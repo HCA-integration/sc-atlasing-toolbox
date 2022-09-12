@@ -1,3 +1,9 @@
+# snakemake
+.snakemake
+.conda
+.config
+.cache
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
