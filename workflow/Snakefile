@@ -1,0 +1,44 @@
+from snakemake.utils import min_version
+min_version("6.0")
+
+container: "docker://condaforge/mambaforge:latest"
+configfile: "config.yaml"
+
+module preprocessing:
+    snakefile: "preprocessing/Snakefile"
+    config: config
+
+module label_transfer:
+    snakefile: "label_transfer/Snakefile"
+    config: config
+
+module integration:
+    snakefile: "integration/Snakefile"
+    config: config
+
+module evaluation:
+    snakefile: "evaluation/Snakefile"
+    config: config
+
+rule all:
+    input: '.snakemake/done'
+    shell:
+        """
+        rm -f {input}
+        """
+
+
+use rule * from preprocessing as preprocessing_*
+use rule * from label_transfer as label_transfer_*
+use rule * from integration as integration_*
+use rule * from evaluation as evaluation_*
+
+rule collect:
+    input:
+#        rules.preprocessing_all.input,
+#        rules.label_transfer_all.input,
+#        rules.integration_all.input,
+#        rules.evaluation_all.input,
+    output:
+        touch('.snakemake/done')
+
