@@ -1,44 +1,58 @@
 from pathlib import Path
 import pandas as pd
 
-def get_wildcards(config):
-    datasets = config['DATASETS'].keys()
+
+def get_h5ad(wildcards):
+    return config['DATASETS'][wildcards.dataset]['adata_file']
+
+
+def get_from_config(config):
+    datasets = config['DATASETS']
     records = [
-        (dataset, config['DATASETS'][dataset]['integration'])
-        for dataset in datasets
+        (dataset, datasets[dataset]['integration'], datasets[dataset]['label'], datasets[dataset]['batch'])
+        for dataset in datasets.keys()
     ]
-    df = pd.DataFrame.from_records(records, columns=['dataset', 'method'])
+    df = pd.DataFrame.from_records(records,columns=['dataset', 'method', 'label', 'batch'])
     df = df.explode('method')
     return df
 
 
-def get_file(wildcards):
-    return config['DATASETS'][wildcards.dataset]['adata_file']
+def get_params(wildcards, column):
+    assert column in parameters.columns
+    params_sub = parameters.query('dataset == @wildcards.dataset & method == @wildcards.method')
+    param = params_sub[column].unique().tolist()
+    if len(param) == 1:
+        return param[0]
+    return param
 
-def get_params(wildcards):
-    columns = ['output_type', 'use_cell_type', 'no_scale']
-    params_sub = params.query('dataset == @wildcards.dataset & method == @wildcards.method')
-    assert len(params_sub) == 1
-    return {column: params_sub[column].tolist()[0] for column in columns}
 
-
-params = pd.read_table(workflow.source_path('params.tsv'))
+parameters = pd.read_table(workflow.source_path('params.tsv'))
+parameters = get_from_config(config).merge(parameters,on='method')
 out_dir = Path(config['output_dir']) / 'integration'
-params = get_wildcards(config).merge(params,on='method')
 
 rule all:
-    input: '.done'
+    input: '.snakemake/done.integration'
 
 
 rule run:
+    message:
+        """
+        params: {params}
+        input: {input}
+        output: {output}
+        """
     input:
-        get_file
+        h5ad=get_h5ad
     output:
         out_dir / '{dataset}/{method}.h5ad'
     params:
-        get_params
+        dataset=lambda wildcards: get_params(wildcards,'dataset'),
+        batch=lambda wildcards: get_params(wildcards,'batch'),
+        label=lambda wildcards: get_params(wildcards,'label'),
+        output_type=lambda wildcards: get_params(wildcards,'output_type'),
+        env=lambda wildcards: get_params(wildcards,'env')
     conda:
-        lambda wildcards: f'envs/{wildcards.method}.yaml'
+        lambda wildcards, params: f'envs/{params.env}'
     script:
         'scripts/{wildcards.method}.py'
 
@@ -48,6 +62,6 @@ rule collect:
         expand(
             rules.run.output,
             zip,
-            **params[['dataset', 'method']].to_dict('list')
+            **parameters[['dataset', 'method']].to_dict('list')
         )
-    output: touch('.done')
+    output: touch('.snakemake/done.integration')

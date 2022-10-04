@@ -3,8 +3,10 @@ output_dir: out
 DATASETS:
   test:
     label: bulk_labels
-    batch: phase
-    adata_file: ../../data/pbmc68k_reduced.h5ad
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
     integration:
       - scvi
       - scanvi
+      - combat
+      - scanorama

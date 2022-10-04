@@ -1,0 +1,10 @@
+name: scanorama
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - scanorama=1.7
+  - pip
+  - pip:
+    - scib==1.0.4

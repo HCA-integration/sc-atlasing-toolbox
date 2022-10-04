@@ -22,6 +22,6 @@ adata.uns['integration'] = {
 }
 
 # run method
-scib.ig.bbknn(adata, batch=params['batch'])
+scib.ig.scanorama(adata, batch=params['batch'])
 
 adata.write(output_adata, compression='gzip')

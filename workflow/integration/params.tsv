@@ -1,7 +1,7 @@
-method	output_type	use_cell_type	no_scale
-bbknn	knn	false	false
-combat	full	false	false
-scanorama	embed	false	false
-scanorama	full	false	false
-scanvi	embed	true	true
-scvi	embed	false	true
+method	output_type	use_cell_type	no_scale	env
+bbknn	knn	false	false	scib.yaml
+combat	full	false	false	scib.yaml
+scanorama	embed	false	false	scanorama.yaml
+scanorama	full	false	false	scanorama.yaml
+scanvi	embed	true	true	scvi-tools.yaml
+scvi	embed	false	true	scvi-tools.yaml
