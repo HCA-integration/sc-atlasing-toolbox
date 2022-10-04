@@ -1,0 +1,7 @@
+method	output_type	use_cell_type	no_scale
+bbknn	knn	false	false
+combat	full	false	false
+scanorama	embed	false	false
+scanorama	full	false	false
+scanvi	embed	true	true
+scvi	embed	false	true

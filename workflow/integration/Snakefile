@@ -1,2 +1,53 @@
-# rule all:
-#    input:
+from pathlib import Path
+import pandas as pd
+
+def get_wildcards(config):
+    datasets = config['DATASETS'].keys()
+    records = [
+        (dataset, config['DATASETS'][dataset]['integration'])
+        for dataset in datasets
+    ]
+    df = pd.DataFrame.from_records(records, columns=['dataset', 'method'])
+    df = df.explode('method')
+    return df
+
+
+def get_file(wildcards):
+    return config['DATASETS'][wildcards.dataset]['adata_file']
+
+def get_params(wildcards):
+    columns = ['output_type', 'use_cell_type', 'no_scale']
+    params_sub = params.query('dataset == @wildcards.dataset & method == @wildcards.method')
+    assert len(params_sub) == 1
+    return {column: params_sub[column].tolist()[0] for column in columns}
+
+
+params = pd.read_table(workflow.source_path('params.tsv'))
+out_dir = Path(config['output_dir']) / 'integration'
+params = get_wildcards(config).merge(params,on='method')
+
+rule all:
+    input: '.done'
+
+
+rule run:
+    input:
+        get_file
+    output:
+        out_dir / '{dataset}/{method}.h5ad'
+    params:
+        get_params
+    conda:
+        lambda wildcards: f'envs/{wildcards.method}.yaml'
+    script:
+        'scripts/{wildcards.method}.py'
+
+
+rule collect:
+    input:
+        expand(
+            rules.run.output,
+            zip,
+            **params[['dataset', 'method']].to_dict('list')
+        )
+    output: touch('.done')
