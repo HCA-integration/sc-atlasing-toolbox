@@ -1,9 +1,21 @@
+from pathlib import Path
+
+import pandas as pd
 from snakemake.utils import min_version
 min_version("6.0")
 
 container: "docker://condaforge/mambaforge:latest"
 configfile: "config.yaml"
 
+params = pd.read_table('params.tsv')
+
+# Process params per module
+for dataset in config['DATASETS'].keys():
+    methods = params.query('dataset == @dataset and module == "integration"')
+    methods = methods['submodules'].str.split(',')[0]
+    config['DATASETS'][dataset]['integration'] = methods
+
+# Import modules
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
     config: config
@@ -16,8 +28,8 @@ module integration:
     snakefile: "integration/Snakefile"
     config: config
 
-module evaluation:
-    snakefile: "evaluation/Snakefile"
+module metrics:
+    snakefile: "metrics/Snakefile"
     config: config
 
 rule all:
@@ -31,14 +43,14 @@ rule all:
 use rule * from preprocessing as preprocessing_*
 use rule * from label_transfer as label_transfer_*
 use rule * from integration as integration_*
-use rule * from evaluation as evaluation_*
+use rule * from metrics as metrics_*
 
 rule collect:
     input:
-#        rules.preprocessing_all.input,
-#        rules.label_transfer_all.input,
-#        rules.integration_all.input,
-#        rules.evaluation_all.input,
+#        rules.preprocessing_all.inpt,
+#        rules.label_transfer_all.inpuut,
+        rules.integration_all.input,
+#        rules.metrics_all.input,
     output:
         touch('.snakemake/done')
 

@@ -1,1 +1,7 @@
-data_dir: data
+output_dir: data/out
+
+DATASETS:
+  test:
+    label: bulk_labels
+    batch: phase
+    adata_file: 'data/pbmc68k_reduced.h5ad'
