@@ -8,7 +8,12 @@ params = snakemake.params
 
 adata = sc.read(input_adata)
 
+# run method
+adata = scib.ig.scanvi(adata, batch=params['batch'], labels=params['label'], max_epochs=100)
+
 # add metadata
+adata.uns['dataset'] = params['dataset']
+
 if 'methods' in adata.uns:
     adata.uns['methods'].append(method)
 else:
@@ -20,8 +25,5 @@ adata.uns['integration'] = {
     'batch_key': params['batch'],
     'output_type': params['output_type']
 }
-
-# run method
-scib.ig.scanvi(adata, batch=params['batch'], labels=params['label'], max_epochs=100)
 
 adata.write(output_adata, compression='gzip')

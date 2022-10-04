@@ -15,6 +15,7 @@ adata.obs['batch'] = adata.obs['batch'].astype(str)
 
 adata.layers['counts'] = csr_matrix(np.exp(adata.X) - 1)
 adata.X = csr_matrix(adata.X)
+adata.layers['normcounts'] = adata.X.copy()
 del adata.raw
 del adata.uns
 

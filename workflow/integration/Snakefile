@@ -32,11 +32,16 @@ out_dir = Path(config['output_dir']) / 'integration'
 
 rule all:
     input: '.snakemake/done.integration'
+    shell:
+        """
+        rm {input}
+        """
 
 
 rule run:
     message:
         """
+        Integrate {wildcards.dataset} with {wildcards.method}
         params: {params}
         input: {input}
         output: {output}

@@ -6,3 +6,5 @@ cd $WORKDIR
 
 #--snakefile $WORKDIR/Snakefile
 snakemake --configfile test/config.yaml $@
+
+conda run -n scanpy python test/run_assertions.py

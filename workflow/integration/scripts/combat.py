@@ -8,7 +8,12 @@ params = snakemake.params
 
 adata = sc.read(input_adata)
 
+# run method
+adata = scib.ig.combat(adata, batch=params['batch'])
+
 # add metadata
+adata.uns['dataset'] = params['dataset']
+
 if 'methods' in adata.uns:
     adata.uns['methods'].append(method)
 else:
@@ -21,7 +26,6 @@ adata.uns['integration'] = {
     'output_type': params['output_type']
 }
 
-# run method
-scib.ig.combat(adata, batch=params['batch'])
+adata.layers['corrected_counts'] = adata.X.copy()
 
 adata.write(output_adata, compression='gzip')

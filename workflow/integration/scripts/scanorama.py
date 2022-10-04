@@ -7,8 +7,14 @@ method = snakemake.wildcards['method']
 params = snakemake.params
 
 adata = sc.read(input_adata)
+adata_raw = adata.copy()
+
+# run method
+adata = scib.ig.scanorama(adata, batch=params['batch'])
 
 # add metadata
+adata.uns['dataset'] = params['dataset']
+
 if 'methods' in adata.uns:
     adata.uns['methods'].append(method)
 else:
@@ -21,7 +27,8 @@ adata.uns['integration'] = {
     'output_type': params['output_type']
 }
 
-# run method
-scib.ig.scanorama(adata, batch=params['batch'])
+adata.layers['corrected_counts'] = adata.X.copy()
+adata.layers['counts'] = adata_raw.layers['counts']
+adata.layers['normcounts'] = adata_raw.layers['normcounts']
 
 adata.write(output_adata, compression='gzip')
