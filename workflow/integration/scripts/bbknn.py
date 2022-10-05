@@ -26,4 +26,6 @@ adata.uns['integration'] = {
     'output_type': params['output_type']
 }
 
+# TODO: ensure all slots are present
+
 adata.write(output_adata, compression='gzip')

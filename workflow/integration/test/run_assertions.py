@@ -29,8 +29,13 @@ for file in outputs:
             assert 'distances' in adata.obsp
         elif 'embed' in output_type:
             assert 'X_emb' in adata.obsm
+            assert 'connectivities' in adata.obsp
+            assert 'distances' in adata.obsp
         elif 'full' in output_type:
             assert 'corrected_counts' in adata.layers
+            assert 'X_emb' in adata.obsm
+            assert 'connectivities' in adata.obsp
+            assert 'distances' in adata.obsp
         else:
             raise ValueError(f'Invalid output type {output_type}')
 

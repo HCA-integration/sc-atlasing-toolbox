@@ -38,25 +38,17 @@ Anndata with integrated and unintegrated information:
 
 ### Integrated output
 Different integration methods provide different types of output.
-These are one of:
+Depending on the output type, the object must contain the following slots:
 
 1. corrected graph (`knn`)
+   + `.obsp['connectivities']` integrated graph connectivities
+   + `.obsp['distances']` integrated graph distances
 2. corrected embedding (`embed`)
+   + `.obsm['X_emb']` integrated embedding
+   + `.obsp['connectivities']` integrated graph connectivities from embedding
+   + `.obsp['distances']` integrated graph distances from embedding
 3. corrected features (`full`)
-
-#### Graph output
-For all integration methods.
-
-+`.obsp['connectivities']`: Integrated graph connectivities
-+`.obsp['distances']`: Integrated graph distances
-
-
-#### Embedding output
-For most integration methods
-
-+ `.obsm['X_emb']`
-
-#### Feature output
-Only for specific integration methods
-
-+ `.layers['corrected_counts']`
+   + `.layers['corrected_counts']` integrated counts
+   + `.obsm['X_emb']` integrated embedding from corrected counts
+   + `.obsp['connectivities']` integrated graph connectivities from embedding
+   + `.obsp['distances']` integrated graph distances from embedding

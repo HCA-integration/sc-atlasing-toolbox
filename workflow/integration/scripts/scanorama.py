@@ -31,4 +31,6 @@ adata.layers['corrected_counts'] = adata.X.copy()
 adata.layers['counts'] = adata_raw.layers['counts']
 adata.layers['normcounts'] = adata_raw.layers['normcounts']
 
+# TODO: ensure all slots are present
+
 adata.write(output_adata, compression='gzip')

@@ -28,4 +28,6 @@ adata.uns['integration'] = {
 
 adata.layers['corrected_counts'] = adata.X.copy()
 
+# TODO: ensure all slots are present
+
 adata.write(output_adata, compression='gzip')
