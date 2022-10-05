@@ -1,0 +1,10 @@
+name: scib
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - scanpy=1.9
+  - pip
+  - pip:
+    - scib==1.0.4
