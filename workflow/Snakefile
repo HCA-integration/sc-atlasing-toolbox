@@ -8,12 +8,21 @@ container: "docker://condaforge/mambaforge:latest"
 configfile: "config.yaml"
 
 params = pd.read_table('params.tsv')
+params['submodules'] = params['submodules'].str.split(',')
 
 # Process params per module
 for dataset in config['DATASETS'].keys():
-    methods = params.query('dataset == @dataset and module == "integration"')
-    methods = methods['submodules'].str.split(',')[0]
-    config['DATASETS'][dataset]['integration'] = methods
+
+    def get_from_params(params, dataset, module):
+        submodules = params.query('dataset == @dataset and module == @module')['submodules']
+        assert len(submodules) == 1
+        if submodules.isna().all():
+            return config['DATASETS'][dataset][module]
+        return submodules.to_list()[0]
+
+    config['DATASETS'][dataset]['integration'] = get_from_params(params, dataset, 'integration')
+    config['DATASETS'][dataset]['metrics'] = get_from_params(params, dataset, 'metrics')
+
 
 # Import modules
 module preprocessing:
@@ -50,7 +59,7 @@ rule collect:
 #        rules.preprocessing_all.inpt,
 #        rules.label_transfer_all.inpuut,
         rules.integration_all.input,
-#        rules.metrics_all.input,
+        # TODO: feed integration output to metrics
+        rules.metrics_merge.output,
     output:
         touch('.snakemake/done')
-

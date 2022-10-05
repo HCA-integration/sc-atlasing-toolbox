@@ -1,2 +1,71 @@
-#rule all:
-#    input:
+from pathlib import Path
+import pandas as pd
+
+
+def get_from_config(config):
+    datasets = config['DATASETS']
+    records = [
+        (dataset, datasets[dataset]['metrics'], datasets[dataset]['label'], datasets[dataset]['batch'])
+        for dataset in datasets.keys()
+    ]
+    df = pd.DataFrame.from_records(records,columns=['dataset', 'metric', 'label', 'batch'])
+    df = df.explode('metric')
+    return df
+
+
+def get_params(wildcards, column):
+    assert column in parameters.columns
+    params_sub = parameters.query('dataset == @wildcards.dataset & metric == @wildcards.metric')
+    param = params_sub[column].unique().tolist()
+    if len(param) == 1:
+        return param[0]
+    return param
+
+
+out_dir = Path(config['output_dir']) / 'metric'
+in_path = Path(config['output_dir']) / 'integration' / '{dataset}' / '{method}.h5ad'
+
+# get wildcards from input directory
+datasets, methods = glob_wildcards(in_path)
+integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
+
+# get full parameters
+parameters = pd.read_table(workflow.source_path('params.tsv'))
+parameters = parameters.merge(get_from_config(config),on='metric').merge(integration_wildcards,on='dataset')
+
+
+rule all:
+    input: '.snakemake/done.metrics'
+    shell:
+        """
+        rm {input}
+        """
+
+
+rule run:
+    input:
+        h5ad=in_path
+    output:
+        metric=out_dir / '{dataset}/{method}/{metric}.tsv'
+    params:
+        dataset=lambda wildcards: get_params(wildcards,'dataset'),
+        metric_type=lambda wildcards: get_params(wildcards,'metric_type'),
+        output_type=lambda wildcards: get_params(wildcards,'output_type'),
+    conda:
+        '../../envs/scib.yaml'
+    script:
+        'scripts/{wildcards.metric}.py'
+
+
+rule merge:
+    input:
+        expand(
+            rules.run.output,
+            zip,
+            **parameters[['dataset', 'method', 'metric']].to_dict('list')
+        )
+    output:
+        metrics=out_dir / 'metric.tsv',
+        done=touch('.snakemake/done.metrics')
+    run:
+        pd.concat([pd.read_table(file) for file in input]).to_csv(output.metrics)

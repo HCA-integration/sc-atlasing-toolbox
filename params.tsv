@@ -1,5 +1,5 @@
 dataset	module	submodules
 test	integration	scvi,scanvi,scgen
-test	metrics	knn,embed,full
+test	metrics
 benchmark	integration	scvi,scanvi,scgen
-benchmark	metrics	knn,embed
+benchmark	metrics
