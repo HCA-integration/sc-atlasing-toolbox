@@ -1,0 +1,6 @@
+name: awscli
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - awscli

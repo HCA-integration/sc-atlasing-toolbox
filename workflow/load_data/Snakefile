@@ -1,0 +1,77 @@
+from pathlib import Path
+import pandas as pd
+
+
+def get_from_dataset(key, value, column=None, debug=False):
+    if column is None:
+        column = dataset_df.columns
+    sub = dataset_df.query(f'{key} == @value')
+    if debug:
+        print(f'##DEBUG## {key, value, column}')
+        print(sub)
+        print(sub[column])
+    return sub[column]
+
+def unlist_dict(dictionary):
+    return {
+        k: v[0] if isinstance(v, list) and len(v) == 1 else v
+        for k, v in dictionary.items()
+    }
+
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']))
+out_dir = Path(config['output_dir']) / 'load_data'
+
+
+rule all:
+    input: '.snakemake/done.download'
+    shell:
+        """
+        rm {input}
+        """
+
+
+rule download:
+    output:
+        h5ad=out_dir / 'download/{dataset}.h5ad'
+    params:
+        url=lambda wildcards: get_from_dataset('dataset_name', wildcards.dataset, 'url').iloc[0]
+    shell:
+        """
+        wget {params.url} -O {output}
+        """
+
+
+rule metadata:
+    input:
+        h5ad=rules.download.output.h5ad
+    params:
+        meta=lambda wildcards: unlist_dict(
+            get_from_dataset('dataset_name', wildcards.dataset).to_dict('list')
+        )
+    output:
+        h5ad=out_dir / 'processed/{dataset}.h5ad'
+        #  TODO: count distribution plot
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/metadata.py'
+
+
+rule merge:
+    input:
+        lambda wildcards: expand(
+            rules.metadata.output.h5ad,
+            dataset=get_from_dataset('organ', wildcards.organ, 'dataset_name')
+        )
+    output:
+        h5ad=out_dir / 'merged/{organ}.h5ad'
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/merge.py'
+
+
+rule collect:
+    input:
+        expand(rules.merge.output,organ=dataset_df['organ'].unique())
+    output: touch('.snakemake/done.download')

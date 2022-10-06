@@ -1,0 +1,4 @@
+organ	dataset_name	dataset_id	url	modalities	n_samples	n_cells	health_status	demographic	10x_assay	rank	pipeline_version	reference	donor_column	sample_column
+blood	Cell2020	"Cell. 2020 Sep 17;182(6):1419-1440."	https://submissions-lattice.s3.us-west-1.amazonaws.com/may2022_blood_kidney/AnnData/RNA/10_1016_j_cell_2020_08_001.h5ad	RNA, CITE	109	90,957	COVID-19,normal	adult	10x 3' v2,10x 3' v3	6			patient	sample
+blood	SciImmunol2020	"Sci Immunol. 2020 Jul 10;5(49):eabd1554"	https://submissions-lattice.s3.us-west-1.amazonaws.com/may2022_blood_kidney/AnnData/RNA/10_1126_sciimmunol_abd1554.h5ad	RNA, CITE	17	59,572	COVID-19,normal,influenza	adult	10x 3' v3	7			Donor ID	Sample ID
+blood	AIDA_pilot_1	AIDA pilot data_1	https://submissions-lattice.s3.us-west-1.amazonaws.com/may2022_blood_kidney/AnnData/RNA/aida_pbmc_1.h5ad	RNA	316	750	normal	adult	10x 5' v1,10x 5' v2	12	DRAGEN v3.8.4	GRCh38-GENCODE 32	donor	donor

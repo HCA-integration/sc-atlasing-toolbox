@@ -1,0 +1,2 @@
+output_dir: test/out
+dataset_meta: test/datasets.tsv

@@ -12,6 +12,7 @@ bash test/run_test.sh --use-conda -c2  # actual run with max 2 cores
 ## Input
 AnnData file h5ad with the following:
 
++ `.uns['dataset']` name of task/dataset
 + `.X` normalised and log-transformed counts (same as `.layers['normcounts']`)
 + `.layers['counts']` raw counts
 + `.layers['normcounts']` normalised and log-transformed counts
