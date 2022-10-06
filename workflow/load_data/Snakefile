@@ -18,7 +18,7 @@ def unlist_dict(dictionary):
         for k, v in dictionary.items()
     }
 
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']))
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']), comment='#')
 out_dir = Path(config['output_dir']) / 'load_data'
 
 

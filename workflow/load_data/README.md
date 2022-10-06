@@ -13,6 +13,7 @@ AnnData object must contain:
 + `.uns['dataset']` name of task/dataset
 + `.obs['dataset']`
 + `.obs['organ']`
++ `.uns['organ']`
 + `.uns['meta']` metadata related to data download
   + `.uns['meta']['organ']`
   + `.uns['meta']['dataset_name']`
@@ -24,3 +25,11 @@ AnnData object must contain:
   + `.uns['meta']['health_status']`
   + `.uns['meta']['demographic']`
   + `.uns['meta']['10x_assay']`
+
+
+# Merged data
+
++ `.X` raw counts
++ `.uns['dataset']` name of organ
++ `.obs['dataset']`
++ `.obs['organ']`
