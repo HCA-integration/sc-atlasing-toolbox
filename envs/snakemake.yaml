@@ -4,4 +4,4 @@ channels:
   - bioconda
 dependencies:
   - python
-  - snakemake
+  - snakemake=7.14
