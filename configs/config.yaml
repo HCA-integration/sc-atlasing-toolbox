@@ -1,4 +1,7 @@
+# Note: relative paths must be relative to the project root, not the directory of the config file.
+
 output_dir: data/out
+dataset_meta: configs/datasets.tsv
 
 DATASETS:
   test:

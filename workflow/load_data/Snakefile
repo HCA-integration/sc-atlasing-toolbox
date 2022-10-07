@@ -12,11 +12,13 @@ def get_from_dataset(key, value, column=None, debug=False):
         print(sub[column])
     return sub[column]
 
+
 def unlist_dict(dictionary):
     return {
         k: v[0] if isinstance(v, list) and len(v) == 1 else v
         for k, v in dictionary.items()
     }
+
 
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']), comment='#')
 out_dir = Path(config['output_dir']) / 'load_data'
