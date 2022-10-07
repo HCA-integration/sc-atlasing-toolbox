@@ -1,5 +1,6 @@
-data/out
 slurm*
+data/out
+**out/
 .DS_Store
 *.h5ad
 .idea/
