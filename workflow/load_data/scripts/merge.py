@@ -13,7 +13,7 @@ def read_adata(file):
     # keep only relevant columns
     donor_column = [ad.uns['meta']['donor_column']]
     sample_columns = [s.strip() for s in ad.uns['meta']['sample_column'].split('+')]
-    columns = set(donor_column).union(set(sample_columns))
+    columns = list(set(donor_column).union(set(sample_columns)))
 
     obs = ad.obs[columns].copy()
     obs['organ'] = organ
@@ -35,11 +35,15 @@ def read_adata(file):
     return ad
 
 
-adatas = [read_adata(file) for file in files]
-pprint(adatas)
+adata = read_adata(files[0])
+print(adata)
 
-print('Concatenate...')
-adata = sc.concat(adatas, join='outer')
+for file in files[1:]:
+    _adata = read_adata(file)
+    print(_adata)
+    print('Concatenate...')
+    adata = sc.concat([adata, _adata], join='outer')
+
 adata.uns['dataset'] = organ
 adata.uns['organ'] = organ
 pprint(adata)
