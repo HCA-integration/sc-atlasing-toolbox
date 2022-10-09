@@ -27,7 +27,11 @@ for file in merged_outputs:
     print(f'Check {file}...')
     adata = sc.read(file)
 
+    assert 'organ' in adata.uns
     assert 'dataset' in adata.uns
-    assert 'dataset' in adata.obs
     assert 'organ' in adata.obs
+    assert 'dataset' in adata.obs
+    assert 'donor' in adata.obs
+    assert 'sample' in adata.obs
+    assert 'label' in adata.obs
     print(adata)

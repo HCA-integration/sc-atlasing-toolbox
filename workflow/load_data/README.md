@@ -25,11 +25,16 @@ AnnData object must contain:
   + `.uns['meta']['health_status']`
   + `.uns['meta']['demographic']`
   + `.uns['meta']['10x_assay']`
+  + `.uns['meta']['sample_column']`
+  + `.uns['meta']['donor_column']`
 
 
 # Merged data
 
 + `.X` raw counts
 + `.uns['dataset']` name of organ
-+ `.obs['dataset']`
 + `.obs['organ']`
++ `.obs['dataset']`
++ `.obs['donor']`
++ `.obs['sample']`
++ `.obs['label']`

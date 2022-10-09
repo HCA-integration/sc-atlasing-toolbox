@@ -13,8 +13,6 @@ adata.obs['dataset'] = wildcards.dataset
 adata.obs['organ'] = meta['organ']
 adata.uns['meta'] = meta
 
-# TODO: keep only relevant columns
-
 # TODO plot count distribution -> save to file
 # TODO: ensure only raw counts are kept
 
