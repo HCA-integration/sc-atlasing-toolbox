@@ -31,9 +31,10 @@ rule run:
     message:
         """
         Integrate {wildcards.dataset} with {wildcards.method}
-        params: {params}
         input: {input}
         output: {output}
+        params: {params}
+        wildcards: {wildcards}
         """
     input:
         h5ad=get_h5ad

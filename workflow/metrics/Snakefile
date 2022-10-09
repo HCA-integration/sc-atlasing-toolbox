@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, get_params
+from utils import get_wildcards_from_config
 
 
 out_dir = Path(config['output_dir']) / 'metric'
@@ -19,9 +19,6 @@ parameters = get_wildcards_from_config(
     ['dataset', 'metric', 'label', 'batch'],
     explode_by='metric'
 ).merge(
-    parameters,
-    on='metric'
-).merge(
     integration_wildcards,
     on='dataset'
 )
@@ -36,14 +33,18 @@ rule all:
 
 
 rule run:
+    message:
+        """
+        Evaluate {wildcards.metric} on {wildcards.dataset}
+        input: {input}
+        output: {output}
+        wildcards: {wildcards}
+        """
     input:
-        h5ad=in_path
+        h5ad=in_path,
+        metrics_meta=workflow.source_path('params.tsv')
     output:
         metric=out_dir / '{dataset}/{method}/{metric}.tsv'
-    params:
-        dataset=lambda wildcards: get_params(wildcards,parameters,'dataset'),
-        metric_type=lambda wildcards: get_params(wildcards,parameters,'metric_type'),
-        output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
     conda:
         '../../envs/scib.yaml'
     script:
