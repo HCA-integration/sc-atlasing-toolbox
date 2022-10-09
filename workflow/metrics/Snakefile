@@ -4,7 +4,8 @@ import pandas as pd
 from utils import get_wildcards_from_config
 
 
-out_dir = Path(config['output_dir']) / 'metric'
+out_dir = Path(config['output_dir']) / 'metrics'
+# TODO: save input pattern in config
 in_path = Path(config['output_dir']) / 'integration' / '{dataset}' / '{method}.h5ad'
 
 # get wildcards from input directory
@@ -12,7 +13,6 @@ datasets, methods = glob_wildcards(in_path)
 integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
 
 # get full parameters
-parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters = get_wildcards_from_config(
     config['DATASETS'],
     ['metrics', 'label', 'batch'],
@@ -62,4 +62,5 @@ rule merge:
         metrics=out_dir / 'metric.tsv',
         done=touch('.snakemake/done.metrics')
     run:
-        pd.concat([pd.read_table(file) for file in input]).to_csv(output.metrics)
+        metrics_df = pd.concat([pd.read_table(file) for file in input])
+        metrics_df.to_csv(output.metrics, sep='\t', index=False)

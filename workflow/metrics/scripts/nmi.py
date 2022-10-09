@@ -55,4 +55,4 @@ df = pd.DataFrame.from_records(
     records,
     columns=['metric', 'method', 'output_type', 'metric_type', 'score']
 )
-df.to_csv(output_scib, sep='\t')
+df.to_csv(output_scib, sep='\t', index=False)
