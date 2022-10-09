@@ -1,5 +1,5 @@
 slurm*
-data/out
+**out
 **out/
 .DS_Store
 *.h5ad

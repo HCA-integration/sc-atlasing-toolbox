@@ -10,3 +10,9 @@ DATASETS:
     adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
+  test2:
+    label: bulk_labels
+    batch: phase
+    adata_file: 'data/pbmc68k.h5ad'
+    metrics:
+      - nmi

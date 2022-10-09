@@ -1,27 +1,30 @@
 from pathlib import Path
-
 import pandas as pd
 from snakemake.utils import min_version
-min_version("6.0")
 
+from utils import get_wildcards_from_config
+
+
+min_version("6.0")
 container: "docker://condaforge/mambaforge:latest"
 configfile: "configs/config.yaml"
 
-params = pd.read_table('configs/modules.tsv', comment='#')
+params = pd.read_table('configs/modules.tsv',comment='#')
 params['submodules'] = params['submodules'].str.split(',')
 
 # Process params per module
 for dataset in config['DATASETS'].keys():
 
-    def get_from_params(params, dataset, module):
+    def _get(params, dataset, module):
         submodules = params.query('dataset == @dataset and module == @module')['submodules']
         assert len(submodules) == 1
         if submodules.isna().all():
             return config['DATASETS'][dataset][module]
         return submodules.to_list()[0]
 
-    config['DATASETS'][dataset]['integration'] = get_from_params(params, dataset, 'integration')
-    config['DATASETS'][dataset]['metrics'] = get_from_params(params, dataset, 'metrics')
+
+    config['DATASETS'][dataset]['integration'] = _get(params,dataset,'integration')
+    config['DATASETS'][dataset]['metrics'] = _get(params,dataset,'metrics')
 
 config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
 
@@ -54,19 +57,35 @@ rule all:
         rm -f {input}
         """
 
-use rule * from load_data as load_data_*
-use rule * from preprocessing as preprocessing_*
-use rule * from label_transfer as label_transfer_*
-use rule * from integration as integration_*
-use rule * from metrics as metrics_*
+use rule * from load_data as load_data_ *
+
+use rule * from preprocessing as preprocessing_ *
+
+use rule * from label_transfer as label_transfer_ *
+
+use rule * from integration as integration_ *
+
+use rule * from metrics as metrics_ *
+
+use rule merge from metrics as metrics_merge with:
+    input:
+        expand(
+            rules.run.output,
+            zip,
+            **get_wildcards_from_config(
+                config['DATASETS'],
+                ['integration', 'metrics', 'label', 'batch'],
+                ['dataset', 'method', 'metric', 'label', 'batch'],
+                explode_by=['method', 'metric']
+            )
+        )
 
 rule collect:
     input:
-        rules.load_data_all.input,
-#        rules.preprocessing_all.inpt,
-#        rules.label_transfer_all.inpuut,
+        # rules.load_data_all.input,
+        # rules.preprocessing_all.input,
+        # rules.label_transfer_all.input,
         rules.integration_all.input,
-        # TODO: feed integration output to metrics
         rules.metrics_merge.output,
     output:
         touch('.snakemake/done')

@@ -19,14 +19,23 @@ def get_wildcards_from_config(config, config_params, wildcard_names, explode_by)
     ]
     df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
     if explode_by is not None:
-        df = df.explode(explode_by)
+        explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
+        for column in explode_by:
+            df = df.explode(column)
     return df
 
 
-def get_params(wildcards, parameters, column):
-    assert column in parameters.columns
+def get_params(wildcards, parameters_df, column):
+    """
+
+    :param wildcards: wildcards passed on from Snakemake
+    :param parameters_df: dataframe with parameters for wildcards, column names must match wildcard names
+    :param column: column or columns from parameters_df
+    :return: single parameter or list of parameters as specified by column
+    """
+    assert column in parameters_df.columns
     query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
-    params_sub = parameters.query(query)
+    params_sub = parameters_df.query(query)
     param = params_sub[column].unique().tolist()
     if len(param) == 1:
         return param[0]
