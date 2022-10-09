@@ -1,36 +1,22 @@
 from pathlib import Path
 import pandas as pd
 
+from utils import get_wildcards_from_config, get_params
+
 
 def get_h5ad(wildcards):
     return config['DATASETS'][wildcards.dataset]['adata_file']
 
 
-# TODO reuse function
-def get_from_config(config):
-    datasets = config['DATASETS']
-    records = [
-        (dataset, datasets[dataset]['integration'], datasets[dataset]['label'], datasets[dataset]['batch'])
-        for dataset in datasets.keys()
-    ]
-    df = pd.DataFrame.from_records(records,columns=['dataset', 'method', 'label', 'batch'])
-    df = df.explode('method')
-    return df
-
-
-# TODO reuse function
-def get_params(wildcards, column):
-    assert column in parameters.columns
-    params_sub = parameters.query('dataset == @wildcards.dataset & method == @wildcards.method')
-    param = params_sub[column].unique().tolist()
-    if len(param) == 1:
-        return param[0]
-    return param
-
-
 parameters = pd.read_table(workflow.source_path('params.tsv'))
-parameters = get_from_config(config).merge(parameters,on='method')
+parameters = get_wildcards_from_config(
+    config['DATASETS'],
+    ['integration', 'label', 'batch'],
+    ['dataset', 'method', 'label', 'batch'],
+    explode_by='method'
+).merge(parameters,on='method')
 out_dir = Path(config['output_dir']) / 'integration'
+
 
 rule all:
     input: '.snakemake/done.integration'
@@ -54,11 +40,11 @@ rule run:
     output:
         out_dir / '{dataset}/{method}.h5ad'
     params:
-        dataset=lambda wildcards: get_params(wildcards,'dataset'),
-        batch=lambda wildcards: get_params(wildcards,'batch'),
-        label=lambda wildcards: get_params(wildcards,'label'),
-        output_type=lambda wildcards: get_params(wildcards,'output_type'),
-        env=lambda wildcards: get_params(wildcards,'env')
+        dataset=lambda wildcards: get_params(wildcards,parameters,'dataset'),
+        batch=lambda wildcards: get_params(wildcards,parameters,'batch'),
+        label=lambda wildcards: get_params(wildcards,parameters,'label'),
+        output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
+        env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
         lambda wildcards, params: f'envs/{params.env}'
     script:
