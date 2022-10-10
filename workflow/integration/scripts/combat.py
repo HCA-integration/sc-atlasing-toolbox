@@ -10,6 +10,7 @@ method = snakemake.wildcards['method']
 params = snakemake.params
 
 adata_raw = sc.read(input_adata)
+adata_raw.X = adata_raw.layers['normcounts'].copy()
 
 # run method
 adata = scib.ig.combat(adata_raw, batch=params['batch'])

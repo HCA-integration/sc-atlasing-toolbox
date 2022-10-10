@@ -36,4 +36,5 @@ def process(adata, adata_raw, output_type):
 
     adata.layers['counts'] = adata_raw.layers['counts']
     adata.layers['normcounts'] = adata_raw.layers['normcounts']
+    adata.raw = adata_raw
     return adata

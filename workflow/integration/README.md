@@ -6,7 +6,7 @@ Activate the snakemake environment and call `test/run_test.sh` with run specific
 ```
 conda activate snakemake
 bash test/run_test.sh -n  # dry run
-bash test/run_test.sh --use-conda -c2  # actual run with max 2 cores
+bash test/run_test.sh -c2  # actual run with max 2 cores
 ```
 
 ## Input
@@ -32,10 +32,15 @@ Anndata with integrated and unintegrated information:
     + `.uns['integration']['label_key']` label used for integration
     + `.uns['integration']['batch_key']` batch used for integration
     + `.uns['integration']['output_type']` output type of method (one of 'knn', 'embed' or 'full')
+ 
 
-### Unintegrated output
+### Unintegrated data
+Some slots are dedicated to the unintegrated data and must be available in the integrated anndata object.
+
 + `.layers['counts']`
 + `.layers['normcounts']`
++ `.raw.obsm['X_pca']`
++ `.uns['preprocessing']` preprocessing parameters as provided
 
 ### Integrated output
 Different integration methods provide different types of output.
