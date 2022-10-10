@@ -1,5 +1,6 @@
-import scanpy as sc
 import glob
+import numpy as np
+import scanpy as sc
 
 outputs = glob.glob('test/out/integration/test/*.h5ad')
 print(outputs)
@@ -25,14 +26,17 @@ for file in outputs:
         output_type = [output_type] if isinstance(output_type, str) else output_type
 
         if 'knn' in output_type:
+            assert len(np.unique(adata.X.data)) == 0
+            assert 'X_emb' not in adata.obsm
             assert 'connectivities' in adata.obsp
             assert 'distances' in adata.obsp
         elif 'embed' in output_type:
+            assert len(np.unique(adata.X.data)) == 0
             assert 'X_emb' in adata.obsm
             assert 'connectivities' in adata.obsp
             assert 'distances' in adata.obsp
         elif 'full' in output_type:
-            assert 'corrected_counts' in adata.layers
+            assert len(np.unique(adata.X.data)) > 0
             assert 'X_emb' in adata.obsm
             assert 'connectivities' in adata.obsp
             assert 'distances' in adata.obsp

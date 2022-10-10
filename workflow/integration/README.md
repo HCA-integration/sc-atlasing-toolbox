@@ -3,7 +3,7 @@
 ## Testing
 Activate the snakemake environment and call `test/run_test.sh` with run specific Snakemake parameters.
 
-```commandline
+```
 conda activate snakemake
 bash test/run_test.sh -n  # dry run
 bash test/run_test.sh --use-conda -c2  # actual run with max 2 cores
@@ -49,7 +49,7 @@ Depending on the output type, the object must contain the following slots:
    + `.obsp['connectivities']` integrated graph connectivities from embedding
    + `.obsp['distances']` integrated graph distances from embedding
 3. corrected features (`full`)
-   + `.layers['corrected_counts']` integrated counts
+   + `.X` integrated counts
    + `.obsm['X_emb']` integrated embedding from corrected counts
    + `.obsp['connectivities']` integrated graph connectivities from embedding
    + `.obsp['distances']` integrated graph distances from embedding

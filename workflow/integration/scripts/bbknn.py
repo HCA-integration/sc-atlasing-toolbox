@@ -1,15 +1,19 @@
 import scib
 import scanpy as sc
 
-input_adata = snakemake.input[0]
-output_adata = snakemake.output[0]
+from utils import process
+
+
+input_adata = snakemake.input.h5ad
+output_adata = snakemake.output.h5ad
 method = snakemake.wildcards['method']
 params = snakemake.params
 
-adata = sc.read(input_adata)
+adata_raw = sc.read(input_adata)
 
 # run method
-adata = scib.ig.bbknn(adata, batch=params['batch'])
+adata = scib.ig.bbknn(adata_raw, batch=params['batch'])
+adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 
 # add metadata
 adata.uns['dataset'] = params['dataset']
@@ -25,7 +29,5 @@ adata.uns['integration'] = {
     'batch_key': params['batch'],
     'output_type': params['output_type']
 }
-
-# TODO: ensure all slots are present
 
 adata.write(output_adata, compression='gzip')

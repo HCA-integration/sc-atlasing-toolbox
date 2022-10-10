@@ -1,15 +1,19 @@
 import scib
 import scanpy as sc
 
+from utils import process
+
+
 input_adata = snakemake.input[0]
 output_adata = snakemake.output[0]
 method = snakemake.wildcards['method']
 params = snakemake.params
 
-adata = sc.read(input_adata)
+adata_raw = sc.read(input_adata)
 
 # run method
-adata = scib.ig.combat(adata, batch=params['batch'])
+adata = scib.ig.combat(adata_raw, batch=params['batch'])
+adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 
 # add metadata
 adata.uns['dataset'] = params['dataset']
@@ -27,7 +31,5 @@ adata.uns['integration'] = {
 }
 
 adata.layers['corrected_counts'] = adata.X.copy()
-
-# TODO: ensure all slots are present
 
 adata.write(output_adata, compression='gzip')

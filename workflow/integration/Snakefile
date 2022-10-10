@@ -39,7 +39,7 @@ rule run:
     input:
         h5ad=get_h5ad
     output:
-        out_dir / '{dataset}/{method}.h5ad'
+        h5ad=out_dir / '{dataset}/{method}.h5ad'
     params:
         dataset=lambda wildcards: get_params(wildcards,parameters,'dataset'),
         batch=lambda wildcards: get_params(wildcards,parameters,'batch'),
