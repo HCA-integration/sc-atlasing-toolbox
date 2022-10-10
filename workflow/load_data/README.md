@@ -29,7 +29,7 @@ AnnData object must contain:
   + `.uns['meta']['donor_column']`
 
 
-# Merged data
+## Merged data
 
 + `.X` raw counts
 + `.uns['dataset']` name of organ
