@@ -4,7 +4,7 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
-  - scanpy=1.9
   - pip
   - pip:
-    - scib==1.0.4
+    - scanpy==1.9
+    - git+https://github.com/theislab/scib.git@rpy2_optional
