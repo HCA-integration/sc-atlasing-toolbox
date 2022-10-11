@@ -11,6 +11,7 @@ default-resources:
   - partition=cpu_p
   - qos=icb
   - mem_mb=10000
+  - disk_mb=100000
 restart-times: 3
 max-jobs-per-second: 10
 max-status-checks-per-second: 1

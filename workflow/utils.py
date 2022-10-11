@@ -40,3 +40,24 @@ def get_params(wildcards, parameters_df, column):
     if len(param) == 1:
         return param[0]
     return param
+
+
+
+def get_resource(config, profile, resource_key):
+    """
+    Retrieve resource information from config['resources']
+    
+    :param config: config passed from Snakemake
+    :param profile: resource profile, key under config['resources']
+    :param resource_key: resource key, key under config['resources'][profile]
+    """
+    if 'resources' in config:
+        resources = config['resources']
+        if profile in resources and resource_key in resources[profile]:
+            return resources[profile][resource_key]
+        else:
+            raise ValueError(
+                f'Invalid profile "{profile}" or resource key "{resource_key}".'
+                'Please check that your config contains the correct entries under config["resources"]'
+            )
+    return ''

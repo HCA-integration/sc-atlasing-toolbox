@@ -3,6 +3,14 @@
 output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+  gpu:
+    partition: gpu_p
+    qos: gpu
+
 DATASETS:
   test:
     label: bulk_labels

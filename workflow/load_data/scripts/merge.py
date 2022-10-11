@@ -1,3 +1,4 @@
+import gc
 import scanpy as sc
 from pprint import pprint
 
@@ -24,6 +25,7 @@ def read_adata(file):
     # TODO: add label key(s)
     # TODO: add disease, location, sequencing technology
     # TODO: remove duplicate columns
+    del ad.obs
     ad.obs = obs
 
     # remove data
@@ -32,17 +34,23 @@ def read_adata(file):
     del ad.raw
     del ad.obsm
 
+    gc.collect()
+
     return ad
 
 
+print(f'Read first file {files[0]}...')
 adata = read_adata(files[0])
 print(adata)
 
 for file in files[1:]:
+    print(f'Read {file}...')
     _adata = read_adata(file)
     print(_adata)
     print('Concatenate...')
     adata = sc.concat([adata, _adata], join='outer')
+    del _adata
+    gc.collect()
 
 adata.uns['dataset'] = organ
 adata.uns['organ'] = organ

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, get_params
+from utils import get_wildcards_from_config, get_params, get_resource
 
 
 def get_h5ad(wildcards):
@@ -25,17 +25,7 @@ rule all:
         rm {input}
         """
 
-
-# TODO: add resource management
 rule run:
-    message:
-        """
-        Integrate {wildcards.dataset} with {wildcards.method}
-        input: {input}
-        output: {output}
-        params: {params}
-        wildcards: {wildcards}
-        """
     input:
         h5ad=get_h5ad
     output:
@@ -48,6 +38,9 @@ rule run:
         env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
         lambda wildcards, params: f'envs/{params.env}'
+    resources:
+        partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
+        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos')
     script:
         'scripts/{wildcards.method}.py'
 

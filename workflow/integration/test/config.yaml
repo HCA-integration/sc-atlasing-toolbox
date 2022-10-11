@@ -1,5 +1,13 @@
 output_dir: test/out
 
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+  gpu:
+    partition: gpu_p
+    qos: gpu
+
 DATASETS:
   test:
     label: bulk_labels
