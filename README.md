@@ -67,3 +67,13 @@ snakemake --use-conda -c10  # run with 10 cores
 ```
 
 Which modules are computed exactly can be defined in `configs/modules.tsv`.
+
+### Use Snakemake profiles
+
+Different [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) are provided under `.profiles`.
+These save defaults for commandline parameters and simplify the snakemake call.
+To use a profile e.g. the local profile, call
+
+```commandline
+snakemake --profile .profiles/local
+```

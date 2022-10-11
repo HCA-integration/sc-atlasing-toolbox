@@ -1,0 +1,6 @@
+jobs: 10
+keep-going: False
+rerun-incomplete: True
+printshellcmds: True
+scheduler: greedy
+use-conda: True
