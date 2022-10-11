@@ -18,13 +18,6 @@ parameters = get_wildcards_from_config(
 out_dir = Path(config['output_dir']) / 'integration'
 
 
-rule all:
-    input: '.snakemake/done.integration'
-    shell:
-        """
-        rm {input}
-        """
-
 rule run:
     input:
         h5ad=get_h5ad
@@ -45,11 +38,11 @@ rule run:
         'scripts/{wildcards.method}.py'
 
 
-rule collect:
+rule all:
     input:
         expand(
             rules.run.output,
             zip,
             **parameters[['dataset', 'method']].to_dict('list')
         )
-    output: touch('.snakemake/done.integration')
+    default_target: True

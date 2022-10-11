@@ -24,14 +24,6 @@ parameters = get_wildcards_from_config(
 )
 
 
-rule all:
-    input: '.snakemake/done.metrics'
-    shell:
-        """
-        rm {input}
-        """
-
-
 rule run:
     message:
         """
@@ -59,8 +51,13 @@ rule merge:
             **parameters[['dataset', 'method', 'metric']].to_dict('list')
         )
     output:
-        metrics=out_dir / 'metric.tsv',
-        done=touch('.snakemake/done.metrics')
+        metrics=out_dir / 'metric.tsv'
     run:
         metrics_df = pd.concat([pd.read_table(file) for file in input])
-        metrics_df.to_csv(output.metrics, sep='\t', index=False)
+        metrics_df.to_csv(output.metrics,sep='\t',index=False)
+
+
+rule all:
+    input:
+        rules.merge.output
+    default_target: True
