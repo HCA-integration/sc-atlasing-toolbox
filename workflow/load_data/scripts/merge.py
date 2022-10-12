@@ -2,6 +2,8 @@ import gc
 import scanpy as sc
 from pprint import pprint
 
+from utils import CELLxGENE_COLUMNS, get_union
+
 organ = snakemake.wildcards.organ
 files = snakemake.input
 out_file = snakemake.output.h5ad
@@ -14,7 +16,7 @@ def read_adata(file):
     # keep only relevant columns
     donor_column = [ad.uns['meta']['donor_column']]
     sample_columns = [s.strip() for s in ad.uns['meta']['sample_column'].split('+')]
-    columns = list(set(donor_column).union(set(sample_columns)))
+    columns = get_union(CELLxGENE_COLUMNS, donor_column, sample_columns)
 
     obs = ad.obs[columns].copy()
     obs['organ'] = organ
@@ -22,9 +24,6 @@ def read_adata(file):
     obs['dataset_id'] = ad.uns['meta']['dataset_id']
     obs['donor'] = ad.obs[donor_column]
     obs['sample'] = ad.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
-    # TODO: add label key(s)
-    # TODO: add disease, location, sequencing technology
-    # TODO: remove duplicate columns
     del ad.obs
     ad.obs = obs
 

@@ -2,6 +2,9 @@ import pandas as pd
 import scanpy as sc
 import glob
 
+from utils import CELLxGENE_COLUMNS
+
+
 datasets_df = pd.read_table('test/datasets.tsv')
 
 # single dataset
@@ -27,11 +30,14 @@ for file in merged_outputs:
     print(f'Check {file}...')
     adata = sc.read(file)
 
+    print('Check that CELLxGENES mandatory columns present')
+    for col in CELLxGENE_COLUMNS:
+        assert col in adata.obs.columns
+
     assert 'organ' in adata.uns
     assert 'dataset' in adata.uns
     assert 'organ' in adata.obs
     assert 'dataset' in adata.obs
     assert 'donor' in adata.obs
     assert 'sample' in adata.obs
-    assert 'label' in adata.obs
     print(adata)
