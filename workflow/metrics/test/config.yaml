@@ -17,6 +17,7 @@ DATASETS:
       #- isolated_label_asw
       #- isolated_label_f1
       - nmi
+      - ari
   test2:
     label: bulk_labels
     batch: batch

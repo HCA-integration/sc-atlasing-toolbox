@@ -26,7 +26,7 @@ rep_map = {
 
 records = []
 for output_type in meta['output_types']:
-    _, score, _ = cluster_optimal(
+    cluster_optimal(
         adata=adata,
         label_key=meta['label'],
         cluster_key='cluster',
@@ -35,6 +35,7 @@ for output_type in meta['output_types']:
         use_rep=rep_map[output_type],
         n_iterations=5
     )
+    score = scib.me.ari(adata, meta['label'], 'cluster')
     records.append((metric, method, output_type, metric_type, score))
 
 write_metrics(records, output_file)

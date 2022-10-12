@@ -2,6 +2,31 @@ import scanpy as sc
 import pandas as pd
 
 
+def get_from_adata(adata):
+    output_type = adata.uns['integration']['output_type']
+    output_types = [output_type] if isinstance(output_type, str) else output_type
+
+    return {
+        'label': adata.uns['integration']['label_key'],
+        'batch': adata.uns['integration']['batch_key'],
+        'output_types': output_types
+    }
+
+
+def write_metrics(records, filename):
+    """
+    Create Dataframe from records and write to file
+
+    :param records: list of tuples for rows
+    :param filename: output file name
+    """
+    df = pd.DataFrame.from_records(
+        records,
+        columns=['method', 'output_type', 'metric', 'metric_type', 'score']
+    )
+    df.to_csv(filename, sep='\t', index=False)
+
+
 def compute_neighbors(adata, output_type):
     """ Compute kNN graph based on output type.
 
