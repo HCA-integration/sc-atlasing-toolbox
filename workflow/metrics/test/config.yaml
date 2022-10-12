@@ -6,18 +6,17 @@ DATASETS:
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
     metrics:
-      #- asw_batch
-      #- graph_connectivity
-      #- ilisi
-      #- pcr
-      #- ari
-      #- asw_label
-      #- cell_cycle
-      #- clisi
-      #- isolated_label_asw
-      #- isolated_label_f1
       - nmi
       - ari
+      - asw_label
+      - asw_batch
+      - cell_cycle
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
   test2:
     label: bulk_labels
     batch: batch
