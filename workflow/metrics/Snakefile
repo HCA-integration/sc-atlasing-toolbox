@@ -39,22 +39,34 @@ rule run:
         metric=out_dir / '{dataset}/{method}/{metric}.tsv'
     conda:
         '../../envs/scib.yaml'
+    benchmark:
+        out_dir / '{dataset}/{method}/{metric}.benchmark.tsv'
     script:
         'scripts/{wildcards.metric}.py'
 
 
 rule merge:
     input:
-        expand(
-            rules.run.output,
-            zip,
-            **parameters[['dataset', 'method', 'metric']].to_dict('list')
-        )
+        metrics=expand(rules.run.output,zip,**parameters[['dataset', 'method', 'metric']].to_dict('list')),
     output:
-        metrics=out_dir / 'metrics.tsv'
+        metrics=out_dir / 'metrics.tsv',
     run:
-        metrics_df = pd.concat([pd.read_table(file) for file in input])
+        metrics_df = pd.concat([pd.read_table(file) for file in input.metrics])
         metrics_df.to_csv(output.metrics,sep='\t',index=False)
+
+
+rule benchmark:
+    input:
+        benchmark=expand(rules.run.benchmark,zip,**parameters[['dataset', 'method', 'metric']].to_dict('list'))
+    output:
+        benchmark=out_dir / 'metrics.benchmark.tsv'
+    params:
+        wildcards=parameters[['dataset', 'method', 'metric']]
+    run:
+        benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
+        benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
+        print(benchmark_df)
+        benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
 
 
 rule all:

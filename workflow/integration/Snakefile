@@ -34,15 +34,28 @@ rule run:
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos')
+    benchmark:
+        out_dir / '{dataset}/{method}.benchmark.tsv'
     script:
         'scripts/{wildcards.method}.py'
 
 
+rule benchmark:
+    input:
+        benchmark=expand(rules.run.benchmark,zip,**parameters[['dataset', 'method']].to_dict('list'))
+    output:
+        benchmark=out_dir / 'integration.benchmark.tsv'
+    params:
+        wildcards=parameters[['dataset', 'method']]
+    run:
+        benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
+        benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
+        print(benchmark_df)
+        benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
+
+
 rule all:
     input:
-        expand(
-            rules.run.output,
-            zip,
-            **parameters[['dataset', 'method']].to_dict('list')
-        )
+        expand(rules.run.output,zip,**parameters[['dataset', 'method']].to_dict('list')),
+        rules.benchmark.output
     default_target: True
