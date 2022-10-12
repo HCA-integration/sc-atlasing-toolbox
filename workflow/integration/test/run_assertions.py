@@ -22,26 +22,23 @@ for file in outputs:
         assert 'normcounts' in adata.layers
 
         # Output type specific outputs
-        output_type = adata.uns['integration']['output_type']
-        output_type = [output_type] if isinstance(output_type, str) else output_type
+        output_types = adata.uns['integration']['output_type']
+        output_types = [output_types] if isinstance(output_types, str) else output_types
 
-        if 'knn' in output_type:
-            assert len(np.unique(adata.X.data)) == 0
-            assert 'X_emb' not in adata.obsm
+        for ot in output_types:
+            if ot not in ['knn', 'embed', 'full']:
+                raise ValueError(f'Invalid output type {ot}')
+
+        if 'knn' in output_types:
             assert 'connectivities' in adata.obsp
             assert 'distances' in adata.obsp
-        elif 'embed' in output_type:
-            assert len(np.unique(adata.X.data)) == 0
+        if 'embed' in output_types:
             assert 'X_emb' in adata.obsm
-            assert 'connectivities' in adata.obsp
-            assert 'distances' in adata.obsp
-        elif 'full' in output_type:
-            assert len(np.unique(adata.X.data)) > 0
-            assert 'X_emb' in adata.obsm
-            assert 'connectivities' in adata.obsp
-            assert 'distances' in adata.obsp
-        else:
-            raise ValueError(f'Invalid output type {output_type}')
+        if 'full' in output_types:
+            # check that counts are different from input
+            adata_raw = adata.raw.to_adata()
+            assert adata.X.data.shape != adata_raw.X.data.shape or np.any(adata.X.data != adata_raw.X.data)
+            assert 'X_pca' in adata.obsm
 
     except AssertionError as e:
         print(file)

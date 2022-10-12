@@ -51,7 +51,7 @@ rule merge:
             **parameters[['dataset', 'method', 'metric']].to_dict('list')
         )
     output:
-        metrics=out_dir / 'metric.tsv'
+        metrics=out_dir / 'metrics.tsv'
     run:
         metrics_df = pd.concat([pd.read_table(file) for file in input])
         metrics_df.to_csv(output.metrics,sep='\t',index=False)

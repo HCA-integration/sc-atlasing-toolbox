@@ -20,35 +20,23 @@ output_types = [output_type] if isinstance(output_type, str) else output_type
 # evaluate only on labeled cells
 # adata = adata[adata.obs[label].notnull()]
 
+rep_map = {
+    'knn': None,
+    'embed': 'X_emb',
+    'full': 'X_pca'
+}
+
 records = []
 for output_type in output_types:
-    if output_type in ['full', 'embed']:
-        assert 'X_emb' in adata.obsm
-        # cluster on graph built from 'X_emb'
-        res_max, score_max, score_all = cluster_optimal(
-            adata,
-            label,
-            cluster_key='cluster',
-            cluster_function=sc.tl.leiden,
-            metric=scib.me.nmi,
-            use_rep='X_emb',
-            n_iterations=5
-        )
-    elif output_type == 'knn':
-        # clustering on the knn graph directly
-        res_max, score_max, score_all = cluster_optimal(
-            adata,
-            label,
-            cluster_key='cluster',
-            cluster_function=sc.tl.leiden,
-            metric=scib.me.nmi,
-            use_rep=None,
-            n_iterations=5
-        )
-    else:
-        raise ValueError(f'invalid output type: {output_type}')
-
-    score = scib.me.nmi(adata, 'cluster', label)
+    _, score, _ = cluster_optimal(
+        adata,
+        label,
+        cluster_key='cluster',
+        cluster_function=sc.tl.leiden,
+        metric=scib.me.nmi,
+        use_rep=rep_map[output_type],
+        n_iterations=5
+    )
     records.append((metric, method, output_type, metric_type, score))
 
 df = pd.DataFrame.from_records(

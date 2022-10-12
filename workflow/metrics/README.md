@@ -11,28 +11,23 @@ bash test/run_test.sh -c
 
 ## Input
 
-### Unintegrated output
+### Unintegrated data
 + `.layers['counts']` raw counts
 + `.layers['normcounts']` normalised and log-transformed counts
 + `.raw` integrated anndata object with all processed slots
 
-### Integrated output
+### Integrated data
 
 One or a list of output types in `.uns['integration']['output_type']` and representations in the corresponding `Anndata`
 slots.
 
 1. corrected graph (`knn`)
-   + `.obsp['connectivities']` integrated graph connectivities
-   + `.obsp['distances']` integrated graph distances
+   + `.obsp['connectivities']`, `.obsp['distances']` integrated kNN graph returned by integration method
 2. corrected embedding (`embed`)
-   + `.obsm['X_emb']` integrated embedding
-   + `.obsp['connectivities']` integrated graph connectivities from embedding
-   + `.obsp['distances']` integrated graph distances from embedding
+   + `.obsm['X_emb']` integrated embedding returned by integration method
 3. corrected features (`full`)
-   + `.layers['corrected_counts']` integrated counts
-   + `.obsm['X_emb']` integrated embedding from corrected counts
-   + `.obsp['connectivities']` integrated graph connectivities from embedding
-   + `.obsp['distances']` integrated graph distances from embedding
+   + `.X` corrected feature counts returned by integration method
+   + `.obsm['X_pca']` PCA on corrected feature counts
 
 
 ## Output

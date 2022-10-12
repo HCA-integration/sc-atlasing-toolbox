@@ -2,15 +2,33 @@ import scanpy as sc
 import pandas as pd
 
 
-def prepare_unintegrated(adata, n_hvg=200):
-    # TODO: preprocessing according to what is in .uns
-    adata_orig = adata.copy()
-    sc.pp.highly_variable_genes(adata_orig, n_top_genes=n_hvg)
-    sc.pp.pca(adata_orig)
-    sc.pp.neighbors(adata_orig)
-    return adata_orig
+def compute_neighbors(adata, output_type):
+    """ Compute kNN graph based on output type.
+
+    :param adata: integrated anndata object
+    :param output_type: string of output type
+    :return: anndata with kNN graph based on output type
+    """
+
+    if 'knn' == output_type:
+        assert 'connectivities' in adata.obsp
+        assert 'distances' in adata.obsp
+
+    elif 'embed' == output_type:
+        assert 'X_emb' in adata.obsm
+        sc.pp.neighbors(adata, use_rep='X_emb')
+
+    elif 'full' == output_type:
+        assert 'X_pca' in adata.obsm
+        sc.pp.neighbors(adata, use_rep='X_pca')
+
+    else:
+        raise ValueError(f'Invalid output type {output_type}')
+
+    return adata
 
 
+# TODO: include in scib package
 def cluster_optimal(
         adata,
         label_key,

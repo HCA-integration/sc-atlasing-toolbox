@@ -47,14 +47,9 @@ Different integration methods provide different types of output.
 Depending on the output type, the object must contain the following slots:
 
 1. corrected graph (`knn`)
-   + `.obsp['connectivities']` integrated graph connectivities
-   + `.obsp['distances']` integrated graph distances
+   + `.obsp['connectivities']`, `.obsp['distances']` integrated kNN graph returned by integration method
 2. corrected embedding (`embed`)
-   + `.obsm['X_emb']` integrated embedding
-   + `.obsp['connectivities']` integrated graph connectivities from embedding
-   + `.obsp['distances']` integrated graph distances from embedding
+   + `.obsm['X_emb']` integrated embedding returned by integration method
 3. corrected features (`full`)
-   + `.X` integrated counts
-   + `.obsm['X_emb']` integrated embedding from corrected counts
-   + `.obsp['connectivities']` integrated graph connectivities from embedding
-   + `.obsp['distances']` integrated graph distances from embedding
+   + `.X` corrected feature counts returned by integration method
+   + `.obsm['X_pca']` PCA on corrected feature counts
