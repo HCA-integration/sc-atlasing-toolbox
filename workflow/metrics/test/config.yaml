@@ -1,5 +1,8 @@
 output_dir: test/out
 
+input:
+  metrics: test/out/integration/{dataset}/{method}.h5ad
+
 DATASETS:
   test:
     label: bulk_labels

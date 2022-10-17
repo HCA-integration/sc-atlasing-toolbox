@@ -5,8 +5,7 @@ from utils import get_wildcards_from_config
 
 
 out_dir = Path(config['output_dir']) / 'metrics'
-# TODO: save input pattern in config
-in_path = Path(config['output_dir']) / 'integration' / '{dataset}' / '{method}.h5ad'
+in_path = Path(config['input']['metrics'])
 
 # get wildcards from input directory
 datasets, methods = glob_wildcards(in_path)
@@ -71,5 +70,6 @@ rule benchmark:
 
 rule all:
     input:
-        rules.merge.output
+        rules.merge.output,
+        rules.benchmark.output
     default_target: True

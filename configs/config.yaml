@@ -3,6 +3,9 @@
 output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
+input:
+  metrics: test/out/integration/{dataset}/{method}.h5ad
+
 resources:
   cpu:
     partition: cpu_p
