@@ -9,6 +9,7 @@ def get_h5ad(wildcards):
 
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
+parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
     config['DATASETS'],
     ['integration', 'label', 'batch'],
