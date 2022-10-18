@@ -14,6 +14,11 @@ def process(adata, adata_raw, output_type):
     if isinstance(output_type, str):
         output_type = [output_type]
 
+    # save unintegrated count layers
+    adata.layers['counts'] = adata_raw.layers['counts']
+    adata.layers['normcounts'] = adata_raw.layers['normcounts']
+    adata.raw = adata_raw
+
     if 'full' in output_type:
         sc.pp.pca(adata)
         # TODO: use same parameters as in .uns['preprocessing']
@@ -26,9 +31,4 @@ def process(adata, adata_raw, output_type):
 
     else:
         raise ValueError(f'Invalid output type {output_type}')
-
-    # save unintegrated count layers
-    adata.layers['counts'] = adata_raw.layers['counts']
-    adata.layers['normcounts'] = adata_raw.layers['normcounts']
-    adata.raw = adata_raw
     return adata
