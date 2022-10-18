@@ -7,4 +7,4 @@ dependencies:
   - scanpy=1.9
   - pip
   - pip:
-    - git+https://github.com/theislab/scib.git@rpy2_optional
+    - git+https://github.com/theislab/scib.git

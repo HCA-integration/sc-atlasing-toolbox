@@ -7,4 +7,4 @@ dependencies:
   - scanorama=1.7
   - pip
   - pip:
-    - git+https://github.com/theislab/scib.git@rpy2_optional
+    - git+https://github.com/theislab/scib.git
