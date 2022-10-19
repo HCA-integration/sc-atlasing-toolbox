@@ -1,26 +1,40 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config
+from utils import get_wildcards_from_config, get_params
 
 
 out_dir = Path(config['output_dir']) / 'metrics'
 in_path = Path(config['input']['metrics'])
 
-# get wildcards from input directory
-datasets, methods = glob_wildcards(in_path)
-integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
+if 'integration' in config['defaults']:
+    parameters = get_wildcards_from_config(
+        config=config,
+        config_params=['integration', 'metrics', 'label', 'batch'],
+        wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
+        explode_by=['method', 'metric']
+    )
+else:
+    # get wildcards from input directory
+    datasets, methods = glob_wildcards(in_path)
+    integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
+    # get full parameters
+    parameters = get_wildcards_from_config(
+        config=config,
+        config_params=['metrics', 'label', 'batch'],
+        wildcard_names=['dataset', 'metric', 'label', 'batch'],
+        explode_by='metric'
+    ).merge(
+        integration_wildcards,
+        on='dataset'
+    )
 
-# get full parameters
-parameters = get_wildcards_from_config(
-    config['DATASETS'],
-    ['metrics', 'label', 'batch'],
-    ['dataset', 'metric', 'label', 'batch'],
-    explode_by='metric'
-).merge(
-    integration_wildcards,
-    on='dataset'
-)
+
+def get_wildcards(wildcards_df, columns, wildcards=None):
+    if wildcards:
+        query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
+        wildcards_df = wildcards_df.query(query)
+    return wildcards_df[columns].drop_duplicates().to_dict('list')
 
 
 rule run:
@@ -35,18 +49,18 @@ rule run:
         h5ad=in_path,
         metrics_meta=workflow.source_path('params.tsv')
     output:
-        metric=out_dir / '{dataset}/{method}/{metric}.tsv'
+        metric=out_dir / 'datasets/{dataset}/{method}/{metric}.tsv'
     conda:
         '../../envs/scib.yaml'
     benchmark:
-        out_dir / '{dataset}/{method}/{metric}.benchmark.tsv'
+        out_dir / 'datasets/{dataset}/{method}/{metric}.benchmark.tsv'
     script:
         'scripts/{wildcards.metric}.py'
 
 
 rule merge:
     input:
-        metrics=expand(rules.run.output,zip,**parameters[['dataset', 'method', 'metric']].to_dict('list')),
+        metrics=expand(rules.run.output,zip,**get_wildcards(parameters,['dataset', 'method', 'metric'])),
     output:
         metrics=out_dir / 'metrics.tsv',
     run:
@@ -54,9 +68,33 @@ rule merge:
         metrics_df.to_csv(output.metrics,sep='\t',index=False)
 
 
+use rule merge as merge_per_dataset with:
+    input:
+        metrics=lambda wildcards: expand(
+            rules.run.output,
+            zip,
+            **get_wildcards(parameters,['method', 'metric'],wildcards),
+            allow_missing=True
+        ),
+    output:
+        metrics=out_dir / 'per_dataset' / '{dataset}.tsv',
+
+
+use rule merge as merge_per_method with:
+    input:
+        metrics=lambda wildcards: expand(
+            rules.run.output,
+            zip,
+            **get_wildcards(parameters,['dataset', 'metric'], wildcards),
+            allow_missing=True
+        ),
+    output:
+        metrics=out_dir / 'per_method' / '{method}.tsv',
+
+
 rule benchmark:
     input:
-        benchmark=expand(rules.run.benchmark,zip,**parameters[['dataset', 'method', 'metric']].to_dict('list'))
+        benchmark=expand(rules.run.benchmark,zip,**get_wildcards(parameters,['dataset', 'method', 'metric']))
     output:
         benchmark=out_dir / 'metrics.benchmark.tsv'
     params:
@@ -70,6 +108,8 @@ rule benchmark:
 
 rule all:
     input:
+        expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
+        expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
-        rules.benchmark.output
+        rules.benchmark.output,
     default_target: True
