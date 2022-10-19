@@ -2,23 +2,34 @@ import numpy as np
 import pandas as pd
 
 
-def get_wildcards_from_config(config, config_params, wildcard_names, explode_by, config_keys=None):
+def get_wildcards_from_config(
+        config,
+        config_params,
+        wildcard_names,
+        explode_by,
+        config_keys=None,
+        slot='DATASETS'
+):
     """
 
-    :param config: part of the config with entries of same format
+    :param config: Snakemake config dictionary
     :param config_params: list of parameters for each config entry
         e.g. ['integration', 'label', 'batch']
     :param wildcard_names: names of wildcards to be extracted.
         Must map to config keys, and prepended by a wildcard name for the config entries
         e.g. ['dataset', 'method', 'label', 'batch']
-    :param config_keys: list of entries to subset the config by., otherwise use all keys
     :param explode_by: column to explode by, expecting list entry for that column
+    :param config_keys: list of entries to subset the config by., otherwise use all keys
+    :param slot: slot in config to get wildcards from. The config_params must be contained under that slot.
     :return: dataframe with wildcard mapping. Wildcard names in columns and wildcard values as entries
     """
+    global_config = config
+    config = config[slot]
+
     if config_keys is None:
         config_keys = config.keys()
     records = [
-        (key, *[config[key][w] for w in config_params])
+        (key, *[_get_or_default_from_config(config, global_config['defaults'], key, w) for w in config_params])
         for key in config_keys
     ]
     df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
@@ -29,32 +40,53 @@ def get_wildcards_from_config(config, config_params, wildcard_names, explode_by,
     return df.reset_index(drop=True)
 
 
+def _get_or_default_from_config(config, defaults, key, value):
+    if value in config[key]:
+        return config[key][value]
+    try:
+        assert value in defaults
+    except AssertionError:
+        raise AssertionError(f'No default defined for "{value}"')
+    return defaults[value]
+
+
 def get_params(wildcards, parameters_df, column, wildcards_keys=None):
     """
 
     :param wildcards: wildcards passed on from Snakemake or dictionary
     :param parameters_df: dataframe with parameters for wildcards, column names must match wildcard names
     :param column: column or columns from parameters_df
-    :param wildcards_keys: list of wildcards to constrain the query to
+    :param wildcards_keys: list of wildcards to return
     :return: single parameter or list of parameters as specified by column
     """
-    assert column in parameters_df.columns
-
-    if wildcards_keys is None:
-        wildcards_keys = [key for key in wildcards.keys() if key in parameters_df.columns]
-
-    assert np.all([key in wildcards.keys() for key in wildcards.keys()])
-
-    query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards_keys])
-    params_sub = parameters_df.query(query)
     try:
-        assert params_sub.shape[0] == 1
-    except AssertionError:
-        raise ValueError(f'Incorrect number of parameters for wildcards: {wildcards}\n{parameters_df}')
-    param = params_sub[column].tolist()
+        assert column in parameters_df.columns
+
+        if wildcards is not None:
+            if wildcards_keys is None:
+                wildcards_keys = [key for key in wildcards.keys() if key in parameters_df.columns]
+            assert np.all([key in wildcards.keys() for key in wildcards.keys()])
+
+            query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
+            params_sub = parameters_df.query(query)
+        else:
+            params_sub = parameters_df
+
+        try:
+            assert params_sub.shape[0] == 1
+        except AssertionError:
+            raise ValueError(
+                f'Incorrect number of parameters\n{params_sub}'
+            )
+        param = params_sub[column].tolist()
+    except Exception as e:
+        raise Exception(
+            f'Error for wildcards={wildcards}, column={column}, wildcards_keys={wildcards_keys}'
+            f'\n{parameters_df}\nError message: {e}'
+        )
     if len(param) == 1:
         return param[0]
-    return param
+    return param[wildcards_keys]
 
 
 def get_resource(config, profile, resource_key):

@@ -8,15 +8,16 @@ resources:
     partition: gpu_p
     qos: gpu
 
+defaults:
+  integration:
+    - scvi
+    - scanvi
+    - combat
+    - scanorama
+    - unintegrated
+
 DATASETS:
   test:
     label: bulk_labels
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
-    integration:
-      - scvi
-      - scanvi
-      - combat
-      - scanorama
-      # - bbknn
-      - unintegrated

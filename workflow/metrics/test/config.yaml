@@ -3,6 +3,21 @@ output_dir: test/out
 input:
   metrics: test/out/integration/{dataset}/{method}.h5ad
 
+defaults:
+  metrics:
+    - nmi
+    - ari
+    - asw_label
+    - asw_batch
+    - cell_cycle
+    - clisi
+    - ilisi
+    - graph_connectivity
+    - isolated_label_asw
+    - isolated_label_f1
+    - pcr
+
+
 DATASETS:
   test:
     label: bulk_labels

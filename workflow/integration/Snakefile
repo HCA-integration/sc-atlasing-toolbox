@@ -7,13 +7,12 @@ from utils import get_wildcards_from_config, get_params, get_resource
 def get_h5ad(wildcards):
     return config['DATASETS'][wildcards.dataset]['adata_file']
 
-
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
-    config['DATASETS'],
-    ['integration', 'label', 'batch'],
-    ['dataset', 'method', 'label', 'batch'],
+    config=config,
+    config_params=['integration', 'label', 'batch'],
+    wildcard_names=['dataset', 'method', 'label', 'batch'],
     explode_by='method'
 ).merge(parameters,on='method')
 out_dir = Path(config['output_dir']) / 'integration'

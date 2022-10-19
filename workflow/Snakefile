@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils import get_wildcards_from_config
+from utils import get_wildcards_from_config, _get_or_default_from_config
 
 
 min_version("6.0")
@@ -18,7 +18,7 @@ for dataset in config['DATASETS'].keys():
     def _get(params, dataset, module):
         submodules = params.query('dataset == @dataset and module == @module')['submodules']
         if len(submodules) == 0 or submodules.isna().all():
-            submodules = config['DATASETS'][dataset][module]
+            submodules = _get_or_default_from_config(config['DATASETS'],config['defaults'],dataset,module)
         else:
             submodules = submodules.to_list()[0]
         if len(submodules) == 0:
@@ -35,7 +35,6 @@ for dataset in config['DATASETS'].keys():
 config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
 
 out_dir = Path(config['output_dir'])
-
 
 # Import modules
 module load_data:
@@ -68,20 +67,8 @@ use rule * from integration as integration_ *
 
 use rule * from metrics as metrics_ *
 
-metrics_wildcards = get_wildcards_from_config(
-    config=config['DATASETS'],
-    config_params=['integration', 'metrics', 'label', 'batch'],
-    wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
-    explode_by=['method', 'metric']
-)
-print(metrics_wildcards)
 
-use rule merge from metrics as metrics_merge with:
-    input: expand(rules.run.output,zip,**metrics_wildcards)
-
-print(rules.metrics_all.input)
-
-rule collect:
+rule all:
     input:
         # rules.load_data_all.input,
         # rules.preprocessing_all.input,
@@ -98,7 +85,7 @@ rule download_pancreas:
 
 
 benchmark_params = get_wildcards_from_config(
-    config['DATASETS'],
+    config=config,
     config_keys=['pancreas'],
     config_params=['integration', 'metrics'],
     wildcard_names=['dataset', 'method', 'metric'],

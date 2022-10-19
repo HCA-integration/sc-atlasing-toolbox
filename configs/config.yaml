@@ -15,6 +15,25 @@ resources:
     qos: gpu
 
 # TODO: defaults
+defaults:
+  integration:
+    - scvi
+    - scanvi
+    - combat
+    - scanorama
+    - unintegrated
+  metrics:
+    - nmi
+    - ari
+    - asw_label
+    - asw_batch
+    - cell_cycle
+    - clisi
+    - ilisi
+    - graph_connectivity
+    - isolated_label_asw
+    - isolated_label_f1
+    - pcr
 
 DATASETS:
   test:
@@ -33,21 +52,5 @@ DATASETS:
     adata_file: 'data/pancreas.h5ad'
     label: celltype
     batch: tech
-    metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - cell_cycle
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
     integration:
-      #- scvi
-      #- scanvi
-      #- combat
-      #- scanorama
       - unintegrated
