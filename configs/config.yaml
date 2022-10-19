@@ -4,7 +4,7 @@ output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
 input:
-  metrics: test/out/integration/{dataset}/{method}.h5ad
+  metrics: data/out/integration/{dataset}/{method}.h5ad
 
 resources:
   cpu:
@@ -13,6 +13,8 @@ resources:
   gpu:
     partition: gpu_p
     qos: gpu
+
+# TODO: defaults
 
 DATASETS:
   test:
@@ -27,3 +29,25 @@ DATASETS:
     adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
+  pancreas:
+    adata_file: 'data/pancreas.h5ad'
+    label: celltype
+    batch: tech
+    metrics:
+      - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - cell_cycle
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
+    integration:
+      #- scvi
+      #- scanvi
+      #- combat
+      #- scanorama
+      - unintegrated

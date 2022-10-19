@@ -17,16 +17,24 @@ for dataset in config['DATASETS'].keys():
 
     def _get(params, dataset, module):
         submodules = params.query('dataset == @dataset and module == @module')['submodules']
-        assert len(submodules) == 1
-        if submodules.isna().all():
-            return config['DATASETS'][dataset][module]
-        return submodules.to_list()[0]
+        if len(submodules) == 0 or submodules.isna().all():
+            submodules = config['DATASETS'][dataset][module]
+        else:
+            submodules = submodules.to_list()[0]
+        if len(submodules) == 0:
+            raise ValueError(
+                f'No submodules defined for {dataset}, {module}.'
+                ' Check that they are either defined either in the config or modules.tsv'
+            )
+        return submodules
 
 
     config['DATASETS'][dataset]['integration'] = _get(params,dataset,'integration')
     config['DATASETS'][dataset]['metrics'] = _get(params,dataset,'metrics')
 
 config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
+
+out_dir = Path(config['output_dir'])
 
 
 # Import modules
@@ -50,13 +58,6 @@ module metrics:
     snakefile: "metrics/Snakefile"
     config: config
 
-rule all:
-    input: '.snakemake/done'
-    shell:
-        """
-        rm -f {input}
-        """
-
 use rule * from load_data as load_data_ *
 
 use rule * from preprocessing as preprocessing_ *
@@ -67,18 +68,18 @@ use rule * from integration as integration_ *
 
 use rule * from metrics as metrics_ *
 
+metrics_wildcards = get_wildcards_from_config(
+    config=config['DATASETS'],
+    config_params=['integration', 'metrics', 'label', 'batch'],
+    wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
+    explode_by=['method', 'metric']
+)
+print(metrics_wildcards)
+
 use rule merge from metrics as metrics_merge with:
-    input:
-        expand(
-            rules.run.output,
-            zip,
-            **get_wildcards_from_config(
-                config['DATASETS'],
-                ['integration', 'metrics', 'label', 'batch'],
-                ['dataset', 'method', 'metric', 'label', 'batch'],
-                explode_by=['method', 'metric']
-            )
-        )
+    input: expand(rules.run.output,zip,**metrics_wildcards)
+
+print(rules.metrics_all.input)
 
 rule collect:
     input:
@@ -86,6 +87,28 @@ rule collect:
         # rules.preprocessing_all.input,
         # rules.label_transfer_all.input,
         rules.integration_all.input,
-        rules.metrics_merge.output,
+        rules.metrics_all.input
     output:
         touch('.snakemake/done')
+    default_target: True
+
+
+rule download_pancreas:
+    input: expand(rules.load_data_download.output,dataset='pancreas')
+
+
+benchmark_params = get_wildcards_from_config(
+    config['DATASETS'],
+    config_keys=['pancreas'],
+    config_params=['integration', 'metrics'],
+    wildcard_names=['dataset', 'method', 'metric'],
+    explode_by=['method', 'metric']
+)
+
+use rule metrics_benchmark as benchmark_pancreas with:
+    input:
+        benchmark=expand(rules.run.benchmark,zip,**benchmark_params)
+    output:
+        benchmark=out_dir / 'metrics' / 'pancreas_benchmark.tsv'
+    params:
+        wildcards=benchmark_params
