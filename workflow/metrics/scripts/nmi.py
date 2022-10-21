@@ -7,6 +7,7 @@ input_adata = snakemake.input.h5ad
 output_file = snakemake.output.metric
 metric = snakemake.wildcards.metric
 method = snakemake.wildcards.method
+dataset = snakemake.wildcards.dataset
 
 metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = metrics_meta.loc[metric]['metric_type']
@@ -24,8 +25,9 @@ rep_map = {
     'full': 'X_pca'
 }
 
-records = []
-for output_type in meta['output_types']:
+output_types = meta['output_types']
+scores = []
+for output_type in output_types:
     _, score, _ = cluster_optimal(
         adata=adata,
         label_key=meta['label'],
@@ -35,6 +37,6 @@ for output_type in meta['output_types']:
         use_rep=rep_map[output_type],
         n_iterations=5
     )
-    records.append((metric, method, output_type, metric_type, score))
+    scores.append(score)
 
-write_metrics(records, output_file)
+write_metrics(scores, output_types, metric, metric_type, method, dataset, output_file)

@@ -7,6 +7,7 @@ input_adata = snakemake.input.h5ad
 output_file = snakemake.output.metric
 metric = snakemake.wildcards.metric
 method = snakemake.wildcards.method
+dataset = snakemake.wildcards.dataset
 n_cores = snakemake.threads
 
 metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
@@ -16,13 +17,14 @@ print(f'read {input_adata} ...')
 adata = sc.read(input_adata)
 meta = get_from_adata(adata)
 
-records = []
-for output_type in meta['output_types']:
+output_types = meta['output_types']
+scores = []
+for output_type in output_types:
     adata = compute_neighbors(adata, output_type)
     score = scib.me.graph_connectivity(
         adata,
         label_key=meta['label']
     )
-    records.append((metric, method, output_type, metric_type, score))
+    scores.append(score)
 
-write_metrics(records, output_file)
+write_metrics(scores, output_types, metric, metric_type, method, dataset, output_file)

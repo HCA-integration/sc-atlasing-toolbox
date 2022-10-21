@@ -13,16 +13,15 @@ def get_from_adata(adata):
     }
 
 
-def write_metrics(records, filename):
-    """
-    Create Dataframe from records and write to file
+def write_metrics(scores, output_types, metric, metric_type, method, dataset, filename):
 
-    :param records: list of tuples for rows
-    :param filename: output file name
-    """
+    records = [
+        (dataset, metric, method, output_type, metric_type, score)
+        for score, output_type in zip(scores, output_types)
+    ]
     df = pd.DataFrame.from_records(
         records,
-        columns=['method', 'output_type', 'metric', 'metric_type', 'score']
+        columns=['dataset', 'metric', 'method', 'output_type', 'metric_type', 'score']
     )
     df.to_csv(filename, sep='\t', index=False)
 
