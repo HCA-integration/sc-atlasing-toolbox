@@ -44,7 +44,7 @@ rule run:
     output:
         metric=out_dir / 'datasets/{dataset}/{method}/{metric}.tsv'
     conda:
-        '../../envs/scib.yaml'
+        'envs/scib.yaml'
     benchmark:
         out_dir / 'datasets/{dataset}/{method}/{metric}.benchmark.tsv'
     script:
@@ -62,7 +62,7 @@ rule merge:
         time=out_dir / 'metrics_time.png',
     params:
         wildcards=get_wildcards(parameters,['dataset', 'method', 'metric'])
-    conda: '../../envs/scanpy.yaml'
+    conda: 'envs/scanpy.yaml'
     script: 'scripts/merge.py'
 
 
