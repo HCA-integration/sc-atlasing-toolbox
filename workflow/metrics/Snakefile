@@ -63,7 +63,7 @@ rule merge:
     params:
         wildcards=get_wildcards(parameters,['dataset', 'method', 'metric'])
     conda: '../../envs/scanpy.yaml'
-    script: workflow.source_path('scripts/merge.py')
+    script: 'scripts/merge.py'
 
 
 use rule merge as merge_per_dataset with:

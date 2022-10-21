@@ -75,8 +75,6 @@ rule all:
         # rules.label_transfer_all.input,
         rules.integration_all.input,
         rules.metrics_all.input
-    output:
-        touch('.snakemake/done')
     default_target: True
 
 
@@ -92,10 +90,11 @@ benchmark_params = get_wildcards_from_config(
     explode_by=['method', 'metric']
 )
 
-use rule metrics_benchmark as benchmark_pancreas with:
+use rule merge from metrics as benchmark_pancreas with:
     input:
-        benchmark=expand(rules.run.benchmark,zip,**benchmark_params)
+        metrics=expand(rules.run.output,zip,**benchmark_params),
+        benchmark=expand(rules.run.benchmark,zip,**benchmark_params),
     output:
-        benchmark=out_dir / 'metrics' / 'pancreas_benchmark.tsv'
-    params:
-        wildcards=benchmark_params
+        metrics=out_dir / 'metrics' / 'pancreas_metrics.tsv',
+        plot=out_dir / 'metrics' / 'pancreas.png',
+        time=out_dir / 'metrics' / 'pancreas_time.png',

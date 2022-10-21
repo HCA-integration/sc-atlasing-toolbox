@@ -14,7 +14,6 @@ resources:
     partition: gpu_p
     qos: gpu
 
-# TODO: defaults
 defaults:
   integration:
     - scvi
@@ -42,12 +41,30 @@ DATASETS:
     adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
   test2:
     label: bulk_labels
     batch: phase
     adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
   pancreas:
     adata_file: 'data/pancreas.h5ad'
     label: celltype
