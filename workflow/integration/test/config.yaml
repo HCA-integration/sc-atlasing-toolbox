@@ -21,3 +21,7 @@ DATASETS:
     label: bulk_labels
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
+  test2:
+    label: bulk_labels
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
