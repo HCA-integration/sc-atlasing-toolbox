@@ -41,3 +41,9 @@ DATASETS:
     adata_file: ../../data/pbmc68k.h5ad
     metrics:
       - nmi
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr

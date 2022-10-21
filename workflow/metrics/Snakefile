@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, get_params
+from utils import get_wildcards_from_config, expand_per, get_wildcards
 
 
 out_dir = Path(config['output_dir']) / 'metrics'
@@ -30,13 +30,6 @@ else:
     )
 
 
-def get_wildcards(wildcards_df, columns, wildcards=None):
-    if wildcards:
-        query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
-        wildcards_df = wildcards_df.query(query)
-    return wildcards_df[columns].drop_duplicates().to_dict('list')
-
-
 rule run:
     message:
         """
@@ -60,50 +53,41 @@ rule run:
 
 rule merge:
     input:
-        metrics=expand(rules.run.output,zip,**get_wildcards(parameters,['dataset', 'method', 'metric'])),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'method', 'metric']),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'method',
+                                                                                         'metric']),
     output:
         metrics=out_dir / 'metrics.tsv',
-    run:
-        metrics_df = pd.concat([pd.read_table(file) for file in input.metrics])
-        metrics_df.to_csv(output.metrics,sep='\t',index=False)
+        plot=out_dir / 'metrics.png',
+        time=out_dir / 'metrics_time.png',
+    params:
+        wildcards=get_wildcards(parameters,['dataset', 'method', 'metric'])
+    conda: '../../envs/scanpy.yaml'
+    script: workflow.source_path('scripts/merge.py')
 
 
 use rule merge as merge_per_dataset with:
     input:
-        metrics=lambda wildcards: expand(
-            rules.run.output,
-            zip,
-            **get_wildcards(parameters,['method', 'metric'],wildcards),
-            allow_missing=True
-        ),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['method', 'metric']),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['method', 'metric']),
     output:
-        metrics=out_dir / 'per_dataset' / '{dataset}.tsv',
+        metrics=out_dir / 'per_dataset' / '{dataset}_metrics.tsv',
+        plot=out_dir / 'per_dataset' / '{dataset}.png',
+        time=out_dir / 'per_dataset' / '{dataset}_time.png',
+    params:
+        wildcards=lambda wildcards: get_wildcards(parameters,['method', 'metric'],wildcards)
 
 
 use rule merge as merge_per_method with:
     input:
-        metrics=lambda wildcards: expand(
-            rules.run.output,
-            zip,
-            **get_wildcards(parameters,['dataset', 'metric'], wildcards),
-            allow_missing=True
-        ),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'metric']),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'metric']),
     output:
         metrics=out_dir / 'per_method' / '{method}.tsv',
-
-
-rule benchmark:
-    input:
-        benchmark=expand(rules.run.benchmark,zip,**get_wildcards(parameters,['dataset', 'method', 'metric']))
-    output:
-        benchmark=out_dir / 'metrics.benchmark.tsv'
+        plot=out_dir / 'per_method' / '{method}.png',
+        time=out_dir / 'per_method' / '{method}_time.png',
     params:
-        wildcards=parameters[['dataset', 'method', 'metric']]
-    run:
-        benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
-        benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
-        print(benchmark_df)
-        benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
+        wildcards=lambda wildcards: get_wildcards(parameters,['dataset', 'metric'],wildcards)
 
 
 rule all:
@@ -111,5 +95,4 @@ rule all:
         expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
-        rules.benchmark.output,
     default_target: True

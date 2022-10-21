@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from snakemake.io import expand
 
 
 def get_wildcards_from_config(
@@ -41,6 +42,15 @@ def get_wildcards_from_config(
 
 
 def _get_or_default_from_config(config, defaults, key, value):
+    """
+    Get entry from config or return defaults if not present
+
+    :param config: part of the config with multiple entries of the same structure
+    :param defaults: config defaults for keys with missing value
+    :param key: top-level key of config dictionary
+    :param value: key of
+    :return:
+    """
     if value in config[key]:
         return config[key][value]
     try:
@@ -48,6 +58,34 @@ def _get_or_default_from_config(config, defaults, key, value):
     except AssertionError:
         raise AssertionError(f'No default defined for "{value}"')
     return defaults[value]
+
+
+def get_wildcards(wildcards_df, columns, wildcards=None):
+    """
+    Get wildcards from DataFrame
+
+    :param wildcards_df: DataFrame with wildcard names in columns
+    :param columns: wildcard keys that are present in the dataframe column
+    :param wildcards: wildcards passed from Snakemake to subset to
+    :return: subset of the wildcards_df by wildcard match and columns
+    """
+    if wildcards:
+        query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
+        wildcards_df = wildcards_df.query(query)
+    return wildcards_df[columns].drop_duplicates().to_dict('list')
+
+
+def expand_per(target, wildcards_df, wildcards, columns):
+    """
+    Expand a target by specific wildcards, considering wildcards to
+
+    :param target: file name or Snakemake target object with wildcards
+    :param wildcards_df: DataFrame with wildcard names in columns
+    :param wildcards: wildcards passed from Snakemake to expand
+    :param columns: wildcard keys that are present in the dataframe column
+    :return: list of expanded targets
+    """
+    return expand(target, zip, **get_wildcards(wildcards_df, columns, wildcards), allow_missing=True)
 
 
 def get_params(wildcards, parameters_df, column, wildcards_keys=None):
