@@ -65,6 +65,7 @@ g = sns.catplot(
     dodge=False,
 )
 description = ' '.join([f'{key}={value}' for key, value in wildcards.items()])
-g.fig.subplots_adjust(top=.8 + (.04 * n_rows))
+adjust = np.min([.8 + (.04 * n_rows), 0.95])
+g.fig.subplots_adjust(top=adjust)
 g.fig.suptitle(f'Computation time for metrics {description}')
 g.savefig(snakemake.output.time)

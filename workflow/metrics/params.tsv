@@ -11,3 +11,9 @@ isolated_label_asw	bio_conservation	full,embed
 isolated_label_f1	bio_conservation	full,embed,knn
 nmi	bio_conservation	full,embed,knn
 kbet	batch_correction	full,embed,knn
+ari_leiden_y	bio_conservation	full,embed,knn
+ari_kmeans_y	bio_conservation	full,embed,knn
+nmi_leiden_y	bio_conservation	full,embed,knn
+nmi_kmeans_y	bio_conservation	full,embed,knn
+asw_label_y	bio_conservation	full,embed
+asw_batch_y	batch_correction	full,embed

@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils import get_wildcards_from_config, _get_or_default_from_config
+from utils import get_wildcards_from_config, _get_or_default_from_config, get_wildcards
 
 
 min_version("6.0")
@@ -95,6 +95,8 @@ use rule merge from metrics as benchmark_pancreas with:
         metrics=expand(rules.run.output,zip,**benchmark_params),
         benchmark=expand(rules.run.benchmark,zip,**benchmark_params),
     output:
-        metrics=out_dir / 'metrics' / 'pancreas_metrics.tsv',
-        plot=out_dir / 'metrics' / 'pancreas.png',
-        time=out_dir / 'metrics' / 'pancreas_time.png',
+        metrics=out_dir / 'benchmark_metrics_pancreas' / 'metrics.tsv',
+        plot=out_dir / 'benchmark_metrics_pancreas' / 'metrics.png',
+        time=out_dir / 'benchmark_metrics_pancreas' / 'time.png',
+    params:
+        wildcards=get_wildcards(benchmark_params,['dataset', 'method', 'metric'])

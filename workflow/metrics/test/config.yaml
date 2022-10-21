@@ -24,26 +24,25 @@ DATASETS:
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
     metrics:
-      - nmi
       - ari
-      - asw_label
-      - asw_batch
-      - cell_cycle
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
-  test2:
-    label: bulk_labels
-    batch: batch
-    adata_file: ../../data/pbmc68k.h5ad
-    metrics:
+      - ari_leiden_y
+      - ari_kmeans_y
       - nmi
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
+      - nmi_leiden_y
+      - nmi_kmeans_y
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
+#  test2:
+#    label: bulk_labels
+#    batch: batch
+#    adata_file: ../../data/pbmc68k.h5ad
+#    metrics:
+#      - nmi
+#      - clisi
+#      - ilisi
+#      - graph_connectivity
+#      - isolated_label_asw
+#      - isolated_label_f1
+#      - pcr

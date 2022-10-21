@@ -111,3 +111,9 @@ def cluster_optimal(
         return res_max, score_max, score_all
     else:
         return res_max, score_max, score_all, clustering
+
+
+def rename_categories(adata, obs_col):
+    s = adata.obs[obs_col]
+    s = s.cat.rename_categories({i for i, _ in enumerate(s.cat.categories)})
+    return s.to_numpy()
