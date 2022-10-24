@@ -14,16 +14,13 @@ def read_adata(file):
     ad.obs_names = ad.uns['meta']['dataset_name'] + '-' + ad.obs.reset_index().index.astype(str)
 
     # keep only relevant columns
-    donor_column = [ad.uns['meta']['donor_column']]
-    sample_columns = [s.strip() for s in ad.uns['meta']['sample_column'].split('+')]
-    columns = get_union(CELLxGENE_COLUMNS, donor_column, sample_columns)
+    columns = get_union(CELLxGENE_COLUMNS, ['donor', 'sample'])
 
     obs = ad.obs[columns].copy()
     obs['organ'] = organ
     obs['dataset'] = ad.uns['meta']['dataset_name']
     obs['dataset_id'] = ad.uns['meta']['dataset_id']
-    obs['donor'] = ad.obs[donor_column]
-    obs['sample'] = ad.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+
     del ad.obs
     ad.obs = obs
 

@@ -17,6 +17,11 @@ adata.obs['dataset'] = wildcards.dataset
 adata.obs['organ'] = meta['organ']
 adata.uns['meta'] = meta
 
+donor_column = meta['donor_column']
+sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
+adata.obs['donor'] = adata.obs[donor_column]
+adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+
 # ensure only raw counts are kept
 adata.layers['final'] = adata.X.copy()
 if isinstance(adata.raw, anndata._core.raw.Raw):
