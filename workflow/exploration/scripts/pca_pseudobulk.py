@@ -2,8 +2,6 @@ from matplotlib import pyplot as plt
 import anndata
 import pandas as pd
 import scanpy as sc
-import sc_toolbox as sct
-
 
 sc.set_figure_params(dpi=100, dpi_save=150, frameon=False)
 plt.rcParams['figure.figsize'] = 12, 8
@@ -14,8 +12,18 @@ color = snakemake.params['color']
 
 adata = sc.read(input_h5ad)
 
-adata.X = adata.X.todense()
-pbulks_df = sct.tools.generate_pseudobulk(adata, group_key=bulk_by)
+
+def get_pseudobulks(adata, group_key):
+    pseudobulk = pd.DataFrame(data=adata.var_names.values, columns=["Genes"])
+
+    for i in adata.obs.loc[:, group_key].cat.categories:
+        temp = adata.obs.loc[:, group_key] == i
+        pseudobulk[i] = adata[temp].X.sum(axis=0).A1
+
+    return pseudobulk
+
+
+pbulks_df = get_pseudobulks(adata, group_key=bulk_by)
 pbulks_df = pbulks_df.set_index('Genes')
 
 obs = pd.DataFrame(pbulks_df.columns, columns=[bulk_by])
