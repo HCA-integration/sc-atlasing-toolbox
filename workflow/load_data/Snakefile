@@ -51,8 +51,8 @@ rule metadata:
             get_from_dataset('dataset_name', wildcards.dataset).to_dict('list')
         )
     output:
-        h5ad=out_dir / 'processed/{dataset}.h5ad'
-        #  TODO: count distribution plot
+        h5ad=out_dir / 'processed/{dataset}.h5ad',
+        plot=out_dir / 'processed/{dataset}_counts.png',
     conda:
         '../../envs/scanpy.yaml'
     script:

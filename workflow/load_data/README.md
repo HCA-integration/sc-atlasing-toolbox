@@ -5,6 +5,7 @@ Tasks:
 1. download data from URL & add metadata
 2. merge datasets to single h5ad
 
+
 ## Download data
 
 AnnData object must contain:
@@ -38,3 +39,14 @@ AnnData object must contain:
 + `.obs['donor']`
 + `.obs['sample']`
 + `.obs['label']`
+
+
+## Testing
+
+Activate the snakemake environment and call `test/run_test.sh` with run specific Snakemake parameters.
+
+```
+conda activate snakemake
+bash test/run_test.sh -n
+bash test/run_test.sh -c
+```
