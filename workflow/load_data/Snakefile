@@ -24,14 +24,6 @@ dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']), comment
 out_dir = Path(config['output_dir']) / 'load_data'
 
 
-rule all:
-    input: '.snakemake/done.download'
-    shell:
-        """
-        rm {input}
-        """
-
-
 rule download:
     output:
         h5ad=out_dir / 'download/{dataset}.h5ad'
@@ -41,6 +33,11 @@ rule download:
         """
         wget {params.url} -O {output}
         """
+
+
+rule download_all:
+    input:
+        expand(rules.download.output,dataset=dataset_df['dataset_name'])
 
 
 rule metadata:
@@ -59,6 +56,11 @@ rule metadata:
         'scripts/metadata.py'
 
 
+rule metadata_all:
+    input:
+        expand(rules.metadata.output,dataset=dataset_df['dataset_name'])
+
+
 rule merge:
     input:
         lambda wildcards: expand(
@@ -73,7 +75,9 @@ rule merge:
         'scripts/merge.py'
 
 
-rule collect:
+rule all:
     input:
-        expand(rules.merge.output,organ=dataset_df['organ'].unique())
-    output: touch('.snakemake/done.download')
+        rules.download_all.input,
+        rules.metadata_all.input,
+        expand(rules.merge.output,organ=dataset_df['organ'].unique()),
+    default_target: True
