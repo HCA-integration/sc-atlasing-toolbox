@@ -1,10 +1,12 @@
 # Load data
 
-Tasks:
+Given a TSV file of datasets with URLs and further information per dataset, do the following:
 
-1. download data from URL & add metadata
-2. merge datasets to single h5ad
+1. Download data from URL & add metadata
+2. Merge datasets to single h5ad per organ
 
+For example configuration files, checkout out `test/config.yaml` and `test/datasets.tsv`.
+Complete dataset configurations should be available at the top-level pipeline (git root of this repository).
 
 ## Download data
 

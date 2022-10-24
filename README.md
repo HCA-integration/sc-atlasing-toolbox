@@ -45,7 +45,37 @@ The most relevant snakemake arguments are:
 Refer to the [snakemake documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html) for more
 commandline arguments.
 
-### Run a module
+### Run the full pipeline
+
+First make sure that all configuration files (under `configs/`) define which datasets you want to run and which modules
+are included.
+Which modules are computed exactly can be defined in `configs/modules.tsv`.
+Then use the following commands to call the pipeline.
+
+Dryrun:
+```commandline
+snakemake -n
+```
+
+Run full pipelin with 10 cores:
+```commandline
+snakemake --use-conda -c10
+```
+
+> Note: the full pipeline doesn't yet combine input and outputs of all modules. That is still WIP
+
+
+### Run parts of the full pipeline
+
+Check out the `workflow/Snakefile` for the exact parts of the pipeline you want to run.
+For example, if you just want the data loading workflow, the rule is called `load_data_all` and the snakemake command
+will be:
+
+```commandline
+snakemake load_data_all --use-conda -n
+```
+
+### Run a single module
 
 The general command from the directory of interest is:
 
@@ -54,23 +84,13 @@ snakemake --configfile <configfile> <snakemake args>
 ```
 
 You need to specify a config file that is specific to the data you want to run the pipeline on.
+This is most useful for testing or reusing the modules for other workflows.
 Check out the `test` directories of each module for an example.
-
-### Run the full pipeline
-
-> Note: the full pipeline doesn't yet combine input and outputs of the different modules. That is still WIP
-
-
-```commandline
-snakemake -n  # dryrun
-snakemake --use-conda -c10  # run with 10 cores
-```
-
-Which modules are computed exactly can be defined in `configs/modules.tsv`.
 
 ### Use Snakemake profiles
 
-Different [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) are provided under `.profiles`.
+Different [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) are provided
+under `.profiles`.
 These save defaults for commandline parameters and simplify the snakemake call.
 To use a profile e.g. the local profile, call
 
