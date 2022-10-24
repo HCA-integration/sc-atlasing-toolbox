@@ -1,0 +1,31 @@
+from pathlib import Path
+import pandas as pd
+
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+out_dir = Path(config['output_dir']) / 'exploration'
+
+module load_data:
+    snakefile: "../load_data/Snakefile"
+    config: config
+
+use rule * from load_data as load_data_ *
+
+
+rule pca_pseudobulk:
+    input:
+        h5ad=rules.load_data_metadata.output.h5ad
+    output:
+        png=out_dir / '{dataset}_pseudobulk_pca.png'
+    params:
+        bulk_by='sample',
+        color='donor',
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/pca_pseudobulk.py'
+
+
+rule all:
+    input:
+        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset_name'])
+    default_target: True

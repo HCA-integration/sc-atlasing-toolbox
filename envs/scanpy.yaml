@@ -4,4 +4,7 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
-  - scanpy=1.9
+  - pip
+  - pip:
+    - scanpy==1.9
+    - sc-toolbox
