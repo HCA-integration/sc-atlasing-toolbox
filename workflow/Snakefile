@@ -41,6 +41,10 @@ module load_data:
     snakefile: "load_data/Snakefile"
     config: config
 
+module exploration:
+    snakefile: "exploration/Snakefile"
+    config: config
+
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
     config: config
@@ -59,6 +63,8 @@ module metrics:
 
 use rule * from load_data as load_data_ *
 
+use rule * from exploration as exploration_ *
+
 use rule * from preprocessing as preprocessing_ *
 
 use rule * from label_transfer as label_transfer_ *
@@ -70,7 +76,8 @@ use rule * from metrics as metrics_ *
 
 rule all:
     input:
-        # rules.load_data_all.input,
+        rules.load_data_all.input,
+        rules.exploration_all.input,
         # rules.preprocessing_all.input,
         # rules.label_transfer_all.input,
         rules.integration_all.input,
