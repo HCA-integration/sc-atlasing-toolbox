@@ -3,8 +3,8 @@ import anndata
 import pandas as pd
 import scanpy as sc
 
-sc.set_figure_params(dpi=100, frameon=False)
-plt.rcParams['figure.figsize'] = 20, 12
+sc.set_figure_params(frameon=False)
+plt.rcParams['figure.figsize'] = 30, 25
 input_h5ad = snakemake.input.h5ad
 output_png = snakemake.output.png
 dataset = snakemake.wildcards.dataset
