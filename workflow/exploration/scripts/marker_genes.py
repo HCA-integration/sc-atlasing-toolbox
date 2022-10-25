@@ -1,6 +1,4 @@
 from matplotlib import pyplot as plt
-import anndata
-import pandas as pd
 import scanpy as sc
 
 sc.set_figure_params(frameon=False)

@@ -55,8 +55,25 @@ rule marker_genes_all:
         expand(rules.marker_genes.output,dataset=dataset_df['dataset_name'])
 
 
+rule qc:
+    input:
+        h5ad=rules.load_data_metadata.output.h5ad
+    output:
+        joint=out_dir / 'qc' / '{dataset}_joint.png',
+        umi=out_dir / 'qc' / '{dataset}_umi.png'
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/qc_plot.py'
+
+
+rule qc_all:
+    input:
+        expand(rules.qc.output,dataset=dataset_df['dataset_name'])
+
 rule all:
     input:
-        #rules.pca_pseudobulk_all.input,
+        rules.pca_pseudobulk_all.input,
         rules.marker_genes_all.input,
+        rules.qc_all.input,
     default_target: True
