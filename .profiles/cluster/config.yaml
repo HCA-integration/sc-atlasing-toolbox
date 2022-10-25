@@ -10,15 +10,15 @@ cluster:
 default-resources:
   - partition=cpu_p
   - qos=icb
-  - mem_mb=10000
+  - mem_mb=100000
   - disk_mb=100000
-restart-times: 3
+restart-times: 2
 max-jobs-per-second: 10
 max-status-checks-per-second: 1
 local-cores: 1
 latency-wait: 60
 jobs: 10
-keep-going: True
+keep-going: False
 rerun-incomplete: True
 printshellcmds: True
 scheduler: greedy
