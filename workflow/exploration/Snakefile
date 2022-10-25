@@ -15,7 +15,7 @@ rule pca_pseudobulk:
     input:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
-        png=out_dir / '{dataset}_pseudobulk_pca.png'
+        png=out_dir / 'pseudobulk_pca' / '{dataset}.png'
     params:
         bulk_by='sample',
         color='donor',
@@ -25,7 +25,38 @@ rule pca_pseudobulk:
         'scripts/pca_pseudobulk.py'
 
 
-rule all:
+rule pca_pseudobulk_all:
     input:
         expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset_name'])
+
+
+rule marker_genes:
+    input:
+        h5ad=rules.load_data_metadata.output.h5ad
+    output:
+        png=out_dir / 'marker_genes' / '{dataset}.png',
+    params:
+        markers=[
+            "CD44", "CD3D", "CD4", "CD8A", "CCR7", "LEF1", "CD27", "SELL", "IL7R", "GZMH", "GZMK", "GZMA", "GZMB",
+            "PRF1", "TRGV9", "TRDV2", "FOXP3", "IL2RA", "TRAV1-2", "SLC4A10", "NCR1", "NCAM1", "GNLY", "TNFRSF18",
+            "TNFRSF4", "KLRB1", "FCER1G", "CD14", "FCGR3A", "CD1C", "C1QA", "CLEC4C", "IL3RA", "AXL", "SIGLEC6",
+            "CLEC9A", "FCER1A", "FCER2", "CD19", "CD24", "TCL1A", "IGHM", "IGHD", "CD79A", "MS4A1", "TNFRSF13B",
+            "BANK1", "JCHAIN", "CHPF", "IGHG1", "FCRL3", "ENTPD1", "CD38", "MKI67", "IFI27", "IFIT1", "MX2", "KIT",
+            "CD34", "PPBP", "PF4", "HBB", "EPX"
+        ]
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/marker_genes.py'
+
+
+rule marker_genes_all:
+    input:
+        expand(rules.marker_genes.output,dataset=dataset_df['dataset_name'])
+
+
+rule all:
+    input:
+        #rules.pca_pseudobulk_all.input,
+        rules.marker_genes_all.input,
     default_target: True
