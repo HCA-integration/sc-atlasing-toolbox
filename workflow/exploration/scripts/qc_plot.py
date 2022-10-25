@@ -89,32 +89,58 @@ def plot_qc_joint(
 
 
 sc.set_figure_params(frameon=False)
+plt.rcParams['figure.figsize'] = 12, 12
 
 input_h5ad = snakemake.input.h5ad
 output_joint = snakemake.output.joint
-output_umi = snakemake.output.umi
+output_violin = snakemake.output.violin
 dataset = snakemake.wildcards.dataset
 
+print(f'Read {input_h5ad}...')
 adata = sc.read(input_h5ad)
 
+print('Calculate QC stats...')
 adata.var["mito"] = adata.var['feature_name'].str.startswith("MT-")
 sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)
 
-plt.rcParams['figure.figsize'] = 12, 12
+print('Joint QC plot...')
 plot_qc_joint(
     adata,
     x='total_counts',
     y='n_genes_by_counts',
     hue='pct_counts_mito',
     palette='plasma',
+    marginal_hue='donor',
     title=f'Joint QC for {dataset}',
 )
 plt.tight_layout()
 plt.savefig(output_joint)
 
-plt.rcParams['figure.figsize'] = 22, 6
-g = sns.boxplot(x="sample", y="total_counts", data=adata.obs, hue='pct_counts_mito')
-g.set_xticklabels(g.get_xticklabels(), rotation=90)
+print('Violin plots...')
+fig, axes = plt.subplots(nrows=2, ncols=1)
+
+sc.pl.violin(
+    adata,
+    keys='total_counts',
+    groupby='donor',
+    rotation=90,
+    show=False,
+    ax=axes[0],
+)
+
+sc.pl.violin(
+    adata,
+    keys='pct_counts_mito',
+    groupby='donor',
+    rotation=90,
+    show=False,
+    ax=axes[1],
+)
+fig.suptitle(dataset)
+
+#g = sns.violinplot(x="donor", y="total_counts", data=adata.obs)
+#g.set_xticklabels(g.get_xticklabels(), rotation=90)
+#g.get_figure().savefig(output_violin)
 
 plt.tight_layout()
-plt.savefig(output_umi)
+plt.savefig(output_violin)

@@ -60,7 +60,7 @@ rule qc:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
         joint=out_dir / 'qc' / '{dataset}_joint.png',
-        umi=out_dir / 'qc' / '{dataset}_umi.png'
+        violin=out_dir / 'qc' / '{dataset}_violin.png'
     conda:
         'envs/scanpy.yaml'
     script:
