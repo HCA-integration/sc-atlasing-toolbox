@@ -4,6 +4,10 @@ import pandas as pd
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / 'exploration'
 
+wildcard_constraints:
+    dataset='\w+',
+    organ='\w+',
+
 module load_data:
     snakefile: "../load_data/Snakefile"
     config: config
@@ -25,9 +29,17 @@ rule pca_pseudobulk:
         'scripts/pca_pseudobulk.py'
 
 
+use rule pca_pseudobulk as pca_pseudobulk_organ with:
+    input:
+        h5ad=rules.load_data_merge.output.h5ad
+    output:
+        png=out_dir / 'pseudobulk_pca' / 'organ' / '{organ}.png'
+
+
 rule pca_pseudobulk_all:
     input:
-        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset_name'])
+        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset_name']),
+        expand(rules.pca_pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
 rule marker_genes:
