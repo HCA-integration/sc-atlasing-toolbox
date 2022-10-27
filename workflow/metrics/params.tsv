@@ -17,3 +17,5 @@ nmi_leiden_y	bio_conservation	full,embed,knn
 nmi_kmeans_y	bio_conservation	full,embed,knn
 asw_label_y	bio_conservation	full,embed
 asw_batch_y	batch_correction	full,embed
+ilisi_y	batch_correction	full,embed,knn
+clisi_y	bio_conservation	full,embed,knn

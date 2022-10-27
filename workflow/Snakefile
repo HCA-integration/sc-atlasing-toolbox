@@ -85,25 +85,21 @@ rule all:
     default_target: True
 
 
-rule download_pancreas:
-    input: expand(rules.load_data_download.output,dataset='pancreas')
+#benchmark_params = get_wildcards_from_config(
+#    config=config,
+#    config_keys=['pancreas_ari_nmi', 'pancreas_asw', 'pancreas_lisi'],
+#    config_params=['integration', 'metrics'],
+#    wildcard_names=['dataset', 'method', 'metric'],
+#    explode_by=['method', 'metric']
+#)
 
-
-benchmark_params = get_wildcards_from_config(
-    config=config,
-    config_keys=['pancreas'],
-    config_params=['integration', 'metrics'],
-    wildcard_names=['dataset', 'method', 'metric'],
-    explode_by=['method', 'metric']
-)
-
-use rule merge from metrics as benchmark_pancreas with:
-    input:
-        metrics=expand(rules.run.output,zip,**benchmark_params),
-        benchmark=expand(rules.run.benchmark,zip,**benchmark_params),
-    output:
-        metrics=out_dir / 'benchmark_metrics_pancreas' / 'metrics.tsv',
-        plot=out_dir / 'benchmark_metrics_pancreas' / 'metrics.png',
-        time=out_dir / 'benchmark_metrics_pancreas' / 'time.png',
-    params:
-        wildcards=get_wildcards(benchmark_params,['dataset', 'method', 'metric'])
+#use rule merge from metrics as benchmark_pancreas with:
+#    input:
+#       metrics=expand(rules.run.output,zip,**benchmark_params),
+#        benchmark=expand(rules.run.benchmark,zip,**benchmark_params),
+#    output:
+#        metrics=out_dir / 'benchmark_metrics_pancreas' / 'metrics.tsv',
+#        plot=out_dir / 'benchmark_metrics_pancreas' / 'metrics.png',
+#        time=out_dir / 'benchmark_metrics_pancreas' / 'time.png',
+#    params:
+#        wildcards=get_wildcards(benchmark_params,['dataset', 'method', 'metric'])

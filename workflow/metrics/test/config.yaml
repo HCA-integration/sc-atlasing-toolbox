@@ -16,10 +16,20 @@ defaults:
     - isolated_label_asw
     - isolated_label_f1
     - pcr
+  integration:
+    - unintegrated
 
 
 DATASETS:
   test:
+    label: bulk_labels
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
+  test2:
+    label: bulk_labels
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
+  ari_nmi:
     label: bulk_labels
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
@@ -30,19 +40,21 @@ DATASETS:
       - nmi
       - nmi_leiden_y
       - nmi_kmeans_y
+  asw:
+    label: bulk_labels
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
+    metrics:
       - asw_label
       - asw_label_y
       - asw_batch
       - asw_batch_y
-#  test2:
-#    label: bulk_labels
-#    batch: batch
-#    adata_file: ../../data/pbmc68k.h5ad
-#    metrics:
-#      - nmi
-#      - clisi
-#      - ilisi
-#      - graph_connectivity
-#      - isolated_label_asw
-#      - isolated_label_f1
-#      - pcr
+  lisi:
+    label: bulk_labels
+    batch: batch
+    adata_file: ../../data/pbmc68k.h5ad
+    metrics:
+      - ilisi
+      - ilisi_y
+      - clisi
+      - clisi_y

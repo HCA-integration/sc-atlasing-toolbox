@@ -35,33 +35,38 @@ defaults:
     - pcr
 
 DATASETS:
-  test:
-    label: bulk_labels
-    batch: phase
-    adata_file: 'data/pbmc68k.h5ad'
+  pancreas_ari_nmi:
+    adata_file: 'data/pancreas.h5ad'
+    label: celltype
+    batch: tech
+    integration:
+      - unintegrated
     metrics:
-      - nmi
       - ari
-      - asw_label
-      - asw_batch
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
-  test2:
-    label: bulk_labels
-    batch: phase
-    adata_file: 'data/pbmc68k.h5ad'
+      - ari_leiden_y
+      - ari_kmeans_y
+      - nmi
+      - nmi_leiden_y
+      - nmi_kmeans_y
+#  pancreas_asw:
+#    adata_file: 'data/pancreas.h5ad'
+#    label: celltype
+#    batch: tech
+#    integration:
+#      - unintegrated
+#    metrics:
+#      - asw_label
+#      - asw_label_y
+#      - asw_batch
+#      - asw_batch_y
+  pancreas_lisi:
+    adata_file: 'data/pancreas.h5ad'
+    label: celltype
+    batch: tech
+    integration:
+      - unintegrated
     metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - clisi
       - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
+      - ilisi_y
+      - clisi
+      - clisi_y

@@ -18,9 +18,6 @@ adata = sc.read(input_adata)
 meta = get_from_adata(adata)
 adata_raw = adata.raw.to_adata()
 
-# evaluate only on labeled cells
-# adata = adata[adata.obs[label].notnull()]
-
 output_types = meta['output_types']
 scores = []
 for output_type in output_types:

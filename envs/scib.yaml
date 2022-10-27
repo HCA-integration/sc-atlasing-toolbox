@@ -8,4 +8,4 @@ dependencies:
   - pip:
     - scanpy==1.9
     - git+https://github.com/theislab/scib.git
-    - scib-metrics
+    - scib-metrics==0.0.6
