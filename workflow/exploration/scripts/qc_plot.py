@@ -101,6 +101,7 @@ plt.rcParams['figure.figsize'] = 12, 12
 input_h5ad = snakemake.input.h5ad
 output_joint = snakemake.output.joint
 output_violin = snakemake.output.violin
+output_avg = snakemake.output.average_jitter
 dataset = snakemake.wildcards.dataset
 
 print(f'Read {input_h5ad}...')
@@ -151,3 +152,49 @@ fig.suptitle(dataset)
 
 plt.tight_layout()
 plt.savefig(output_violin)
+
+print('Average scatter plots...')
+fig, axes = plt.subplots(nrows=3, ncols=1)
+
+df = (
+    adata.obs[['n_genes_by_counts', 'pct_counts_mito', 'total_counts', 'donor', 'sample']]
+    .groupby(['donor', 'sample'])
+    .median()
+    .reset_index('donor')
+    .dropna()
+)
+
+sns.stripplot(
+    data=df,
+    x='total_counts',
+    hue='donor',
+    legend=False,
+    ax=axes[0],
+)
+axes[0].set_title('Mean genes per cell, median over sample')
+axes[0].set_xlim(0, None)
+
+sns.stripplot(
+    data=df,
+    x='n_genes_by_counts',
+    hue='donor',
+    legend=False,
+    ax=axes[1],
+)
+axes[1].set_title('Mean genes per cell, median over sample')
+axes[1].set_xlim(0, None)
+
+sns.stripplot(
+    data=df,
+    x='pct_counts_mito',
+    hue='donor',
+    legend=False,
+    ax=axes[2],
+)
+axes[2].set_title('Percent of mitochondrial genes per cell, median over sample')
+axes[2].set_xlim(0, 100)
+
+fig.suptitle(dataset)
+
+plt.tight_layout()
+plt.savefig(output_avg)

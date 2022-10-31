@@ -74,6 +74,7 @@ rule qc:
     output:
         joint=out_dir / 'qc' / '{dataset}_joint.png',
         violin=out_dir / 'qc' / '{dataset}_violin.png',
+        average_jitter=out_dir / 'qc' / '{dataset}_average_jitter.png',
     conda:
         'envs/scanpy.yaml'
     script:
