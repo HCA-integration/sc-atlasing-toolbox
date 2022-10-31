@@ -49,7 +49,14 @@ def plot_qc_joint(
         x = x_log
         y = y_log
 
-    g = sns.JointGrid(data=adata.obs, x=x, y=y)
+    print(x)
+    g = sns.JointGrid(
+        data=adata.obs,
+        x=x,
+        y=y,
+        xlim=(0, adata.obs[x].max()),
+        ylim=(0, adata.obs[y].max()),
+    )
     # main plot
     g.plot_joint(
         sns.scatterplot,
@@ -138,9 +145,9 @@ sc.pl.violin(
 )
 fig.suptitle(dataset)
 
-#g = sns.violinplot(x="donor", y="total_counts", data=adata.obs)
-#g.set_xticklabels(g.get_xticklabels(), rotation=90)
-#g.get_figure().savefig(output_violin)
+# g = sns.violinplot(x="donor", y="total_counts", data=adata.obs)
+# g.set_xticklabels(g.get_xticklabels(), rotation=90)
+# g.get_figure().savefig(output_violin)
 
 plt.tight_layout()
 plt.savefig(output_violin)
