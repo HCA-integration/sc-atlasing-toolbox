@@ -53,6 +53,7 @@ rule marker_genes:
     output:
         png=out_dir / 'marker_genes' / '{dataset}.png',
     params:
+        # TOOD: specify and get from config
         markers=[
             "CD44", "CD3D", "CD4", "CD8A", "CCR7", "LEF1", "CD27", "SELL", "IL7R", "GZMH", "GZMK", "GZMA", "GZMB",
             "PRF1", "TRGV9", "TRDV2", "FOXP3", "IL2RA", "TRAV1-2", "SLC4A10", "NCR1", "NCAM1", "GNLY", "TNFRSF18",
@@ -77,7 +78,7 @@ rule qc:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
         joint=out_dir / 'qc' / '{dataset}_joint.png',
-        violin=out_dir / 'qc' / '{dataset}_violin.png'
+        violin=out_dir / 'qc' / '{dataset}_violin.png',
     conda:
         'envs/scanpy.yaml'
     script:
