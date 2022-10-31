@@ -7,9 +7,15 @@ sc.set_figure_params(dpi=100, frameon=False)
 plt.rcParams['figure.figsize'] = 10, 7
 input_h5ad = snakemake.input.h5ad
 output_png = snakemake.output.png
-dataset = snakemake.wildcards.dataset
 bulk_by = snakemake.params['bulk_by']
 color = snakemake.params['color']
+
+if 'dataset' in snakemake.wildcards.keys():
+    dataset = snakemake.wildcards.dataset
+elif 'organ' in snakemake.wildcards.keys():
+    dataset = snakemake.wildcards.organ
+else:
+    raise ValueError(f'Neither of "dataset" or "organ" in wildcards: {snakemake.wildcards}')
 
 adata = sc.read(input_h5ad)
 

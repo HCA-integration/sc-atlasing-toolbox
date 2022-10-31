@@ -72,6 +72,8 @@ rule merge:
         h5ad=out_dir / 'merged/{organ}.h5ad'
     conda:
         '../../envs/scanpy.yaml'
+    resources:
+        mem_mb=400000
     script:
         'scripts/merge.py'
 

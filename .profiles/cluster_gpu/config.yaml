@@ -8,10 +8,10 @@ cluster:
     --job-name=smk-{rule}-{wildcards}
     --output=logs/{rule}/{rule}-{wildcards}-%j.out
 default-resources:
-  - partition=cpu_p
-  - qos=icb
-  - mem_mb=100000
-  - disk_mb=100000
+  - partition=gpu_p
+  - qos=gpu
+  - mem_mb=10000
+  - disk_mb=32000
 restart-times: 2
 max-jobs-per-second: 10
 max-status-checks-per-second: 1

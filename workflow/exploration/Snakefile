@@ -32,8 +32,13 @@ rule pca_pseudobulk:
 use rule pca_pseudobulk as pca_pseudobulk_organ with:
     input:
         h5ad=rules.load_data_merge.output.h5ad
+    params:
+        bulk_by='sample',
+        color='dataset',
     output:
         png=out_dir / 'pseudobulk_pca' / 'organ' / '{organ}.png'
+    resources:
+        mem_mb=400000
 
 
 rule pca_pseudobulk_all:
