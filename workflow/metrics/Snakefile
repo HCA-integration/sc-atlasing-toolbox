@@ -1,38 +1,39 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, expand_per, get_wildcards
+from utils import get_wildcards_from_config, expand_per, get_wildcards, get_params, get_resource
 
 module integration:
     snakefile: "../integration/Snakefile"
     config: config
 
-use rule * from integration as integration_*
+use rule * from integration as integration_ *
 
 out_dir = Path(config['output_dir']) / 'metrics'
-in_path = Path(config['input']['metrics'])
 
-if 'integration' in config['defaults']:
-    parameters = get_wildcards_from_config(
-        config=config,
-        config_params=['integration', 'metrics', 'label', 'batch'],
-        wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
-        explode_by=['method', 'metric']
-    )
-else:
-    # get wildcards from input directory
-    datasets, methods = glob_wildcards(in_path)
-    integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
-    # get full parameters
-    parameters = get_wildcards_from_config(
-        config=config,
-        config_params=['metrics', 'label', 'batch'],
-        wildcard_names=['dataset', 'metric', 'label', 'batch'],
-        explode_by='metric'
-    ).merge(
-        integration_wildcards,
-        on='dataset'
-    )
+wildcards_df = get_wildcards_from_config(
+    config=config,
+    config_params=['integration', 'metrics', 'label', 'batch'],
+    wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
+    explode_by=['method', 'metric']
+)
+
+# # get wildcards from input directory
+# datasets, methods = glob_wildcards(in_path)
+# integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
+# # get full parameters
+# wildcards_df = get_wildcards_from_config(
+#     config=config,
+#     config_params=['metrics', 'label', 'batch'],
+#     wildcard_names=['dataset', 'metric', 'label', 'batch'],
+#     explode_by='metric'
+# ).merge(
+#     integration_wildcards,
+#     on='dataset'
+# )
+
+parameters = pd.read_table(workflow.source_path('params.tsv'))
+parameters = wildcards_df.merge(parameters,on='metric')
 
 
 rule run:
@@ -44,12 +45,17 @@ rule run:
         wildcards: {wildcards}
         """
     input:
-        h5ad=in_path,
+        h5ad=rules.integration_run.output.h5ad,
         metrics_meta=workflow.source_path('params.tsv')
     output:
         metric=out_dir / 'datasets/{dataset}/{method}/{metric}.tsv'
+    params:
+        env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
-        'envs/scib.yaml'
+        lambda wildcards, params: f'envs/{params.env}.yaml'
+    resources:
+        partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
+        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos')
     benchmark:
         out_dir / 'datasets/{dataset}/{method}/{metric}.benchmark.tsv'
     script:
@@ -57,6 +63,12 @@ rule run:
 
 
 rule merge:
+    message:
+        """
+        Merge all metrics for all datasets and methods
+        datasets: {params.wildcards[dataset]}
+        methods: {params.wildcards[method]}
+        """
     input:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'method', 'metric']),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'method',
@@ -72,6 +84,10 @@ rule merge:
 
 
 use rule merge as merge_per_dataset with:
+    message:
+        """
+        Merge all metrics for {wildcards}
+        """
     input:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['method', 'metric']),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['method', 'metric']),
@@ -84,6 +100,10 @@ use rule merge as merge_per_dataset with:
 
 
 use rule merge as merge_per_method with:
+    message:
+        """
+        Merge all metrics for {wildcards}
+        """
     input:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'metric']),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'metric']),

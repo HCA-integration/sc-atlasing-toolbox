@@ -1,7 +1,12 @@
 output_dir: test/out
 
-input:
-  metrics: test/out/integration/{dataset}/{method}.h5ad
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+  gpu:
+    partition: gpu_p
+    qos: gpu
 
 defaults:
   metrics:

@@ -1,21 +1,21 @@
-metric	metric_type	output_type
-asw_batch	batch_correction	full,embed
-graph_connectivity	batch_correction	full,embed,knn
-ilisi	batch_correction	full,embed,knn
-pcr	batch_correction	full,embed
-ari	bio_conservation	full,embed,knn
-asw_label	bio_conservation	full,embed
-cell_cycle	bio_conservation	full
-clisi	bio_conservation	full,embed,knn
-isolated_label_asw	bio_conservation	full,embed
-isolated_label_f1	bio_conservation	full,embed,knn
-nmi	bio_conservation	full,embed,knn
-kbet	batch_correction	full,embed,knn
-ari_leiden_y	bio_conservation	full,embed,knn
-ari_kmeans_y	bio_conservation	full,embed,knn
-nmi_leiden_y	bio_conservation	full,embed,knn
-nmi_kmeans_y	bio_conservation	full,embed,knn
-asw_label_y	bio_conservation	full,embed
-asw_batch_y	batch_correction	full,embed
-ilisi_y	batch_correction	full,embed,knn
-clisi_y	bio_conservation	full,embed,knn
+metric	metric_type	output_type	env	resources
+asw_batch	batch_correction	full,embed	scib	cpu
+graph_connectivity	batch_correction	full,embed,knn	scib	cpu
+ilisi	batch_correction	full,embed,knn	scib	cpu
+pcr	batch_correction	full,embed	scib	cpu
+ari	bio_conservation	full,embed,knn	scib	cpu
+asw_label	bio_conservation	full,embed	scib	cpu
+cell_cycle	bio_conservation	full	scib	cpu
+clisi	bio_conservation	full,embed,knn	scib	cpu
+isolated_label_asw	bio_conservation	full,embed	scib	cpu
+isolated_label_f1	bio_conservation	full,embed,knn	scib	cpu
+nmi	bio_conservation	full,embed,knn	scib	cpu
+kbet	batch_correction	full,embed,knn	scib	cpu
+ari_leiden_y	bio_conservation	full,embed,knn	scib_metrics	gpu
+ari_kmeans_y	bio_conservation	full,embed,knn	scib_metrics	gpu
+nmi_leiden_y	bio_conservation	full,embed,knn	scib_metrics	gpu
+nmi_kmeans_y	bio_conservation	full,embed,knn	scib_metrics	gpu
+asw_label_y	bio_conservation	full,embed	scib_metrics	gpu
+asw_batch_y	batch_correction	full,embed	scib_metrics	gpu
+ilisi_y	batch_correction	full,embed,knn	scib_metrics	gpu
+clisi_y	bio_conservation	full,embed,knn	scib_metrics	gpu
