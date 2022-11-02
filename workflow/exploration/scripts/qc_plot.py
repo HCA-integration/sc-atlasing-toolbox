@@ -178,7 +178,7 @@ sns.stripplot(
     legend=False,
     ax=axes[0],
 )
-axes[0].set_title('Mean genes per cell, median over sample')
+axes[0].set_title('Mean counts per cell, median over sample')
 axes[0].set_xlim(0, None)
 
 sns.stripplot(
