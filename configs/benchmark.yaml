@@ -33,14 +33,15 @@ defaults:
     - isolated_label_asw
     - isolated_label_f1
     - pcr
+  datasets:
+    - pancreas_ari_nmi
+    - pancreas_lisi
 
 DATASETS:
   pancreas_ari_nmi:
     adata_file: 'data/pancreas.h5ad'
     label: celltype
     batch: tech
-    integration:
-      - unintegrated
     metrics:
       - ari
       - ari_leiden_y
@@ -48,23 +49,19 @@ DATASETS:
       - nmi
       - nmi_leiden_y
       - nmi_kmeans_y
-#  pancreas_asw:
-#    adata_file: 'data/pancreas.h5ad'
-#    label: celltype
-#    batch: tech
-#    integration:
-#      - unintegrated
-#    metrics:
-#      - asw_label
-#      - asw_label_y
-#      - asw_batch
-#      - asw_batch_y
+  pancreas_asw:
+    adata_file: 'data/pancreas.h5ad'
+    label: celltype
+    batch: tech
+    metrics:
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
   pancreas_lisi:
     adata_file: 'data/pancreas.h5ad'
     label: celltype
     batch: tech
-    integration:
-      - unintegrated
     metrics:
       - ilisi
       - ilisi_y
