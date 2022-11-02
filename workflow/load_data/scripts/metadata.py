@@ -22,6 +22,9 @@ sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['donor'] = adata.obs[donor_column]
 adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
 
+for key, value in meta.items():
+    adata.obs[key] = value
+
 # ensure only raw counts are kept
 adata.layers['final'] = adata.X.copy()
 if isinstance(adata.raw, anndata._core.raw.Raw):

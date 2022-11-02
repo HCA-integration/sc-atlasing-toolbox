@@ -31,7 +31,7 @@ rule download:
         url=lambda wildcards: get_from_dataset('dataset_name', wildcards.dataset, 'url').iloc[0]
     shell:
         """
-        wget {params.url} -O {output}
+        curl -o {output} "{params.url}"
         """
 
 
@@ -62,6 +62,7 @@ rule metadata_all:
 
 
 # TODO: merge only selected datasets
+# TODO: generate TSV for metadata summary
 rule merge:
     input:
         lambda wildcards: expand(

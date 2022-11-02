@@ -1,14 +1,32 @@
-CELLxGENE_COLUMNS = [
-    'organism',
-    #'donor_id',
-    'development_stage',
-    'sex',
-    'ethnicity',
-    'disease',
-    'tissue',
-    'cell_type',
+# CELLxGENE columns of schema 3.0.0
+# https://github.com/chanzuckerberg/single-cell-curation/blob/main/schema/3.0.0/schema.md#general-requirements
+
+CELLxGENE_OBS = [
     'assay',
-    #'suspension_type'
+    'assay_ontology_term_id',
+    'cell_type',
+    'cell_type_ontology_term_id',
+    'development_stage',
+    'development_stage_ontology_term_id',
+    'disease',
+    'disease_ontology_term_id',
+    'donor_id',
+    'is_primary_data',
+    'organism',
+    'organism_ontology_term_id',
+    'self_reported_ethnicity',
+    'self_reported_ethnicity_ontology_term_id',
+    'sex',
+    'sex_ontology_term_id',
+    'suspension_type',
+    'tissue',
+    'tissue_ontology_term_id',
+]
+
+CELLxGENE_VARS = [
+    'feature_name',
+    'feature_reference',
+    'feature_biotype'
 ]
 
 
