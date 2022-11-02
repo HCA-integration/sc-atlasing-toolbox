@@ -102,7 +102,14 @@ input_h5ad = snakemake.input.h5ad
 output_joint = snakemake.output.joint
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
-dataset = snakemake.wildcards.dataset
+hue = snakemake.params.hue
+
+if 'dataset' in snakemake.wildcards.keys():
+    dataset = snakemake.wildcards.dataset
+elif 'organ' in snakemake.wildcards.keys():
+    dataset = snakemake.wildcards.organ
+else:
+    raise ValueError(f'Neither of "dataset" or "organ" in wildcards: {snakemake.wildcards}')
 
 print(f'Read {input_h5ad}...')
 adata = sc.read(input_h5ad)
@@ -118,7 +125,7 @@ plot_qc_joint(
     y='n_genes_by_counts',
     hue='pct_counts_mito',
     palette='plasma',
-    marginal_hue='donor',
+    marginal_hue=hue,
     title=f'Joint QC for {dataset}',
 )
 plt.tight_layout()
@@ -130,7 +137,7 @@ fig, axes = plt.subplots(nrows=2, ncols=1)
 sc.pl.violin(
     adata,
     keys='total_counts',
-    groupby='donor',
+    groupby=hue,
     rotation=90,
     show=False,
     ax=axes[0],
@@ -139,7 +146,7 @@ sc.pl.violin(
 sc.pl.violin(
     adata,
     keys='pct_counts_mito',
-    groupby='donor',
+    groupby=hue,
     rotation=90,
     show=False,
     ax=axes[1],
@@ -157,17 +164,17 @@ print('Average scatter plots...')
 fig, axes = plt.subplots(nrows=3, ncols=1)
 
 df = (
-    adata.obs[['n_genes_by_counts', 'pct_counts_mito', 'total_counts', 'donor', 'sample']]
-    .groupby(['donor', 'sample'])
+    adata.obs[['n_genes_by_counts', 'pct_counts_mito', 'total_counts', hue, 'sample']]
+    .groupby([hue, 'sample'])
     .median()
-    .reset_index('donor')
+    .reset_index(hue)
     .dropna()
 )
 
 sns.stripplot(
     data=df,
     x='total_counts',
-    hue='donor',
+    hue=hue,
     legend=False,
     ax=axes[0],
 )
@@ -177,7 +184,7 @@ axes[0].set_xlim(0, None)
 sns.stripplot(
     data=df,
     x='n_genes_by_counts',
-    hue='donor',
+    hue=hue,
     legend=False,
     ax=axes[1],
 )
@@ -187,7 +194,7 @@ axes[1].set_xlim(0, None)
 sns.stripplot(
     data=df,
     x='pct_counts_mito',
-    hue='donor',
+    hue=hue,
     legend=False,
     ax=axes[2],
 )

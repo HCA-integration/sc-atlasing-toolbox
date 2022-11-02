@@ -80,15 +80,31 @@ rule qc:
         joint=out_dir / 'qc' / '{dataset}_joint.png',
         violin=out_dir / 'qc' / '{dataset}_violin.png',
         average_jitter=out_dir / 'qc' / '{dataset}_average_jitter.png',
+    params:
+        hue='donor'
     conda:
         'envs/scanpy.yaml'
     script:
         'scripts/qc_plot.py'
 
 
+use rule qc as qc_organ with:
+    input:
+        h5ad=rules.load_data_merge.output.h5ad
+    output:
+        joint=out_dir / 'qc' / 'organ' / '{organ}_joint.png',
+        violin=out_dir / 'qc' / 'organ' / '{organ}_violin.png',
+        average_jitter=out_dir / 'qc' / 'organ' / '{organ}_average_jitter.png',
+    params:
+        hue='dataset'
+    resources:
+        mem_mb=400000
+
+
 rule qc_all:
     input:
-        expand(rules.qc.output,dataset=dataset_df['dataset_name'])
+        expand(rules.qc.output,dataset=dataset_df['dataset_name']),
+        expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
 
 rule all:
     input:
