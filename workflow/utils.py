@@ -3,6 +3,14 @@ import pandas as pd
 from snakemake.io import expand
 
 
+def set_defaults(config):
+    if 'defaults' not in config:
+        config['defaults'] = {}
+    if 'datasets' not in config['defaults']:
+        config['defaults']['datasets'] = list(config['DATASETS'].keys())
+    return config
+
+
 def get_wildcards_from_config(
         config,
         config_params,

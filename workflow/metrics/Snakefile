@@ -1,13 +1,16 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, expand_per, get_wildcards, get_params, get_resource
+from utils import get_wildcards_from_config, expand_per, get_wildcards, get_params, get_resource, set_defaults
 
 module integration:
     snakefile: "../integration/Snakefile"
     config: config
 
 use rule * from integration as integration_ *
+
+
+config = set_defaults(config)
 
 out_dir = Path(config['output_dir']) / 'metrics'
 
