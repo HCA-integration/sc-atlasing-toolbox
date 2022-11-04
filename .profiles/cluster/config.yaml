@@ -7,11 +7,12 @@ cluster:
     --mem={resources.mem_mb}
     --job-name=smk-{rule}-{wildcards}
     --output=logs/{rule}/{rule}-{wildcards}-%j.out
+    --parsable
 default-resources:
   - partition=cpu_p
   - qos=icb
-  - mem_mb=100000
-  - disk_mb=100000
+  - mem_mb=90000
+  - disk_mb=20000
 restart-times: 2
 max-jobs-per-second: 10
 max-status-checks-per-second: 1
@@ -23,3 +24,4 @@ rerun-incomplete: True
 printshellcmds: True
 scheduler: greedy
 use-conda: True
+cluster-cancel: scancel
