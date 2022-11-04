@@ -14,6 +14,7 @@ parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
     config=config,
+    config_keys=config['defaults']['datasets'],
     config_params=['integration', 'label', 'batch'],
     wildcard_names=['dataset', 'method', 'label', 'batch'],
     explode_by='method',

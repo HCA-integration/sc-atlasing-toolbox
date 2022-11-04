@@ -16,9 +16,10 @@ out_dir = Path(config['output_dir']) / 'metrics'
 
 wildcards_df = get_wildcards_from_config(
     config=config,
+    config_keys=config['defaults']['datasets'],
     config_params=['integration', 'metrics', 'label', 'batch'],
     wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
-    explode_by=['method', 'metric']
+    explode_by=['method', 'metric'],
 )
 
 # # get wildcards from input directory
