@@ -22,6 +22,11 @@ sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['donor'] = adata.obs[donor_column]
 adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
 
+if adata.uns['schema_version'] == '2.0.0':
+    adata.obs['self_reported_ethnicity'] = adata.obs['ethnicity']
+    adata.obs['self_reported_ethnicity_ontology_term_id'] = adata.obs['ethnicity_ontology_term_id']
+    adata.obs['donor_id'] = adata.obs['donor']
+
 for key, value in meta.items():
     adata.obs[key] = value
 

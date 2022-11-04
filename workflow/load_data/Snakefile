@@ -31,7 +31,7 @@ rule download:
         url=lambda wildcards: get_from_dataset('dataset_name', wildcards.dataset, 'url').iloc[0]
     shell:
         """
-        curl -o {output} "{params.url}"
+        wget -O {output} "{params.url}"
         """
 
 
@@ -52,6 +52,9 @@ rule metadata:
         plot=out_dir / 'processed/{dataset}_counts.png',
     conda:
         '../../envs/scanpy.yaml'
+    resources:
+        mem_mb=60000,
+        disk_mb=20000,
     script:
         'scripts/metadata.py'
 
@@ -61,8 +64,6 @@ rule metadata_all:
         expand(rules.metadata.output,dataset=dataset_df['dataset_name'])
 
 
-# TODO: merge only selected datasets
-# TODO: generate TSV for metadata summary
 rule merge:
     input:
         lambda wildcards: expand(
@@ -74,7 +75,8 @@ rule merge:
     conda:
         '../../envs/scanpy.yaml'
     resources:
-        mem_mb=400000
+        mem_mb=400000,
+        disk_mb=100000
     script:
         'scripts/merge.py'
 
