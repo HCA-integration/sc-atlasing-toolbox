@@ -3,17 +3,6 @@
 output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
-input:
-  metrics: data/out/integration/{dataset}/{method}.h5ad
-
-resources:
-  cpu:
-    partition: cpu_p
-    qos: icb
-  gpu:
-    partition: gpu_p
-    qos: gpu
-
 defaults:
   integration:
     - scvi
@@ -34,35 +23,24 @@ defaults:
     - isolated_label_f1
     - pcr
   datasets:
-    - pancreas_ari_nmi
-    - pancreas_lisi
+    - pancreas
 
 DATASETS:
-  pancreas_ari_nmi:
+  pancreas:
     adata_file: 'data/pancreas.h5ad'
     label: celltype
     batch: tech
     metrics:
       - ari
       - ari_leiden_y
-      - ari_kmeans_y
+        #- ari_kmeans_y
       - nmi
       - nmi_leiden_y
-      - nmi_kmeans_y
-  pancreas_asw:
-    adata_file: 'data/pancreas.h5ad'
-    label: celltype
-    batch: tech
-    metrics:
-      - asw_label
-      - asw_label_y
-      - asw_batch
-      - asw_batch_y
-  pancreas_lisi:
-    adata_file: 'data/pancreas.h5ad'
-    label: celltype
-    batch: tech
-    metrics:
+        #- nmi_kmeans_y
+  #    - asw_label
+  #    - asw_label_y
+  #    - asw_batch
+  #    - asw_batch_y
       - ilisi
       - ilisi_y
       - clisi

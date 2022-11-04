@@ -3,9 +3,6 @@
 output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
-input:
-  metrics: data/out/integration/{dataset}/{method}.h5ad
-
 resources:
   cpu:
     partition: cpu_p
@@ -33,6 +30,8 @@ defaults:
     - isolated_label_asw
     - isolated_label_f1
     - pcr
+  datasets:
+    - test
 
 DATASETS:
   test:
