@@ -53,15 +53,7 @@ rule marker_genes:
     output:
         png=out_dir / 'marker_genes' / '{dataset}.png',
     params:
-        # TOOD: specify and get from config
-        markers=[
-            "CD44", "CD3D", "CD4", "CD8A", "CCR7", "LEF1", "CD27", "SELL", "IL7R", "GZMH", "GZMK", "GZMA", "GZMB",
-            "PRF1", "TRGV9", "TRDV2", "FOXP3", "IL2RA", "TRAV1-2", "SLC4A10", "NCR1", "NCAM1", "GNLY", "TNFRSF18",
-            "TNFRSF4", "KLRB1", "FCER1G", "CD14", "FCGR3A", "CD1C", "C1QA", "CLEC4C", "IL3RA", "AXL", "SIGLEC6",
-            "CLEC9A", "FCER1A", "FCER2", "CD19", "CD24", "TCL1A", "IGHM", "IGHD", "CD79A", "MS4A1", "TNFRSF13B",
-            "BANK1", "JCHAIN", "CHPF", "IGHG1", "FCRL3", "ENTPD1", "CD38", "MKI67", "IFI27", "IFIT1", "MX2", "KIT",
-            "CD34", "PPBP", "PF4", "HBB", "EPX"
-        ]
+        markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
     conda:
         'envs/scanpy.yaml'
     script:

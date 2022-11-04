@@ -15,9 +15,12 @@ ontology_label = 'cell_type'
 
 # match marker genes and var_names
 adata.var_names = adata.var['feature_name'].astype(str)
-n_markers_all = len(markers)
-markers = adata.var[adata.var['feature_name'].isin(markers)].index.to_list()
-print(f'removed {n_markers_all - len(markers)} genes from marker list')
+print({k: len(v) for k, v in markers.items()})
+markers = {
+    k: adata.var[adata.var['feature_name'].isin(v)].index.to_list()
+    for k, v in markers.items()
+}
+print({k: len(v) for k, v in markers.items()})
 
 fig, axes = plt.subplots(nrows=2, ncols=1)
 sc.pl.dotplot(
