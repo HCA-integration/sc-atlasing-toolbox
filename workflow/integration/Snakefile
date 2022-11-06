@@ -1,38 +1,39 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, get_params, get_resource, set_defaults
+from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults
 
 
 def get_h5ad(wildcards):
     return config['DATASETS'][wildcards.dataset]['adata_file']
 
 
-config = set_defaults(config)
+config = set_defaults(config,'integration')
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
-    config=config,
+    config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
     config_params=['integration', 'label', 'batch'],
     wildcard_names=['dataset', 'method', 'label', 'batch'],
     explode_by='method',
-    
 ).merge(parameters,on='method')
 out_dir = Path(config['output_dir']) / 'integration'
+
+parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
+wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams']
 
 
 rule run:
     input:
         h5ad=get_h5ad
     output:
-        h5ad=out_dir / '{dataset}/{method}.h5ad'
+        h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/adata.h5ad',
+        model=touch(directory(out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/model'))
     params:
-        dataset=lambda wildcards: get_params(wildcards,parameters,'dataset'),
-        batch=lambda wildcards: get_params(wildcards,parameters,'batch'),
-        label=lambda wildcards: get_params(wildcards,parameters,'label'),
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
+        hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams'),
         env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
         lambda wildcards, params: f'envs/{params.env}'
@@ -41,18 +42,18 @@ rule run:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=32000,
     benchmark:
-        out_dir / '{dataset}/{method}.benchmark.tsv'
+        out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'
     script:
         'scripts/{wildcards.method}.py'
 
 
 rule benchmark:
     input:
-        benchmark=expand(rules.run.benchmark,zip,**parameters[['dataset', 'method']].to_dict('list'))
+        benchmark=expand(rules.run.benchmark,zip,**parameters[wildcard_names].to_dict('list'))
     output:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
-        wildcards=parameters[['dataset', 'method']]
+        wildcards=parameters[wildcard_names]
     run:
         benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
         benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
@@ -62,6 +63,6 @@ rule benchmark:
 
 rule all:
     input:
-        expand(rules.run.output,zip,**parameters[['dataset', 'method']].to_dict('list')),
+        expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list')),
         rules.benchmark.output
     default_target: True

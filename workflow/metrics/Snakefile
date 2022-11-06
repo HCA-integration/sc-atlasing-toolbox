@@ -1,7 +1,13 @@
 from pathlib import Path
 import pandas as pd
 
-from utils import get_wildcards_from_config, expand_per, get_wildcards, get_params, get_resource, set_defaults
+from utils import get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
+    set_defaults
+
+
+def all_but(_list, is_not):
+    return [x for x in _list if x != is_not]
+
 
 module integration:
     snakefile: "../integration/Snakefile"
@@ -10,12 +16,11 @@ module integration:
 use rule * from integration as integration_ *
 
 
-config = set_defaults(config)
-
+config = set_defaults(config,'metrics')
 out_dir = Path(config['output_dir']) / 'metrics'
 
 wildcards_df = get_wildcards_from_config(
-    config=config,
+    config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
     config_params=['integration', 'metrics', 'label', 'batch'],
     wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
@@ -37,7 +42,11 @@ wildcards_df = get_wildcards_from_config(
 # )
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
-parameters = wildcards_df.merge(parameters,on='metric')
+parameters = wildcards_df \
+    .merge(parameters,on='metric') \
+    .merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
+
+wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams']
 
 
 rule run:
@@ -52,7 +61,7 @@ rule run:
         h5ad=rules.integration_run.output.h5ad,
         metrics_meta=workflow.source_path('params.tsv')
     output:
-        metric=out_dir / 'datasets/{dataset}/{method}/{metric}.tsv'
+        metric=out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/{metric}.tsv'
     params:
         env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
@@ -61,7 +70,7 @@ rule run:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos')
     benchmark:
-        out_dir / 'datasets/{dataset}/{method}/{metric}.benchmark.tsv'
+        out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/{metric}.benchmark.tsv'
     script:
         'scripts/{wildcards.metric}.py'
 
@@ -74,15 +83,14 @@ rule merge:
         methods: {params.wildcards[method]}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'method', 'metric']),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'method',
-                                                                                         'metric']),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,wildcard_names),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,wildcard_names),
     output:
         metrics=out_dir / 'metrics.tsv',
         plot=out_dir / 'metrics.png',
         time=out_dir / 'metrics_time.png',
     params:
-        wildcards=get_wildcards(parameters,['dataset', 'method', 'metric'])
+        wildcards=get_wildcards(parameters,wildcard_names)
     conda: 'envs/scanpy.yaml'
     script: 'scripts/merge.py'
 
@@ -93,14 +101,14 @@ use rule merge as merge_per_dataset with:
         Merge all metrics for {wildcards}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['method', 'metric']),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['method', 'metric']),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'dataset')),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
     output:
         metrics=out_dir / 'per_dataset' / '{dataset}_metrics.tsv',
         plot=out_dir / 'per_dataset' / '{dataset}.png',
         time=out_dir / 'per_dataset' / '{dataset}_time.png',
     params:
-        wildcards=lambda wildcards: get_wildcards(parameters,['method', 'metric'],wildcards)
+        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'dataset'),wildcards)
 
 
 use rule merge as merge_per_method with:
@@ -109,14 +117,14 @@ use rule merge as merge_per_method with:
         Merge all metrics for {wildcards}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,['dataset', 'metric']),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,['dataset', 'metric']),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'method')),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'method')),
     output:
         metrics=out_dir / 'per_method' / '{method}.tsv',
         plot=out_dir / 'per_method' / '{method}.png',
         time=out_dir / 'per_method' / '{method}_time.png',
     params:
-        wildcards=lambda wildcards: get_wildcards(parameters,['dataset', 'metric'],wildcards)
+        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'method'),wildcards)
 
 
 rule all:
@@ -125,3 +133,5 @@ rule all:
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
     default_target: True
+
+print(rules.run.output)

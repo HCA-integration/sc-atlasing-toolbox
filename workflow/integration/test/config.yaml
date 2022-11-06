@@ -10,11 +10,31 @@ resources:
 
 defaults:
   integration:
-    - scvi
-    - scanvi
-    - combat
-    - scanorama
-    - unintegrated
+    scvi:
+      n_hidden: 128
+      dispersion:
+        - gene
+        - gene-batch
+        - gene-label
+        - gene-cell
+      n_epochs:
+        - None
+        - 100
+      observed_lib_size: true
+    scanvi:
+      n_hidden: 128
+      dispersion:
+        - gene
+        - gene-batch
+        - gene-label
+        - gene-cell
+      n_epochs:
+        - None
+        - 100
+      observed_lib_size: true
+    combat:
+    scanorama:
+    unintegrated:
 
 DATASETS:
   test:
