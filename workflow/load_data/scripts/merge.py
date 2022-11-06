@@ -41,9 +41,11 @@ adata = read_adata(files[0])
 print(adata)
 
 for file in files[1:]:
+
     print(f'Read {file}...')
     _adata = read_adata(file)
     print(_adata)
+
     print('Concatenate...')
     # merge genes
     var_map = pd.merge(
@@ -51,7 +53,9 @@ for file in files[1:]:
         _adata.var,
         how='outer',
         on=['feature_id']+CELLxGENE_VARS
-    ).drop_duplicates()
+    )
+    var_map = var_map[~var_map.index.duplicated()]
+
     # merge adata
     adata = sc.concat([adata, _adata], join='outer')
     adata.var = var_map.loc[adata.var_names]
@@ -67,4 +71,4 @@ print(adata.var)
 assert 'feature_name' in adata.var
 
 print('Write...')
-adata.write(out_file, compression='gzip')
+adata.write(out_file)
