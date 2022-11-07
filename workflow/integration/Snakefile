@@ -33,7 +33,7 @@ rule run:
         model=touch(directory(out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/model'))
     params:
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
-        hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams'),
+        hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
         env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
         lambda wildcards, params: f'envs/{params.env}'

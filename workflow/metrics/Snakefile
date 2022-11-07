@@ -133,5 +133,3 @@ rule all:
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
     default_target: True
-
-print(rules.run.output)

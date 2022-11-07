@@ -25,13 +25,9 @@ defaults:
     unintegrated:
     scvi:
       n_hidden: 128
-      dispersion:
-        - gene
-        - gene-batch
-        - gene-label
-        - gene-cell
-      n_epochs:
-      observed_lib_size: true
+      dispersion: gene
+      max_epochs: 10
+      use_observed_lib_size: true
 
 
 DATASETS:
