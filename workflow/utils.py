@@ -16,9 +16,11 @@ def set_defaults(config, modules=None):
 
     for module in modules:
         for dataset in config['DATASETS'].keys():
-            config['DATASETS'][dataset][module] = _get_or_default_from_config(
-                config['DATASETS'], config['defaults'], dataset, module
-            )
+            entry = _get_or_default_from_config(config['DATASETS'], config['defaults'], dataset, module)
+            # for TSV input make sure integration methods have the proper types
+            if module == 'integration' and isinstance(entry, list):
+                entry = {k: None for k in entry}
+            config['DATASETS'][dataset][module] = entry
     return config
 
 
