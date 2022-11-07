@@ -33,14 +33,14 @@ DATASETS:
     metrics:
       - ari
       - ari_leiden_y
-        #- ari_kmeans_y
+      - ari_kmeans_y
       - nmi
       - nmi_leiden_y
-        #- nmi_kmeans_y
-  #    - asw_label
-  #    - asw_label_y
-  #    - asw_batch
-  #    - asw_batch_y
+      - nmi_kmeans_y
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
       - ilisi
       - ilisi_y
       - clisi

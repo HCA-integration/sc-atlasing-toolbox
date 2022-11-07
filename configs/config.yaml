@@ -7,9 +7,11 @@ resources:
   cpu:
     partition: cpu_p
     qos: icb
+    mem_mb: 300000
   gpu:
     partition: gpu_p
     qos: gpu
+    mem_mb: 90000
 
 defaults:
   integration:
