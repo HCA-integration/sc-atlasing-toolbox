@@ -22,7 +22,12 @@ defaults:
     - isolated_label_f1
     - pcr
   integration:
-    - unintegrated
+    unintegrated:
+    scvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 10
+      use_observed_lib_size: true
 
 
 DATASETS:

@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import requests
 
 
 def get_from_dataset(key, value, column=None, debug=False):
@@ -11,6 +12,19 @@ def get_from_dataset(key, value, column=None, debug=False):
         print(sub)
         print(sub[column])
     return sub[column]
+
+
+def get_url(wildcards):
+    url = get_from_dataset('dataset_name',wildcards.dataset,'url').iloc[0]
+    if not isinstance(url, str):
+        # infer CxG URL from collection and dataset IDs
+        collection_id = get_from_dataset('dataset_name',wildcards.dataset,'collection_id').iloc[0]
+        dataset_id = get_from_dataset('dataset_name',wildcards.dataset,'dataset_id').iloc[0]
+        url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/assets/'
+        assets = requests.get(url=url).json()
+        asset = [a for a in assets if a["filetype"] == "H5AD"][0]
+        url = asset["presigned_url"]
+    return url
 
 
 def unlist_dict(dictionary):
@@ -28,7 +42,7 @@ rule download:
     output:
         h5ad=out_dir / 'download/{dataset}.h5ad'
     params:
-        url=lambda wildcards: get_from_dataset('dataset_name', wildcards.dataset, 'url').iloc[0]
+        url=get_url
     shell:
         """
         wget -O {output} "{params.url}"

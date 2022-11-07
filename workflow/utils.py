@@ -3,12 +3,39 @@ import pandas as pd
 from snakemake.io import expand
 
 
-def set_defaults(config):
+def set_defaults(config, modules=None):
     if 'defaults' not in config:
         config['defaults'] = {}
     if 'datasets' not in config['defaults']:
         config['defaults']['datasets'] = list(config['DATASETS'].keys())
+
+    if modules is None:
+        modules = ['integration', 'metrics']
+    elif isinstance(modules, str):
+        modules = [modules]
+
+    for module in modules:
+        for dataset in config['DATASETS'].keys():
+            entry = _get_or_default_from_config(config['DATASETS'], config['defaults'], dataset, module)
+            # for TSV input make sure integration methods have the proper types
+            if module == 'integration' and isinstance(entry, list):
+                entry = {k: None for k in entry}
+            config['DATASETS'][dataset][module] = entry
     return config
+
+
+def expand_dict(_dict):
+    """
+    Create a cross-product on a dictionary with literals and lists
+    :param _dict: dictionary with lists and literals as values
+    :return: list of dictionaries with literals as values
+    """
+    df = pd.DataFrame({k: [v] if isinstance(v, list) else [[v]] for k, v in _dict.items()})
+    for col in df.columns:
+        df = df.explode(col)
+    dict_list = df.apply(lambda row: {col: x for col, x in zip(df.columns, row)}, axis=1)
+    wildcards = df.apply(lambda row: ','.join([f'{col}={x}' for col, x in zip(df.columns, row)]), axis=1)
+    return zip(wildcards, dict_list)
 
 
 def get_wildcards_from_config(
@@ -17,11 +44,10 @@ def get_wildcards_from_config(
         wildcard_names,
         explode_by,
         config_keys=None,
-        slot='DATASETS'
 ):
     """
 
-    :param config: Snakemake config dictionary
+    :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
     :param config_params: list of parameters for each config entry
         e.g. ['integration', 'label', 'batch']
     :param wildcard_names: names of wildcards to be extracted.
@@ -29,16 +55,13 @@ def get_wildcards_from_config(
         e.g. ['dataset', 'method', 'label', 'batch']
     :param explode_by: column to explode by, expecting list entry for that column
     :param config_keys: list of entries to subset the config by., otherwise use all keys
-    :param slot: slot in config to get wildcards from. The config_params must be contained under that slot.
     :return: dataframe with wildcard mapping. Wildcard names in columns and wildcard values as entries
     """
-    global_config = config
-    config = config[slot]
 
     if config_keys is None:
         config_keys = config.keys()
     records = [
-        (key, *[_get_or_default_from_config(config, global_config['defaults'], key, w) for w in config_params])
+        (key, *[config[key][w] for w in config_params])
         for key in config_keys
     ]
     df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
@@ -66,6 +89,25 @@ def _get_or_default_from_config(config, defaults, key, value):
     except AssertionError:
         raise AssertionError(f'No default defined for "{value}"')
     return defaults[value]
+
+
+def get_hyperparams(config, module='integration'):
+    """
+    Get hyperparameters specific to each method of a module for all datasets
+
+    :param config: config containing dataset specific information
+    :param module: name of module, key must be present for each dataset entry
+    :return: DataFrame with hyperparameters
+    """
+    records = []
+    for dataset, dataset_dict in config['DATASETS'].items():
+        for method, hyperparams_dict in dataset_dict[module].items():
+            if isinstance(hyperparams_dict, dict):
+                for rec in expand_dict(hyperparams_dict):
+                    records.append((dataset, method, *rec))
+            else:
+                records.append((dataset, method, str(hyperparams_dict), hyperparams_dict))
+    return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
 
 
 def get_wildcards(wildcards_df, columns, wildcards=None):

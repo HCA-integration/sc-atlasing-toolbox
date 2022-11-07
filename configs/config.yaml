@@ -15,11 +15,11 @@ resources:
 
 defaults:
   integration:
-    - scvi
-    - scanvi
-    - combat
-    - scanorama
-    - unintegrated
+    scvi:
+    scanvi:
+    combat:
+    scanorama:
+    unintegrated:
   metrics:
     - nmi
     - ari

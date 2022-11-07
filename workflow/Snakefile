@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils import get_wildcards_from_config, _get_or_default_from_config, get_wildcards
+from utils import _get_or_default_from_config, set_defaults
 
 
 min_version("6.0")
@@ -32,6 +32,7 @@ for dataset in config['DATASETS'].keys():
     config['DATASETS'][dataset]['integration'] = _get(params,dataset,'integration')
     config['DATASETS'][dataset]['metrics'] = _get(params,dataset,'metrics')
 
+config = set_defaults(config,'integration')
 config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
 
 out_dir = Path(config['output_dir'])
@@ -83,23 +84,3 @@ rule all:
         rules.integration_all.input,
         rules.metrics_all.input
     default_target: True
-
-
-#benchmark_params = get_wildcards_from_config(
-#    config=config,
-#    config_keys=['pancreas_ari_nmi', 'pancreas_asw', 'pancreas_lisi'],
-#    config_params=['integration', 'metrics'],
-#    wildcard_names=['dataset', 'method', 'metric'],
-#    explode_by=['method', 'metric']
-#)
-
-#use rule merge from metrics as benchmark_pancreas with:
-#    input:
-#       metrics=expand(rules.run.output,zip,**benchmark_params),
-#        benchmark=expand(rules.run.benchmark,zip,**benchmark_params),
-#    output:
-#        metrics=out_dir / 'benchmark_metrics_pancreas' / 'metrics.tsv',
-#        plot=out_dir / 'benchmark_metrics_pancreas' / 'metrics.png',
-#        time=out_dir / 'benchmark_metrics_pancreas' / 'time.png',
-#    params:
-#        wildcards=get_wildcards(benchmark_params,['dataset', 'method', 'metric'])
