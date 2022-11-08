@@ -3,7 +3,7 @@ import scanpy as sc
 
 from utils import process
 
-input_adata = snakemake.input[0]
+input_adata = snakemake.input.h5ad
 output_adata = snakemake.output.h5ad
 output_model = snakemake.output.model
 wildcards = snakemake.wildcards

@@ -14,7 +14,19 @@ resources:
 defaults:
   integration:
     scvi:
+      n_hidden: 128
+      dispersion:
+        - gene
+        - gene-batch
+        - gene-label
+        - gene-cell
+      max_epochs: 10
+      use_observed_lib_size: true
     scanvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 10
+      use_observed_lib_size: true
     combat:
     scanorama:
     unintegrated:
