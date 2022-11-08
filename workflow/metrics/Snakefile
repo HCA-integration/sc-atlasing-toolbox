@@ -68,7 +68,9 @@ rule run:
         lambda wildcards, params: f'envs/{params.env}.yaml'
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
-        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos')
+        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
+        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
+        disk_mb=100
     benchmark:
         out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/{metric}.benchmark.tsv'
     script:
@@ -92,6 +94,9 @@ rule merge:
     params:
         wildcards=get_wildcards(parameters,wildcard_names)
     conda: 'envs/scanpy.yaml'
+    resources:
+        mem_mb=1000,
+        disk_mb=500
     script: 'scripts/merge.py'
 
 
