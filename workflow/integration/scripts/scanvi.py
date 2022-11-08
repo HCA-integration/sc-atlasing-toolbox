@@ -3,8 +3,9 @@ import scanpy as sc
 
 from utils import process
 
-input_adata = snakemake.input[0]
-output_adata = snakemake.output[0]
+input_adata = snakemake.input.h5ad
+output_adata = snakemake.output.h5ad
+output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 params = snakemake.params
 
@@ -48,6 +49,7 @@ model = scvi.model.SCANVI.from_scvi_model(
     **model_params
 )
 model.train(n_samples_per_label=100, **train_params)
+model.save(output_model, overwrite=True)
 
 adata.obsm["X_emb"] = model.get_latent_representation()
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])

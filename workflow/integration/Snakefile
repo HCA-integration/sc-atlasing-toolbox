@@ -61,6 +61,8 @@ rule benchmark:
         benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
 
 
+# TODO: benchmark plots
+
 rule all:
     input:
         expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list')),
