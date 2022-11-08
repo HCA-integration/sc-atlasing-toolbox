@@ -4,9 +4,11 @@ resources:
   cpu:
     partition: cpu_p
     qos: icb
+    gpu: 0
   gpu:
     partition: gpu_p
     qos: gpu
+    gpu: 1
 
 defaults:
   integration:

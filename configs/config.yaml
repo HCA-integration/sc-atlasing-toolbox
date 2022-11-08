@@ -7,10 +7,12 @@ resources:
   cpu:
     partition: cpu_p
     qos: icb
+    gpu: 0
     mem_mb: 300000
   gpu:
     partition: gpu_p
     qos: gpu
+    gpu: 1
     mem_mb: 90000
 
 defaults:

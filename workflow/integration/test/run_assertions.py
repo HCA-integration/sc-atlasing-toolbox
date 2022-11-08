@@ -2,7 +2,7 @@ import glob
 import numpy as np
 import scanpy as sc
 
-outputs = glob.glob('test/out/integration/test/*.h5ad')
+outputs = glob.glob('test/out/integration/test/**/**/*.h5ad')
 print(outputs)
 
 for file in outputs:

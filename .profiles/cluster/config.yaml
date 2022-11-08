@@ -3,6 +3,7 @@ cluster:
   sbatch
     --partition={resources.partition}
     --qos={resources.qos}
+    --gres=gpu:{resources.gpu}
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name=smk-{rule}-{wildcards}
@@ -11,6 +12,7 @@ cluster:
 default-resources:
   - partition=cpu_p
   - qos=icb
+  - gpu=0
   - mem_mb=90000
   - disk_mb=20000
 restart-times: 1
