@@ -1,3 +1,6 @@
+"""
+Data Loader
+"""
 from pathlib import Path
 import pandas as pd
 import requests
@@ -67,7 +70,7 @@ rule metadata:
     conda:
         '../../envs/scanpy.yaml'
     resources:
-        mem_mb=60000,
+        mem_mb=200000,
         disk_mb=20000,
     script:
         'scripts/metadata.py'
@@ -89,7 +92,7 @@ rule merge:
     conda:
         '../../envs/scanpy.yaml'
     resources:
-        mem_mb=400000,
+        mem_mb=500000,
         disk_mb=100000
     script:
         'scripts/merge.py'

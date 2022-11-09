@@ -32,7 +32,7 @@ for dataset in config['DATASETS'].keys():
     config['DATASETS'][dataset]['integration'] = _get(params,dataset,'integration')
     config['DATASETS'][dataset]['metrics'] = _get(params,dataset,'metrics')
 
-config = set_defaults(config,'integration')
+config = set_defaults(config,['integration', 'metrics'])
 config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
 
 out_dir = Path(config['output_dir'])

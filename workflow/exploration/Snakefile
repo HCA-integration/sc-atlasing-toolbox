@@ -1,5 +1,11 @@
+"""
+Exploration
+"""
 from pathlib import Path
 import pandas as pd
+
+from utils import get_resource
+
 
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / 'exploration'
@@ -25,6 +31,8 @@ rule pca_pseudobulk:
         color='donor',
     conda:
         'envs/scanpy.yaml'
+    resources:
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
         'scripts/pca_pseudobulk.py'
 
@@ -56,6 +64,8 @@ rule marker_genes:
         markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
     conda:
         'envs/scanpy.yaml'
+    resources:
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
         'scripts/marker_genes.py'
 
@@ -76,6 +86,8 @@ rule qc:
         hue='donor'
     conda:
         'envs/scanpy.yaml'
+    resources:
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
         'scripts/qc_plot.py'
 

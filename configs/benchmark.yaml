@@ -4,42 +4,12 @@ output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
 defaults:
-  integration:
-    scvi:
-      n_hidden: 128
-      dispersion:
-        - gene
-        - gene-batch
-        - gene-label
-        - gene-cell
-      max_epochs: 10
-      use_observed_lib_size: true
-    scanvi:
-      n_hidden: 128
-      dispersion: gene
-      max_epochs: 10
-      use_observed_lib_size: true
-    combat:
-    scanorama:
-    unintegrated:
-  metrics:
-    - nmi
-    - ari
-    - asw_label
-    - asw_batch
-    - cell_cycle
-    - clisi
-    - ilisi
-    - graph_connectivity
-    - isolated_label_asw
-    - isolated_label_f1
-    - pcr
   datasets:
     - pancreas
 
 DATASETS:
   pancreas:
-    adata_file: 'data/pancreas.h5ad'
+    adata_file: data/pancreas.h5ad
     label: celltype
     batch: tech
     metrics:
@@ -57,3 +27,16 @@ DATASETS:
       - ilisi_y
       - clisi
       - clisi_y
+  integration:
+    scvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 100
+      use_observed_lib_size: true
+    scanvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 100
+      use_observed_lib_size: true
+    combat:
+    unintegrated:

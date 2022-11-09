@@ -50,7 +50,7 @@ adata_bulk = anndata.AnnData(
     dtype='float32'
 )
 sc.pp.log1p(adata_bulk)
-sc.pp.highly_variable_genes(adata_bulk, n_top_genes=200)
+sc.pp.highly_variable_genes(adata_bulk, n_top_genes=2000)
 sc.pp.pca(adata_bulk)
 
 sc.pl.pca(

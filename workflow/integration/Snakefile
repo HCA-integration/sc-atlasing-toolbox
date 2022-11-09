@@ -1,3 +1,6 @@
+"""
+Integration
+"""
 from pathlib import Path
 import pandas as pd
 
@@ -41,7 +44,6 @@ rule run:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-        mem_mb=32000,
     benchmark:
         out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'
     script:
