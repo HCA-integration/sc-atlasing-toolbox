@@ -4,9 +4,13 @@ resources:
   cpu:
     partition: cpu_p
     qos: icb
+    gpu: 0
+    mem_mb: 1000
   gpu:
     partition: gpu_p
     qos: gpu
+    gpu: 1
+    mem_mb: 1000
 
 defaults:
   metrics:

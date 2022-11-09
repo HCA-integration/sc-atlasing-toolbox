@@ -30,8 +30,9 @@ for output_type in output_types:
     if output_type == 'embed':
         X = adata.obsm['X_emb']
     else:
-        X = adata.X
-        X = X if isinstance(X, np.ndarray) else X.todense()
+        X = adata.obsm['X_pca']
+
+    X = X if isinstance(X, np.ndarray) else X.todense()
 
     score = scib_metrics.silhouette_batch(
         X=X,
