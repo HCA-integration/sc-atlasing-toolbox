@@ -5,3 +5,4 @@ channels:
 dependencies:
   - python
   - snakemake=7.14
+  - tabulate=0.8
