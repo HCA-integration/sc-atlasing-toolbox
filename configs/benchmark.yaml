@@ -4,29 +4,6 @@ output_dir: data/out
 dataset_meta: configs/datasets.tsv
 
 defaults:
-  datasets:
-    - pancreas
-
-DATASETS:
-  pancreas:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
-    metrics:
-      - ari
-      - ari_leiden_y
-      - ari_kmeans_y
-      - nmi
-      - nmi_leiden_y
-      - nmi_kmeans_y
-      - asw_label
-      - asw_label_y
-      - asw_batch
-      - asw_batch_y
-      - ilisi
-      - ilisi_y
-      - clisi
-      - clisi_y
   integration:
     scvi:
       n_hidden: 128
@@ -40,3 +17,44 @@ DATASETS:
       use_observed_lib_size: true
     combat:
     unintegrated:
+  datasets:
+    - pancreas_ari
+    - pancreas_nmi
+    - pancreas_asw
+    - pancreas_lisi
+
+DATASETS:
+  pancreas_ari:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - ari
+      - ari_leiden_y
+      - ari_kmeans_y
+  pancreas_nmi:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - nmi
+      - nmi_leiden_y
+      - nmi_kmeans_y
+  pancreas_asw:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
+  pancreas_lisi:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - ilisi
+      - ilisi_y
+      - clisi
+      - clisi_y
