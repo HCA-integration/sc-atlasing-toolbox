@@ -21,6 +21,38 @@ module load_data:
 use rule * from load_data as load_data_ *
 
 
+rule summary_stats:
+    """
+    Summarise
+    + number of cells
+    + number of cells per sample
+    + number of cells per donor
+    + disease states
+    """
+    input:
+        h5ad=rules.load_data_metadata.output.h5ad
+    output:
+        tsv=out_dir / 'summary' / '{dataset}.tsv',
+        sample=out_dir / 'summary' / '{dataset}_sample.png',
+        donor=out_dir / 'summary' / '{dataset}_donor.png',
+    conda:
+        'envs/scanpy.yaml'
+    resources:
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
+    script:
+        'scripts/summary_stats.py'
+
+
+rule summary_stats_all:
+    input:
+        tsv=expand(rules.summary_stats.output.tsv,dataset=dataset_df['dataset_name']),
+    output:
+        tsv=out_dir / 'summary.tsv',
+        png=out_dir / 'summary.png',
+    script:
+        'scripts/plot_summary.py'
+
+
 rule pca_pseudobulk:
     input:
         h5ad=rules.load_data_metadata.output.h5ad
@@ -79,9 +111,10 @@ rule qc:
     input:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
-        joint=out_dir / 'qc' / '{dataset}_joint.png',
-        violin=out_dir / 'qc' / '{dataset}_violin.png',
-        average_jitter=out_dir / 'qc' / '{dataset}_average_jitter.png',
+        joint=out_dir / 'qc' / '{dataset}' / 'joint.png',
+        joint_log=out_dir / 'qc' / '{dataset}' / 'joint_log.png',
+        violin=out_dir / 'qc' / '{dataset}' / 'violin.png',
+        average_jitter=out_dir / 'qc' / '{dataset}' / 'average_jitter.png',
     params:
         hue='donor'
     conda:
@@ -96,9 +129,10 @@ use rule qc as qc_organ with:
     input:
         h5ad=rules.load_data_merge.output.h5ad
     output:
-        joint=out_dir / 'qc' / 'organ' / '{organ}_joint.png',
-        violin=out_dir / 'qc' / 'organ' / '{organ}_violin.png',
-        average_jitter=out_dir / 'qc' / 'organ' / '{organ}_average_jitter.png',
+        joint=out_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
+        joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
+        violin=out_dir / 'qc' / 'organ' / '{organ}' / 'violin.png',
+        average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'average_jitter.png',
     params:
         hue='dataset'
     resources:
@@ -112,6 +146,7 @@ rule qc_all:
 
 rule all:
     input:
+        rules.summary_stats_all.output,
         rules.pca_pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.qc_all.input,

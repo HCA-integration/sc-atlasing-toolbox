@@ -17,7 +17,8 @@ def plot_qc_joint(
         palette=None,
         x_threshold=(0, np.inf),
         y_threshold=(0, np.inf),
-        title=''
+        title='',
+        return_adata=False
 ):
     """
     Plot scatter plot with marginal histograms from obs columns in anndata object.
@@ -32,6 +33,8 @@ def plot_qc_joint(
     :param x_threshold: tuple of upper and lower filter thresholds for x axis
     :param y_threshold: tuple of upper and lower filter thresholds for y axis
     :param title: Title text for plot
+    :return:
+        seaborn plot (and anndata object with updated values, if `return_adata=True`)
     """
 
     adata = adata.copy()
@@ -40,8 +43,8 @@ def plot_qc_joint(
         return np.log1p(_x) / np.log(base)
 
     if log > 1:
-        x_log = f'log1p_{x}'
-        y_log = f'log1p_{y}'
+        x_log = f'log{log} {x}'
+        y_log = f'log{log} {y}'
         adata.obs[x_log] = log1p_base(adata.obs[x], log)
         adata.obs[y_log] = log1p_base(adata.obs[y], log)
         x_threshold = log1p_base(x_threshold, log)
@@ -49,7 +52,6 @@ def plot_qc_joint(
         x = x_log
         y = y_log
 
-    print(x)
     g = sns.JointGrid(
         data=adata.obs,
         x=x,
@@ -92,6 +94,8 @@ def plot_qc_joint(
             g.ax_joint.axvline(x=t, color='red')
             g.ax_marg_x.axvline(x=t, color='red')
 
+    if return_adata:
+        return g, adata
     return g
 
 
@@ -100,6 +104,7 @@ plt.rcParams['figure.figsize'] = 12, 12
 
 input_h5ad = snakemake.input.h5ad
 output_joint = snakemake.output.joint
+output_joint_log = snakemake.output.joint_log
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
 hue = snakemake.params.hue
@@ -131,12 +136,26 @@ plot_qc_joint(
 plt.tight_layout()
 plt.savefig(output_joint)
 
+_, adata = plot_qc_joint(
+    adata,
+    x='total_counts',
+    y='n_genes_by_counts',
+    log=10,
+    hue='pct_counts_mito',
+    palette='plasma',
+    marginal_hue=hue,
+    title=f'Joint QC for {dataset}',
+    return_adata=True,
+)
+plt.tight_layout()
+plt.savefig(output_joint_log)
+
 print('Violin plots...')
 fig, axes = plt.subplots(nrows=2, ncols=1)
 
 sc.pl.violin(
     adata,
-    keys='total_counts',
+    keys='log10 total_counts',
     groupby=hue,
     rotation=90,
     show=False,
@@ -164,7 +183,7 @@ print('Average scatter plots...')
 fig, axes = plt.subplots(nrows=3, ncols=1)
 
 df = (
-    adata.obs[['n_genes_by_counts', 'pct_counts_mito', 'total_counts', hue, 'sample']]
+    adata.obs[['log10 n_genes_by_counts', 'pct_counts_mito', 'log10 total_counts', hue, 'sample']]
     .groupby([hue, 'sample'])
     .median()
     .reset_index(hue)
@@ -173,7 +192,7 @@ df = (
 
 sns.stripplot(
     data=df,
-    x='total_counts',
+    x='log10 total_counts',
     hue=hue,
     legend=False,
     ax=axes[0],
@@ -183,7 +202,7 @@ axes[0].set_xlim(0, None)
 
 sns.stripplot(
     data=df,
-    x='n_genes_by_counts',
+    x='log10 n_genes_by_counts',
     hue=hue,
     legend=False,
     ax=axes[1],
