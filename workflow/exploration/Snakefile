@@ -32,9 +32,9 @@ rule summary_stats:
     input:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
-        tsv=out_dir / 'summary' / '{dataset}.tsv',
-        sample=out_dir / 'summary' / '{dataset}_sample.png',
-        donor=out_dir / 'summary' / '{dataset}_donor.png',
+        tsv=out_dir / 'summary' / 'datasets' / '{dataset}.tsv',
+        sample=out_dir / 'summary' / 'datasets' / '{dataset}_sample.png',
+        donor=out_dir / 'summary' / 'datasets' / '{dataset}_donor.png',
     conda:
         'envs/scanpy.yaml'
     resources:
@@ -47,8 +47,9 @@ rule summary_stats_all:
     input:
         tsv=expand(rules.summary_stats.output.tsv,dataset=dataset_df['dataset_name']),
     output:
-        tsv=out_dir / 'summary.tsv',
-        png=out_dir / 'summary.png',
+        tsv=out_dir / 'summary' / 'all_datasets.tsv',
+        aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
+        png=out_dir / 'summary' / 'all_datasets.png',
     conda:
         'envs/scanpy.yaml'
     script:

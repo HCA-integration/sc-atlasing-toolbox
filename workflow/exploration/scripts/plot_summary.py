@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 
@@ -12,8 +13,12 @@ df.sort_values(by='n_cells', ascending=True).plot.barh(
     subplots=True,
     sharex=False,
     sharey=True,
-    layout=(2, 2),
-    figsize=(12, 0.8 * n_rows)
+    layout=(int(df.shape[1] / 2), 2),
+    figsize=(12, np.max([5, 1.2 * n_rows]))
 )
+
 plt.tight_layout()
 plt.savefig(snakemake.output.png)
+
+# save aggregated stats
+df[['n_cells', 'n_samples', 'n_donors']].agg('sum').to_csv(snakemake.output.aggregate, sep='\t')
