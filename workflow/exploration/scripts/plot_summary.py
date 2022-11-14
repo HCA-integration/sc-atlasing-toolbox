@@ -13,7 +13,7 @@ df.sort_values(by='n_cells', ascending=True).plot.barh(
     sharex=False,
     sharey=True,
     layout=(2, 2),
-    figsize=(12, 2 * n_rows)
+    figsize=(12, 0.8 * n_rows)
 )
 plt.tight_layout()
 plt.savefig(snakemake.output.png)
