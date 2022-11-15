@@ -15,7 +15,7 @@ def read_adata(file):
     ad.obs_names = ad.uns['meta']['dataset_name'] + '-' + ad.obs.reset_index().index.astype(str)
 
     # keep only relevant columns
-    columns = get_union(CELLxGENE_OBS, ['donor', 'sample', 'cell_annotation'])
+    columns = get_union(CELLxGENE_OBS, ['donor', 'sample', 'cell_annotation', 'reference'])
 
     ad.obs = ad.obs[columns].copy()
     ad.obs['organ'] = organ

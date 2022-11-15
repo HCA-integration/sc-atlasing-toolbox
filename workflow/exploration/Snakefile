@@ -63,7 +63,7 @@ rule pca_pseudobulk:
         png=out_dir / 'pseudobulk_pca' / '{dataset}.png'
     params:
         bulk_by='sample',
-        color='donor',
+        color=['donor', 'sex', 'disease'],
     conda:
         'envs/scanpy.yaml'
     resources:
@@ -77,7 +77,7 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
         h5ad=rules.load_data_merge.output.h5ad
     params:
         bulk_by='sample',
-        color='dataset',
+        color=['dataset', 'reference', 'sex', 'disease', 'assay'],
     output:
         png=out_dir / 'pseudobulk_pca' / 'organ' / '{organ}.png'
     resources:
