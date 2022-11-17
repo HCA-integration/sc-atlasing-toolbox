@@ -12,8 +12,9 @@ meta = snakemake.params.meta
 adata = sc.read(in_file, as_sparse=['X'])
 print(adata)
 
-adata.uns['dataset'] = wildcards.dataset
-adata.obs['dataset'] = wildcards.dataset
+adata.uns['dataset'] = meta['dataset']
+adata.obs['dataset'] = meta['dataset']
+adata.obs['study'] = meta['study']
 adata.obs['organ'] = meta['organ']
 adata.uns['meta'] = meta
 

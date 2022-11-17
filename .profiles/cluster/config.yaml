@@ -27,3 +27,9 @@ printshellcmds: True
 scheduler: greedy
 use-conda: True
 cluster-cancel: scancel
+rerun-triggers:
+  - mtime
+  - params
+  - input
+  - software-env
+  - code

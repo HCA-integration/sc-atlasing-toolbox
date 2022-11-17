@@ -10,13 +10,7 @@ output_png = snakemake.output.png
 bulk_by = snakemake.params['bulk_by']
 color = snakemake.params['color']
 colors = color if isinstance(color, list) else [color]
-
-if 'dataset' in snakemake.wildcards.keys():
-    dataset = snakemake.wildcards.dataset
-elif 'organ' in snakemake.wildcards.keys():
-    dataset = snakemake.wildcards.organ
-else:
-    raise ValueError(f'Neither of "dataset" or "organ" in wildcards: {snakemake.wildcards}')
+dataset = snakemake.params.dataset
 
 adata = sc.read(input_h5ad)
 

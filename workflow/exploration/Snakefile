@@ -45,7 +45,7 @@ rule summary_stats:
 
 rule summary_stats_all:
     input:
-        tsv=expand(rules.summary_stats.output.tsv,dataset=dataset_df['dataset_name']),
+        tsv=expand(rules.summary_stats.output.tsv,dataset=dataset_df['dataset']),
     output:
         tsv=out_dir / 'summary' / 'all_datasets.tsv',
         aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
@@ -62,6 +62,7 @@ rule pca_pseudobulk:
     output:
         png=out_dir / 'pseudobulk_pca' / '{dataset}.png'
     params:
+        dataset=lambda wildcards: wildcards.dataset,
         bulk_by='sample',
         color=['donor', 'sex', 'disease'],
     conda:
@@ -74,8 +75,9 @@ rule pca_pseudobulk:
 
 use rule pca_pseudobulk as pca_pseudobulk_organ with:
     input:
-        h5ad=rules.load_data_merge.output.h5ad
+        h5ad=rules.load_data_merge_organ.output.h5ad
     params:
+        dataset=lambda wildcards: wildcards.organ,
         bulk_by='sample',
         color=['dataset', 'reference', 'sex', 'disease', 'assay'],
     output:
@@ -86,7 +88,7 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
 
 rule pca_pseudobulk_all:
     input:
-        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset_name']),
+        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset']),
         expand(rules.pca_pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
@@ -107,7 +109,7 @@ rule marker_genes:
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,dataset=dataset_df['dataset_name'])
+        expand(rules.marker_genes.output,dataset=dataset_df['dataset'])
 
 
 rule qc:
@@ -119,6 +121,7 @@ rule qc:
         violin=out_dir / 'qc' / '{dataset}' / 'violin.png',
         average_jitter=out_dir / 'qc' / '{dataset}' / 'average_jitter.png',
     params:
+        dataset=lambda wildcards: wildcards.dataset,
         hue='donor'
     conda:
         'envs/scanpy.yaml'
@@ -130,21 +133,22 @@ rule qc:
 
 use rule qc as qc_organ with:
     input:
-        h5ad=rules.load_data_merge.output.h5ad
+        h5ad=rules.load_data_merge_organ.output.h5ad
     output:
         joint=out_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
         joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
         violin=out_dir / 'qc' / 'organ' / '{organ}' / 'violin.png',
         average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'average_jitter.png',
     params:
-        hue='dataset'
+        dataset=lambda wildcards: wildcards.organ,
+        hue='study'
     resources:
         mem_mb=500000
 
 
 rule qc_all:
     input:
-        expand(rules.qc.output,dataset=dataset_df['dataset_name']),
+        expand(rules.qc.output,dataset=dataset_df['dataset']),
         expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
 
 rule all:

@@ -108,13 +108,7 @@ output_joint_log = snakemake.output.joint_log
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
 hue = snakemake.params.hue
-
-if 'dataset' in snakemake.wildcards.keys():
-    dataset = snakemake.wildcards.dataset
-elif 'organ' in snakemake.wildcards.keys():
-    dataset = snakemake.wildcards.organ
-else:
-    raise ValueError(f'Neither of "dataset" or "organ" in wildcards: {snakemake.wildcards}')
+dataset = snakemake.params.dataset
 
 print(f'Read {input_h5ad}...')
 adata = sc.read(input_h5ad)

@@ -4,3 +4,9 @@ rerun-incomplete: True
 printshellcmds: True
 scheduler: greedy
 use-conda: True
+rerun-triggers:
+  - mtime
+  - params
+  - input
+  - software-env
+  - code

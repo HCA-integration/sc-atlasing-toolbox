@@ -29,15 +29,18 @@ merged_outputs = glob.glob('test/out/*/merged/*.h5ad')
 for file in merged_outputs:
     print(f'Check {file}...')
     adata = sc.read(file)
-
     print('Check that CELLxGENES mandatory columns present')
-    for col in CELLxGENE_OBS + ['organ', 'dataset', 'donor', 'sample', 'cell_annotation']:
-        assert col in adata.obs.columns
+    extra_columns = ['organ', 'donor', 'sample', 'cell_annotation', 'reference', 'study', 'dataset', 'dataset_id']
+    try:
+        for col in CELLxGENE_OBS + extra_columns:
+            assert col in adata.obs.columns
 
-    for col in CELLxGENE_VARS:
-        assert col in adata.var.columns
+        for col in CELLxGENE_VARS:
+            assert col in adata.var.columns
 
-    for col in ['organ', 'dataset']:
-        assert col in adata.uns
-
-    print(adata)
+        for col in ['organ', 'dataset']:
+            assert col in adata.uns
+    except AssertionError:
+        print(f'column {col} not in adata')
+    finally:
+        print(adata)

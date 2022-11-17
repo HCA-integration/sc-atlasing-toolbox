@@ -5,22 +5,20 @@ import scanpy as sc
 
 from utils import CELLxGENE_OBS, CELLxGENE_VARS, get_union
 
-organ = snakemake.wildcards.organ
+dataset = snakemake.params.dataset
 files = snakemake.input
 out_file = snakemake.output.h5ad
 
 
 def read_adata(file):
     ad = sc.read(file)
-    ad.obs_names = ad.uns['meta']['dataset_name'] + '-' + ad.obs.reset_index().index.astype(str)
+    ad.obs_names = ad.uns['dataset'] + '-' + ad.obs.reset_index().index.astype(str)
 
     # keep only relevant columns
-    columns = get_union(CELLxGENE_OBS, ['donor', 'sample', 'cell_annotation', 'reference'])
+    extra_columns = ['organ', 'donor', 'sample', 'cell_annotation', 'reference', 'study', 'dataset', 'dataset_id']
+    columns = get_union(CELLxGENE_OBS, extra_columns)
 
     ad.obs = ad.obs[columns].copy()
-    ad.obs['organ'] = organ
-    ad.obs['dataset'] = ad.uns['meta']['dataset_name']
-    ad.obs['dataset_id'] = ad.uns['meta']['dataset_id']
 
     ad.var = ad.var[CELLxGENE_VARS]
     ad.var.index.set_names('feature_id', inplace=True)
@@ -41,7 +39,6 @@ adata = read_adata(files[0])
 print(adata)
 
 for file in files[1:]:
-
     print(f'Read {file}...')
     _adata = read_adata(file)
     print(_adata)
@@ -52,7 +49,7 @@ for file in files[1:]:
         adata.var,
         _adata.var,
         how='outer',
-        on=['feature_id']+CELLxGENE_VARS
+        on=['feature_id'] + CELLxGENE_VARS
     )
     var_map = var_map[~var_map.index.duplicated()]
 
@@ -63,8 +60,10 @@ for file in files[1:]:
     del _adata
     gc.collect()
 
-adata.uns['dataset'] = organ
+organ = adata.obs['organ'].unique()[0]
+adata.uns['dataset'] = dataset
 adata.uns['organ'] = organ
+adata.uns['meta'] = {'dataset': dataset, 'organ': organ}
 print(adata)
 print(adata.var)
 

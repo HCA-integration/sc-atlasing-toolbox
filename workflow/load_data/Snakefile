@@ -18,11 +18,11 @@ def get_from_dataset(key, value, column=None, debug=False):
 
 
 def get_url(wildcards):
-    url = get_from_dataset('dataset_name',wildcards.dataset,'url').iloc[0]
-    if not isinstance(url, str):
+    url = get_from_dataset('dataset',wildcards.dataset,'url').iloc[0]
+    if not isinstance(url,str):
         # infer CxG URL from collection and dataset IDs
-        collection_id = get_from_dataset('dataset_name',wildcards.dataset,'collection_id').iloc[0]
-        dataset_id = get_from_dataset('dataset_name',wildcards.dataset,'dataset_id').iloc[0]
+        collection_id = get_from_dataset('dataset',wildcards.dataset,'collection_id').iloc[0]
+        dataset_id = get_from_dataset('dataset',wildcards.dataset,'dataset_id').iloc[0]
         url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/assets/'
         assets = requests.get(url=url).json()
         asset = [a for a in assets if a["filetype"] == "H5AD"][0]
@@ -32,13 +32,18 @@ def get_url(wildcards):
 
 def unlist_dict(dictionary):
     return {
-        k: v[0] if isinstance(v, list) and len(v) == 1 else v
+        k: v[0] if isinstance(v,list) and len(v) == 1 else v
         for k, v in dictionary.items()
     }
 
 
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']), comment='#')
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / 'load_data'
+
+wildcard_constraints:
+    dataset='\w+',
+    study='\w+',
+    organ='\w+',
 
 
 rule download:
@@ -54,7 +59,7 @@ rule download:
 
 rule download_all:
     input:
-        expand(rules.download.output,dataset=dataset_df['dataset_name'])
+        expand(rules.download.output,dataset=dataset_df['dataset'])
 
 
 rule metadata:
@@ -62,7 +67,7 @@ rule metadata:
         h5ad=rules.download.output.h5ad
     params:
         meta=lambda wildcards: unlist_dict(
-            get_from_dataset('dataset_name', wildcards.dataset).to_dict('list')
+            get_from_dataset('dataset',wildcards.dataset).to_dict('list')
         )
     output:
         h5ad=out_dir / 'processed/{dataset}.h5ad',
@@ -78,29 +83,57 @@ rule metadata:
 
 rule metadata_all:
     input:
-        expand(rules.metadata.output,dataset=dataset_df['dataset_name'])
+        expand(rules.metadata.output,dataset=dataset_df['dataset'])
 
 
-rule merge:
+rule merge_study:
     input:
         lambda wildcards: expand(
             rules.metadata.output.h5ad,
-            dataset=get_from_dataset('organ', wildcards.organ, 'dataset_name')
+            dataset=get_from_dataset('study',wildcards.study,'dataset')
         )
     output:
-        h5ad=out_dir / 'merged/{organ}.h5ad'
+        h5ad=out_dir / 'merged/{study}.h5ad'
+    params:
+        dataset=lambda wildcards: wildcards.study
+    resources:
+        mem_mb=200000,
+        disk_mb=20000
     conda:
         '../../envs/scanpy.yaml'
+    script:
+        'scripts/merge.py'
+
+
+def get_datasets_per_organ(wildcards):
+    targets = []
+    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
+    for study in studies:
+        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
+        if len(datasets_per_study) == 1:
+            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
+        else:
+            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
+    return targets
+
+
+rule merge_organ:
+    input: get_datasets_per_organ
+    output:
+        h5ad=out_dir / 'merged/organ/{organ}.h5ad'
+    params:
+        dataset=lambda wildcards: wildcards.organ
     resources:
         mem_mb=500000,
         disk_mb=100000
+    conda:
+        '../../envs/scanpy.yaml'
     script:
         'scripts/merge.py'
 
 
 rule all:
     input:
-        rules.download_all.input,
         rules.metadata_all.input,
-        expand(rules.merge.output,organ=dataset_df['organ'].unique()),
+        expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
     default_target: True
