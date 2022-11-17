@@ -20,11 +20,8 @@ else:
 
 adata = sc.read(input_h5ad)
 
-if bulk_by == 'sample' and color == 'donor':
-    # quickfix: in case more donors than samples
-    adata.obs['bulk_by'] = adata.obs[bulk_by].str.cat(adata.obs[color]).astype('category')
-else:
-    adata.obs['bulk_by'] = adata.obs[bulk_by]
+# make sure all columns are present for bulk
+adata.obs['bulk_by'] = adata.obs[bulk_by].str.cat(adata.obs[color]).astype('category')
 
 
 def get_pseudobulks(adata, group_key):
@@ -60,6 +57,9 @@ adata_bulk = anndata.AnnData(
 sc.pp.log1p(adata_bulk)
 sc.pp.highly_variable_genes(adata_bulk, n_top_genes=2000)
 sc.pp.pca(adata_bulk)
+
+# remove colors if too many entries
+colors = [c for c in colors if adata_bulk.obs[c].nunique() <= 64]
 
 n_rows = len(colors)
 height = np.max([7, n_rows * 0.2 * 7])
