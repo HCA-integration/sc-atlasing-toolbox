@@ -1,0 +1,38 @@
+"""
+Data QC
+"""
+from pathlib import Path
+import pandas as pd
+
+
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+out_dir = Path(config['output_dir']) / 'subset'
+
+module load_data:
+    snakefile: "../load_data/Snakefile"
+    config: config
+
+use rule * from load_data as load_data_ *
+
+
+rule subset:
+    input:
+        h5ad=rules.merge_organ.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / '{strategy}.h5ad'
+    params:
+        n_cells=lambda wildcards: config['subset'][wildcards.organ]['n_cells']
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/{wildcards.strategy}.py'
+
+
+rule all:
+    input:
+        expand(
+            rules.subset.output,
+            organ=dataset_df['organ'].unique(),
+            strategy=['by_sample', 'within_sample']
+        )
+    default_target: True

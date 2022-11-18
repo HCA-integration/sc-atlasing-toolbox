@@ -8,6 +8,7 @@ from utils import _get_or_default_from_config, set_defaults
 min_version("6.0")
 container: "docker://condaforge/mambaforge:latest"
 configfile: "configs/config.yaml"
+configfile: "configs/subset.yaml"
 
 params = pd.read_table('configs/modules.tsv',comment='#')
 params['submodules'] = params['submodules'].str.split(',')
@@ -46,6 +47,10 @@ module exploration:
     snakefile: "exploration/Snakefile"
     config: config
 
+module subset:
+    snakefile: "subset/Snakefile"
+    config: config
+
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
     config: config
@@ -66,6 +71,8 @@ use rule * from load_data as load_data_ *
 
 use rule * from exploration as exploration_ *
 
+use rule * from subset as subset_ *
+
 use rule * from preprocessing as preprocessing_ *
 
 use rule * from label_transfer as label_transfer_ *
@@ -79,6 +86,7 @@ rule all:
     input:
         rules.load_data_all.input,
         rules.exploration_all.input,
+        rules.subset_all.input,
         # rules.preprocessing_all.input,
         # rules.label_transfer_all.input,
         rules.integration_all.input,
