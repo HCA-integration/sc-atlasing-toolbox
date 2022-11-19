@@ -1,0 +1,11 @@
+name: plots
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - upsetplot
+  - pip
+  - pip:
+    - scanpy==1.9
+    - sc-toolbox
