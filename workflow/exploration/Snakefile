@@ -7,8 +7,9 @@ import pandas as pd
 from utils import get_resource
 
 
+module_name = 'exploration'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
-out_dir = Path(config['output_dir']) / 'exploration'
+out_dir = Path(config['output_dir']) / module_name
 
 wildcard_constraints:
     dataset='\w+',
@@ -17,6 +18,13 @@ wildcard_constraints:
 module load_data:
     snakefile: "../load_data/Snakefile"
     config: config
+
+use rule * from common as common_ *
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
 
 use rule * from load_data as load_data_ *
 
@@ -176,3 +184,12 @@ rule all:
         rules.qc_all.input,
         rules.barcode_matching_all.input,
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

@@ -1,12 +1,20 @@
 """
-Data QC
+Data Subsetting for benchmark
 """
 from pathlib import Path
 import pandas as pd
 
 
+module_name = 'subset'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
-out_dir = Path(config['output_dir']) / 'subset'
+out_dir = Path(config['output_dir']) / module_name
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
 
 module load_data:
     snakefile: "../load_data/Snakefile"
@@ -36,3 +44,12 @@ rule all:
             strategy=['by_sample', 'within_sample']
         )
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

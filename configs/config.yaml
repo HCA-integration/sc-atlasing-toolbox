@@ -2,6 +2,7 @@
 
 output_dir: data/out
 dataset_meta: configs/datasets.tsv
+images: images
 
 resources:
   cpu:

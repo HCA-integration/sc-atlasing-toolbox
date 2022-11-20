@@ -37,13 +37,21 @@ def unlist_dict(dictionary):
     }
 
 
+module_name = 'load_data'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
-out_dir = Path(config['output_dir']) / 'load_data'
+out_dir = Path(config['output_dir']) / module_name
 
 wildcard_constraints:
     dataset='\w+',
     study='\w+',
     organ='\w+',
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
 
 
 rule download:
@@ -137,3 +145,12 @@ rule all:
         rules.metadata_all.input,
         expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

@@ -1,4 +1,5 @@
 output_dir: test/out
+images: test/images
 
 resources:
   cpu:

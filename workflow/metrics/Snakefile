@@ -19,8 +19,9 @@ module integration:
 use rule * from integration as integration_ *
 
 
-config = set_defaults(config,'metrics')
-out_dir = Path(config['output_dir']) / 'metrics'
+module_name = 'metrics'
+config = set_defaults(config,module_name)
+out_dir = Path(config['output_dir']) / module_name
 
 wildcards_df = get_wildcards_from_config(
     config=config['DATASETS'],
@@ -50,6 +51,14 @@ parameters = wildcards_df \
     .merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
 
 wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams']
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+
+use rule * from common as common_ *
 
 
 rule run:
@@ -143,3 +152,12 @@ rule all:
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

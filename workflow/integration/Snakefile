@@ -11,7 +11,9 @@ def get_h5ad(wildcards):
     return config['DATASETS'][wildcards.dataset]['adata_file']
 
 
-config = set_defaults(config,'integration')
+module_name = 'integration'
+config = set_defaults(config,module_name)
+out_dir = Path(config['output_dir']) / module_name
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
@@ -22,10 +24,17 @@ parameters = get_wildcards_from_config(
     wildcard_names=['dataset', 'method', 'label', 'batch'],
     explode_by='method',
 ).merge(parameters,on='method')
-out_dir = Path(config['output_dir']) / 'integration'
 
 parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams']
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+
+use rule * from common as common_ *
 
 
 rule run:
@@ -71,3 +80,12 @@ rule all:
         expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list')),
         rules.benchmark.output
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

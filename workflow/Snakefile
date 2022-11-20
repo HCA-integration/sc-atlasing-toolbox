@@ -39,6 +39,10 @@ config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
 out_dir = Path(config['output_dir'])
 
 # Import modules
+module common:
+    snakefile: "common/Snakefile"
+    config: config
+
 module load_data:
     snakefile: "load_data/Snakefile"
     config: config
@@ -67,6 +71,8 @@ module metrics:
     snakefile: "metrics/Snakefile"
     config: config
 
+use rule * from common as common_ *
+
 use rule * from load_data as load_data_ *
 
 use rule * from exploration as exploration_ *
@@ -92,3 +98,14 @@ rule all:
         rules.integration_all.input,
         rules.metrics_all.input
     default_target: True
+
+
+modules = ['load_data', 'exploration', 'subset', 'integration', 'metrics']
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'],
+            target=[f'{_module}_all' for _module in modules] + ['all']
+        )
