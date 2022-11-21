@@ -3,11 +3,7 @@ import gc
 import pandas as pd
 import scanpy as sc
 
-from utils import CELLxGENE_OBS, CELLxGENE_VARS, get_union
-
-dataset = snakemake.params.dataset
-files = snakemake.input
-out_file = snakemake.output.h5ad
+from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS, get_union
 
 
 def read_adata(file):
@@ -15,8 +11,7 @@ def read_adata(file):
     ad.obs_names = ad.uns['dataset'] + '-' + ad.obs.reset_index().index.astype(str)
 
     # keep only relevant columns
-    extra_columns = ['organ', 'donor', 'sample', 'cell_annotation', 'reference', 'study', 'dataset', 'modalities']
-    columns = get_union(CELLxGENE_OBS, extra_columns)
+    columns = get_union(CELLxGENE_OBS, EXTRA_COLUMNS)
 
     ad.obs = ad.obs[columns].copy()
 
@@ -33,6 +28,10 @@ def read_adata(file):
 
     return ad
 
+
+dataset = snakemake.params.dataset
+files = snakemake.input
+out_file = snakemake.output.h5ad
 
 print(f'Read first file {files[0]}...')
 adata = read_adata(files[0])

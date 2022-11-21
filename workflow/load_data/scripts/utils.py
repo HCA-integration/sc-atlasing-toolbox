@@ -30,6 +30,18 @@ CELLxGENE_VARS = [
 ]
 
 
+EXTRA_COLUMNS = [
+    'organ',
+    'donor',
+    'sample',
+    'cell_annotation',
+    'reference',
+    'study',
+    'dataset',
+    'modalities'
+]
+
+
 def get_union(*args: list):
     """
 

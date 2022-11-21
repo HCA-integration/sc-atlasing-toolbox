@@ -2,7 +2,7 @@ import pandas as pd
 import scanpy as sc
 import glob
 
-from utils import CELLxGENE_OBS, CELLxGENE_VARS
+from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS
 
 datasets_df = pd.read_table('test/datasets.tsv')
 
@@ -18,9 +18,13 @@ for file in single_outputs:
     assert 'dataset' in adata.obs
     assert 'organ' in adata.obs
     assert 'meta' in adata.uns
-    for key in datasets_df.columns:
-        assert key in adata.uns['meta']
-        assert key in adata.obs.columns
+    try:
+        for key in datasets_df.columns:
+            assert key in adata.uns['meta']
+            assert key in adata.obs.columns
+    except AssertionError:
+        print(f'AssertionError: "{key}" not in "{file}"')
+        print(adata)
 
 # merged datasets
 
@@ -30,9 +34,8 @@ for file in merged_outputs:
     print(f'Check {file}...')
     adata = sc.read(file)
     print('Check that CELLxGENES mandatory columns present')
-    extra_columns = ['organ', 'donor', 'sample', 'cell_annotation', 'reference', 'study', 'dataset', 'dataset_id']
     try:
-        for col in CELLxGENE_OBS + extra_columns:
+        for col in CELLxGENE_OBS + EXTRA_COLUMNS:
             assert col in adata.obs.columns
 
         for col in CELLxGENE_VARS:
@@ -41,6 +44,5 @@ for file in merged_outputs:
         for col in ['organ', 'dataset']:
             assert col in adata.uns
     except AssertionError:
-        print(f'column {col} not in adata')
-    finally:
+        print(f'AssertionError: column "{col}" not in "{file}"')
         print(adata)

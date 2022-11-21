@@ -15,18 +15,19 @@ wildcard_constraints:
     dataset='\w+',
     organ='\w+',
 
+
 module load_data:
     snakefile: "../load_data/Snakefile"
     config: config
 
-use rule * from common as common_ *
+use rule * from load_data as load_data_ *
+
 
 module common:
     snakefile: "../common/Snakefile"
     config: config
 
-
-use rule * from load_data as load_data_ *
+use rule * from common as common_ *
 
 
 rule summary_stats:
@@ -66,11 +67,11 @@ rule summary_stats_all:
 
 rule pca_pseudobulk:
     input:
-        h5ad=rules.load_data_metadata.output.h5ad
+        h5ad=rules.load_data_merge_study.output.h5ad
     output:
-        png=out_dir / 'pseudobulk_pca' / '{dataset}.png'
+        png=out_dir / 'pseudobulk_pca' / '{study}.png'
     params:
-        dataset=lambda wildcards: wildcards.dataset,
+        dataset=lambda wildcards: wildcards.study,
         bulk_by='sample',
         color=['donor', 'sex', 'disease'],
     conda:
@@ -96,16 +97,17 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
 
 rule pca_pseudobulk_all:
     input:
-        expand(rules.pca_pseudobulk.output,dataset=dataset_df['dataset']),
+        expand(rules.pca_pseudobulk.output,study=dataset_df['study']),
         expand(rules.pca_pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
 rule marker_genes:
     input:
-        h5ad=rules.load_data_metadata.output.h5ad
+        h5ad=rules.load_data_merge_study.output.h5ad
     output:
-        png=out_dir / 'marker_genes' / '{dataset}.png',
+        png=out_dir / 'marker_genes' / '{study}.png',
     params:
+        dataset=lambda wildcards: wildcards.study,
         markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
     conda:
         'envs/scanpy.yaml'
@@ -117,7 +119,7 @@ rule marker_genes:
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,dataset=dataset_df['dataset'])
+        expand(rules.marker_genes.output,study=dataset_df['study'])
 
 
 rule qc:

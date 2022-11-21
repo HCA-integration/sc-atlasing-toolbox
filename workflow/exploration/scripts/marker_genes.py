@@ -5,14 +5,14 @@ sc.set_figure_params(frameon=False)
 plt.rcParams['figure.figsize'] = 30, 25
 input_h5ad = snakemake.input.h5ad
 output_png = snakemake.output.png
-dataset = snakemake.wildcards.dataset
-markers = snakemake.params['markers']
+dataset = snakemake.params.dataset
+markers = snakemake.params.markers
 
 adata = sc.read(input_h5ad)
 
-author_label = adata.uns['meta']['cell_annotation']
+author_label = 'cell_annotation'
 ontology_label = 'cell_type'
-
+print(adata)
 # match marker genes and var_names
 adata.var_names = adata.var['feature_name'].astype(str)
 print({k: len(v) for k, v in markers.items()})

@@ -57,12 +57,9 @@ use rule * from common as common_ *
 rule download:
     output:
         h5ad=out_dir / 'download/{dataset}.h5ad'
-    params:
-        url=get_url
-    shell:
-        """
-        wget -O {output} "{params.url}"
-        """
+    run:
+        url = get_url(wildcards)
+        shell("wget -O {output} '{url}'")
 
 
 rule download_all:
@@ -126,7 +123,7 @@ def get_datasets_per_organ(wildcards):
 
 
 rule merge_organ:
-    input: get_datasets_per_organ
+    input: expand(rules.merge_study.output.h5ad,study=dataset_df['study'].unique())
     output:
         h5ad=out_dir / 'merged/organ/{organ}.h5ad'
     params:
@@ -143,6 +140,7 @@ rule merge_organ:
 rule all:
     input:
         rules.metadata_all.input,
+        expand(rules.merge_study.output, study=dataset_df['study'].unique()),
         expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
     default_target: True
 
