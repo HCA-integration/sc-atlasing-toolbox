@@ -5,12 +5,17 @@ import pandas as pd
 import scanpy as sc
 
 
-def get_pseudobulks(adata, group_key):
+def get_pseudobulks(adata, group_key, agg='mean'):
     pseudobulk = {'Genes': adata.var_names.values}
 
     for i in adata.obs.loc[:, group_key].cat.categories:
         temp = adata.obs.loc[:, group_key] == i
-        pseudobulk[i] = adata[temp].X.sum(axis=0).A1
+        if agg == 'sum':
+            pseudobulk[i] = adata[temp].X.sum(axis=0).A1
+        elif agg == 'mean':
+            pseudobulk[i] = adata[temp].X.mean(axis=0).A1
+        else:
+            raise ValueError(f'invalid aggregation method "{agg}"')
 
     pseudobulk = pd.DataFrame(pseudobulk).set_index('Genes')
 
@@ -26,6 +31,7 @@ colors = color if isinstance(color, list) else [color]
 dataset = snakemake.params.dataset
 
 adata = sc.read(input_h5ad)
+sc.pp.normalize_total(adata)
 
 # make sure all columns are present for bulk
 adata.obs['bulk_by'] = adata.obs[bulk_by].str.cat(adata.obs[color].astype(str)).astype('category')
@@ -49,7 +55,6 @@ adata_bulk = anndata.AnnData(
 )
 
 # process pseudobulk adata
-sc.pp.normalize_total(adata_bulk)
 sc.pp.log1p(adata_bulk)
 sc.pp.highly_variable_genes(adata_bulk, n_top_genes=2000)
 sc.pp.pca(adata_bulk)
