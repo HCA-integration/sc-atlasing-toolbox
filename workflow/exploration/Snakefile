@@ -88,7 +88,7 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
     params:
         dataset=lambda wildcards: wildcards.organ,
         bulk_by='sample',
-        color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities'],
+        color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities', 'suspension_type', 'pipeline_version'],
     output:
         png=out_dir / 'pseudobulk_pca' / 'organ' / '{organ}.png'
     resources:

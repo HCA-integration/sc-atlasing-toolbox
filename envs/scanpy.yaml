@@ -7,4 +7,5 @@ dependencies:
   - pip
   - pip:
     - scanpy==1.9
+    - dask
     - sc-toolbox

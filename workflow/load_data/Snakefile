@@ -76,7 +76,7 @@ rule metadata:
         )
     output:
         h5ad=out_dir / 'processed/{dataset}.h5ad',
-        plot=out_dir / 'processed/{dataset}_counts.png',
+        plot=out_dir / 'processed/counts/{dataset}.png',
     conda:
         '../../envs/scanpy.yaml'
     resources:
