@@ -38,7 +38,8 @@ EXTRA_COLUMNS = [
     'reference',
     'study',
     'dataset',
-    'modalities'
+    'modalities',
+    'pipeline_version'
 ]
 
 
