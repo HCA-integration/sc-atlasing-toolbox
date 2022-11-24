@@ -1,0 +1,60 @@
+# Note: relative paths must be relative to the project root, not the directory of the config file.
+
+output_dir: data/out
+dataset_meta: configs/datasets.tsv
+
+defaults:
+  integration:
+    scvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 100
+      use_observed_lib_size: true
+    scanvi:
+      n_hidden: 128
+      dispersion: gene
+      max_epochs: 100
+      use_observed_lib_size: true
+    combat:
+    unintegrated:
+  datasets:
+    - pancreas_ari
+    - pancreas_nmi
+    - pancreas_asw
+    - pancreas_lisi
+
+DATASETS:
+  pancreas_ari:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - ari
+      - ari_leiden_y
+      - ari_kmeans_y
+  pancreas_nmi:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - nmi
+      - nmi_leiden_y
+      - nmi_kmeans_y
+  pancreas_asw:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
+  pancreas_lisi:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
+    metrics:
+      - ilisi
+      - ilisi_y
+      - clisi
+      - clisi_y

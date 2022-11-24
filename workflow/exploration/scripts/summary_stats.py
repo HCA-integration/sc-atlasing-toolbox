@@ -19,7 +19,7 @@ obs_per_donor.plot.barh(figsize=(10,8))
 plt.savefig(output_donor)
 
 stats = {
-    'dataset': snakemake.wildcards.dataset,
+    'study': adata.obs['study'].unique()[0],
     'n_cells': [adata.n_obs],
     'n_genes': [adata.n_vars],
     'n_samples': [obs_per_sample.shape[0]],

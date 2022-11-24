@@ -37,9 +37,37 @@ def unlist_dict(dictionary):
     }
 
 
+def get_datasets_per_organ(wildcards):
+    targets = []
+    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
+    for study in studies:
+        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
+        if len(datasets_per_study) == 1:
+            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
+        else:
+            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
+    return targets
+
+
 module_name = 'load_data'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / module_name
+
+# set default filter settings per values per study filters
+for _, row in dataset_df[['study', 'organ']].drop_duplicates().iterrows():
+    study, organ = row[['study','organ']]
+
+    if organ not in config['filter_per_organ'].keys():
+        config['filter_per_organ'][organ] = {}
+    if 'filter_per_study' not in config.keys():
+        config['filter_per_study'] = {}
+    if study not in config['filter_per_study'].keys():
+        config['filter_per_study'][study] = {}
+
+    # use organ settings as default for all studies of that organ
+    for key, value in config['filter_per_organ'][organ].items():
+        if key not in config['filter_per_study'][study]:
+            config['filter_per_study'][study][key] = value
 
 wildcard_constraints:
     dataset='\w+',
@@ -110,22 +138,30 @@ rule merge_study:
         'scripts/merge.py'
 
 
-def get_datasets_per_organ(wildcards):
-    targets = []
-    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
-    for study in studies:
-        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
-        if len(datasets_per_study) == 1:
-            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
-        else:
-            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
-    return targets
+rule filter:
+    """
+    Filter by study
+    """
+    input:
+        h5ad=rules.merge_study.output.h5ad
+    output:
+        h5ad=out_dir / 'filtered' / '{study}.h5ad'
+    params:
+        filter=lambda wildcards: config['filter_per_study'][wildcards.study]
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/filter.py'
 
 
 rule merge_organ:
-    input: expand(rules.merge_study.output.h5ad,study=dataset_df['study'].unique())
+    input:
+        lambda wildcards: expand(
+            rules.filter.output.h5ad,
+            study=dataset_df[dataset_df['organ'] == wildcards.organ]['study'].unique(),
+        )
     output:
-        h5ad=out_dir / 'merged/organ/{organ}.h5ad'
+        h5ad=out_dir / 'merged' / 'organ' / '{organ}.h5ad'
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
@@ -140,7 +176,8 @@ rule merge_organ:
 rule all:
     input:
         rules.metadata_all.input,
-        expand(rules.merge_study.output, study=dataset_df['study'].unique()),
+        expand(rules.merge_study.output,study=dataset_df['study'].unique()),
+        expand(rules.filter.output,study=dataset_df['study'].unique()),
         expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
     default_target: True
 
