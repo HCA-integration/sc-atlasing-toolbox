@@ -1,3 +1,30 @@
 output_dir: test/out
 dataset_meta: test/datasets.tsv
 images: test/images
+
+filter_per_organ:
+  blood:
+    cells_per_sample:
+      min: 50
+      max: 1000
+    mito_pct: 30
+    remove_by_colum:
+      dataset:
+        - Lee2021_2
+
+filter_per_study:
+  SchulteSchrepping2020:
+    remove_by_colum:
+      sample:
+        - Schulte-Schrepping_C2P01H_d0
+        - Schulte-Schrepping_C2P05F_d0
+        - Schulte-Schrepping_C2P07H_d0
+        - Schulte-Schrepping_C2P10H_d0
+        - Schulte-Schrepping_C2P13F_d0
+        - Schulte-Schrepping_C2P15H_d0
+        - Schulte-Schrepping_C2P16H_d0
+        - Schulte-Schrepping_C2P19H_d0
+      donor:
+        - C19-CB-0008
+      disease:
+        - influenza

@@ -1,7 +1,6 @@
 # Note: relative paths must be relative to the project root, not the directory of the config file.
 
 output_dir: data/out
-dataset_meta: configs/datasets.tsv
 images: images
 
 resources:
@@ -15,99 +14,3 @@ resources:
     qos: gpu
     gpu: 1
     mem_mb: 90000
-
-defaults:
-  integration:
-    scvi:
-      n_hidden: 128
-      dispersion:
-        - gene
-        #- gene-batch
-        #- gene-label
-        #- gene-cell
-      max_epochs: 10
-      use_observed_lib_size: true
-    scanvi:
-      n_hidden: 128
-      dispersion: gene
-      max_epochs: 10
-      use_observed_lib_size: true
-    combat:
-    scanorama:
-    unintegrated:
-  metrics:
-    - nmi
-    - ari
-    - asw_label
-    - asw_batch
-    - cell_cycle
-    - clisi
-    - ilisi
-    - graph_connectivity
-    - isolated_label_asw
-    - isolated_label_f1
-    - pcr
-  datasets:
-    - test
-
-DATASETS:
-  test:
-    label: bulk_labels
-    batch: phase
-    adata_file: 'data/pbmc68k.h5ad'
-    metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
-  test2:
-    label: bulk_labels
-    batch: phase
-    adata_file: 'data/pbmc68k.h5ad'
-    metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_f1
-      - pcr
-
-ORGANS:
-  blood:
-    marker_genes:
-      "Pan-immune": [ "CD44" ]
-      "T": [ "CD3D","CD4","CD8A" ]
-      "Naive T": [ "CCR7","LEF1","CD27","SELL" ]
-      "Memory": [ "IL7R","GZMK" ]
-      "Cytotoxic": [ "GZMH", "GZMA", "GZMB", "PRF1" ]
-      "G/D T": [ "TRGV9", "TRDV2" ]
-      "T Reg": [ "FOXP3", "IL2RA" ]
-      "MAIT": [ "TRAV1-2", "SLC4A10" ]
-      "NK": [ "KLRB1", "NCR1", "NCAM1", "GNLY" ]
-      "ILC": [ "TNFRSF18", "TNFRSF4" ]
-      "Monocyte": [ "FCER1G", "CD14", "FCGR3A" ]
-      "cDC1": [ "CLEC9A" ]
-      "cDC2": [ "CD1C", "FCER1A" ]
-      "pDC": [ "CLEC4C" ]
-      "AS-DC": [ "AXL", "SIGLEC6" ]
-      "B": [ "CD19", "CD79A" ]
-      "Naive B": [ "FCER2", "TCL1A" ]
-      "B Memory": [ "CD24" ]
-      "B non-switched": [ "IGHM", "IGHD" ]
-      "Antibody secreting": [ "TNFRSF13B", "JCHAIN", "CHPF", "IGHG1" ]
-      "Cycling": [ "MKI67" ]
-      "IFN stim": [ "IFIT1", "MX2" ]
-      "HPC": [ "KIT", "CD34" ]
-      "Platelet": [ "PPBP", "PF4" ]
-      "RBC": [ "HBB" ]
-      "Baso/Eos": [ "EPX" ]

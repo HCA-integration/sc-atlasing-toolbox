@@ -8,7 +8,10 @@ from utils import _get_or_default_from_config, set_defaults
 min_version("6.0")
 container: "docker://condaforge/mambaforge:latest"
 configfile: "configs/config.yaml"
+configfile: "configs/load_data.yaml"
+configfile: "configs/exploration.yaml"
 configfile: "configs/subset.yaml"
+configfile: "configs/benchmark.yaml"
 
 params = pd.read_table('configs/modules.tsv',comment='#')
 params['submodules'] = params['submodules'].str.split(',')

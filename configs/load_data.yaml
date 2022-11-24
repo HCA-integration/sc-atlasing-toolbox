@@ -1,0 +1,13 @@
+dataset_meta: configs/datasets.tsv
+
+filter_per_organ:
+  blood:
+    cells_per_sample:
+      min: 50
+      max: 10000
+    mito_pct: 30
+    remove_by_colum:
+      disease:
+        - respiratory system disorder
+        - influenza
+        - systemic lupus erythematosus

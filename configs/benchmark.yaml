@@ -1,60 +1,65 @@
-# Note: relative paths must be relative to the project root, not the directory of the config file.
-
-output_dir: data/out
-dataset_meta: configs/datasets.tsv
-
 defaults:
   integration:
     scvi:
       n_hidden: 128
-      dispersion: gene
-      max_epochs: 100
+      dispersion:
+        - gene
+        #- gene-batch
+        #- gene-label
+        #- gene-cell
+      max_epochs: 10
       use_observed_lib_size: true
     scanvi:
       n_hidden: 128
       dispersion: gene
-      max_epochs: 100
+      max_epochs: 10
       use_observed_lib_size: true
     combat:
+    scanorama:
     unintegrated:
+  metrics:
+    - nmi
+    - ari
+    - asw_label
+    - asw_batch
+    - cell_cycle
+    - clisi
+    - ilisi
+    - graph_connectivity
+    - isolated_label_asw
+    - isolated_label_f1
+    - pcr
   datasets:
-    - pancreas_ari
-    - pancreas_nmi
-    - pancreas_asw
-    - pancreas_lisi
+    - test
 
 DATASETS:
-  pancreas_ari:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
-    metrics:
-      - ari
-      - ari_leiden_y
-      - ari_kmeans_y
-  pancreas_nmi:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
+  test:
+    label: bulk_labels
+    batch: phase
+    adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
-      - nmi_leiden_y
-      - nmi_kmeans_y
-  pancreas_asw:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
-    metrics:
+      - ari
       - asw_label
-      - asw_label_y
       - asw_batch
-      - asw_batch_y
-  pancreas_lisi:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
-    metrics:
-      - ilisi
-      - ilisi_y
       - clisi
-      - clisi_y
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
+  test2:
+    label: bulk_labels
+    batch: phase
+    adata_file: 'data/pbmc68k.h5ad'
+    metrics:
+      - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
