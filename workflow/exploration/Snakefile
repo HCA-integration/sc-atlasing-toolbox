@@ -55,7 +55,7 @@ rule summary_stats:
 
 rule summary_stats_all:
     input:
-        tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study']),
+        tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study'].unique()),
     output:
         tsv=out_dir / 'summary' / 'all_datasets.tsv',
         aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
@@ -98,7 +98,7 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
 
 rule pca_pseudobulk_all:
     input:
-        expand(rules.pca_pseudobulk.output,study=dataset_df['study']),
+        expand(rules.pca_pseudobulk.output,study=dataset_df['study'].unique()),
         expand(rules.pca_pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
@@ -120,7 +120,7 @@ rule marker_genes:
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,study=dataset_df['study'])
+        expand(rules.marker_genes.output,study=dataset_df['study'].unique())
 
 
 rule qc:
@@ -159,7 +159,7 @@ use rule qc as qc_organ with:
 
 rule qc_all:
     input:
-        expand(rules.qc.output,study=dataset_df['study']),
+        expand(rules.qc.output,study=dataset_df['study'].unique()),
         expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
 
 

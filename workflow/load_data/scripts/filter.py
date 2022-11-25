@@ -27,7 +27,7 @@ if 'cells_per_sample' in params.keys():
     min_cells = params['cells_per_sample']['min']
     max_cells = params['cells_per_sample']['max']
     n_cells_per_sample = adata.obs['sample'].value_counts()
-    samples_to_remove = n_cells_per_sample[n_cells_per_sample.between(min_cells, max_cells)].index
-    adata = adata[~adata.obs['sample'].isin(samples_to_remove)]
+    samples_to_keep = n_cells_per_sample[n_cells_per_sample.between(min_cells, max_cells)].index
+    adata = adata[adata.obs['sample'].isin(samples_to_keep)]
 
 adata.write(output_h5ad)
