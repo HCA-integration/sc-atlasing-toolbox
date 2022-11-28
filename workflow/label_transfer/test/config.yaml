@@ -1,0 +1,35 @@
+output_dir: test/out
+images: test/images
+
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+    gpu: 0
+  gpu:
+    partition: gpu_p
+    qos: gpu
+    gpu: 1
+
+defaults:
+  label_transfer:
+    celltypist:
+      - Healthy_COVID19_PBMC
+      - Immune_All_Low
+
+DATASETS:
+  Lee2020:
+    adata_file: test/out/load_data/filtered/Lee2020.h5ad
+    label: cell_type
+    label_transfer:
+      celltypist:
+        - Healthy_COVID19_PBMC
+  blood:
+    adata_file: test/out/load_data/merged/organ/blood.h5ad
+    label: cell_type
+    label_transfer:
+      celltypist:
+        - Healthy_COVID19_PBMC
+  test2:
+    adata_file: ../../data/pbmc68k.h5ad
+    label: bulk_labels

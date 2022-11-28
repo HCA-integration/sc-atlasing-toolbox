@@ -1,4 +1,71 @@
-#rule all:
-#    input:
-#    output:
+"""
+Label transfer and harmonisation
+"""
+import os
+from pathlib import Path
 
+from utils import get_params, get_resource, get_wildcards_from_config, set_defaults, get_wildcards
+
+
+def get_h5ad(wildcards):
+    return config['DATASETS'][wildcards.dataset]['adata_file']
+
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+module_name = 'label_transfer'
+config = set_defaults(config,module_name)
+out_dir = Path(config['output_dir']) / module_name
+os.environ["CELLTYPIST_FOLDER"] = str(out_dir / 'models' / 'celltypist')
+
+envvars:
+    "CELLTYPIST_FOLDER"
+
+
+parameters = get_wildcards_from_config(
+    config=config['DATASETS'],
+    config_keys=config['defaults']['datasets'],
+    config_params=['label_transfer', 'label'],
+    wildcard_names=['dataset', 'label_transfer', 'label'],
+)
+parameters['method'] = [k for d in parameters['label_transfer'] for k,v in d.items()]
+parameters['model'] = [list(v) for d in parameters['label_transfer'] for k,v in d.items()]
+parameters = parameters.explode('model').reset_index(drop=True)
+
+
+rule get_model:
+    output:
+        model=out_dir / 'models' / '{method}' / '{model}.pkl'
+    conda:
+        'envs/{method}.yaml'
+    params:
+        CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"]
+    script:
+        'scripts/get_model_{wildcards.method}.py'
+
+
+rule run:
+    input:
+        h5ad=get_h5ad,
+        model=rules.get_model.output.model,
+    output:
+        h5ad=out_dir / '{method}' / '{dataset}' / '{model}.h5ad',
+        png=out_dir / 'figures' / '{method}-{dataset}-{model}.png',
+    conda:
+        'envs/{method}.yaml'
+    params:
+        CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
+        label_key=lambda wildcards: get_params(wildcards,parameters,'label')
+    script:
+        'scripts/{wildcards.method}.py'
+
+
+rule all:
+    input:
+        expand(rules.run.output,zip,**get_wildcards(parameters, ['dataset', 'method', 'model']))
+    default_target: True

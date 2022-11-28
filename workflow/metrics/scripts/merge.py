@@ -58,7 +58,7 @@ g = sns.catplot(
     x='s',
     y='metric',
     #row=facet_var,
-    #col='output_type',
+    col='output_type',
     hue='output_type',
     #height=3,
     #aspect=0.8 * n_cols,
@@ -67,7 +67,7 @@ g = sns.catplot(
     order=metrics_df.groupby('metric')['s'].max().sort_values(ascending=False).index,
     errwidth=0.5,
     capsize=0.2,
-    dodge=True,
+    dodge=False,
 )
 g.set(xlim=(-.01, None))
 g.fig.subplots_adjust(top=adjust)

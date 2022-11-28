@@ -161,3 +161,14 @@ rule dependency_graph:
             images=config['images'] + f'/{module_name}',
             target='all'
         )
+
+
+rule compare_metrics:
+    input:
+        tsv=rules.merge.output.metrics
+    output:
+        png=out_dir / 'plots' / 'comparison.png'
+    conda:
+        'envs/plots.yaml'
+    script:
+        'scripts/plots/comparison.py'
