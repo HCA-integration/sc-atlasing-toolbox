@@ -55,7 +55,7 @@ rule run:
         model=rules.get_model.output.model,
     output:
         h5ad=out_dir / '{method}' / '{dataset}' / '{model}.h5ad',
-        png=out_dir / '{method}' / '{dataset}' / '{model}.png',
+        png=out_dir / 'figures' / '{method}-{dataset}-{model}.png',
     conda:
         'envs/{method}.yaml'
     params:
@@ -67,5 +67,5 @@ rule run:
 
 rule all:
     input:
-        expand(rules.run.output,**get_wildcards(parameters, ['dataset', 'method', 'model']))
+        expand(rules.run.output,zip,**get_wildcards(parameters, ['dataset', 'method', 'model']))
     default_target: True

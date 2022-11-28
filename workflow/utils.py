@@ -86,7 +86,7 @@ def _get_or_default_from_config(config, defaults, key, value):
     if value in config[key]:
         return config[key][value]
     try:
-        assert value in defaults
+        assert value in defaults.keys()
     except AssertionError:
         raise AssertionError(f'No default defined for "{value}"')
     return defaults[value]
