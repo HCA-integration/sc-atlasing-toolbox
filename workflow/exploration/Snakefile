@@ -66,11 +66,13 @@ rule summary_stats_all:
         'scripts/plot_summary.py'
 
 
-rule pca_pseudobulk:
+rule pseudobulk:
     input:
         h5ad=rules.load_data_filter.output.h5ad
     output:
-        png=out_dir / 'pseudobulk_pca' / '{study}.png'
+        pca_1_2=out_dir / 'pseudobulk' / '{study}_1_2.png',
+        pca_2_3=out_dir / 'pseudobulk' / '{study}_2_3.png',
+        pca_scree=out_dir / 'pseudobulk' / '{study}_scree.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         bulk_by='sample',
@@ -80,10 +82,10 @@ rule pca_pseudobulk:
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
-        'scripts/pca_pseudobulk.py'
+        'scripts/pseudobulk.py'
 
 
-use rule pca_pseudobulk as pca_pseudobulk_organ with:
+use rule pseudobulk as pseudobulk_organ with:
     input:
         h5ad=rules.load_data_merge_organ.output.h5ad
     params:
@@ -91,15 +93,17 @@ use rule pca_pseudobulk as pca_pseudobulk_organ with:
         bulk_by='sample',
         color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities', 'suspension_type', 'pipeline_version'],
     output:
-        png=out_dir / 'pseudobulk_pca' / 'organ' / '{organ}.png'
+        pca_1_2=out_dir / 'pseudobulk' / 'organ' / '{organ}_1_2.png',
+        pca_2_3=out_dir / 'pseudobulk' / 'organ' / '{organ}_2_3.png',
+        pca_scree=out_dir / 'pseudobulk' / 'organ' / '{organ}_scree.png',
     resources:
         mem_mb=500000
 
 
-rule pca_pseudobulk_all:
+rule pseudobulk_all:
     input:
-        expand(rules.pca_pseudobulk.output,study=dataset_df['study']),
-        expand(rules.pca_pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
+        expand(rules.pseudobulk.output,study=dataset_df['study']),
+        expand(rules.pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
 rule marker_genes:
@@ -182,7 +186,7 @@ rule barcode_matching_all:
 rule all:
     input:
         rules.summary_stats_all.output,
-        rules.pca_pseudobulk_all.input,
+        rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.qc_all.input,
         rules.barcode_matching_all.input,
