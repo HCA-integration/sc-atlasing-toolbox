@@ -43,7 +43,7 @@ def get_wildcards_from_config(
         config,
         config_params,
         wildcard_names,
-        explode_by,
+        explode_by=None,
         config_keys=None,
 ):
     """
