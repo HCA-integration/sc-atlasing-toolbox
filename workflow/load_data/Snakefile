@@ -148,6 +148,9 @@ rule filter:
         h5ad=out_dir / 'filtered' / '{study}.h5ad'
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study]
+    resources:
+        mem_mb=200000,
+        disk_mb=20000
     conda:
         '../../envs/scanpy.yaml'
     script:

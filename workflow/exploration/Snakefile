@@ -55,7 +55,7 @@ rule summary_stats:
 
 rule summary_stats_all:
     input:
-        tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study']),
+        tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study'].unique()),
     output:
         tsv=out_dir / 'summary' / 'all_datasets.tsv',
         aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
@@ -102,7 +102,7 @@ use rule pseudobulk as pseudobulk_organ with:
 
 rule pseudobulk_all:
     input:
-        expand(rules.pseudobulk.output,study=dataset_df['study']),
+        expand(rules.pseudobulk.output,study=dataset_df['study'].unique()),
         expand(rules.pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
 
 
@@ -124,7 +124,7 @@ rule marker_genes:
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,study=dataset_df['study'])
+        expand(rules.marker_genes.output,study=dataset_df['study'].unique())
 
 
 rule qc:
@@ -163,7 +163,7 @@ use rule qc as qc_organ with:
 
 rule qc_all:
     input:
-        expand(rules.qc.output,study=dataset_df['study']),
+        expand(rules.qc.output,study=dataset_df['study'].unique()),
         expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
 
 
@@ -202,7 +202,7 @@ rule all:
         rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.qc_all.input,
-        rules.barcode_matching_all.input,
+        #rules.barcode_matching_all.input,
     default_target: True
 
 
