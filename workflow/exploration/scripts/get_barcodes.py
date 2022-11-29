@@ -1,7 +1,7 @@
 import pandas as pd
 import scanpy as sc
-from matplotlib import pyplot as plt
-from upsetplot import UpSet
+#from matplotlib import pyplot as plt
+#from upsetplot import UpSet
 
 
 def UpSetFromLists(listOflist, labels, **kwargs):
@@ -21,17 +21,18 @@ def UpSetFromLists(listOflist, labels, **kwargs):
 
 
 input_h5ad = snakemake.input.h5ad
-output_png = snakemake.output.png
+output_tsv = snakemake.output.tsv
 
 adata = sc.read(input_h5ad)
 # clean obsnames
 adata.obs_names = pd.Series(adata.obs_names).str.split('-', n=1, expand=True)[0]
+adata.obs['sample'].reset_index().to_csv(output_tsv, sep='\t', index=False)
 
-samples = adata.obs['sample'].unique().to_list()
-barcodes = [adata[adata.obs['sample'] == sample].obs_names.tolist() for sample in samples]
-
-UpSetFromLists(
-    listOflist=barcodes,
-    labels=samples,
-).plot()
-plt.savefig(output_png)
+# samples = adata.obs['sample'].unique().to_list()
+# barcodes = [adata[adata.obs['sample'] == sample].obs_names.tolist() for sample in samples]
+#
+# UpSetFromLists(
+#     listOflist=barcodes,
+#     labels=samples,
+# ).plot()
+# plt.savefig(output_png)

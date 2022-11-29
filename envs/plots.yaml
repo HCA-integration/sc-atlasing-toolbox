@@ -4,6 +4,10 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - r-base=4.2
+  - r-data.table
+  - r-complexupset
+  - rpy2
   - upsetplot
   - pip
   - pip:

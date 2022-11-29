@@ -167,15 +167,28 @@ rule qc_all:
         expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
 
 
-rule barcode_matching:
+rule get_barcodes:
     input:
         h5ad=rules.load_data_metadata.output.h5ad
     output:
-        png=out_dir / 'barcode_matching' / '{dataset}.png',
+        tsv=out_dir / 'barcode_matching' / 'barcodes' / '{dataset}.tsv',
     conda:
         'envs/plots.yaml'
     script:
-        'scripts/barcode_matching.py'
+        'scripts/get_barcodes.py'
+
+
+rule barcode_matching:
+    input:
+        tsv=rules.get_barcodes.output.tsv
+    output:
+        png=out_dir / 'barcode_matching' / '{dataset}.png',
+    params:
+        min_size=5
+    conda:
+        'envs/plots.yaml'
+    script:
+        'scripts/barcode_matching.R'
 
 
 rule barcode_matching_all:
