@@ -191,9 +191,10 @@ def get_resource(config, profile, resource_key):
     resources = config['resources']
     try:
         res = resources[profile][resource_key]
-    except:
-        raise KeyError(
-            f'Invalid profile "{profile}" or resource key "{resource_key}". '
+    except KeyError:
+        print(
+            f'WARNING: Invalid profile "{profile}" or resource key "{resource_key}". '
             'Please check that your config contains the correct entries under config["resources"]'
         )
+        res = ''
     return res
