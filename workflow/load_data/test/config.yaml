@@ -6,11 +6,11 @@ filter_per_organ:
   blood:
     cells_per_sample:
       min: 50
-      max: 1000
+      max: 10000
     mito_pct: 30
     remove_by_colum:
       dataset:
-        - Lee2021_2
+        - Lee2020_2
 
 filter_per_study:
   SchulteSchrepping2020:

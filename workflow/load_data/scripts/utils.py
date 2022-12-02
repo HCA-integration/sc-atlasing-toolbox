@@ -1,3 +1,5 @@
+import requests
+
 # CELLxGENE columns of schema 3.0.0
 # https://github.com/chanzuckerberg/single-cell-curation/blob/main/schema/3.0.0/schema.md#general-requirements
 
@@ -28,7 +30,6 @@ CELLxGENE_VARS = [
     'feature_reference',
     'feature_biotype'
 ]
-
 
 EXTRA_COLUMNS = [
     'organ',
@@ -61,3 +62,34 @@ def get_union(*args: list):
         union_set = union_set.union(_set)
 
     return list(union_set)
+
+
+def get_from_dataset(dataset_df, key, value, column=None, debug=False):
+    if column is None:
+        column = dataset_df.columns
+    sub = dataset_df.query(f'{key} == @value')
+    if debug:
+        print(f'##DEBUG## {key, value, column}')
+        print(sub)
+        print(sub[column])
+    return sub[column]
+
+
+def get_url(wildcards):
+    url = get_from_dataset('dataset', wildcards.dataset, 'url').iloc[0]
+    if not isinstance(url, str):
+        # infer CxG URL from collection and dataset IDs
+        collection_id = get_from_dataset('dataset', wildcards.dataset, 'collection_id').iloc[0]
+        dataset_id = get_from_dataset('dataset', wildcards.dataset, 'dataset_id').iloc[0]
+        url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/assets/'
+        assets = requests.get(url=url).json()
+        asset = [a for a in assets if a["filetype"] == "H5AD"][0]
+        url = asset["presigned_url"]
+    return url
+
+
+def unlist_dict(dictionary):
+    return {
+        k: v[0] if isinstance(v, list) and len(v) == 1 else v
+        for k, v in dictionary.items()
+    }

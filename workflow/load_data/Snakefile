@@ -3,51 +3,8 @@ Data Loader
 """
 from pathlib import Path
 import pandas as pd
-import requests
 
-
-def get_from_dataset(key, value, column=None, debug=False):
-    if column is None:
-        column = dataset_df.columns
-    sub = dataset_df.query(f'{key} == @value')
-    if debug:
-        print(f'##DEBUG## {key, value, column}')
-        print(sub)
-        print(sub[column])
-    return sub[column]
-
-
-def get_url(wildcards):
-    url = get_from_dataset('dataset',wildcards.dataset,'url').iloc[0]
-    if not isinstance(url,str):
-        # infer CxG URL from collection and dataset IDs
-        collection_id = get_from_dataset('dataset',wildcards.dataset,'collection_id').iloc[0]
-        dataset_id = get_from_dataset('dataset',wildcards.dataset,'dataset_id').iloc[0]
-        url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/assets/'
-        assets = requests.get(url=url).json()
-        asset = [a for a in assets if a["filetype"] == "H5AD"][0]
-        url = asset["presigned_url"]
-    return url
-
-
-def unlist_dict(dictionary):
-    return {
-        k: v[0] if isinstance(v,list) and len(v) == 1 else v
-        for k, v in dictionary.items()
-    }
-
-
-def get_datasets_per_organ(wildcards):
-    targets = []
-    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
-    for study in studies:
-        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
-        if len(datasets_per_study) == 1:
-            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
-        else:
-            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
-    return targets
-
+from scripts.utils import get_from_dataset, get_url, unlist_dict
 
 module_name = 'load_data'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
@@ -55,7 +12,7 @@ out_dir = Path(config['output_dir']) / module_name
 
 # set default filter settings per values per study filters
 for _, row in dataset_df[['study', 'organ']].drop_duplicates().iterrows():
-    study, organ = row[['study','organ']]
+    study, organ = row[['study', 'organ']]
 
     if organ not in config['filter_per_organ'].keys():
         config['filter_per_organ'][organ] = {}
@@ -100,7 +57,7 @@ rule metadata:
         h5ad=rules.download.output.h5ad
     params:
         meta=lambda wildcards: unlist_dict(
-            get_from_dataset('dataset',wildcards.dataset).to_dict('list')
+            get_from_dataset(dataset_df,'dataset',wildcards.dataset).to_dict('list')
         )
     output:
         h5ad=out_dir / 'processed/{dataset}.h5ad',
@@ -120,10 +77,13 @@ rule metadata_all:
 
 
 rule merge_study:
+    """
+    Merge datasets that had to be split
+    """
     input:
         lambda wildcards: expand(
             rules.metadata.output.h5ad,
-            dataset=get_from_dataset('study',wildcards.study,'dataset')
+            dataset=get_from_dataset(dataset_df,'study',wildcards.study,'dataset')
         )
     output:
         h5ad=out_dir / 'merged/{study}.h5ad'
@@ -140,7 +100,7 @@ rule merge_study:
 
 rule filter:
     """
-    Filter by study
+    QC filter per study
     """
     input:
         h5ad=rules.merge_study.output.h5ad
@@ -155,6 +115,18 @@ rule filter:
         '../../envs/scanpy.yaml'
     script:
         'scripts/filter.py'
+
+
+def get_datasets_per_organ(wildcards):
+    targets = []
+    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
+    for study in studies:
+        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
+        if len(datasets_per_study) == 1:
+            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
+        else:
+            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
+    return targets
 
 
 rule merge_organ:
