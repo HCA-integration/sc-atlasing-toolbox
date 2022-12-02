@@ -54,7 +54,7 @@ rule run:
         h5ad=get_h5ad,
         model=rules.get_model.output.model,
     output:
-        h5ad=out_dir / '{method}' / '{dataset}' / '{model}.h5ad',
+        tsv=out_dir / '{method}' / '{dataset}' / '{model}.tsv',
         png=out_dir / 'figures' / '{method}-{dataset}-{model}.png',
     conda:
         'envs/{method}.yaml'
@@ -62,7 +62,7 @@ rule run:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
         label_key=lambda wildcards: get_params(wildcards,parameters,'label')
     script:
-        'scripts/{wildcards.method}.py'
+        'scripts/celltypist.py'
 
 
 rule all:

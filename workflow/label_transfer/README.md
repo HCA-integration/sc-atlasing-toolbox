@@ -13,5 +13,18 @@ Anndata object with:
 TODO: Preprocessed anndata
 
 ## Output
-Anndata with predicted labels
-TODO: predicted labels in TSV?
+
+* TSV file with predictions matched to barcodes
+* File of Anndata that has been predicted on
+
+
+## Methods
+
+* CellTypist
+* scArches
+
+
+## Steps
+
+1. get/prepare model
+2. predict from model

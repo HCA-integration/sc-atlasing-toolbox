@@ -5,14 +5,13 @@ from celltypist import models
 
 sc.settings.verbosity = 3
 sc.set_figure_params(frameon=False)
-plt.rcParams['figure.figsize'] = 10, 35
 
 input_h5ad = snakemake.input.h5ad
 input_model = snakemake.input.model
 method = snakemake.wildcards.method
 model_name = snakemake.wildcards.model
 label_key = snakemake.params.label_key
-output = snakemake.output.h5ad
+output = snakemake.output.tsv
 output_png = snakemake.output.png
 
 adata = sc.read(input_h5ad, cache=True)
@@ -41,6 +40,7 @@ predictions = celltypist.annotate(adata, model=model, majority_voting=True)
 print(predictions)
 
 # plot predictions vs author labels
+plt.rcParams['figure.figsize'] = 10, 20  # TODO: make dependent on number of cell types
 fig, axes = plt.subplots(nrows=2, ncols=1)
 celltypist.dotplot(
     predictions,
@@ -62,7 +62,8 @@ plt.tight_layout()
 plt.savefig(output_png)
 
 # Get an `AnnData` with predicted labels and confidence scores embedded into the observation metadata columns.
-adata = predictions.to_adata(insert_labels=True, insert_conf=True, prefix=f'{method}_{model_name}:')
-print(adata)
+prefix = f'{method}_{model_name}:'
+results = predictions.to_adata(insert_labels=True, insert_conf=True, prefix=prefix).obs
+results = results[[x for x in results.columns if x.startswith(prefix)]]
 
-adata.write(output)
+results.to_csv(output, sep='\t')

@@ -16,6 +16,8 @@ defaults:
     celltypist:
       - Healthy_COVID19_PBMC
       - Immune_All_Low
+  datasets:
+    - test
 
 DATASETS:
   Lee2020:
@@ -30,6 +32,6 @@ DATASETS:
     label_transfer:
       celltypist:
         - Healthy_COVID19_PBMC
-  test2:
+  test:
     adata_file: ../../data/pbmc68k.h5ad
     label: bulk_labels

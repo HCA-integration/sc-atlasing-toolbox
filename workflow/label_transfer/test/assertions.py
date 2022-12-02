@@ -1,15 +1,18 @@
-import scanpy as sc
+import pandas as pd
 import glob
 
 # celltypist
-celltypist = glob.glob('test/out/label_transfer/celltypist/*/*.h5ad')
-print(celltypist)
+celltypist = glob.glob('test/out/label_transfer/celltypist/*/*.tsv')
+if len(celltypist) == 0:
+    print('No files found for celltypist')
 
 for file in celltypist:
-    adata = sc.read(file)
-    celltypist_columns = [x for x in adata.obs.columns if x.startswith('celltypist')]
-    print(celltypist_columns)
+    print(f'read {file}...')
+    predictions = pd.read_table(file)
+    celltypist_columns = [x for x in predictions.columns if x.startswith('celltypist')]
+
     try:
         assert len(celltypist_columns) == 4
     except AssertionError:
-        print(adata)
+        print('Error: Incorrect number of columns')
+        print(predictions)
