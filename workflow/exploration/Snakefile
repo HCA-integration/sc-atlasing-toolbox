@@ -30,170 +30,11 @@ module load_data:
 
 use rule * from load_data as load_data_ *
 
-
-rule summary_stats:
-    """
-    Summarise
-    + number of cells
-    + number of cells per sample
-    + number of cells per donor
-    + disease states
-    """
-    input:
-        h5ad=rules.load_data_filter.output.h5ad
-    output:
-        tsv=out_dir / 'summary' / 'datasets' / '{study}.tsv',
-        sample=out_dir / 'summary' / 'datasets' / '{study}_sample.png',
-        donor=out_dir / 'summary' / 'datasets' / '{study}_donor.png',
-    conda:
-        'envs/scanpy.yaml'
-    resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
-    script:
-        'scripts/summary_stats.py'
-
-
-rule summary_stats_all:
-    input:
-        tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study'].unique()),
-    output:
-        tsv=out_dir / 'summary' / 'all_datasets.tsv',
-        aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
-        png=out_dir / 'summary' / 'all_datasets.png',
-    conda:
-        'envs/scanpy.yaml'
-    script:
-        'scripts/plot_summary.py'
-
-
-rule pseudobulk:
-    input:
-        h5ad=rules.load_data_filter.output.h5ad
-    output:
-        pca_1_2=out_dir / 'pseudobulk' / '{study}_1_2.png',
-        pca_2_3=out_dir / 'pseudobulk' / '{study}_2_3.png',
-        pca_scree=out_dir / 'pseudobulk' / '{study}_scree.png',
-    params:
-        dataset=lambda wildcards: wildcards.study,
-        bulk_by='sample',
-        color=['donor', 'sex', 'disease'],
-    conda:
-        'envs/scanpy.yaml'
-    resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
-    script:
-        'scripts/pseudobulk.py'
-
-
-use rule pseudobulk as pseudobulk_organ with:
-    input:
-        h5ad=rules.load_data_merge_organ.output.h5ad
-    params:
-        dataset=lambda wildcards: wildcards.organ,
-        bulk_by='sample',
-        color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities', 'suspension_type', 'pipeline_version'],
-    output:
-        pca_1_2=out_dir / 'pseudobulk' / 'organ' / '{organ}_1_2.png',
-        pca_2_3=out_dir / 'pseudobulk' / 'organ' / '{organ}_2_3.png',
-        pca_scree=out_dir / 'pseudobulk' / 'organ' / '{organ}_scree.png',
-    resources:
-        mem_mb=500000
-
-
-rule pseudobulk_all:
-    input:
-        expand(rules.pseudobulk.output,study=dataset_df['study'].unique()),
-        expand(rules.pseudobulk_organ.output,organ=dataset_df['organ'].unique()),
-
-
-rule marker_genes:
-    input:
-        h5ad=rules.load_data_filter.output.h5ad
-    output:
-        png=out_dir / 'marker_genes' / '{study}.png',
-    params:
-        dataset=lambda wildcards: wildcards.study,
-        markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
-    conda:
-        'envs/scanpy.yaml'
-    resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
-    script:
-        'scripts/marker_genes.py'
-
-
-rule marker_genes_all:
-    input:
-        expand(rules.marker_genes.output,study=dataset_df['study'].unique())
-
-
-rule qc:
-    input:
-        h5ad=rules.load_data_filter.output.h5ad
-    output:
-        joint=out_dir / 'qc' / '{study}' / 'joint.png',
-        joint_log=out_dir / 'qc' / '{study}' / 'joint_log.png',
-        violin=out_dir / 'qc' / '{study}' / 'violin.png',
-        average_jitter=out_dir / 'qc' / '{study}' / 'average_jitter.png',
-    params:
-        dataset=lambda wildcards: wildcards.study,
-        hue='donor'
-    conda:
-        'envs/scanpy.yaml'
-    resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
-    script:
-        'scripts/qc_plot.py'
-
-
-use rule qc as qc_organ with:
-    input:
-        h5ad=rules.load_data_merge_organ.output.h5ad
-    output:
-        joint=out_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
-        joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
-        violin=out_dir / 'qc' / 'organ' / '{organ}' / 'violin.png',
-        average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'average_jitter.png',
-    params:
-        dataset=lambda wildcards: wildcards.organ,
-        hue='study'
-    resources:
-        mem_mb=500000
-
-
-rule qc_all:
-    input:
-        expand(rules.qc.output,study=dataset_df['study'].unique()),
-        expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
-
-
-rule get_barcodes:
-    input:
-        h5ad=rules.load_data_metadata.output.h5ad
-    output:
-        tsv=out_dir / 'barcode_matching' / 'barcodes' / '{dataset}.tsv',
-    conda:
-        'envs/plots.yaml'
-    script:
-        'scripts/get_barcodes.py'
-
-
-rule barcode_matching:
-    input:
-        tsv=rules.get_barcodes.output.tsv
-    output:
-        png=out_dir / 'barcode_matching' / '{dataset}.png',
-    params:
-        min_size=5
-    conda:
-        'envs/plots.yaml'
-    script:
-        'scripts/barcode_matching.R'
-
-
-rule barcode_matching_all:
-    input:
-        expand(rules.barcode_matching.output,dataset=dataset_df['dataset'])
+include: 'rules/summary.smk'
+include: 'rules/pseudobulk.smk'
+include: 'rules/marker_genes.smk'
+include: 'rules/qc.smk'
+include: 'rules/barcode_matching.smk'
 
 
 rule all:
@@ -202,7 +43,7 @@ rule all:
         rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.qc_all.input,
-        #rules.barcode_matching_all.input,
+        rules.barcode_matching_all.input,
     default_target: True
 
 
