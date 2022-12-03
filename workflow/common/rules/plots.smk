@@ -2,7 +2,7 @@ rule barplot:
     input:
         tsv='test/data/integration.benchmark.tsv'
     output:
-        png='{out_dir}/{metric}.png',
+        png='{out_dir}/barplot_{metric}.png',
     params:
         metric=lambda wildcards: wildcards.metric,
         category='method',
@@ -10,16 +10,34 @@ rule barplot:
         facet_row='dataset',
         facet_col=None,
         title='Barplot',
-        description=lambda wildcards: ' '.join([f'{key}={value}' for key, value in wildcards.items()]),
+        description=wildcards_to_str,
         dodge=True,
+        xlim=(-.01, None),
     conda:
         '../envs/plots.yaml'
     script:
         '../scripts/barplot.py'
 
 
+rule swarmplot:
+    input:
+        tsv='test/data/metrics.tsv'
+    output:
+        png='{out_dir}/swarmplot_{metric}.png',
+    params:
+        metric=lambda wildcards: wildcards.metric,
+        category='metric',
+        hue='method',
+        title='Swarmplot',
+        description=wildcards_to_str,
+        ylim=(-.05, 1.05),
+    conda:
+        '../envs/plots.yaml'
+    script:
+        '../scripts/swarmplot.py'
+
+
 rule test_plots:
     input:
-        expand(rules.barplot.output,out_dir='test/out/benchmark',metric='s'),
-        expand(rules.barplot.output,out_dir='test/out/benchmark',metric='max_uss'),
-        expand(rules.barplot.output,out_dir='test/out/benchmark',metric='mean_load'),
+        expand(rules.barplot.output,out_dir='test/out/benchmark',metric=['s', 'max_uss', 'mean_load']),
+        expand(rules.swarmplot.output,out_dir='test/out/benchmark',metric=['score']),

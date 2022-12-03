@@ -1,2 +1,5 @@
+from utils import wildcards_to_str
+
+
 include: 'rules/dependency_graph.smk'
 include: 'rules/plots.smk'

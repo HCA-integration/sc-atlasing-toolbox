@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+
 input_tsv = snakemake.input.tsv
 output_png = snakemake.output.png
 
@@ -13,7 +14,6 @@ params_keys = [
     'facet_col',
     'title',
     'description',
-    'dodge',
     'xlim',
     'ylim'
 ]
@@ -36,24 +36,28 @@ for col in [facet_row, facet_col]:
 # plot parameters
 n_rows = 1 if facet_row is None else df[facet_row].nunique()
 n_cols = 1 if facet_col is None else df[facet_col].nunique()
+n_cats = df[category].nunique()
 adjust = np.min([.8 + (.04 * n_rows), .95])
 order = df.groupby(category)[metric].min().sort_values(ascending=False).index
+aspect = np.max([1.5, (.15 * n_cats)])
 
 g = sns.catplot(
     data=df,
-    x=metric,
-    y=category,
+    x=category,
+    y=metric,
+    sharey=False,
     row=facet_row,
     col=facet_col,
     hue=params['hue'],
+    height=3,
+    aspect=aspect,
     margin_titles=True,
-    kind='bar',
+    kind='swarm',
+    s=10,
     order=order,
-    errwidth=0.5,
-    capsize=0.2,
-    dodge=params['dodge'],
 )
-g.set(xlim=(-.01, None))
+g.set(ylim=params['ylim'])
+g.tick_params(axis='x', rotation=90)
 g.fig.subplots_adjust(top=adjust)
 g.fig.suptitle(f'{params["title"]} {params["description"]}')
 

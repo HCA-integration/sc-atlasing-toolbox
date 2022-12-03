@@ -3,6 +3,10 @@ import pandas as pd
 from snakemake.io import expand
 
 
+def wildcards_to_str(wildcards):
+    return ' '.join([f'{key}={value}' for key, value in wildcards.items()])
+
+
 def set_defaults(config, modules=None):
     if 'defaults' not in config:
         config['defaults'] = {}
