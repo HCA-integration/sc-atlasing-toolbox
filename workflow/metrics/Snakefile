@@ -71,8 +71,16 @@ rule all:
         expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
-        expand(rules.computation_plot.output,metric=['s', 'max_uss']),
-        expand(rules.swarmplot.output,metric='score'),
+        expand(
+            rules.computation_plot.output,
+            metric=['s', 'max_uss'],
+            out_dir=['', 'per_datset/', 'per_method/']
+        ),
+        expand(
+            rules.swarmplot.output,
+            metric='score',
+            out_dir=['', 'per_datset/', 'per_method/']
+        ),
     default_target: True
 
 
