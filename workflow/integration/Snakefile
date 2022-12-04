@@ -4,7 +4,7 @@ Integration
 from pathlib import Path
 import pandas as pd
 
-from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults
+from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults, wildcards_to_str
 
 
 def get_h5ad(wildcards):
@@ -73,12 +73,25 @@ rule benchmark:
         benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
 
 
-# TODO: benchmark plots
+use rule barplot from common as barplot with:
+    input:
+        tsv=rules.benchmark.output.benchmark
+    output:
+        png=out_dir / 'plots' / '{metric}.png'
+    params:
+        metric=lambda wildcards: wildcards.metric,
+        category='method',
+        hue='hyperparams',
+        facet_col='dataset',
+        title='Integration benchmark methods',
+        description=wildcards_to_str,
+        dodge=True,
+
 
 rule all:
     input:
         expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list')),
-        rules.benchmark.output
+        expand(rules.barplot.output,metric=['s', 'max_uss', 'mean_load'])
     default_target: True
 
 
