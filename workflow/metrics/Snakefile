@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from utils import get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
-    set_defaults
+    set_defaults, wildcards_to_str
 
 
 def all_but(_list, is_not):
@@ -102,9 +102,7 @@ rule merge:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,wildcard_names),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,wildcard_names),
     output:
-        metrics=out_dir / 'metrics.tsv',
-        plot=out_dir / 'metrics.png',
-        time=out_dir / 'metrics_time.png',
+        tsv=out_dir / 'metrics.tsv',
     params:
         wildcards=get_wildcards(parameters,wildcard_names)
     conda: 'envs/scanpy.yaml'
@@ -123,9 +121,7 @@ use rule merge as merge_per_dataset with:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'dataset')),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
     output:
-        metrics=out_dir / 'per_dataset' / '{dataset}_metrics.tsv',
-        plot=out_dir / 'per_dataset' / '{dataset}.png',
-        time=out_dir / 'per_dataset' / '{dataset}_time.png',
+        tsv=out_dir / 'per_dataset' / '{dataset}_metrics.tsv',
     params:
         wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'dataset'),wildcards)
 
@@ -139,11 +135,38 @@ use rule merge as merge_per_method with:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'method')),
         benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'method')),
     output:
-        metrics=out_dir / 'per_method' / '{method}.tsv',
-        plot=out_dir / 'per_method' / '{method}.png',
-        time=out_dir / 'per_method' / '{method}_time.png',
+        tsv=out_dir / 'per_method' / '{method}.tsv',
     params:
         wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'method'),wildcards)
+
+
+use rule barplot from common as computation_plot with:
+    input:
+        tsv=rules.merge.output.tsv
+    output:
+        png=out_dir / 'plots' / 'computation_{metric}.png'
+    params:
+        metric=lambda wildcards: wildcards.metric,
+        category='metric',
+        hue='output_type',
+        facet_col='dataset',
+        title='Metrics computation',
+        description=wildcards_to_str,
+        dodge=True,
+
+
+use rule swarmplot from common as swarmplot with:
+    input:
+        tsv=rules.merge.output.tsv
+    output:
+        png=out_dir / 'plots' / 'swarmplot_{metric}.png'
+    params:
+        metric=lambda wildcards: wildcards.metric,
+        category='metric',
+        hue='output_type',
+        facet_row='dataset',
+        title='Metrics',
+        description=wildcards_to_str,
 
 
 rule all:
@@ -151,6 +174,8 @@ rule all:
         expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
+        expand(rules.computation_plot.output,metric=['s','max_uss']),
+        expand(rules.swarmplot.output,metric='score'),
     default_target: True
 
 
@@ -165,7 +190,7 @@ rule dependency_graph:
 
 rule compare_metrics:
     input:
-        tsv=rules.merge.output.metrics
+        tsv=rules.merge.output.tsv
     output:
         png=out_dir / 'plots' / 'comparison.png'
     conda:

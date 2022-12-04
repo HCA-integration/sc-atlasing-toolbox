@@ -5,18 +5,21 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+input_metrics = snakemake.input.metrics
+input_benchmark = snakemake.input.benchmark
+out_tsv = snakemake.output.tsv
 wildcards = snakemake.wildcards
 expanded_wildcards = snakemake.params['wildcards']
 expanded_wildcards = pd.DataFrame(expanded_wildcards)
 facet_var = expanded_wildcards.columns[0]
 
-metrics_df = pd.concat([pd.read_table(file) for file in snakemake.input.metrics]).reset_index(drop=True)
-benchmark_df = pd.concat([pd.read_table(file) for file in snakemake.input.benchmark]).reset_index(drop=True)
+metrics_df = pd.concat([pd.read_table(file) for file in input_metrics]).reset_index(drop=True)
+benchmark_df = pd.concat([pd.read_table(file) for file in input_benchmark]).reset_index(drop=True)
 
 benchmark_df = pd.concat([expanded_wildcards, benchmark_df], axis=1)
 
 metrics_df = metrics_df.merge(benchmark_df)
-metrics_df.to_csv(snakemake.output.metrics, sep='\t', index=False)
+metrics_df.to_csv(out_tsv, sep='\t', index=False)
 
 print(metrics_df[['metric', 'method', 'output_type', 'metric_type', 'score', 's', 'h:m:s']])
 
@@ -49,7 +52,7 @@ g.set(ylim=(-.05, 1.05))
 g.tick_params(axis='x', rotation=90)
 g.fig.subplots_adjust(top=adjust)
 g.fig.suptitle(f'Metric scores {description}')
-g.savefig(snakemake.output.plot)
+#g.savefig(snakemake.output.plot)
 
 
 # Time plot
@@ -72,4 +75,4 @@ g = sns.catplot(
 g.set(xlim=(-.01, None))
 g.fig.subplots_adjust(top=adjust)
 g.fig.suptitle(f'Computation time for metrics {description}')
-g.savefig(snakemake.output.time)
+#g.savefig(snakemake.output.time)
