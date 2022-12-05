@@ -1,2 +1,94 @@
-#rule all:
-#    input:
+"""
+Preprocessing
+"""
+from pathlib import Path
+import pandas as pd
+
+
+module_name = 'preprocessing'
+dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+out_dir = Path(config['output_dir']) / module_name
+
+wildcard_constraints:
+    dataset='\w+',
+    study='\w+',
+    organ='\w+',
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+
+module load_data:
+    snakefile: "../load_data/Snakefile"
+    config: config
+
+use rule * from load_data as load_data_ *
+
+
+rule normalize:
+    input:
+        h5ad=rules.load_data_merge_organ.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / 'normalized.h5ad'
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/normalize.py'
+
+
+rule highly_variable_genes:
+    input:
+        h5ad=rules.normalize.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / 'highly_variable_genes.h5ad'
+    params:
+        n_hvgs=2000,
+        batch='donor',
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/highly_variable_genes.py'
+
+
+rule pca:
+    input:
+        h5ad=rules.highly_variable_genes.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / 'pca.h5ad'
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/pca.py'
+
+
+rule neighbors:
+    input:
+        h5ad=rules.pca.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / 'neighbors.h5ad'
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/neighbors.py'
+
+
+rule umap:
+    input:
+        h5ad=rules.neighbors.output.h5ad
+    output:
+        h5ad=out_dir / '{organ}' / 'umap.h5ad'
+    conda:
+        'envs/scanpy.yaml'
+    script:
+        'scripts/umap.py'
+
+
+rule all:
+    input:
+        expand(rules.neighbors.output,organ='blood'),
+        expand(rules.umap.output,organ='blood')
+    default_target: True
