@@ -101,6 +101,7 @@ rule merge_study:
 rule filter:
     """
     QC filter per study
+    TODO: keep filtered out cells for stats
     """
     input:
         h5ad=rules.merge_study.output.h5ad

@@ -2,6 +2,7 @@ from scipy.sparse import csr_matrix
 from matplotlib import pyplot as plt
 import anndata
 import scanpy as sc
+from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS, get_union
 
 in_file = snakemake.input.h5ad
 out_file = snakemake.output.h5ad
@@ -39,6 +40,15 @@ if isinstance(adata.raw, anndata._core.raw.Raw):
 else:
     adata.X = adata.X.copy()
 adata.X = csr_matrix(adata.X)
+
+# save barcodes
+adata.obs['barcode'] = adata.obs_names
+adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index().index.astype(str)
+
+# keep only relevant columns
+adata.obs = adata.obs[get_union(CELLxGENE_OBS, EXTRA_COLUMNS)].copy()
+adata.var = adata.var[CELLxGENE_VARS]
+adata.var.index.set_names('feature_id', inplace=True)
 
 adata.write(out_file, compression='gzip')
 
