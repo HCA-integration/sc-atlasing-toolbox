@@ -43,7 +43,7 @@ rule download:
     output:
         h5ad=out_dir / 'download/{dataset}.h5ad'
     run:
-        url = get_url(wildcards)
+        url = get_url(dataset_df, wildcards)
         shell("wget -O {output} '{url}'")
 
 

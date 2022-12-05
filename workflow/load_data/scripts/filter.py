@@ -10,9 +10,10 @@ params = snakemake.params['filter']
 adata = sc.read(input_h5ad)
 
 # explicit filter
-ex_filters = params['remove_by_colum']
-for column, values in ex_filters.items():
-    adata = adata[~adata.obs[column].isin(values)]
+if 'remove_by_colum' in params:
+    ex_filters = params['remove_by_colum']
+    for column, values in ex_filters.items():
+        adata = adata[~adata.obs[column].isin(values)]
 
 # implicit filters
 # mito filter

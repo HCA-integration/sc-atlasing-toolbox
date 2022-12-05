@@ -75,12 +75,12 @@ def get_from_dataset(dataset_df, key, value, column=None, debug=False):
     return sub[column]
 
 
-def get_url(wildcards):
-    url = get_from_dataset('dataset', wildcards.dataset, 'url').iloc[0]
+def get_url(dataset_df, wildcards):
+    url = get_from_dataset(dataset_df, 'dataset', wildcards.dataset, 'url').iloc[0]
     if not isinstance(url, str):
         # infer CxG URL from collection and dataset IDs
-        collection_id = get_from_dataset('dataset', wildcards.dataset, 'collection_id').iloc[0]
-        dataset_id = get_from_dataset('dataset', wildcards.dataset, 'dataset_id').iloc[0]
+        collection_id = get_from_dataset(dataset_df, 'dataset', wildcards.dataset, 'collection_id').iloc[0]
+        dataset_id = get_from_dataset(dataset_df, 'dataset', wildcards.dataset, 'dataset_id').iloc[0]
         url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/assets/'
         assets = requests.get(url=url).json()
         asset = [a for a in assets if a["filetype"] == "H5AD"][0]

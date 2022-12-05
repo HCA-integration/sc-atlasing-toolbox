@@ -9,6 +9,7 @@ from utils import CELLxGENE_VARS
 
 def read_adata(file):
     ad = sc.read(file)
+    ad.var = ad.var[CELLxGENE_VARS]
     # remove data
     del ad.uns
     del ad.layers
