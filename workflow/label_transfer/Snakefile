@@ -61,6 +61,8 @@ rule run:
     params:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
         label_key=lambda wildcards: get_params(wildcards,parameters,'label')
+    resources:
+        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb')
     script:
         'scripts/celltypist.py'
 

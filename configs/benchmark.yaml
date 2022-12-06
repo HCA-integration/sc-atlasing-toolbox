@@ -29,8 +29,6 @@ defaults:
     - isolated_label_asw
     - isolated_label_f1
     - pcr
-  datasets:
-    - test
 
 DATASETS:
   test:

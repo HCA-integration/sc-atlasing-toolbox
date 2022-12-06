@@ -4,14 +4,14 @@ defaults:
       - Healthy_COVID19_PBMC
       - Immune_All_Low
 
-
 DATASETS:
   blood:
-    adata_file: test/out/load_data/merged/organ/blood.h5ad
+    adata_file: data/out/load_data/merged/organ/blood.h5ad
     label: cell_type
+    batch: dataset
     label_transfer:
       celltypist:
         - Healthy_COVID19_PBMC
   test2:
-    adata_file: ../../data/pbmc68k.h5ad
+    adata_file: data/pbmc68k.h5ad
     label: bulk_labels

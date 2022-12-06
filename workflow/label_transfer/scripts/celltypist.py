@@ -20,7 +20,7 @@ adata = sc.read(input_h5ad, cache=True)
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
 non_ENS_genes_list = [name for name in adata.var_names if not name.startswith('ENS')]
-adata = adata[:, non_ENS_genes_list]
+adata = adata[:, non_ENS_genes_list].copy()
 
 # normalise and log1p the raw counts TODO: move to preprocessing module
 sc.pp.normalize_total(adata, target_sum=1e4)

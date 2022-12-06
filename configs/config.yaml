@@ -3,7 +3,17 @@
 output_dir: data/out
 images: images
 
+defaults:
+  datasets:
+    - test
+    - blood
+
 resources:
+  cpu_merged:
+    partition: cpu_p
+    qos: icb
+    gpu: 0
+    mem_mb: 500000
   cpu:
     partition: cpu_p
     qos: icb
