@@ -20,6 +20,19 @@ rule summary_stats:
         '../scripts/summary_stats.py'
 
 
+use rule summary_stats as summary_stats_filtered with:
+    input:
+        h5ad=rules.load_data_filter.output.removed
+    output:
+        tsv=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}.tsv',
+        sample=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}_sample.png',
+        donor=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}_donor.png',
+    conda:
+        '../envs/scanpy.yaml'
+    resources:
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
+
+
 rule summary_stats_all:
     input:
         tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study'].unique()),
@@ -31,3 +44,9 @@ rule summary_stats_all:
         '../envs/scanpy.yaml'
     script:
         '../scripts/plot_summary.py'
+
+
+rule summary_all:
+    input:
+        rules.summary_stats_all.output,
+        expand(rules.summary_stats_filtered.output.tsv,study=dataset_df['study'].unique())

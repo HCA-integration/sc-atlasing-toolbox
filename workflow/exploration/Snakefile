@@ -39,7 +39,7 @@ include: 'rules/barcode_matching.smk'
 
 rule all:
     input:
-        rules.summary_stats_all.output,
+        rules.summary_all.input,
         rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.qc_all.input,

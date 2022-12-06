@@ -26,6 +26,7 @@ for _, row in dataset_df[['study', 'organ']].drop_duplicates().iterrows():
         if key not in config['filter_per_study'][study]:
             config['filter_per_study'][study][key] = value
 
+
 wildcard_constraints:
     dataset='\w+',
     study='\w+',
@@ -106,7 +107,8 @@ rule filter:
     input:
         h5ad=rules.merge_study.output.h5ad
     output:
-        h5ad=out_dir / 'filtered' / '{study}.h5ad'
+        h5ad=out_dir / 'filtered' / '{study}.h5ad',
+        removed=out_dir / 'filtered' / 'removed' / '{study}.h5ad',
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study]
     resources:
@@ -135,9 +137,28 @@ rule merge_organ:
         lambda wildcards: expand(
             rules.filter.output.h5ad,
             study=dataset_df[dataset_df['organ'] == wildcards.organ]['study'].unique(),
-        )
+        ),
     output:
         h5ad=out_dir / 'merged' / 'organ' / '{organ}.h5ad'
+    params:
+        dataset=lambda wildcards: wildcards.organ
+    resources:
+        mem_mb=500000,
+        disk_mb=100000
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/merge.py'
+
+
+rule merge_organ_filter:
+    input:
+        lambda wildcards: expand(
+            rules.filter.output.removed,
+            study=dataset_df[dataset_df['organ'] == wildcards.organ]['study'].unique(),
+        ),
+    output:
+        h5ad=out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.h5ad'
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
@@ -155,6 +176,7 @@ rule all:
         expand(rules.merge_study.output,study=dataset_df['study'].unique()),
         expand(rules.filter.output,study=dataset_df['study'].unique()),
         expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
+        expand(rules.merge_organ_filter.output,organ=dataset_df['organ'].unique()),
     default_target: True
 
 

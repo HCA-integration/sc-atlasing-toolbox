@@ -32,7 +32,23 @@ use rule qc as qc_organ with:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb')
 
 
+use rule qc as qc_filtered with:
+    input:
+        h5ad=rules.merge_organ_filter.output.h5ad
+    output:
+        joint=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
+        joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',
+        violin=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_violin.png',
+        average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_average_jitter.png',
+    params:
+        dataset=lambda wildcards: wildcards.organ,
+        hue='study'
+    resources:
+        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb')
+
+
 rule qc_all:
     input:
         expand(rules.qc.output,study=dataset_df['study'].unique()),
-        expand(rules.qc_organ.output,organ=dataset_df['organ'].unique())
+        expand(rules.qc_organ.output,organ=dataset_df['organ'].unique()),
+        expand(rules.qc_filtered.output,organ=dataset_df['organ'].unique())
