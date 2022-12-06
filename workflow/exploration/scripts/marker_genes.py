@@ -10,7 +10,7 @@ markers = snakemake.params.markers
 
 adata = sc.read(input_h5ad)
 
-author_label = 'cell_annotation'
+author_label = 'author_annotation'
 ontology_label = 'cell_type'
 print(adata)
 # match marker genes and var_names

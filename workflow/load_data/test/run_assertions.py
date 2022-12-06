@@ -19,12 +19,10 @@ for file in single_outputs:
     assert 'organ' in adata.obs
     assert 'meta' in adata.uns
     try:
-        for key in datasets_df.columns:
-            assert key in adata.uns['meta']
+        for key in CELLxGENE_OBS + EXTRA_COLUMNS:
             assert key in adata.obs.columns
     except AssertionError:
-        print(f'AssertionError: "{key}" not in "{file}"')
-        print(adata)
+        raise AssertionError(f'Single dataset: "{key}" not in "{file}"')
 
 # merged datasets
 
@@ -44,5 +42,4 @@ for file in merged_outputs:
         for col in ['organ', 'dataset']:
             assert col in adata.uns
     except AssertionError:
-        print(f'AssertionError: column "{col}" not in "{file}"')
-        print(adata)
+        raise AssertionError(f'Merged dataset: column "{col}" not in "{file}"')

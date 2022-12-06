@@ -32,15 +32,17 @@ CELLxGENE_VARS = [
 ]
 
 EXTRA_COLUMNS = [
+    'barcode',
     'organ',
     'donor',
     'sample',
-    'cell_annotation',
+    'author_annotation',
     'reference',
     'study',
     'dataset',
     'modalities',
-    'pipeline_version'
+    'pipeline_version',
+    'institution',
 ]
 
 
@@ -65,6 +67,16 @@ def get_union(*args: list):
 
 
 def get_from_dataset(dataset_df, key, value, column=None, debug=False):
+    """
+    Retrieve values in column from dataset_df by subset (key, value)
+
+    :param dataset_df:
+    :param key: column in dataset_df to subset to
+    :param value: value to subset to
+    :param column: column in dataset_df
+    :param debug:
+    :return:
+    """
     if column is None:
         column = dataset_df.columns
     sub = dataset_df.query(f'{key} == @value')

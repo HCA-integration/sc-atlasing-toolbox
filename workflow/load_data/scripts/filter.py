@@ -11,7 +11,9 @@ output_removed = snakemake.output.removed
 params = snakemake.params['filter']
 
 adata = sc.read(input_h5ad)
-adata_filtered = adata.copy()
+
+# subset to available annotations
+adata_filtered = adata[adata.obs['cell_type'].notna()]
 
 # explicit filter
 if 'remove_by_colum' in params:

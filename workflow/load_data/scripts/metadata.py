@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import pandas as pd
 from scipy.sparse import csr_matrix
 from matplotlib import pyplot as plt
 import anndata
@@ -13,17 +16,29 @@ meta = snakemake.params.meta
 adata = sc.read(in_file, as_sparse=['X'])
 print(adata)
 
-adata.uns['dataset'] = meta['dataset']
-adata.obs['dataset'] = meta['dataset']
-adata.obs['study'] = meta['study']
-adata.obs['organ'] = meta['organ']
 adata.uns['meta'] = meta
+adata.uns['dataset'] = meta['dataset']
+adata.uns['organ'] = meta['organ']
+adata.uns['dataset'] = meta['dataset']
 
+adata.obs['organ'] = meta['organ']
+adata.obs['study'] = meta['study']
+adata.obs['dataset'] = meta['dataset']
+
+# add annotation if available
+annotation_file = meta['annotation_file']
+if not annotation_file != 'nan':
+    print(f'Add annotations from {annotation_file}...')
+    assert Path(annotation_file).exists()
+    annotation = pd.read_csv(annotation_file)
+    annotation.index = annotation[meta['barcode_column']]
+    adata.obs = pd.merge(adata.obs, annotation, how='left')
+
+# assign sample and donor variables
 donor_column = meta['donor_column']
 sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['donor'] = adata.obs[donor_column]
 adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
-adata.obs['cell_annotation'] = adata.obs[meta['cell_annotation']]
 
 if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity'] = adata.obs['ethnicity']
@@ -41,7 +56,13 @@ else:
     adata.X = adata.X.copy()
 adata.X = csr_matrix(adata.X)
 
-# save barcodes
+# add author annotations
+adata.obs['author_annotation'] = adata.obs[meta['author_annotation']]
+# use author annotations if no cell ontology available
+if adata.obs['cell_type'].nunique() == 1:
+    adata.obs['cell_type'] = adata.obs['author_annotation']
+
+# save barcodes in separate column
 adata.obs['barcode'] = adata.obs_names
 adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index().index.astype(str)
 
