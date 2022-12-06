@@ -1,3 +1,6 @@
+from utils import wildcards_to_str
+
+
 rule barplot:
     input:
         tsv='test/data/integration.benchmark.tsv'

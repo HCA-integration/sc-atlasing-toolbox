@@ -73,7 +73,7 @@ rule benchmark:
         benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
 
 
-use rule barplot from common as barplot with:
+use rule barplot from common as integration_barplot with:
     input:
         tsv=rules.benchmark.output.benchmark
     output:

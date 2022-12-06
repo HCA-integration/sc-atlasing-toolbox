@@ -72,14 +72,14 @@ rule all:
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
         rules.merge.output,
         expand(
-            rules.computation_plot.output,
+            rules.metrics_computation_plot.output,
             metric=['s', 'max_uss'],
-            out_dir=['', 'per_datset/', 'per_method/']
+            out_dir=['all', 'per_dataset', 'per_method']
         ),
         expand(
-            rules.swarmplot.output,
+            rules.metrics_swarmplot.output,
             metric='score',
-            out_dir=['', 'per_datset/', 'per_method/']
+            out_dir=['all', 'per_dataset', 'per_method']
         ),
     default_target: True
 
