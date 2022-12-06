@@ -99,6 +99,10 @@ rule merge_study:
         'scripts/merge.py'
 
 
+rule merge_study_all:
+    input: expand(rules.merge_study.output,study=dataset_df['study'].unique())
+
+
 rule filter:
     """
     QC filter per study
@@ -118,6 +122,10 @@ rule filter:
         '../../envs/scanpy.yaml'
     script:
         'scripts/filter.py'
+
+
+rule filter_all:
+    input: expand(rules.filter.output, study=dataset_df['study'].unique())
 
 
 def get_datasets_per_organ(wildcards):
@@ -145,6 +153,8 @@ rule merge_organ:
     resources:
         mem_mb=500000,
         disk_mb=100000
+    threads:
+        dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
     script:
@@ -164,6 +174,8 @@ rule merge_organ_filter:
     resources:
         mem_mb=500000,
         disk_mb=100000
+    threads:
+        dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
     script:
@@ -172,9 +184,6 @@ rule merge_organ_filter:
 
 rule all:
     input:
-        rules.metadata_all.input,
-        expand(rules.merge_study.output,study=dataset_df['study'].unique()),
-        expand(rules.filter.output,study=dataset_df['study'].unique()),
         expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
         expand(rules.merge_organ_filter.output,organ=dataset_df['organ'].unique()),
     default_target: True
