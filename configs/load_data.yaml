@@ -4,7 +4,7 @@ filter_per_organ:
   blood:
     cells_per_sample:
       min: 50
-      max: 10000
+      max: None
     mito_pct: 30
     remove_by_colum:
       disease:

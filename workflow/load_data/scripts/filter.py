@@ -2,6 +2,7 @@
 Data filtering
 """
 from pprint import pprint
+import numpy as np
 import scanpy as sc
 
 input_h5ad = snakemake.input.h5ad
@@ -33,6 +34,8 @@ if 'mito_pct' in params.keys():
 if 'cells_per_sample' in params.keys():
     min_cells = params['cells_per_sample']['min']
     max_cells = params['cells_per_sample']['max']
+    min_cells = 0 if min_cells is None else min_cells
+    max_cells = np.inf if max_cells is None else max_cells
     print(f'remove by min={min_cells}, max={max_cells} cells per sample...')
     n_cells_per_sample = adata_filtered.obs['sample'].value_counts()
     samples_to_keep = n_cells_per_sample[n_cells_per_sample.between(min_cells, max_cells)].index
