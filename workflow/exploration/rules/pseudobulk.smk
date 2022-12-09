@@ -23,7 +23,7 @@ use rule pseudobulk as pseudobulk_organ with:
     params:
         dataset=lambda wildcards: wildcards.organ,
         bulk_by='sample',
-        color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities', 'suspension_type', 'pipeline_version'],
+        color=['dataset', 'reference', 'sex', 'disease', 'assay', 'modalities', 'suspension_type', 'pipeline_version', 'institution', 'self_reported_ethnicity'],
     output:
         pca_1_2=out_dir / 'pseudobulk' / 'organ' / '{organ}_1_2.png',
         pca_2_3=out_dir / 'pseudobulk' / 'organ' / '{organ}_2_3.png',
