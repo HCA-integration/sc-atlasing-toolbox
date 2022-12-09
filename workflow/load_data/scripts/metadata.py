@@ -12,7 +12,16 @@ out_file = snakemake.output.h5ad
 out_plot = snakemake.output.plot
 wildcards = snakemake.wildcards
 meta = snakemake.params.meta
+print(meta)
 
+# optional annotations file
+annotation_file = meta['annotation_file']
+if not pd.isna(annotation_file):
+    print(f'check if annotation file {annotation_file} exists')
+    assert Path(annotation_file).exists()
+
+# h5ad
+print(f'read {in_file}...')
 adata = sc.read(in_file, as_sparse=['X'])
 print(adata)
 
@@ -26,13 +35,16 @@ adata.obs['study'] = meta['study']
 adata.obs['dataset'] = meta['dataset']
 
 # add annotation if available
-annotation_file = meta['annotation_file']
-if not annotation_file != 'nan':
+author_annotation = meta['author_annotation']
+if not pd.isna(annotation_file):
     print(f'Add annotations from {annotation_file}...')
-    assert Path(annotation_file).exists()
     annotation = pd.read_csv(annotation_file)
     annotation.index = annotation[meta['barcode_column']]
-    adata.obs = pd.merge(adata.obs, annotation, how='left')
+    # remove column if existing to avoid conflict
+    if author_annotation in adata.obs.columns:
+        del adata.obs[author_annotation]
+    adata.obs = adata.obs.join(annotation[author_annotation], how='left')
+    print(adata.obs)
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
@@ -57,14 +69,14 @@ else:
 adata.X = csr_matrix(adata.X)
 
 # add author annotations
-adata.obs['author_annotation'] = adata.obs[meta['author_annotation']]
+adata.obs['author_annotation'] = adata.obs[author_annotation]
 # use author annotations if no cell ontology available
 if adata.obs['cell_type'].nunique() == 1:
     adata.obs['cell_type'] = adata.obs['author_annotation']
 
 # save barcodes in separate column
 adata.obs['barcode'] = adata.obs_names
-adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index().index.astype(str)
+adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index(drop=True).index.astype(str)
 
 # keep only relevant columns
 adata.obs = adata.obs[get_union(CELLxGENE_OBS, EXTRA_COLUMNS)].copy()
