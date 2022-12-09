@@ -36,8 +36,8 @@ if 'mito_pct' in params.keys():
 if 'cells_per_sample' in params.keys():
     min_cells = params['cells_per_sample']['min']
     max_cells = params['cells_per_sample']['max']
-    min_cells = 0 if min_cells is None else min_cells
-    max_cells = np.inf if max_cells is None else max_cells
+    min_cells = min_cells if isinstance(min_cells, int) else 0
+    max_cells = max_cells if isinstance(max_cells, int) else np.inf
     print(f'remove by min={min_cells}, max={max_cells} cells per sample...')
     n_cells_per_sample = adata_filtered.obs['sample'].value_counts()
     samples_to_keep = n_cells_per_sample[n_cells_per_sample.between(min_cells, max_cells)].index
@@ -50,4 +50,4 @@ adata_removed = adata[~adata.obs_names.isin(adata_filtered.obs_names)]
 print(f'removed {adata_removed.n_obs} cells')
 
 print('Save removed...')
-adata.write(output_removed)
+adata_removed.write(output_removed)

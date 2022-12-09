@@ -6,20 +6,24 @@ input_h5ad = snakemake.input.h5ad
 output = snakemake.output.tsv
 output_sample = snakemake.output.sample
 output_donor = snakemake.output.donor
+study = snakemake.wildcards.study
+
 
 print(f'Read {input_h5ad}...')
 adata = sc.read(input_h5ad)
 
 obs_per_sample = adata.obs['sample'].value_counts()
-obs_per_sample.plot.barh(figsize=(10,8))
+if adata.n_obs > 0:
+    obs_per_sample.plot.barh(figsize=(10,8))
 plt.savefig(output_sample)
 
 obs_per_donor = adata.obs['donor'].value_counts()
-obs_per_donor.plot.barh(figsize=(10,8))
+if adata.n_obs > 0:
+    obs_per_donor.plot.barh(figsize=(10,8))
 plt.savefig(output_donor)
 
 stats = {
-    'study': adata.obs['study'].unique()[0],
+    'study': study,
     'n_cells': [adata.n_obs],
     'n_genes': [adata.n_vars],
     'n_samples': [obs_per_sample.shape[0]],
