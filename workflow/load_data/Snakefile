@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.utils import get_from_dataset, get_url, unlist_dict
+from utils import get_wildcards, get_resource
 
 module_name = 'load_data'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
@@ -26,7 +27,6 @@ for _, row in dataset_df[['study', 'organ']].drop_duplicates().iterrows():
         if key not in config['filter_per_study'][study]:
             config['filter_per_study'][study][key] = value
 
-
 wildcard_constraints:
     dataset='\w+',
     study='\w+',
@@ -44,7 +44,7 @@ rule download:
     output:
         h5ad=out_dir / 'download/{dataset}.h5ad'
     run:
-        url = get_url(dataset_df, wildcards)
+        url = get_url(dataset_df,wildcards)
         shell("wget -O {output} '{url}'")
 
 
@@ -66,7 +66,7 @@ rule metadata:
     conda:
         '../../envs/scanpy.yaml'
     resources:
-        mem_mb=200000,
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
     script:
         'scripts/metadata.py'
@@ -91,8 +91,8 @@ rule merge_study:
     params:
         dataset=lambda wildcards: wildcards.study
     resources:
-        mem_mb=200000,
-        disk_mb=20000
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
+        disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
     script:
@@ -100,7 +100,7 @@ rule merge_study:
 
 
 rule merge_study_all:
-    input: expand(rules.merge_study.output,study=dataset_df['study'].unique())
+    input: expand(rules.merge_study.output,**get_wildcards(dataset_df,['study']))
 
 
 rule filter:
@@ -116,8 +116,8 @@ rule filter:
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study]
     resources:
-        mem_mb=200000,
-        disk_mb=20000
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
+        disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
     script:
@@ -125,7 +125,7 @@ rule filter:
 
 
 rule filter_all:
-    input: expand(rules.filter.output, study=dataset_df['study'].unique())
+    input: expand(rules.filter.output,**get_wildcards(dataset_df,['study']))
 
 
 def get_datasets_per_organ(wildcards):
@@ -144,15 +144,15 @@ rule merge_organ:
     input:
         lambda wildcards: expand(
             rules.filter.output.h5ad,
-            study=dataset_df[dataset_df['organ'] == wildcards.organ]['study'].unique(),
+            **get_wildcards(dataset_df,['study'],wildcards),
         ),
     output:
         h5ad=out_dir / 'merged' / 'organ' / '{organ}.h5ad'
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
-        mem_mb=500000,
-        disk_mb=100000
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
     conda:
@@ -165,15 +165,15 @@ rule merge_organ_filter:
     input:
         lambda wildcards: expand(
             rules.filter.output.removed,
-            study=dataset_df[dataset_df['organ'] == wildcards.organ]['study'].unique(),
+            **get_wildcards(dataset_df,['study'],wildcards),
         ),
     output:
         h5ad=out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.h5ad'
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
-        mem_mb=500000,
-        disk_mb=100000
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
     conda:
@@ -184,8 +184,8 @@ rule merge_organ_filter:
 
 rule all:
     input:
-        expand(rules.merge_organ.output,organ=dataset_df['organ'].unique()),
-        expand(rules.merge_organ_filter.output,organ=dataset_df['organ'].unique()),
+        expand(rules.merge_organ.output,**get_wildcards(dataset_df,['organ'])),
+        expand(rules.merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
     default_target: True
 
 

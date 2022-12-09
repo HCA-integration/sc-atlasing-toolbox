@@ -14,6 +14,7 @@ resources:
     qos: icb
     gpu: 0
     mem_mb: 500000
+    disk_mb: 150000
   cpu:
     partition: cpu_p
     qos: icb
