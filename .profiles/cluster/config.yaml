@@ -15,7 +15,7 @@ default-resources:
   - gpu=0
   - mem_mb=90000
   - disk_mb=20000
-restart-times: 1
+restart-times: 0
 max-jobs-per-second: 10
 max-status-checks-per-second: 1
 local-cores: 1
@@ -33,3 +33,4 @@ rerun-triggers:
   - input
   - software-env
   - code
+show-failed-logs: True

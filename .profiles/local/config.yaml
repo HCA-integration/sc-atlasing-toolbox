@@ -1,4 +1,4 @@
-jobs: 10
+jobs: 1
 keep-going: False
 rerun-incomplete: True
 printshellcmds: True
