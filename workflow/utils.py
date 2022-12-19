@@ -116,13 +116,14 @@ def get_hyperparams(config, module='integration'):
     return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
 
 
-def get_wildcards(wildcards_df, columns=None, wildcards=None):
+def get_wildcards(wildcards_df, columns=None, wildcards=None, drop_na=False):
     """
     Get wildcards from DataFrame
 
     :param wildcards_df: DataFrame with wildcard names in columns
     :param columns: wildcard keys that are present in the dataframe column
     :param wildcards: wildcards passed from Snakemake to subset to
+    :param drop_na: whether to remove rows that contain NAs
     :return: subset of the wildcards_df by wildcard match and columns
     """
     if columns is None:
@@ -136,6 +137,8 @@ def get_wildcards(wildcards_df, columns=None, wildcards=None):
         if wildcards_df.shape[0] == 0:
             raise ValueError(f'no wildcard combination found in wildcards df {query}')
     wildcards_df = unique_dataframe(wildcards_df[columns])
+    if drop_na:
+        wildcards_df = wildcards_df.dropna()
     return wildcards_df.to_dict('list')
 
 

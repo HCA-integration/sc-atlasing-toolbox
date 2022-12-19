@@ -58,6 +58,8 @@ if adata.uns['schema_version'] == '2.0.0':
     adata.obs['donor_id'] = adata.obs['donor']
 
 for key, value in meta.items():
+    if isinstance(value, list):
+        continue
     adata.obs[key] = value
 
 # ensure only raw counts are kept

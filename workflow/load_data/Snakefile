@@ -2,14 +2,16 @@
 Data Loader
 """
 from pathlib import Path
+import pandas as pd
 
-from scripts.utils import get_from_dataset, get_url, unlist_dict
-from utils import get_wildcards, get_resource, load_dataset_df
+from scripts.utils import get_url, unlist_dict
+from utils import get_wildcards, get_resource
 
 
 def load_dataset_df(file):
     dataset_df = pd.read_table(file,comment='#')
-    # dataset_df['subset'] = dataset_df['subset'].str.split(',')
+    dataset_df['subset'] = dataset_df['subset'].str.split(',')
+    dataset_df = dataset_df.explode('subset')
     return dataset_df
 
 
@@ -132,18 +134,6 @@ rule filter_all:
     input: expand(rules.filter.output,**get_wildcards(dataset_df,['study']))
 
 
-def get_datasets_per_organ(wildcards):
-    targets = []
-    studies = get_from_dataset('organ',wildcards.organ,'study').unique()
-    for study in studies:
-        datasets_per_study = get_from_dataset('study',study,'dataset').to_list()
-        if len(datasets_per_study) == 1:
-            targets.extend(expand(rules.metadata.output.h5ad,dataset=datasets_per_study))
-        else:
-            targets.extend(expand(rules.merge_study.output.h5ad,study=study))
-    return targets
-
-
 rule merge_organ:
     input:
         lambda wildcards: expand(
@@ -184,6 +174,35 @@ rule merge_organ_filter:
         '../../envs/scanpy.yaml'
     script:
         'scripts/merge.py'
+
+
+rule merge_subset:
+    input:
+        lambda wildcards: expand(
+            rules.filter.output.h5ad,
+            **get_wildcards(dataset_df,['study'],wildcards),
+        ),
+    output:
+        h5ad=out_dir / 'merged' / 'subset' / '{organ}-{subset}.h5ad'
+    params:
+        dataset=lambda wildcards: wildcards
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
+    threads:
+        dataset_df['dataset'].nunique()
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/merge.py'
+
+
+rule  merge_subset_all:
+    input:
+        expand(
+            rules.merge_subset.output.h5ad,
+            **get_wildcards(dataset_df,['organ', 'subset'],drop_na=True)
+        )
 
 
 rule all:
