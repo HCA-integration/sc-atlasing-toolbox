@@ -2,13 +2,19 @@
 Data Loader
 """
 from pathlib import Path
-import pandas as pd
 
 from scripts.utils import get_from_dataset, get_url, unlist_dict
-from utils import get_wildcards, get_resource
+from utils import get_wildcards, get_resource, load_dataset_df
+
+
+def load_dataset_df(file):
+    dataset_df = pd.read_table(file,comment='#')
+    # dataset_df['subset'] = dataset_df['subset'].str.split(',')
+    return dataset_df
+
 
 module_name = 'load_data'
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 out_dir = Path(config['output_dir']) / module_name
 
 # set default filter settings per values per study filters
@@ -57,9 +63,7 @@ rule metadata:
     input:
         h5ad=rules.download.output.h5ad
     params:
-        meta=lambda wildcards: unlist_dict(
-            get_from_dataset(dataset_df,'dataset',wildcards.dataset).to_dict('list')
-        )
+        meta=lambda wildcards: unlist_dict(get_wildcards(dataset_df,wildcards=wildcards))
     output:
         h5ad=out_dir / 'processed/{dataset}.h5ad',
         plot=out_dir / 'processed/counts/{dataset}.png',
@@ -84,7 +88,7 @@ rule merge_study:
     input:
         lambda wildcards: expand(
             rules.metadata.output.h5ad,
-            dataset=get_from_dataset(dataset_df,'study',wildcards.study,'dataset')
+            dataset=get_wildcards(dataset_df,'dataset',wildcards)['dataset']
         )
     output:
         h5ad=out_dir / 'merged/{study}.h5ad'

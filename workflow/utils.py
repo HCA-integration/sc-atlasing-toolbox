@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import typing
 from snakemake.io import expand
 
 
@@ -115,7 +116,7 @@ def get_hyperparams(config, module='integration'):
     return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
 
 
-def get_wildcards(wildcards_df, columns, wildcards=None):
+def get_wildcards(wildcards_df, columns=None, wildcards=None):
     """
     Get wildcards from DataFrame
 
@@ -124,10 +125,18 @@ def get_wildcards(wildcards_df, columns, wildcards=None):
     :param wildcards: wildcards passed from Snakemake to subset to
     :return: subset of the wildcards_df by wildcard match and columns
     """
+    if columns is None:
+        columns = wildcards_df.columns
+    if isinstance(columns, str):
+        columns = [columns]
     if wildcards:
-        query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
+        wildcards = {k: wildcards[k] for k in wildcards.keys()}
+        query = ' and '.join([f'{k} == "{v}"' for k, v in wildcards.items()])
         wildcards_df = wildcards_df.query(query)
-    return wildcards_df[columns].drop_duplicates().to_dict('list')
+        if wildcards_df.shape[0] == 0:
+            raise ValueError(f'no wildcard combination found in wildcards df {query}')
+    wildcards_df = unique_dataframe(wildcards_df[columns])
+    return wildcards_df.to_dict('list')
 
 
 def expand_per(target, wildcards_df, wildcards, columns):
@@ -164,7 +173,7 @@ def get_params(wildcards, parameters_df, column, wildcards_keys=None):
             params_sub = parameters_df.query(query)
         else:
             params_sub = parameters_df
-        params_sub = params_sub.drop_duplicates()
+        params_sub = unique_dataframe(params_sub)
 
         try:
             assert params_sub.shape[0] == 1
@@ -204,3 +213,13 @@ def get_resource(config, profile, resource_key):
         )
         res = ''
     return res
+
+
+def all_but(_list, is_not):
+    return [x for x in _list if x != is_not]
+
+
+def unique_dataframe(df):
+    hashable_columns = [col for col in df.columns if isinstance(df[col].iloc[0], typing.Hashable)]
+    duplicated = df[hashable_columns].duplicated()
+    return df[~duplicated]

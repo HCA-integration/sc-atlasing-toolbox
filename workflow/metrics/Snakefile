@@ -4,12 +4,8 @@ Metrics
 from pathlib import Path
 import pandas as pd
 
-from utils import get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
+from utils import all_but, get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
     set_defaults, wildcards_to_str
-
-
-def all_but(_list, is_not):
-    return [x for x in _list if x != is_not]
 
 
 module integration:
