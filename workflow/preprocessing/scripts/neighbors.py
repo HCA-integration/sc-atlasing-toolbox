@@ -1,13 +1,14 @@
 """
 Build kNN graph on embedding
 """
+import anndata
 import scanpy as sc
 
-input_h5ad = snakemake.input.h5ad
-output_h5ad = snakemake.output.h5ad
+input_file = snakemake.input.zarr
+output_file = snakemake.output.zarr
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_file)
 
 sc.pp.neighbors(adata, use_rep='X_pca')
 
-adata.write(output_h5ad)
+adata.write_zarr(output_file)
