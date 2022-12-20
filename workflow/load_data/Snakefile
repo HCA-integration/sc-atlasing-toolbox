@@ -5,14 +5,14 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.utils import get_url, unlist_dict
-from utils import get_wildcards, get_resource
+from utils import all_but, get_wildcards, get_resource
 
 
 def load_dataset_df(file):
-    dataset_df = pd.read_table(file,comment='#')
-    dataset_df['subset'] = dataset_df['subset'].str.split(',')
-    dataset_df = dataset_df.explode('subset')
-    return dataset_df
+    df = pd.read_table(file,comment='#')
+    df['subset'] = df['subset'].str.split(',')
+    df = df.explode('subset')
+    return df
 
 
 module_name = 'load_data'
@@ -20,6 +20,9 @@ dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 out_dir = Path(config['output_dir']) / module_name
 
 # set default filter settings per values per study filters
+if 'filter_per_organ' not in config.keys():
+    config['filter_per_organ'] = {}
+
 for _, row in dataset_df[['study', 'organ']].drop_duplicates().iterrows():
     study, organ = row[['study', 'organ']]
 
@@ -65,9 +68,11 @@ rule metadata:
     input:
         h5ad=rules.download.output.h5ad
     params:
-        meta=lambda wildcards: unlist_dict(get_wildcards(dataset_df,wildcards=wildcards))
+        meta=lambda wildcards: unlist_dict(
+            get_wildcards(dataset_df,columns=all_but(dataset_df.columns,'subset'),wildcards=wildcards)
+        )
     output:
-        h5ad=out_dir / 'processed/{dataset}.h5ad',
+        zarr=directory(out_dir / 'processed/' / '{dataset}.zarr'),
         plot=out_dir / 'processed/counts/{dataset}.png',
     conda:
         '../../envs/scanpy.yaml'
@@ -89,11 +94,11 @@ rule merge_study:
     """
     input:
         lambda wildcards: expand(
-            rules.metadata.output.h5ad,
+            rules.metadata.output.zarr,
             dataset=get_wildcards(dataset_df,'dataset',wildcards)['dataset']
         )
     output:
-        h5ad=out_dir / 'merged/{study}.h5ad'
+        zarr=directory(out_dir / 'merged' / '{study}.zarr'),
     params:
         dataset=lambda wildcards: wildcards.study
     resources:
@@ -115,10 +120,10 @@ rule filter:
     TODO: keep filtered out cells for stats
     """
     input:
-        h5ad=rules.merge_study.output.h5ad
+        zarr=rules.merge_study.output.zarr
     output:
-        h5ad=out_dir / 'filtered' / '{study}.h5ad',
-        removed=out_dir / 'filtered' / 'removed' / '{study}.h5ad',
+        zarr=directory(out_dir / 'filtered' / '{study}.zarr'),
+        removed=directory(out_dir / 'filtered' / 'removed' / '{study}.zarr'),
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study]
     resources:
@@ -137,11 +142,11 @@ rule filter_all:
 rule merge_organ:
     input:
         lambda wildcards: expand(
-            rules.filter.output.h5ad,
+            rules.filter.output.zarr,
             **get_wildcards(dataset_df,['study'],wildcards),
         ),
     output:
-        h5ad=out_dir / 'merged' / 'organ' / '{organ}.h5ad'
+        zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
@@ -162,7 +167,7 @@ rule merge_organ_filter:
             **get_wildcards(dataset_df,['study'],wildcards),
         ),
     output:
-        h5ad=out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.h5ad'
+        zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
@@ -179,11 +184,11 @@ rule merge_organ_filter:
 rule merge_subset:
     input:
         lambda wildcards: expand(
-            rules.filter.output.h5ad,
+            rules.filter.output.zarr,
             **get_wildcards(dataset_df,['study'],wildcards),
         ),
     output:
-        h5ad=out_dir / 'merged' / 'subset' / '{organ}-{subset}.h5ad'
+        zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
         dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}'
     resources:
@@ -200,9 +205,20 @@ rule merge_subset:
 rule  merge_subset_all:
     input:
         expand(
-            rules.merge_subset.output.h5ad,
+            rules.merge_subset.output,
             **get_wildcards(dataset_df,['organ', 'subset'],drop_na=True)
         )
+
+
+rule zarr_to_h5ad:
+    input:
+        zarr=out_dir / '{file}.zarr'
+    output:
+        h5ad=out_dir / '{file}.h5ad'
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/convert_zarr_h5ad.py'
 
 
 rule all:

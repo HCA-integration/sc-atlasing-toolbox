@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 import scanpy as sc
+import anndata
 
 sns.set_theme(style='white')
 
@@ -102,7 +103,7 @@ def plot_qc_joint(
 sc.set_figure_params(frameon=False)
 plt.rcParams['figure.figsize'] = 12, 12
 
-input_h5ad = snakemake.input.h5ad
+input_zarr = snakemake.input.zarr
 output_joint = snakemake.output.joint
 output_joint_log = snakemake.output.joint_log
 output_violin = snakemake.output.violin
@@ -110,8 +111,8 @@ output_avg = snakemake.output.average_jitter
 hue = snakemake.params.hue
 dataset = snakemake.params.dataset
 
-print(f'Read {input_h5ad}...')
-adata = sc.read(input_h5ad)
+print(f'Read {input_zarr}...')
+adata = anndata.read_zarr(input_zarr)
 
 print('Calculate QC stats...')
 adata.var["mito"] = adata.var['feature_name'].str.startswith("MT-")

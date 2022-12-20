@@ -4,13 +4,14 @@ Data filtering
 from pprint import pprint
 import numpy as np
 import scanpy as sc
+import anndata
 
-input_h5ad = snakemake.input.h5ad
-output_h5ad = snakemake.output.h5ad
+input_zarr = snakemake.input.zarr
+output_zarr = snakemake.output.zarr
 output_removed = snakemake.output.removed
 params = snakemake.params['filter']
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_zarr)
 
 # subset to available annotations
 adata_filtered = adata[adata.obs['cell_type'].notna()]
@@ -44,10 +45,10 @@ if 'cells_per_sample' in params.keys():
     adata_filtered = adata_filtered[adata_filtered.obs['sample'].isin(samples_to_keep)]
 
 print('Save filtered...')
-adata_filtered.write(output_h5ad)
+adata_filtered.write_zarr(output_zarr)
 
-adata_removed = adata[~adata.obs_names.isin(adata_filtered.obs_names)]
-print(f'removed {adata_removed.n_obs} cells')
+adata_removed = adata.n_obs - sum(adata.obs_names.isin(adata_filtered.obs_names))
+print(f'removed {adata_removed} cells')
 
 print('Save removed...')
-adata_removed.write(output_removed)
+adata[~adata.obs_names.isin(adata_filtered.obs_names)].write_zarr(output_removed)

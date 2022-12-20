@@ -1,5 +1,5 @@
 import pandas as pd
-import scanpy as sc
+import anndata
 from matplotlib import pyplot as plt
 
 
@@ -33,10 +33,10 @@ def UpSetFromLists(listOflist, labels, max_overlap=5, min_overlap_size=50, verbo
     return UpSet(upset_counts, **kwargs)
 
 
-input_h5ad = snakemake.input.h5ad
+input_file = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_file)
 
 # clean obsnames
 adata.obs_names = pd.Series(adata.obs_names).str.split('-', n=1, expand=True)[0]

@@ -23,7 +23,7 @@ def get_pseudobulks(adata, group_key, agg='mean'):
 
 
 sc.set_figure_params(dpi=100, frameon=False)
-input_h5ad = snakemake.input.h5ad
+input_zarr = snakemake.input.zarr
 output_pca_1_2 = snakemake.output.pca_1_2
 output_pca_2_3 = snakemake.output.pca_2_3
 output_pca_scree = snakemake.output.pca_scree
@@ -32,7 +32,7 @@ color = snakemake.params['color']
 colors = color if isinstance(color, list) else [color]
 dataset = snakemake.params.dataset
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_zarr)
 sc.pp.normalize_total(adata)
 
 # make sure all columns are present for bulk

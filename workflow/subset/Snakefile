@@ -25,9 +25,9 @@ use rule * from load_data as load_data_ *
 
 rule subset:
     input:
-        h5ad=rules.merge_organ.output.h5ad
+        zarr=rules.merge_organ.output.zarr
     output:
-        h5ad=out_dir / '{organ}' / '{strategy}.h5ad'
+        zarr=directory(out_dir / '{organ}' / '{strategy}.zarr')
     params:
         n_cells=lambda wildcards: config['subset'][wildcards.organ]['n_cells']
     conda:

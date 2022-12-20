@@ -1,16 +1,16 @@
-import scanpy as sc
+import anndata
 import pandas as pd
 from matplotlib import pyplot as plt
 
-input_h5ad = snakemake.input.h5ad
+input_zarr = snakemake.input.zarr
 output = snakemake.output.tsv
 output_sample = snakemake.output.sample
 output_donor = snakemake.output.donor
 study = snakemake.wildcards.study
 
 
-print(f'Read {input_h5ad}...')
-adata = sc.read(input_h5ad)
+print(f'Read {input_zarr}...')
+adata = anndata.read_zarr(input_zarr)
 
 obs_per_sample = adata.obs['sample'].value_counts()
 if adata.n_obs > 0:

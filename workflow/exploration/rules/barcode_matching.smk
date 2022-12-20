@@ -1,6 +1,6 @@
 rule get_barcodes:
     input:
-        h5ad=rules.load_data_metadata.output.h5ad
+        zarr=rules.load_data_metadata.output.zarr
     output:
         tsv=out_dir / 'barcode_matching' / 'barcodes' / '{dataset}.tsv',
     conda:

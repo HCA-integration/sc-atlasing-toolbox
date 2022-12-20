@@ -1,6 +1,6 @@
 rule pseudobulk:
     input:
-        h5ad=rules.load_data_filter.output.h5ad
+        zarr=rules.load_data_filter.output.zarr
     output:
         pca_1_2=out_dir / 'pseudobulk' / '{study}_1_2.png',
         pca_2_3=out_dir / 'pseudobulk' / '{study}_2_3.png',
@@ -19,7 +19,7 @@ rule pseudobulk:
 
 use rule pseudobulk as pseudobulk_organ with:
     input:
-        h5ad=rules.load_data_merge_organ.output.h5ad
+        zarr=rules.load_data_merge_organ.output.zarr
     params:
         dataset=lambda wildcards: wildcards.organ,
         bulk_by='sample',

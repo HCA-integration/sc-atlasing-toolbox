@@ -1,6 +1,6 @@
 rule qc:
     input:
-        h5ad=rules.load_data_filter.output.h5ad
+        zarr=rules.load_data_filter.output.zarr
     output:
         joint=out_dir / 'qc' / '{study}' / 'joint.png',
         joint_log=out_dir / 'qc' / '{study}' / 'joint_log.png',
@@ -19,7 +19,7 @@ rule qc:
 
 use rule qc as qc_organ with:
     input:
-        h5ad=rules.load_data_merge_organ.output.h5ad
+        zarr=rules.load_data_merge_organ.output.zarr
     output:
         joint=out_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
         joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
@@ -34,7 +34,7 @@ use rule qc as qc_organ with:
 
 use rule qc as qc_filtered with:
     input:
-        h5ad=rules.merge_organ_filter.output.h5ad
+        zarr=rules.merge_organ_filter.output.zarr
     output:
         joint=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
         joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',

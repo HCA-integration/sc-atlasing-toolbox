@@ -1,11 +1,12 @@
+import anndata
 import scanpy as sc
 
-input_h5ad = snakemake.input.h5ad
-output_h5ad = snakemake.output.h5ad
+input_file = snakemake.input.zarr
+output_file = snakemake.output.zarr
 n_cell_max = snakemake.params.n_cells
 strategy = snakemake.wildcards.strategy
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_file)
 print(f'Shape before filtering: {adata.shape}')
 
 adatas = []
@@ -25,4 +26,4 @@ print(f'Subset to {adata.n_obs} cells, {n_samples} samples')
 print(adata)
 
 # save
-adata.write(output_h5ad)
+adata.write_zarr(output_file)

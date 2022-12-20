@@ -9,7 +9,7 @@ dependencies:
   - r-complexupset
   - rpy2
   - upsetplot
+  - zarr
   - pip
   - pip:
     - scanpy==1.9
-    - sc-toolbox

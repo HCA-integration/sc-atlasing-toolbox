@@ -8,7 +8,7 @@ import scanpy as sc
 from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS, get_union
 
 in_file = snakemake.input.h5ad
-out_file = snakemake.output.h5ad
+out_file = snakemake.output.zarr
 out_plot = snakemake.output.plot
 wildcards = snakemake.wildcards
 meta = snakemake.params.meta
@@ -85,7 +85,7 @@ adata.obs = adata.obs[get_union(CELLxGENE_OBS, EXTRA_COLUMNS)].copy()
 adata.var = adata.var[CELLxGENE_VARS]
 adata.var.index.set_names('feature_id', inplace=True)
 
-adata.write(out_file, compression='gzip')
+adata.write_zarr(out_file)
 
 # plot count distribution -> save to file
 plt.hist(adata.X.data, bins=60)
