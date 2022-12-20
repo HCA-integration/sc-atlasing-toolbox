@@ -7,7 +7,7 @@ rule summary_stats:
     + disease states
     """
     input:
-        h5ad=rules.load_data_filter.output.h5ad
+        zarr=rules.load_data_filter.output.zarr
     output:
         tsv=out_dir / 'summary' / 'datasets' / '{study}.tsv',
         sample=out_dir / 'summary' / 'datasets' / '{study}_sample.png',
@@ -22,7 +22,7 @@ rule summary_stats:
 
 use rule summary_stats as summary_stats_filtered with:
     input:
-        h5ad=rules.load_data_filter.output.removed
+        zarr=rules.load_data_filter.output.removed
     output:
         tsv=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}.tsv',
         sample=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}_sample.png',

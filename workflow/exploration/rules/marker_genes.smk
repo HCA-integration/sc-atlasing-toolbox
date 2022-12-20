@@ -1,6 +1,6 @@
 rule marker_genes:
     input:
-        h5ad=rules.load_data_filter.output.h5ad
+        zarr=rules.load_data_filter.output.zarr
     output:
         png=out_dir / 'marker_genes' / '{study}.png',
     params:

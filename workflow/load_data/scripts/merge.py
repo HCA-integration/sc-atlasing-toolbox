@@ -3,12 +3,13 @@ import gc
 
 import pandas as pd
 import scanpy as sc
+import anndata
 
 from utils import CELLxGENE_VARS
 
 
 def read_adata(file):
-    ad = sc.read(file)
+    ad = anndata.read_zarr(file)
     ad.var = ad.var[CELLxGENE_VARS]
     # remove data
     del ad.uns
@@ -20,10 +21,18 @@ def read_adata(file):
 
 dataset = snakemake.params.dataset
 files = snakemake.input
-out_file = snakemake.output.h5ad
+out_file = snakemake.output.zarr
 
 if len(files) == 1:
-    Path(out_file).symlink_to(Path(files[0]).resolve())
+    in_file = Path(files[0])
+    out_dir = Path(out_file)
+    if not out_dir.exists():
+        out_dir.mkdir()
+    for f in in_file.iterdir():
+        if f.name == '.snakemake_timestamp':
+            continue  # skip snakemake timestamp
+        new_file = out_dir / f.name
+        new_file.symlink_to(f.resolve())
 else:
     print(f'Read first file {files[0]}...')
     adata = read_adata(files[0])
@@ -61,4 +70,4 @@ else:
     assert 'feature_name' in adata.var
 
     print('Write...')
-    adata.write(out_file, compression='gzip')
+    adata.write_zarr(out_file)

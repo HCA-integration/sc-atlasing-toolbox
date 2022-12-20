@@ -9,3 +9,4 @@ dependencies:
     - scanpy==1.9
     - dask
     - sc-toolbox
+    - zarr

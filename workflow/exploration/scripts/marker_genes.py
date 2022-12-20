@@ -1,14 +1,15 @@
 from matplotlib import pyplot as plt
 import scanpy as sc
+import anndata
 
 sc.set_figure_params(frameon=False)
 plt.rcParams['figure.figsize'] = 30, 25
-input_h5ad = snakemake.input.h5ad
+input_file = snakemake.input.zarr
 output_png = snakemake.output.png
 dataset = snakemake.params.dataset
 markers = snakemake.params.markers
 
-adata = sc.read(input_h5ad)
+adata = anndata.read_zarr(input_file)
 
 author_label = 'author_annotation'
 ontology_label = 'cell_type'
