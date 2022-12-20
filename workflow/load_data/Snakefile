@@ -185,7 +185,7 @@ rule merge_subset:
     output:
         h5ad=out_dir / 'merged' / 'subset' / '{organ}-{subset}.h5ad'
     params:
-        dataset=lambda wildcards: wildcards
+        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}'
     resources:
         mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
