@@ -35,8 +35,16 @@ DATASETS:
   test:
     label: bulk_labels
     batch: batch
+    lineage: phase
     adata_file: ../../data/pbmc68k.h5ad
+    integration:
+        combat:
+        scvi:
+          max_epochs: 10
   test2:
     label: bulk_labels
     batch: batch
+    lineage: phase
     adata_file: ../../data/pbmc68k.h5ad
+    integration:
+      combat:

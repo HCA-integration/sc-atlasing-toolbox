@@ -1,6 +1,8 @@
+import typing
+import traceback
+
 import numpy as np
 import pandas as pd
-import typing
 from snakemake.io import expand
 
 
@@ -130,12 +132,7 @@ def get_wildcards(wildcards_df, columns=None, wildcards=None, drop_na=False):
         columns = wildcards_df.columns
     if isinstance(columns, str):
         columns = [columns]
-    if wildcards:
-        wildcards = {k: wildcards[k] for k in wildcards.keys()}
-        query = ' and '.join([f'{k} == "{v}"' for k, v in wildcards.items()])
-        wildcards_df = wildcards_df.query(query)
-        if wildcards_df.shape[0] == 0:
-            raise ValueError(f'no wildcard combination found in wildcards df {query}')
+    wildcards_df = subset_by_wildcards(wildcards_df, wildcards)
     wildcards_df = unique_dataframe(wildcards_df[columns])
     if drop_na:
         wildcards_df = wildcards_df.dropna()
@@ -172,21 +169,20 @@ def get_params(wildcards, parameters_df, column, wildcards_keys=None):
                 wildcards_keys = [key for key in wildcards.keys() if key in parameters_df.columns]
             assert np.all([key in wildcards.keys() for key in wildcards.keys()])
 
-            query = ' and '.join([f'{w} == @wildcards.{w}' for w in wildcards.keys()])
-            params_sub = parameters_df.query(query)
-        else:
-            params_sub = parameters_df
-        params_sub = unique_dataframe(params_sub)
+        params_sub = subset_by_wildcards(parameters_df, wildcards)
+        columns = list(set(wildcards_keys + [column]))
+        params_sub = unique_dataframe(params_sub[columns])
 
         try:
             assert params_sub.shape[0] == 1
         except AssertionError:
             raise ValueError(
-                f'Incorrect number of parameters\n{params_sub}'
+                f'More than 1 row after subsetting\n{params_sub}'
             )
         param = params_sub[column].tolist()
     except Exception as e:
         print(e)
+        print(traceback.format_exc())
         raise Exception(
             f'Error for wildcards={wildcards}, column={column}, wildcards_keys={wildcards_keys}'
             f'\n{parameters_df}\nError message: {e}'
@@ -226,3 +222,20 @@ def unique_dataframe(df):
     hashable_columns = [col for col in df.columns if isinstance(df[col].iloc[0], typing.Hashable)]
     duplicated = df[hashable_columns].duplicated()
     return df[~duplicated]
+
+
+def subset_by_wildcards(df, wildcards):
+    """
+    Helper function to subset df by wildcards
+    :param df: dataframe with wildcard names in column and wildcard values in rows
+    :param wildcards: wildcards object from Snakemake
+    :return: subset dataframe
+    """
+    if wildcards is None:
+        return df
+    wildcards = {k: wildcards[k] for k in wildcards.keys() if k in df.columns}
+    query = ' and '.join([f'{k} == "{v}"' for k, v in wildcards.items()])
+    df = df.query(query)
+    if df.shape[0] == 0:
+        raise ValueError(f'no wildcard combination found in wildcards df {query}')
+    return df

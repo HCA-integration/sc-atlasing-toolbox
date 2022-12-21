@@ -20,13 +20,20 @@ parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
-    config_params=['integration', 'label', 'batch'],
-    wildcard_names=['dataset', 'method', 'label', 'batch'],
+    config_params=['integration', 'label', 'batch', 'lineage'],
+    wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
     explode_by='method',
 ).merge(parameters,on='method')
 
 parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams']
+
+wildcard_constraints:
+    dataset='\w+',
+    method='\w+',
+    batch='\w+',
+    label='\w+',
+    hyperparams='((?![/]).)*',
 
 
 module common:
@@ -37,61 +44,16 @@ module common:
 use rule * from common as common_ *
 
 
-rule run:
-    input:
-        h5ad=get_h5ad
-    output:
-        h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/adata.h5ad',
-        model=touch(directory(out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/model'))
-    params:
-        output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
-        hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
-        env=lambda wildcards: get_params(wildcards,parameters,'env')
-    conda:
-        lambda wildcards, params: f'envs/{params.env}'
-    resources:
-        partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
-        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
-        gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-    benchmark:
-        out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'
-    script:
-        'scripts/{wildcards.method}.py'
-
-
-rule benchmark:
-    input:
-        benchmark=expand(rules.run.benchmark,zip,**parameters[wildcard_names].to_dict('list'))
-    output:
-        benchmark=out_dir / 'integration.benchmark.tsv'
-    params:
-        wildcards=parameters[wildcard_names]
-    run:
-        benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
-        benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
-        print(benchmark_df)
-        benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
-
-
-use rule barplot from common as integration_barplot with:
-    input:
-        tsv=rules.benchmark.output.benchmark
-    output:
-        png=out_dir / 'plots' / '{metric}.png'
-    params:
-        metric=lambda wildcards: wildcards.metric,
-        category='method',
-        hue='hyperparams',
-        facet_col='dataset',
-        title='Integration benchmark methods',
-        description=wildcards_to_str,
-        dodge=True,
+include: 'rules/integration.smk'
+include: 'rules/lineage.smk'
+include: 'rules/benchmark.smk'
 
 
 rule all:
     input:
-        expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list')),
-        expand(rules.barplot.output,metric=['s', 'max_uss', 'mean_load'])
+        rules.run_all.input,
+        rules.run_lineages_all.input,
+        rules.plots.input
     default_target: True
 
 
