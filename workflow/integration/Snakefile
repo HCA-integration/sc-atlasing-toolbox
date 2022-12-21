@@ -52,7 +52,7 @@ include: 'rules/benchmark.smk'
 rule all:
     input:
         rules.run_all.input,
-        rules.run_lineages_all.input,
+        #rules.run_lineages_all.input,
         rules.plots.input
     default_target: True
 

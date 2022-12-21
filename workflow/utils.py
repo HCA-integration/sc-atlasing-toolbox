@@ -1,5 +1,6 @@
 import typing
 import traceback
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -69,7 +70,7 @@ def get_wildcards_from_config(
     if config_keys is None:
         config_keys = config.keys()
     records = [
-        (key, *[config[key][w] for w in config_params])
+        (key, *[_get_or_default_from_config(config, {}, key, w) for w in config_params])
         for key in config_keys
     ]
     df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
@@ -95,7 +96,8 @@ def _get_or_default_from_config(config, defaults, key, value):
     try:
         assert value in defaults.keys()
     except AssertionError:
-        raise AssertionError(f'No default defined for "{value}"')
+        warnings.warn(f'No default defined for "{value}" for "{key}", returning None')
+        return None
     return defaults[value]
 
 
@@ -231,7 +233,7 @@ def subset_by_wildcards(df, wildcards):
     :param wildcards: wildcards object from Snakemake
     :return: subset dataframe
     """
-    if wildcards is None:
+    if not wildcards:
         return df
     wildcards = {k: wildcards[k] for k in wildcards.keys() if k in df.columns}
     query = ' and '.join([f'{k} == "{v}"' for k, v in wildcards.items()])

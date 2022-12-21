@@ -33,14 +33,20 @@ defaults:
       dispersion: gene
       max_epochs: 10
       use_observed_lib_size: true
+    scpoli:
+      supervised: true
+      early_stopping_kwargs:
+        early_stopping_metric: val_prototype_loss
+        mode: min
+        threshold: 0
+        patience: 20
+        reduce_lr: true
+        lr_patience: 13
+        lr_factor: 0.1
 
 
 DATASETS:
   test:
-    label: bulk_labels
-    batch: batch
-    adata_file: ../../data/pbmc68k.h5ad
-  test2:
     label: bulk_labels
     batch: batch
     adata_file: ../../data/pbmc68k.h5ad
