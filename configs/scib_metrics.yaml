@@ -5,6 +5,8 @@ dataset_meta: configs/datasets.tsv
 
 defaults:
   integration:
+    unintegrated:
+    combat:
     scvi:
       n_hidden: 128
       dispersion: gene
@@ -15,15 +17,28 @@ defaults:
       dispersion: gene
       max_epochs: 100
       use_observed_lib_size: true
-    combat:
-    unintegrated:
+    scpoli:
+      supervised: true
+      early_stopping_kwargs:
+        early_stopping_metric: val_prototype_loss
+        mode: min
+        threshold: 0
+        patience: 20
+        reduce_lr: true
+        lr_patience: 13
+        lr_factor: 0.1
   datasets:
-    - pancreas_ari
-    - pancreas_nmi
-    - pancreas_asw
-    - pancreas_lisi
+    - pancreas
+    #- pancreas_ari
+    #- pancreas_nmi
+    #- pancreas_asw
+    #- pancreas_lisi
 
 DATASETS:
+  pancreas:
+    adata_file: data/pancreas.h5ad
+    label: celltype
+    batch: tech
   pancreas_ari:
     adata_file: data/pancreas.h5ad
     label: celltype

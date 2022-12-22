@@ -94,11 +94,11 @@ use rule * from metrics as metrics_ *
 
 rule all:
     input:
-        rules.load_data_all.input,
-        rules.exploration_all.input,
-        rules.preprocessing_all.input,
-        rules.subset_all.input,
-        rules.label_transfer_all.input,
+        #rules.load_data_all.input,
+        #rules.exploration_all.input,
+        #rules.preprocessing_all.input,
+        #rules.subset_all.input,
+        #rules.label_transfer_all.input,
         rules.integration_all.input,
         rules.metrics_all.input
     default_target: True

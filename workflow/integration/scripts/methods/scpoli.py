@@ -14,10 +14,12 @@ cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyp
 early_stopping_kwargs = hyperparams['early_stopping_kwargs'] if 'early_stopping_kwargs' in hyperparams.keys() else {}
 
 adata_raw = sc.read(input_file)
+adata = adata_raw.copy()
+adata.X = adata.layers['counts']
 
 # train model
 model = scPoli(
-    adata=adata_raw,
+    adata=adata,
     condition_key=wildcards.batch,
     cell_type_keys=cell_type_keys,
     embedding_dim=3,

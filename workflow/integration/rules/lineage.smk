@@ -20,7 +20,7 @@ checkpoint split_lineage:
         '../scripts/split_anndata.py'
 
 
-use rule run as run_per_lineage with:
+rule run_per_lineage:
     input:
         h5ad=lambda w: get_checkpoint_output(checkpoints.split_lineage,dataset=w.dataset) / f'{w.lineage}.h5ad',
     output:
@@ -34,8 +34,16 @@ use rule run as run_per_lineage with:
         output_type=lambda w: get_params(w,parameters,column='output_type'),
         hyperparams=lambda w: get_params(w,parameters,column='hyperparams_dict'),
         env=lambda w: get_params(w,parameters,column='env')
+    conda:
+        lambda wildcards, params: f'../envs/{params.env}'
+    resources:
+        partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
+        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
+        gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
     benchmark:
         out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages/{lineage}/benchmark.tsv'
+    script:
+        '../scripts/methods/{wildcards.method}.py'
 
 
 def collect_lineages(wildcards):
