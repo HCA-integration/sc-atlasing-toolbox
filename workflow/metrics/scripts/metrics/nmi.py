@@ -8,6 +8,7 @@ output_file = snakemake.output.metric
 metric = snakemake.wildcards.metric
 method = snakemake.wildcards.method
 dataset = snakemake.wildcards.dataset
+hyperparams = snakemake.wildcards.hyperparams
 
 metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = metrics_meta.loc[metric]['metric_type']
@@ -39,4 +40,13 @@ for output_type in output_types:
     )
     scores.append(score)
 
-write_metrics(scores, output_types, metric, metric_type, method, dataset, output_file)
+write_metrics(
+    scores=scores,
+    output_types=output_types,
+    metric=metric,
+    metric_type=metric_type,
+    method=method,
+    hyperparams=hyperparams,
+    dataset=dataset,
+    filename=output_file
+)

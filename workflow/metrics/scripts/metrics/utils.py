@@ -13,16 +13,20 @@ def get_from_adata(adata):
     }
 
 
-def write_metrics(scores, output_types, metric, metric_type, method, dataset, filename):
+def write_metrics(filename, scores, output_types, **kwargs):
+    """
+    Write metrics for output type specific scores
+    :param filename: file to write to
+    :param scores: list of scores, order must match that of output_types
+    :param output_types: list of output types, order must match that of scores
+    :param kwargs: additional information to add to output
+    """
 
-    records = [
-        (dataset, metric, method, output_type, metric_type, score)
-        for score, output_type in zip(scores, output_types)
-    ]
-    df = pd.DataFrame.from_records(
-        records,
-        columns=['dataset', 'metric', 'method', 'output_type', 'metric_type', 'score']
-    )
+    meta_names = [key for key in kwargs.keys()]
+    meta_values = [kwargs[col] for col in meta_names]
+
+    records = [(*meta_values, output_type, score) for score, output_type in zip(scores, output_types)]
+    df = pd.DataFrame.from_records(records, columns=meta_names + ['output_type', 'score'])
     df.to_csv(filename, sep='\t', index=False)
 
 

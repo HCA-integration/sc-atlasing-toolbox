@@ -25,7 +25,7 @@ use rule barplot from plots as integration_barplot with:
     params:
         metric=lambda wildcards: wildcards.metric,
         category='method',
-        hue='hyperparams',
+        #hue='hyperparams',
         facet_col='dataset',
         title='Integration benchmark methods',
         description=wildcards_to_str,

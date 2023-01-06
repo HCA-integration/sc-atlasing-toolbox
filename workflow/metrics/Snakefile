@@ -62,21 +62,34 @@ include: 'rules/merge.smk'
 include: 'rules/plots.smk'
 
 
-rule all:
+rule merge_all:
     input:
         expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
         expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
+
+
+rule plots_all:
+    input:
+        expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
+        expand(
+            rules.metrics_barplot_per_dataset.output,
+            metric=['s', 'max_uss', 'score'],
+            **get_wildcards(parameters,'dataset')
+        ),
+        expand(
+            rules.metrics_barplot_per_method.output,
+            metric=['s', 'max_uss', 'score'],
+            **get_wildcards(parameters,'method')
+        ),
+        expand(rules.metrics_swarmplot.output,metric='score'),
+        expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**get_wildcards(parameters,'dataset')),
+        expand(rules.metrics_swarmplot_per_method.output,metric='score',**get_wildcards(parameters,'method')),
+
+
+rule all:
+    input:
         rules.merge.output,
-        expand(
-            rules.metrics_computation_plot.output,
-            metric=['s', 'max_uss'],
-            out_dir=['all', 'per_dataset', 'per_method']
-        ),
-        expand(
-            rules.metrics_swarmplot.output,
-            metric='score',
-            out_dir=['all', 'per_dataset', 'per_method']
-        ),
+        rules.plots_all.input
     default_target: True
 
 

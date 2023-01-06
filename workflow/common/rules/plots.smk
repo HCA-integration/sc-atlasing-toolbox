@@ -38,9 +38,3 @@ rule swarmplot:
         '../envs/plots.yaml'
     script:
         '../scripts/swarmplot.py'
-
-
-rule test_plots:
-    input:
-        expand(rules.barplot.output,out_dir='test/out/benchmark',metric=['s', 'max_uss', 'mean_load']),
-        expand(rules.swarmplot.output,out_dir='test/out/benchmark',metric=['score']),

@@ -11,8 +11,19 @@ expanded_wildcards = snakemake.params['wildcards']
 expanded_wildcards = pd.DataFrame(expanded_wildcards)
 facet_var = expanded_wildcards.columns[0]
 
-metrics_df = pd.concat([pd.read_table(file) for file in input_metrics]).reset_index(drop=True)
-benchmark_df = pd.concat([pd.read_table(file) for file in input_benchmark]).reset_index(drop=True)
+metrics_df = pd.concat(
+    [pd.read_table(file) for file in input_metrics],
+    ignore_index=True,
+).reset_index(drop=True)
+
+print(metrics_df)
+
+benchmark_df = pd.concat(
+    [pd.read_table(file) for file in input_benchmark],
+    ignore_index=True,
+).reset_index(drop=True)
+
+print(benchmark_df)
 
 benchmark_df = pd.concat([expanded_wildcards, benchmark_df], axis=1)
 

@@ -3,7 +3,7 @@ import pandas as pd
 
 metrics_columns = ['dataset', 'metric', 'method', 'output_type', 'metric_type', 'score']
 
-metrics_df = pd.read_table('test/out/metrics/metrics.tsv')
+metrics_df = pd.read_table('test/out/metrics/results/metrics.tsv')
 
 try:
     for column in metrics_columns:
