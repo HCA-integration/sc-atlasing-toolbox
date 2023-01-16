@@ -91,6 +91,10 @@ def _get_or_default_from_config(config, defaults, key, value):
     :param value: key of
     :return:
     """
+    if key not in config.keys():
+        print('config:', config)
+        raise KeyError(f'Key "{key}" not found in config')
+
     if value in config[key]:
         return config[key][value]
     try:
@@ -241,3 +245,24 @@ def subset_by_wildcards(df, wildcards):
     if df.shape[0] == 0:
         raise ValueError(f'no wildcard combination found in wildcards df {query}')
     return df
+
+
+def get_datasets_for_module(config, module):
+    """
+    Collect dataset names e.g. for wildcard expansion from config["DATASETS"] for a given module
+    If the "DATASETS" key is not available in the config, warn and return an empty list
+    A dataset is valid if it contains an input file for the given module.
+
+    :param config: config dictionary passed from Snakemake
+    :param module: name of module to collect valid datasets for
+    :return: list of valid dataset names from config["DATASETS"]
+    """
+    if 'DATASETS' not in config:
+        warnings.warn('No datasets specified in config, cannot collect any datasets')
+        return []
+    return [
+        dataset for dataset in config['DATASETS'].keys()
+        if 'input' in config['DATASETS'][dataset]
+           and config['DATASETS'][dataset]['input'] is not None
+           and module in config['DATASETS'][dataset]['input']
+    ]

@@ -13,23 +13,20 @@ resources:
 
 defaults:
   integration:
-    unintegrated:
+    bbknn:
     combat:
+    harmony:
     scanorama:
-    scvi:
-      n_hidden: 128
-      dispersion:
-        - gene
-        - gene-batch
-        - gene-label
-        - gene-cell
-      max_epochs: 10
-      use_observed_lib_size: true
     scanvi:
       n_hidden: 128
       dispersion: gene
       max_epochs: 10
       use_observed_lib_size: true
+    scgen:
+      max_epochs: 50
+      batch_size: 32
+      early_stopping: True
+      early_stopping_patience: 25
     scpoli:
       supervised: true
       early_stopping_kwargs:
@@ -40,29 +37,30 @@ defaults:
         reduce_lr: true
         lr_patience: 13
         lr_factor: 0.1
+    scvi:
+      n_hidden: 128
+      dispersion:
+        - gene
+        - gene-batch
+        - gene-label
+        - gene-cell
+      max_epochs: 10
+      use_observed_lib_size: true
+    unintegrated:
 
 DATASETS:
   test:
+    input:
+      integration: ../../data/pbmc68k.h5ad
     label: bulk_labels
     batch: batch
     lineage: phase
-    adata_file: ../../data/pbmc68k.h5ad
-    integration:
-      scpoli:
-        supervised: true
-        early_stopping_kwargs:
-          early_stopping_metric: val_prototype_loss
-          mode: min
-          threshold: 0
-          patience: 20
-          reduce_lr: true
-          lr_patience: 13
-          lr_factor: 0.1
 
   test2:
+    input:
+      integration: ../../data/pbmc68k.h5ad
     label: bulk_labels
     batch: batch
     lineage: phase
-    adata_file: ../../data/pbmc68k.h5ad
     integration:
       combat:

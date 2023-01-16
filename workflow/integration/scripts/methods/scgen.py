@@ -1,4 +1,4 @@
-from scarches.models.scpoli import scPoli
+from scgen import SCGEN
 
 from utils import add_metadata, read_anndata, process
 
@@ -16,26 +16,17 @@ adata_raw = read_anndata(input_file)
 adata = adata_raw.copy()
 adata.X = adata.layers['counts']
 
+SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)
+
 # train model
-model = scPoli(
-    adata=adata,
-    condition_key=wildcards.batch,
-    cell_type_keys=cell_type_keys,
-    embedding_dim=3,
-)
-
-model.train(
-    n_epochs=50,
-    pretraining_epochs=40,
-    early_stopping_kwargs=early_stopping_kwargs,
-    eta=5,
-)
-
+model = SCGEN(adata)
+model.train()
+corrected_adata = model.batch_removal()
 model.save(output_model, overwrite=True)
 
 # prepare output adata
-adata = adata_raw.copy()
-adata.obsm["X_emb"] = model.get_latent()
+adata.X = corrected_adata.X
+adata.obsm["X_emb"] = corrected_adata.obsm["latent"]
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 

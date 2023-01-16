@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils import _get_or_default_from_config, set_defaults
+from utils_pipeline import update_module_configs, config_for_module
 
 
 min_version("6.0")
@@ -10,42 +10,18 @@ container: "docker://condaforge/mambaforge:latest"
 configfile: "configs/config.yaml"
 configfile: "configs/load_data.yaml"
 configfile: "configs/exploration.yaml"
-configfile: "configs/subset.yaml"
 configfile: "configs/label_transfer.yaml"
 configfile: "configs/benchmark.yaml"
 
 params = pd.read_table('configs/modules.tsv',comment='#')
 params['submodules'] = params['submodules'].str.split(',')
-
-# Process params per module
-for dataset in config['DATASETS'].keys():
-
-    def _get(params, dataset, module):
-        submodules = params.query('dataset == @dataset and module == @module')['submodules']
-        if len(submodules) == 0 or submodules.isna().all():
-            submodules = _get_or_default_from_config(config['DATASETS'],config['defaults'],dataset,module)
-        else:
-            submodules = submodules.to_list()[0]
-        if len(submodules) == 0:
-            raise ValueError(
-                f'No submodules defined for {dataset}, {module}.'
-                ' Check that they are either defined either in the config or modules.tsv'
-            )
-        return submodules
-
-
-    config['DATASETS'][dataset]['integration'] = _get(params,dataset,'integration')
-    config['DATASETS'][dataset]['metrics'] = _get(params,dataset,'metrics')
-
-config = set_defaults(config,['integration', 'metrics'])
-config['dataset_meta'] = str(Path(config['dataset_meta']).resolve())
+config = update_module_configs(config, params)
 
 out_dir = Path(config['output_dir'])
 
 # Import modules
 module common:
     snakefile: "common/Snakefile"
-    config: config
 
 module load_data:
     snakefile: "load_data/Snakefile"
@@ -61,7 +37,7 @@ module subset:
 
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
-    config: config
+    config: config_for_module(config, module='preprocessing')
 
 module label_transfer:
     snakefile: "label_transfer/Snakefile"
@@ -69,7 +45,7 @@ module label_transfer:
 
 module integration:
     snakefile: "integration/Snakefile"
-    config: config
+    config: config_for_module(config, module='integration')
 
 module metrics:
     snakefile: "metrics/Snakefile"

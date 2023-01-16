@@ -4,6 +4,8 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - matplotlib
+  - seaborn
   - r-base=4.2
   - r-data.table
   - r-complexupset
@@ -27,5 +29,3 @@ dependencies:
   - r-rcpparmadillo
   - r-desc
 #  - r-proxyc
-  - pip
-  - pip:

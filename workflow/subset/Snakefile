@@ -2,12 +2,33 @@
 Data Subsetting for benchmark
 """
 from pathlib import Path
-import pandas as pd
+
+from utils import set_defaults, get_datasets_for_module, get_params, get_resource, get_wildcards_from_config
 
 
 module_name = 'subset'
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
+
+parameters = get_wildcards_from_config(
+    config=config['DATASETS'],
+    config_keys=config['defaults']['datasets'],
+    config_params=['batch'],  # TODO: add strategy
+    wildcard_names=['dataset', 'sample'],
+)
+
+
+def get_input(wildcards):
+    return config['DATASETS'][wildcards.dataset]['input']['subset']
+
+
+def get_param(wildcards, param):
+    dataset = wildcards.dataset
+    try:
+        param = config['DATASETS'][dataset]['subset'][param]
+    except:
+        raise KeyError(f'invalid parameter for dataset="{dataset}", param="{param}"')
+    return param
 
 
 module common:
@@ -16,20 +37,17 @@ module common:
 
 use rule * from common as common_ *
 
-module load_data:
-    snakefile: "../load_data/Snakefile"
-    config: config
-
-use rule * from load_data as load_data_ *
-
-
 rule subset:
     input:
-        zarr=rules.merge_organ.output.zarr
+        zarr=get_input
     output:
-        zarr=directory(out_dir / '{organ}' / '{strategy}.zarr')
+        zarr=directory(out_dir / '{dataset}' / '{strategy}.zarr')
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     params:
-        n_cells=lambda wildcards: config['subset'][wildcards.organ]['n_cells']
+        n_cells=lambda wildcards: get_param(wildcards,'n_cells'),
+        sample_key=lambda wildcards: get_params(wildcards,parameters,'sample')
     conda:
         'envs/scanpy.yaml'
     script:
@@ -40,7 +58,7 @@ rule all:
     input:
         expand(
             rules.subset.output,
-            organ=dataset_df['organ'].unique(),
+            dataset=get_datasets_for_module(config,module='subset'),
             strategy=['by_sample', 'within_sample']
         )
     default_target: True

@@ -9,7 +9,7 @@ checkpoint split_lineage:
         {params}
         """
     input:
-        h5ad=get_h5ad
+        h5ad=get_input
     output:
         directory(out_dir / '{dataset}' / 'lineages')
     params:

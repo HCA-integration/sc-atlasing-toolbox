@@ -1,5 +1,7 @@
 defaults:
   integration:
+    unintegrated:
+    scanorama:
     scvi:
       n_hidden: 128
       dispersion:
@@ -14,9 +16,16 @@ defaults:
       dispersion: gene
       max_epochs: 10
       use_observed_lib_size: true
-    combat:
-    scanorama:
-    unintegrated:
+    scpoli:
+      supervised: true
+      early_stopping_kwargs:
+        early_stopping_metric: val_prototype_loss
+        mode: min
+        threshold: 0
+        patience: 20
+        reduce_lr: true
+        lr_patience: 13
+        lr_factor: 0.1
   metrics:
     - nmi
     - ari
@@ -29,12 +38,42 @@ defaults:
     - isolated_label_asw
     - isolated_label_f1
     - pcr
+  datasets:
+    - blood_benchmark
+    - test
+  subset:
+    n_cells: 500000
+
+output_map:
+  subset: data/out/subset/{dataset}/by_sample.zarr
+  preprocessing: data/out/preprocessing/{dataset}/neighbors.zarr
 
 DATASETS:
+  blood_benchmark:
+    input:
+      subset: data/out/load_data/merged/subset/blood-benchmark.zarr
+      preprocessing: subset
+      integration: preprocessing
+    label: cell_type
+    batch: study
+    metrics:
+      - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
   test:
+    input:
+      subset: data/pbmc68k.h5ad
+      preprocessing: subset
+      integration: data/pbmc68k.h5ad
     label: bulk_labels
     batch: phase
-    adata_file: 'data/pbmc68k.h5ad'
     metrics:
       - nmi
       - ari
@@ -47,6 +86,7 @@ DATASETS:
       - isolated_label_f1
       - pcr
   test2:
+    input:
     label: bulk_labels
     batch: phase
     adata_file: 'data/pbmc68k.h5ad'

@@ -28,7 +28,18 @@ defaults:
     - pcr
   integration:
     unintegrated:
+    bbknn:
+    harmony:
     scvi:
+      n_hidden: 128
+      dispersion:
+        - gene
+        - gene-batch
+        - gene-label
+        - gene-cell
+      max_epochs: 10
+      use_observed_lib_size: true
+    scanvi:
       n_hidden: 128
       dispersion: gene
       max_epochs: 10
@@ -43,6 +54,11 @@ defaults:
         reduce_lr: true
         lr_patience: 13
         lr_factor: 0.1
+    scgen:
+      max_epochs: 50
+      batch_size: 32
+      early_stopping: True
+      early_stopping_patience: 25
 
 
 DATASETS:

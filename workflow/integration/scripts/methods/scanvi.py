@@ -1,7 +1,6 @@
 import scvi
-import scanpy as sc
 
-from utils import process
+from utils import add_metadata, read_anndata, process
 
 input_adata = snakemake.input.h5ad
 output_adata = snakemake.output.h5ad
@@ -9,7 +8,7 @@ output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 params = snakemake.params
 
-adata_raw = sc.read(input_adata)
+adata_raw = read_anndata(input_adata)
 adata = adata_raw.copy()
 
 # run method
@@ -51,22 +50,9 @@ model = scvi.model.SCANVI.from_scvi_model(
 model.train(n_samples_per_label=100, **train_params)
 model.save(output_model, overwrite=True)
 
+# prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
-
-# add metadata
-adata.uns['dataset'] = wildcards.dataset
-
-if 'methods' in adata.uns:
-    adata.uns['methods'].append(wildcards.method)
-else:
-    adata.uns['methods'] = [wildcards.method]
-
-adata.uns['integration'] = {
-    'method': wildcards.method,
-    'label_key': wildcards.label,
-    'batch_key': wildcards.batch,
-    'output_type': params['output_type']
-}
+add_metadata(adata, wildcards, params)
 
 adata.write(output_adata, compression='gzip')

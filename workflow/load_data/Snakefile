@@ -210,17 +210,6 @@ rule  merge_subset_all:
         )
 
 
-rule zarr_to_h5ad:
-    input:
-        zarr=out_dir / '{file}.zarr'
-    output:
-        h5ad=out_dir / '{file}.h5ad'
-    conda:
-        '../../envs/scanpy.yaml'
-    script:
-        'scripts/convert_zarr_h5ad.py'
-
-
 rule all:
     input:
         expand(rules.merge_organ.output,**get_wildcards(dataset_df,['organ'])),

@@ -26,3 +26,8 @@ filter_per_study:
         - C19-CB-0008
       disease:
         - influenza
+
+DATASETS:
+  blood:
+    input:
+      preprocessing: test/out/load_data/merged/organ/blood.zarr

@@ -7,8 +7,8 @@ import pandas as pd
 from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults, wildcards_to_str
 
 
-def get_h5ad(wildcards):
-    return config['DATASETS'][wildcards.dataset]['adata_file']
+def get_input(wildcards):
+    return config['DATASETS'][wildcards.dataset]['input']['integration']
 
 
 module_name = 'integration'

@@ -1,5 +1,15 @@
+import anndata
 import scanpy as sc
 from scipy.sparse import csr_matrix
+
+
+# TODO: put in common location
+def read_anndata(file):
+    if file.endswith('.zarr'):
+        adata = anndata.read_zarr(file)
+    else:
+        adata = sc.read(file)
+    return adata
 
 
 def process(adata, adata_raw, output_type):
@@ -21,6 +31,7 @@ def process(adata, adata_raw, output_type):
 
     if 'full' in output_type:
         sc.pp.pca(adata)
+        adata.layers['corrected_counts'] = adata.X.copy()
         # TODO: use same parameters as in .uns['preprocessing']
 
     elif 'embed' in output_type or 'knn' in output_type:
@@ -55,4 +66,3 @@ def add_metadata(adata, wildcards, params):
         'batch_key': wildcards.batch,
         'output_type': params['output_type']
     }
-    return adata

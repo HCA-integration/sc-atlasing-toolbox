@@ -3,16 +3,20 @@ Preprocessing
 """
 from pathlib import Path
 import pandas as pd
+from utils import get_datasets_for_module, get_resource
 
 
 module_name = 'preprocessing'
 dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / module_name
 
+
+def get_input(wildcards):
+    return config['DATASETS'][wildcards.dataset]['input']['preprocessing']
+
+
 wildcard_constraints:
     dataset='\w+',
-    study='\w+',
-    organ='\w+',
 
 
 module common:
@@ -22,18 +26,14 @@ module common:
 use rule * from common as common_ *
 
 
-module load_data:
-    snakefile: "../load_data/Snakefile"
-    config: config
-
-use rule * from load_data as load_data_ *
-
-
 rule normalize:
     input:
-        zarr=rules.load_data_merge_organ.output.zarr
+        zarr=get_input
     output:
-        zarr=directory(out_dir / '{organ}' / 'normalized.zarr')
+        zarr=directory(out_dir / '{dataset}' / 'normalized.zarr')
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
     script:
@@ -44,10 +44,13 @@ rule highly_variable_genes:
     input:
         zarr=rules.normalize.output.zarr
     output:
-        zarr=directory(out_dir / '{organ}' / 'highly_variable_genes.zarr')
+        zarr=directory(out_dir / '{dataset}' / 'highly_variable_genes.zarr')
     params:
         n_hvgs=2000,
         batch='donor',
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
     script:
@@ -58,7 +61,10 @@ rule pca:
     input:
         zarr=rules.highly_variable_genes.output.zarr
     output:
-        zarr=directory(out_dir / '{organ}' / 'pca.zarr')
+        zarr=directory(out_dir / '{dataset}' / 'pca.zarr')
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
     script:
@@ -69,7 +75,10 @@ rule neighbors:
     input:
         zarr=rules.pca.output.zarr
     output:
-        zarr=directory(out_dir / '{organ}' / 'neighbors.zarr')
+        zarr=directory(out_dir / '{dataset}' / 'neighbors.zarr')
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
     script:
@@ -80,7 +89,10 @@ rule umap:
     input:
         zarr=rules.neighbors.output.zarr
     output:
-        zarr=directory(out_dir / '{organ}' / 'umap.zarr')
+        zarr=directory(out_dir / '{dataset}' / 'umap.zarr')
+    resources:
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
     script:
@@ -89,6 +101,6 @@ rule umap:
 
 rule all:
     input:
-        expand(rules.neighbors.output,organ='blood'),
-        expand(rules.umap.output,organ='blood')
+        expand(rules.neighbors.output,dataset=get_datasets_for_module(config,module='preprocessing')),
+        expand(rules.umap.output,dataset=get_datasets_for_module(config,module='preprocessing'))
     default_target: True

@@ -1,0 +1,10 @@
+name: scgen
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - scanpy==1.9
+    - scgen==2.1.0

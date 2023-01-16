@@ -6,6 +6,7 @@ defaults:
 
 DATASETS:
   blood:
+    input:
     adata_file: data/out/load_data/merged/organ/blood.h5ad
     label: cell_type
     batch: dataset
@@ -13,5 +14,6 @@ DATASETS:
       celltypist:
         - Healthy_COVID19_PBMC
   test2:
+    input:
     adata_file: data/pbmc68k.h5ad
     label: bulk_labels

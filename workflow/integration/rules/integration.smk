@@ -1,6 +1,6 @@
 rule run:
     input:
-        h5ad=get_h5ad
+        h5ad=get_input
     output:
         h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/adata.h5ad',
         model=touch(directory(out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/model'))

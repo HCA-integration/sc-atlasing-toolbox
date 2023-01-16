@@ -1,0 +1,11 @@
+name: bbknn
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - scanpy==1.9
+    - git+https://github.com/theislab/scib.git
+    - bbknn
