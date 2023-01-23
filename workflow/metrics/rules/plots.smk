@@ -19,6 +19,8 @@ use rule barplot from plots as metrics_barplot with:
         title='Metrics computation',
         description=wildcards_to_str,
         dodge=True,
+    group:
+        'metrics'
 
 
 use rule barplot from plots as metrics_barplot_per_dataset with:
@@ -49,6 +51,8 @@ use rule barplot from plots as metrics_barplot_per_method with:
         title='Metrics computation',
         description=wildcards_to_str,
         dodge=True,
+    group:
+        'metrics'
 
 
 # swarm plots
@@ -81,7 +85,8 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
         title='Metrics',
         description=wildcards_to_str,
         dodge=True,
-
+    group:
+        'metrics'
 
 use rule swarmplot from plots as metrics_swarmplot_per_method with:
     input:
@@ -96,7 +101,8 @@ use rule swarmplot from plots as metrics_swarmplot_per_method with:
         title='Metrics',
         description=wildcards_to_str,
         dodge=True,
-
+    group:
+        'metrics'
 
 rule compare_metrics:
     input:
@@ -105,6 +111,8 @@ rule compare_metrics:
         png=out_dir / 'plots' / 'comparison.png'
     conda:
         '../envs/plots.yaml'
+    group:
+        'metrics'
     script:
         '../scripts/plots/comparison.py'
 
@@ -120,6 +128,8 @@ rule funkyheatmap:
         '../envs/plots.yaml'
     singularity:
         'ghcr.io/dynverse/funky_heatmap:latest'
+    group:
+        'metrics'
     script:
         '../scripts/plots/funkyheatmap.R'
 
@@ -129,6 +139,8 @@ rule funkyheatmap_standalone:
         tsv=rules.merge.output.tsv
     output:
         png=out_dir / 'plots' / 'funky_heatmap.png'
+    group:
+        'metrics'
     shell:
         """
         wget https://github.com/dynverse/funkyheatmap/releases/latest/download/executable.zip

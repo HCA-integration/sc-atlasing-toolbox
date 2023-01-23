@@ -1,4 +1,12 @@
 rule run:
+    message:
+       """
+       Integration: Run {wildcards.method} on {wildcards.dataset}
+       input: {input}
+       output: {output}
+       wildcards: {wildcards}
+       resources: gpu={resources.gpu}
+       """
     input:
         h5ad=get_input
     output:

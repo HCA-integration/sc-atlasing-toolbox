@@ -10,6 +10,8 @@ rule benchmark:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
         wildcards=parameters[wildcard_names]
+    group:
+        'integration'
     run:
         benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
         benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
@@ -22,6 +24,8 @@ use rule barplot from plots as integration_barplot with:
         tsv=rules.benchmark.output.benchmark
     output:
         png=out_dir / 'plots' / '{metric}.png'
+    group:
+        'integration'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='method',

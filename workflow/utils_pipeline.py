@@ -43,6 +43,5 @@ def config_for_module(config, module):
         input_file = input_slot[module]
         if input_file in config['output_map']:
             file_name = config['output_map'][input_file].format(dataset=dataset)
-            print(file_name)
             config['DATASETS'][dataset]['input'][module] = file_name
     return config

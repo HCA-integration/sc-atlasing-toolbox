@@ -1,7 +1,13 @@
 defaults:
   integration:
     unintegrated:
-    scanorama:
+    bbknn:
+    harmony:
+    scgen:
+      max_epochs: 50
+      batch_size: 32
+      early_stopping: True
+      early_stopping_patience: 25
     scvi:
       n_hidden: 128
       dispersion:
@@ -26,6 +32,7 @@ defaults:
         reduce_lr: true
         lr_patience: 13
         lr_factor: 0.1
+  
   metrics:
     - nmi
     - ari
@@ -56,6 +63,7 @@ DATASETS:
       integration: preprocessing
     label: cell_type
     batch: study
+    sample: sample
     metrics:
       - nmi
       - ari
@@ -71,9 +79,10 @@ DATASETS:
     input:
       subset: data/pbmc68k.h5ad
       preprocessing: subset
-      integration: data/pbmc68k.h5ad
+      integration: preprocessing
     label: bulk_labels
     batch: phase
+    sample: phase
     metrics:
       - nmi
       - ari

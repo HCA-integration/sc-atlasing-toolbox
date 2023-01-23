@@ -1,7 +1,7 @@
 rule run:
     message:
        """
-       Evaluate {wildcards.metric} on {wildcards.dataset}
+       Metrics: Evaluate {wildcards.metric} on {wildcards.dataset}
        input: {input}
        output: {output}
        wildcards: {wildcards}

@@ -20,7 +20,9 @@ n_cells = 0
 
 for sample, count in adata.obs[sample_key].value_counts(sort=False).items():
     n_cells += count
-    if n_cells >= n_cell_max:
+    print('sample:', sample)
+    print('count:', count)
+    if n_cells > n_cell_max:
         break
     samples.append(sample)
 

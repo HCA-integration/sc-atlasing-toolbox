@@ -13,6 +13,8 @@ rule merge:
     params:
         wildcards=get_wildcards(parameters,wildcard_names)
     conda: '../envs/scanpy.yaml'
+    group:
+        'merge'
     resources:
         mem_mb=1000,
         disk_mb=500

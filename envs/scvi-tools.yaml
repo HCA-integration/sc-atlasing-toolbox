@@ -4,6 +4,7 @@ channels:
 dependencies:
   - python=3.9
   - scvi-tools=0.17
+  - zarr
   - pip
   - pip:
     - git+https://github.com/theislab/scib.git

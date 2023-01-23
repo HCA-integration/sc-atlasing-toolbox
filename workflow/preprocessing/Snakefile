@@ -47,7 +47,7 @@ rule highly_variable_genes:
         zarr=directory(out_dir / '{dataset}' / 'highly_variable_genes.zarr')
     params:
         n_hvgs=2000,
-        batch='donor',
+        batch=lambda wildcards: config['DATASETS'][wildcards.dataset]['batch'],
     resources:
         mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),

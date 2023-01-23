@@ -13,7 +13,7 @@ out_dir = Path(config['output_dir']) / module_name
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
-    config_params=['batch'],  # TODO: add strategy
+    config_params=['sample'],  # TODO: add strategy
     wildcard_names=['dataset', 'sample'],
 )
 

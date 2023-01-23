@@ -4,6 +4,7 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - zarr
   - pip
   - pip:
     - scanpy==1.9
