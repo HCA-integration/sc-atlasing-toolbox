@@ -29,6 +29,10 @@ def process(adata, adata_raw, output_type):
     adata.layers['normcounts'] = adata_raw.layers['normcounts']
     adata.raw = adata_raw
 
+    # save kNN graph of unintegrated object
+    adata.obsp['connectivities_uni'] = adata_raw.obsp['connectivities']
+    adata.obsp['distances_uni'] = adata_raw.obsp['distances']
+
     if 'full' in output_type:
         sc.pp.pca(adata)
         adata.layers['corrected_counts'] = adata.X.copy()

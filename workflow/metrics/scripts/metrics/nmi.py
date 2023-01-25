@@ -1,7 +1,7 @@
 import pandas as pd
 import scanpy as sc
 import scib
-from utils import cluster_optimal, write_metrics, get_from_adata
+from utils import cluster_optimal, write_metrics, get_from_adata, select_neighbors
 
 input_adata = snakemake.input.h5ad
 output_file = snakemake.output.metric
@@ -20,22 +20,23 @@ meta = get_from_adata(adata)
 # evaluate only on labeled cells
 # adata = adata[adata.obs[label].notnull()]
 
-rep_map = {
-    'knn': None,
-    'embed': 'X_emb',
-    'full': 'X_pca'
-}
+# rep_map = {
+#     'knn': None,
+#     'embed': 'X_emb',
+#     'full': 'X_pca'
+# }
 
 output_types = meta['output_types']
 scores = []
 for output_type in output_types:
+    adata = select_neighbors(adata, output_type)
     _, score, _ = cluster_optimal(
         adata=adata,
         label_key=meta['label'],
         cluster_key='cluster',
         cluster_function=sc.tl.leiden,
         metric=scib.me.nmi,
-        use_rep=rep_map[output_type],
+        use_rep=None, # rep_map[output_type],
         n_iterations=5
     )
     scores.append(score)

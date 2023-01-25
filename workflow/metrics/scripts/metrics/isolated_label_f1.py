@@ -1,7 +1,7 @@
 import pandas as pd
 import scanpy as sc
 import scib
-from utils import write_metrics, get_from_adata, compute_neighbors
+from utils import write_metrics, get_from_adata, select_neighbors
 
 input_adata = snakemake.input.h5ad
 output_file = snakemake.output.metric
@@ -20,7 +20,7 @@ meta = get_from_adata(adata)
 output_types = meta['output_types']
 scores = []
 for output_type in output_types:
-    adata = compute_neighbors(adata, output_type)
+    adata = select_neighbors(adata, output_type)
     score = scib.me.isolated_labels(
         adata,
         label_key=meta['label'],

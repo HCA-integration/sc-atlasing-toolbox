@@ -20,7 +20,7 @@ use rule barplot from plots as metrics_barplot with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics'
+        'metrics_plots'
 
 
 use rule barplot from plots as metrics_barplot_per_dataset with:
@@ -36,6 +36,8 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
         title='Metrics computation',
         description=wildcards_to_str,
         dodge=True,
+    group:
+        'metrics_plots'
 
 
 use rule barplot from plots as metrics_barplot_per_method with:
@@ -52,7 +54,7 @@ use rule barplot from plots as metrics_barplot_per_method with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics'
+        'metrics_plots'
 
 
 # swarm plots
@@ -70,6 +72,8 @@ use rule swarmplot from plots as metrics_swarmplot with:
         facet_row='output_type',
         title='Metrics',
         description=wildcards_to_str,
+    group:
+        'metrics_plots'
 
 
 use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
@@ -86,7 +90,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics'
+        'metrics_plots'
 
 use rule swarmplot from plots as metrics_swarmplot_per_method with:
     input:
@@ -102,7 +106,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_method with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics'
+        'metrics_plots'
 
 rule compare_metrics:
     input:
@@ -112,7 +116,7 @@ rule compare_metrics:
     conda:
         '../envs/plots.yaml'
     group:
-        'metrics'
+        'metrics_plots'
     script:
         '../scripts/plots/comparison.py'
 
@@ -129,7 +133,7 @@ rule funkyheatmap:
     singularity:
         'ghcr.io/dynverse/funky_heatmap:latest'
     group:
-        'metrics'
+        'metrics_plots'
     script:
         '../scripts/plots/funkyheatmap.R'
 
@@ -140,7 +144,7 @@ rule funkyheatmap_standalone:
     output:
         png=out_dir / 'plots' / 'funky_heatmap.png'
     group:
-        'metrics'
+        'metrics_plots'
     shell:
         """
         wget https://github.com/dynverse/funkyheatmap/releases/latest/download/executable.zip

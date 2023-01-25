@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scib
-from utils import write_metrics, get_from_adata, compute_neighbors
+from utils import write_metrics, get_from_adata
 
 input_adata = snakemake.input.h5ad
 output_file = snakemake.output.metric

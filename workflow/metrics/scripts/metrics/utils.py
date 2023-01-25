@@ -56,6 +56,12 @@ def compute_neighbors(adata, output_type):
     return adata
 
 
+def select_neighbors(adata, output_type):
+    adata.obsp['connectivities'] = adata.obsp['connectivities_' + output_type]
+    adata.obsp['distances'] = adata.obsp['distances_' + output_type]
+    return adata
+
+
 # TODO: include in scib package
 def cluster_optimal(
         adata,

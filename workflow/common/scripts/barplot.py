@@ -40,7 +40,6 @@ n_cols = 1 if facet_col is None else df[facet_col].nunique()
 adjust = np.min([.8 + (.04 * n_rows), .95])
 order = df.groupby(category)[metric].min().sort_values(ascending=False).index
 
-
 g = sns.catplot(
     data=df,
     x=metric,

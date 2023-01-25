@@ -1,3 +1,19 @@
+rule preprocess:
+    input:
+        h5ad=rules.integration_run.output.h5ad,
+    output:
+        h5ad=out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/preprocessed.h5ad'
+    conda:
+        lambda wildcards, params: f'../envs/scanpy.yaml'
+    resources:
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        gpu=get_resource(config,profile='cpu',resource_key='gpu'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+    script:
+        '../scripts/preprocess.py'
+
+
 rule run:
     message:
        """
@@ -8,7 +24,7 @@ rule run:
        resources: gpu={resources.gpu}
        """
     input:
-        h5ad=rules.integration_run.output.h5ad,
+        h5ad=rules.preprocess.output.h5ad,
         metrics_meta=workflow.source_path('../params.tsv')
     output:
         metric=out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/{metric}.tsv'
