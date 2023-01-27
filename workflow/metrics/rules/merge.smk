@@ -47,3 +47,9 @@ use rule merge as merge_per_method with:
         tsv=out_dir / 'results' / 'per_method' / '{method}.tsv',
     params:
         wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'method'),wildcards)
+
+
+rule merge_all:
+    input:
+        expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
+        expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),

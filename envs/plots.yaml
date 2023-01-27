@@ -28,4 +28,6 @@ dependencies:
   - r-rcppparallel
   - r-rcpparmadillo
   - r-desc
+  - r-tidyverse
+  - r-dynutils
 #  - r-proxyc

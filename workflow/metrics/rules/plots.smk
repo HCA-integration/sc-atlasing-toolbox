@@ -127,7 +127,14 @@ rule funkyheatmap:
     input:
         tsv=rules.merge.output.tsv
     output:
-        png=out_dir / 'plots' / 'funky_heatmap.png'
+        pdf=out_dir / 'plots' / 'funky_heatmap.pdf',
+        tsv=out_dir / 'plots' / 'funky_heatmap.tsv'
+    params:
+        weight_batch=0.4,
+        id_vars=['dataset', 'method', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
+        variable_var='metric',
+        value_var='score',
+        n_top=50,
     conda:
         '../envs/plots.yaml'
     singularity:
@@ -136,6 +143,22 @@ rule funkyheatmap:
         'metrics_plots'
     script:
         '../scripts/plots/funkyheatmap.R'
+
+
+use rule funkyheatmap as funkyheatmap_per_method with:
+    input:
+        tsv=rules.merge_per_method.output.tsv
+    output:
+        pdf=out_dir / 'plots' / 'per_method' / 'funky_heatmap-{method}.pdf',
+        tsv=out_dir / 'plots' / 'per_method' / 'funky_heatmap-{method}.tsv',
+
+
+use rule funkyheatmap as funkyheatmap_per_dataset with:
+    input:
+        tsv=rules.merge_per_dataset.output.tsv
+    output:
+        pdf=out_dir / 'plots' / 'per_dataset' / 'funky_heatmap-{dataset}.pdf',
+        tsv=out_dir / 'plots' / 'per_dataset' / 'funky_heatmap-{dataset}.tsv',
 
 
 rule funkyheatmap_standalone:
@@ -151,3 +174,19 @@ rule funkyheatmap_standalone:
         unzip -o executable.zip -d funky_heatmap
         ./funky_heatmap/funky_heatmap --data {input.tsv} --output {output.png}
         """
+
+
+rule plots_all:
+    input:
+        # funky heatmap
+        rules.funkyheatmap.output,
+        expand(rules.funkyheatmap_per_dataset.output,**get_wildcards(parameters,'dataset')),
+        expand(rules.funkyheatmap_per_method.output,**get_wildcards(parameters,'method')),
+        # barplot
+        expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
+        expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'dataset')),
+        expand(rules.metrics_barplot_per_method.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'method')),
+        # swarmplot
+        expand(rules.metrics_swarmplot.output,metric='score'),
+        expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**get_wildcards(parameters,'dataset')),
+        expand(rules.metrics_swarmplot_per_method.output,metric='score',**get_wildcards(parameters,'method')),

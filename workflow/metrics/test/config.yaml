@@ -65,11 +65,13 @@ DATASETS:
   test:
     label: bulk_labels
     batch: batch
-    adata_file: ../../data/pbmc68k.h5ad
+    input:
+      integration: ../../data/pbmc68k.h5ad
   scib_metrics:
     label: bulk_labels
     batch: batch
-    adata_file: ../../data/pbmc68k.h5ad
+    input:
+      integration: ../../data/pbmc68k.h5ad
     metrics:
       - ari
       - ari_leiden_y

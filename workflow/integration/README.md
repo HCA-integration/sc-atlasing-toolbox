@@ -9,6 +9,10 @@ bash test/run_test.sh -n  # dry run
 bash test/run_test.sh -c2  # actual run with max 2 cores
 ```
 
+The script will call the pipeline and run a test script.
+If the input files don't yet exist, the test script might throw a `FileNotFoundError`.
+You can ignore it, if you haven't yet executed the pipeline completely and therefore don't yet have all outputs.
+
 ## Input
 AnnData file h5ad with the following:
 
