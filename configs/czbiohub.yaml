@@ -5,18 +5,18 @@ images: images
 
 resources:
   cpu_merged:
-    partition: cpu_p
-    qos: icb
+    partition: cpu
+    qos: normal
     gpu: 0
-    mem_mb: 400000
-    disk_mb: 50000
+    mem_mb: 500000
+    disk_mb: 150000
   cpu:
-    partition: cpu_p
-    qos: icb
+    partition: cpu
+    qos: normal
     gpu: 0
-    mem_mb: 300000
+    mem_mb: 200000
   gpu:
-    partition: gpu_p
-    qos: gpu
+    partition: gpu
+    qos: normal
     gpu: 1
-    mem_mb: 300000
+    mem_mb: 200000

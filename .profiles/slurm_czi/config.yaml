@@ -1,0 +1,38 @@
+cluster:
+  mkdir -p logs/{rule} &&
+  sbatch
+    --partition={resources.partition}
+    --gres=gpu:{resources.gpu}
+    --cpus-per-task={threads}
+    --mem={resources.mem_mb}
+    --job-name=smk-{rule}-{wildcards}
+    --output=logs/{rule}/{rule}-{wildcards}-%j.out
+    --parsable
+default-resources:
+  - partition=cpu
+  - qos=normal
+  - gpu=0
+  - mem_mb=90000
+  - disk_mb=20000
+restart-times: 0
+max-jobs-per-second: 10
+max-status-checks-per-second: 1
+local-cores: 1
+latency-wait: 30
+jobs: 20
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+scheduler: greedy
+use-conda: True
+cluster-cancel: scancel
+rerun-triggers:
+  - mtime
+  - params
+  - input
+  - software-env
+  - code
+show-failed-logs: True
+shadow-prefix: /tmp/michaela.mueller
+latency-wait: 90
+configfile: configs/czbiohub.yaml

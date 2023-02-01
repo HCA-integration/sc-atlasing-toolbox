@@ -16,6 +16,7 @@ checkpoint split_lineage:
         split_key=lambda wildcards: get_params(wildcards,parameters,'lineage_key')
     conda:
         '../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         '../scripts/split_anndata.py'
 
@@ -42,6 +43,7 @@ rule run_per_lineage:
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
     benchmark:
         out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages/{lineage}/benchmark.tsv'
+    shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
 
@@ -63,6 +65,7 @@ rule merge_lineage:
         h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages.h5ad',
     conda:
         '../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         '../scripts/merge_anndata.py'
 

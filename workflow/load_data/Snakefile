@@ -79,6 +79,7 @@ rule metadata:
     resources:
         mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
+    shadow: 'minimal'
     script:
         'scripts/metadata.py'
 
@@ -106,6 +107,7 @@ rule merge_study:
         disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -131,6 +133,7 @@ rule filter:
         disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/filter.py'
 
@@ -156,6 +159,7 @@ rule merge_organ:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -177,6 +181,7 @@ rule merge_organ_filter:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -198,6 +203,7 @@ rule merge_subset:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 

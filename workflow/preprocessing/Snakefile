@@ -36,6 +36,7 @@ rule normalize:
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/normalize.py'
 
@@ -53,6 +54,7 @@ rule highly_variable_genes:
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/highly_variable_genes.py'
 
@@ -67,6 +69,7 @@ rule pca:
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/pca.py'
 
@@ -81,6 +84,7 @@ rule neighbors:
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/neighbors.py'
 
@@ -95,6 +99,7 @@ rule umap:
         disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/umap.py'
 

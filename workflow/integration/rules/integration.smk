@@ -24,6 +24,7 @@ rule run:
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
     benchmark:
         out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'
+    shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
 

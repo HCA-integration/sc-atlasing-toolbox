@@ -8,7 +8,10 @@ from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_
 
 
 def get_input(wildcards):
-    return config['DATASETS'][wildcards.dataset]['input']['integration']
+  assert wildcards.dataset in config['DATASETS'].keys()
+  assert 'input' in config['DATASETS'][wildcards.dataset].keys()
+  assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
+  return config['DATASETS'][wildcards.dataset]['input']['integration']
 
 
 module_name = 'integration'
