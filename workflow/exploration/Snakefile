@@ -24,6 +24,13 @@ module common:
 use rule * from common as common_ *
 
 
+module preprocessing:
+    snakefile: "../preprocessing/Snakefile"
+    config: config
+
+use rule * from preprocessing as preprocessing_*
+
+
 module load_data:
     snakefile: "../load_data/Snakefile"
     config: config
@@ -35,6 +42,7 @@ include: 'rules/pseudobulk.smk'
 include: 'rules/marker_genes.smk'
 include: 'rules/qc.smk'
 include: 'rules/barcode_matching.smk'
+include: 'rules/batch_pcr.smk'
 
 
 rule all:
@@ -44,6 +52,7 @@ rule all:
         rules.marker_genes_all.input,
         rules.qc_all.input,
         rules.barcode_matching_all.input,
+        rules.batch_pcr_all.input,
     default_target: True
 
 

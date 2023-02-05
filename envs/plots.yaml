@@ -4,6 +4,10 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - anndata=0.8
+  - scanpy=1.9
+  - numpy<1.24
+  - zarr
   - matplotlib
   - seaborn
   - r-base=4.2
@@ -11,7 +15,6 @@ dependencies:
   - r-complexupset
   - rpy2
   - upsetplot
-  - zarr
   #### funky heatmap
   - r-ggplot2
   - r-cowplot

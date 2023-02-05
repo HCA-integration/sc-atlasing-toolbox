@@ -55,11 +55,11 @@ use rule * from common as common_ *
 
 use rule * from load_data as load_data_ *
 
+use rule * from preprocessing as preprocessing_ *
+
 use rule * from exploration as exploration_ *
 
 use rule * from subset as subset_ *
-
-use rule * from preprocessing as preprocessing_ *
 
 use rule * from label_transfer as label_transfer_ *
 

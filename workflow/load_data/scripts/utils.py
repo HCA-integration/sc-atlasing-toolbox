@@ -36,6 +36,7 @@ EXTRA_COLUMNS = [
     'organ',
     'donor',
     'sample',
+    'batch',
     'author_annotation',
     'reference',
     'study',

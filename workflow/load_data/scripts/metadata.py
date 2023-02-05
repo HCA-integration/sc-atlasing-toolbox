@@ -48,9 +48,16 @@ if not pd.isna(annotation_file):
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
-sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['donor'] = adata.obs[donor_column]
+
+sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+
+if 'batch_condition' in adata.uns.keys():
+    batch_columns = adata.uns['batch_condition']
+    adata.obs['batch'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+else:
+    adata.obs['batch'] = meta['study']
 
 if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity'] = adata.obs['ethnicity']
