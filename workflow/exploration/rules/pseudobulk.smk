@@ -8,7 +8,7 @@ rule pseudobulk:
     params:
         dataset=lambda wildcards: wildcards.study,
         bulk_by='sample',
-        color=['donor', 'assay', 'sex', 'disease', 'self_reported_ethnicity', 'development_stage'],
+        color=['donor', 'assay', 'sex', 'disease', 'self_reported_ethnicity', 'development_stage', 'batch'],
     conda:
         '../envs/scanpy.yaml'
     resources:
