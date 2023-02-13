@@ -18,6 +18,11 @@ module_name = 'integration'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
 
+os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
+
+envvars:
+   'LD_LIBRARY_PATH'
+
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(

@@ -6,8 +6,12 @@ dependencies:
   - python=3.9
   - scanpy=1.9
   - numpy<1.24
-  - scvi-tools
+  - cudatoolkit
   - zarr
   - pip
   - pip:
+    - torch
+    - torchvision
+    - torchaudio
+    - scvi-tools
     - scgen==2.1.0

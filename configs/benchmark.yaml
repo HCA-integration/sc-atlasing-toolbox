@@ -32,7 +32,6 @@ defaults:
         reduce_lr: true
         lr_patience: 13
         lr_factor: 0.1
-  
   metrics:
     - nmi
     - ari
@@ -43,11 +42,12 @@ defaults:
     - ilisi
     - graph_connectivity
     - isolated_label_asw
-    - isolated_label_f1
+    # - isolated_label_f1
     - pcr
   datasets:
     - blood_benchmark
-    - test
+    - blood_benchmark_donor
+    # - test
   subset:
     n_cells: 500000
 
@@ -73,7 +73,24 @@ DATASETS:
       - ilisi
       - graph_connectivity
       - isolated_label_asw
-      - isolated_label_f1
+      # - isolated_label_f1
+      - pcr
+  blood_benchmark_donor:
+    input:
+      integration: data/out/preprocessing/blood_benchmark/neighbors.zarr
+    label: cell_type
+    batch: donor
+    sample: sample
+    metrics:
+      - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      # - isolated_label_f1
       - pcr
   test:
     input:

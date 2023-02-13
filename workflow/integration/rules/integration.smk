@@ -5,7 +5,7 @@ rule run:
        input: {input}
        output: {output}
        wildcards: {wildcards}
-       resources: gpu={resources.gpu}
+       resources: gpu={resources.gpu} mem_mb={resources.mem_mb} partition={resources.partition} qos={resources.qos}
        """
     input:
         h5ad=get_input
@@ -15,12 +15,13 @@ rule run:
     params:
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
-        env=lambda wildcards: get_params(wildcards,parameters,'env')
+        env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
-        lambda wildcards, params: f'../envs/{params.env}'
+        lambda wildcards, params: f'../envs/{params.env}.yaml'
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
+        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
     benchmark:
         out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'

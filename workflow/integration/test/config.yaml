@@ -6,10 +6,12 @@ resources:
     partition: cpu_p
     qos: icb
     gpu: 0
+    mem_mb: 1000
   gpu:
     partition: gpu_p
     qos: gpu
     gpu: 1
+    mem_mb: 1000
 
 defaults:
   integration:
@@ -51,14 +53,14 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: ../../data/pbmc68k.h5ad
+      integration: test/data/pbmc68k.h5ad
     label: bulk_labels
     batch: batch
     lineage: phase
 
   test2:
     input:
-      integration: ../../data/pbmc68k.h5ad
+      integration: test/data/pbmc68k.h5ad
     label: bulk_labels
     batch: batch
     lineage: phase

@@ -74,6 +74,7 @@ g <- funky_heatmap(
   metrics_tab[1:n_top],
   column_info = column_info,
   col_annot_offset = 3.5,
-  add_abc = TRUE
+  add_abc = TRUE,
+  scale_column = FALSE
 )
 ggsave(output_pdf, g, device = cairo_pdf, width = g$width, height = g$height, dpi=300)

@@ -48,6 +48,12 @@ parameters = wildcards_df \
 
 wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams']
 
+wildcard_constraints:
+    dataset='\w+',
+    method='\w+',
+    batch='\w+',
+    label='\w+',
+    hyperparams='((?![/]).)*',
 
 module common:
     snakefile: "../common/Snakefile"
