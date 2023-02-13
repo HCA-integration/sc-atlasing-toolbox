@@ -1,4 +1,4 @@
-from scgen import SCGEN
+import scgen
 
 from utils import add_metadata, read_anndata, process
 
@@ -9,18 +9,15 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyperparams['supervised'] else None
-early_stopping_kwargs = hyperparams['early_stopping_kwargs'] if 'early_stopping_kwargs' in hyperparams.keys() else {}
 
 adata_raw = read_anndata(input_file)
 adata = adata_raw.copy()
-adata.X = adata.layers['counts']
 
-SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)
+scgen.SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)
 
 # train model
-model = SCGEN(adata)
-model.train()
+model = scgen.SCGEN(adata)
+model.train(**hyperparams)
 corrected_adata = model.batch_removal()
 model.save(output_model, overwrite=True)
 

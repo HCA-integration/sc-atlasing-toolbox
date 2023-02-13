@@ -9,7 +9,7 @@ use rule barplot from plots as metrics_barplot with:
     input:
         tsv=rules.merge.output.tsv
     output:
-        png=out_dir / 'plots' / '{metric}-barplot.png'
+        png=out_dir / 'plots' / 'all' /'{metric}-barplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -27,7 +27,7 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
     input:
         tsv=rules.merge_per_dataset.output.tsv
     output:
-        png=out_dir / 'plots' / 'per_dataset' / '{metric}-barplot-{dataset}.png'
+        png=out_dir / 'plots' / 'per_dataset' / '{dataset}' / '{metric}-barplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -44,7 +44,7 @@ use rule barplot from plots as metrics_barplot_per_method with:
     input:
         tsv=rules.merge_per_method.output.tsv
     output:
-        png=out_dir / 'plots' / 'per_method' / '{metric}-barplot-{method}.png'
+        png=out_dir / 'plots' / 'per_method' / '{method}' / '{metric}-barplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -63,7 +63,7 @@ use rule swarmplot from plots as metrics_swarmplot with:
     input:
         tsv=rules.merge.output.tsv
     output:
-        png=out_dir / 'plots' / '{metric}-swarmplot.png'
+        png=out_dir / 'plots' / 'all' / '{metric}-swarmplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -80,7 +80,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
     input:
         tsv=rules.merge_per_dataset.output.tsv
     output:
-        png=out_dir / 'plots' / 'per_dataset' / '{metric}-swarmplot-{dataset}.png'
+        png=out_dir / 'plots' / 'per_dataset' / '{dataset}' / '{metric}-swarmplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -96,7 +96,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_method with:
     input:
         tsv=rules.merge_per_method.output.tsv
     output:
-        png=out_dir / 'plots' / 'per_method' / '{metric}-swarmplot-{method}.png'
+        png=out_dir / 'plots' / 'per_method' / '{method}' / '{metric}-swarmplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -127,8 +127,8 @@ rule funkyheatmap:
     input:
         tsv=rules.merge.output.tsv
     output:
-        pdf=out_dir / 'plots' / 'funky_heatmap.pdf',
-        tsv=out_dir / 'plots' / 'funky_heatmap.tsv'
+        pdf=out_dir / 'plots' / 'all' / 'funky_heatmap.pdf',
+        tsv=out_dir / 'plots' / 'all' / 'funky_heatmap.tsv'
     params:
         weight_batch=0.4,
         id_vars=['dataset', 'method', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
@@ -145,20 +145,20 @@ rule funkyheatmap:
         '../scripts/plots/funkyheatmap.R'
 
 
-use rule funkyheatmap as funkyheatmap_per_method with:
-    input:
-        tsv=rules.merge_per_method.output.tsv
-    output:
-        pdf=out_dir / 'plots' / 'per_method' / 'funky_heatmap-{method}.pdf',
-        tsv=out_dir / 'plots' / 'per_method' / 'funky_heatmap-{method}.tsv',
-
-
 use rule funkyheatmap as funkyheatmap_per_dataset with:
     input:
         tsv=rules.merge_per_dataset.output.tsv
     output:
-        pdf=out_dir / 'plots' / 'per_dataset' / 'funky_heatmap-{dataset}.pdf',
-        tsv=out_dir / 'plots' / 'per_dataset' / 'funky_heatmap-{dataset}.tsv',
+        pdf=out_dir / 'plots' / 'per_dataset' / '{dataset}' / 'funky_heatmap.pdf',
+        tsv=out_dir / 'plots' / 'per_dataset' / '{dataset}' / 'funky_heatmap.tsv',
+
+
+use rule funkyheatmap as funkyheatmap_per_method with:
+    input:
+        tsv=rules.merge_per_method.output.tsv
+    output:
+        pdf=out_dir / 'plots' / 'per_method' / '{method}' / 'funky_heatmap.pdf',
+        tsv=out_dir / 'plots' / 'per_method' / '{method}' / 'funky_heatmap.tsv',
 
 
 rule funkyheatmap_standalone:

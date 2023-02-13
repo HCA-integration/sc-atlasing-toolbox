@@ -43,7 +43,13 @@ def expand_dict(_dict):
     for col in df.columns:
         df = df.explode(col)
     dict_list = df.apply(lambda row: {col: x for col, x in zip(df.columns, row)}, axis=1)
-    wildcards = df.apply(lambda row: ','.join([f'{col}={x}'.replace(' ', '').replace("'", '') for col, x in zip(df.columns, row)]), axis=1)
+
+    def remove_chars(s, chars="{} ',"):
+        for c in chars:
+            s = s.replace(c, '')
+        return s
+
+    wildcards = df.apply(lambda row: '-'.join([remove_chars(f'{col}:{x}') for col, x in zip(df.columns, row)]), axis=1)
     return zip(wildcards, dict_list)
 
 
@@ -175,6 +181,11 @@ def get_params(wildcards, parameters_df, column, wildcards_keys=None):
                 wildcards_keys = [key for key in wildcards.keys() if key in parameters_df.columns]
             assert np.all([key in wildcards.keys() for key in wildcards.keys()])
 
+        # quickfix: ignore hyperparameters
+        if 'hyperparams' in wildcards_keys:
+            wildcards_keys.remove('hyperparams')
+
+        wildcards = {k: v for k, v in wildcards.items() if k in wildcards_keys}
         params_sub = subset_by_wildcards(parameters_df, wildcards)
         columns = list(set(wildcards_keys + [column]))
         params_sub = unique_dataframe(params_sub[columns])

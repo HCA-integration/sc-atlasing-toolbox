@@ -6,9 +6,13 @@ dependencies:
   - scanpy=1.9
   - numpy<1.24
   - scvi-tools
+  - cudatoolkit
   - zarr
   - pip
   - pip:
+    - torch
+    - torchvision
+    - torchaudio
     - git+https://github.com/theislab/scarches.git
     #- scvi-tools==0.12.1
     #- pytorch-lightning==1.3.8

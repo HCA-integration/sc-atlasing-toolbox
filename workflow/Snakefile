@@ -19,6 +19,11 @@ config = update_module_configs(config, params)
 
 out_dir = Path(config['output_dir'])
 
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
+
+envvars:
+    'HDF5_USE_FILE_LOCKING'
+
 # Import modules
 module common:
     snakefile: "common/Snakefile"

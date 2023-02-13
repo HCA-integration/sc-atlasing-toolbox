@@ -31,7 +31,7 @@ for output_type in output_types:
     score = scib.me.silhouette_batch(
         adata,
         batch_key=meta['batch'],
-        group_key=meta['label'],
+        label_key=meta['label'],
         embed='X_emb' if output_type == 'embed' else 'X_pca',
     )
     scores.append(score)

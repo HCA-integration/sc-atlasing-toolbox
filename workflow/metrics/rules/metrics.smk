@@ -10,6 +10,7 @@ rule preprocess:
         qos=get_resource(config,profile='cpu',resource_key='qos'),
         gpu=get_resource(config,profile='cpu',resource_key='gpu'),
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+    shadow: 'copy-minimal'
     script:
         '../scripts/preprocess.py'
 
@@ -40,5 +41,6 @@ rule run:
         disk_mb=100
     benchmark:
         out_dir / 'datasets/{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/{metric}.benchmark.tsv'
+    shadow: 'copy-minimal'
     script:
         '../scripts/metrics/{wildcards.metric}.py'

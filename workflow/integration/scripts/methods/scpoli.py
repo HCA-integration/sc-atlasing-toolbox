@@ -1,3 +1,4 @@
+import torch
 from scarches.models.scpoli import scPoli
 
 from utils import add_metadata, read_anndata, process
@@ -11,6 +12,9 @@ params = snakemake.params
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyperparams['supervised'] else None
 early_stopping_kwargs = hyperparams['early_stopping_kwargs'] if 'early_stopping_kwargs' in hyperparams.keys() else {}
+
+# check GPU
+print('GPU available:', torch.cuda.is_available())
 
 adata_raw = read_anndata(input_file)
 adata = adata_raw.copy()
