@@ -79,7 +79,7 @@ rule metadata:
     resources:
         mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
-    shadow: 'minimal'
+    shadow: 'shallow'
     script:
         'scripts/metadata.py'
 
