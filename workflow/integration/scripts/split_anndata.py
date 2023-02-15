@@ -4,7 +4,7 @@ import scanpy as sc
 
 input_file = snakemake.input.h5ad
 output_dir = snakemake.output[0]
-split_key = snakemake.params.split_key
+split_key = snakemake.wildcards.lineage_key
 
 out_dir = Path(output_dir)
 if not out_dir.exists():

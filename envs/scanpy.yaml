@@ -4,9 +4,9 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
-  - pip
-  - pip:
-    - scanpy==1.9
-    - dask
-    - sc-toolbox
-    - zarr
+  - scanpy=1.9
+  - numpy<1.24
+  - matplotlib<3.7
+  - muon
+  - dask
+  - zarr

@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
 })
 
 dt <- fread(input_file)
-#print(head(dt))
+dt[, (id_vars) := lapply(.SD, as.character), .SDcols = id_vars]
 
 # define groups of interest to be plotted in funkyheatmap
 integration_setup <- id_vars
@@ -32,11 +32,13 @@ metrics <- c(bio_metrics, batch_metrics)
 
 # subset data.table to columns of interest & transform
 all_columns <- c(id_vars, variable_var, value_var, 'metric_type')
-id_formula <- as.formula(paste(paste(id_vars, collapse='+'), variable_var, sep = '~'))
+id_formula <- paste(paste(id_vars, collapse='+'), variable_var, sep = '~')
+print(id_formula)
 metrics_tab <- dcast(
   subset(dt, select = all_columns),
-  id_formula,
-   value.var = value_var
+  as.formula(id_formula),
+  value.var = value_var,
+  fun.aggregate = mean
 )
 
 # scores should be already scaled [0,1] - however, we aim to compute the scores based on the min-max scaled metrics
@@ -49,8 +51,8 @@ score_group_bio <- rowMeans(scaled_metrics_tab[, bio_metrics, with=FALSE], na.rm
 
 # weighted overall score
 score_all <- (weight_batch * score_group_batch + (1 - weight_batch) * score_group_bio)
-metrics_tab <- add_column(metrics_tab, "Overall Score" = score_all, .after = "dataset")
-metrics_tab <- add_column(metrics_tab, "Batch Correction" = score_group_batch, .after = "Overall Score")
+metrics_tab <- add_column(metrics_tab, "Overall Score" = score_all, .before = batch_metrics[1])
+metrics_tab <- add_column(metrics_tab, "Batch Correction" = score_group_batch, .before = batch_metrics[1])
 metrics_tab <- add_column(metrics_tab, "Bio conservation" = score_group_bio, .before = bio_metrics[1])
 
 # order methods by the overall score

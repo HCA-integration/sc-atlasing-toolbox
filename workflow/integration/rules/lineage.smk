@@ -5,15 +5,15 @@ def get_checkpoint_output(checkpoint, **kwargs):
 checkpoint split_lineage:
     message:
         """
-        {wildcards}
-        {params}
+        Split lineages: Split {wildcards.dataset} by lineage key {wildcards.lineage_key}
+        input: {input}
+        output: {output}
+        wildcards: {wildcards}
         """
     input:
         h5ad=get_input
     output:
-        directory(out_dir / '{dataset}' / 'lineages')
-    params:
-        split_key=lambda wildcards: get_params(wildcards,parameters,'lineage_key')
+        directory(out_dir / '{dataset}' / 'lineage_key~{lineage_key}')
     conda:
         '../envs/scanpy.yaml'
     shadow: 'minimal'
@@ -23,26 +23,23 @@ checkpoint split_lineage:
 
 rule run_per_lineage:
     input:
-        h5ad=lambda w: get_checkpoint_output(checkpoints.split_lineage,dataset=w.dataset) / f'{w.lineage}.h5ad',
+        h5ad=lambda w: get_checkpoint_output(checkpoints.split_lineage,**w) / f'{w.lineage}.h5ad',
     output:
-        h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages/{lineage}/adata.h5ad',
-        model=touch(
-            directory(
-                out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages/{lineage}/model'
-            )
-        )
+        h5ad=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/adata.h5ad',
+        model=touch(directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/model'))
+    benchmark:
+        out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/benchmark.tsv'
     params:
-        output_type=lambda w: get_params(w,parameters,column='output_type'),
-        hyperparams=lambda w: get_params(w,parameters,column='hyperparams_dict'),
-        env=lambda w: get_params(w,parameters,column='env')
+        output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
+        hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
+        env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
-        lambda wildcards, params: f'../envs/{params.env}'
+        lambda wildcards, params: f'../envs/{params.env}.yaml'
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
+        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-    benchmark:
-        out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages/{lineage}/benchmark.tsv'
     shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
@@ -62,7 +59,7 @@ rule merge_lineage:
     input:
         collect_lineages
     output:
-        h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/lineages.h5ad',
+        h5ad=out_dir / paramspace.wildcard_pattern / 'lineages.h5ad',
     conda:
         '../envs/scanpy.yaml'
     shadow: 'minimal'

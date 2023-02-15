@@ -59,19 +59,34 @@ defaults:
       batch_size: 32
       early_stopping: True
       early_stopping_patience: 25
+  datasets:
+    - test
+    # - test_2
 
 
 DATASETS:
   test:
     label: bulk_labels
-    batch: batch
+    batch: phase
+    lineage:
+      - batch
+      - 
     input:
-      integration: ../../data/pbmc68k.h5ad
+      integration: test/data/pbmc68k.h5ad
+    integration:
+      unintegrated:
+  test_2:
+    label: bulk_labels
+    batch: phase
+    input:
+      integration: test/data/pbmc68k.h5ad
+    integration:
+      unintegrated:
   scib_metrics:
     label: bulk_labels
     batch: batch
     input:
-      integration: ../../data/pbmc68k.h5ad
+      integration: test/data/pbmc68k.h5ad
     metrics:
       - ari
       - ari_leiden_y

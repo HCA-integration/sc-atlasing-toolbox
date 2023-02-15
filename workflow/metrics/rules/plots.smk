@@ -130,10 +130,10 @@ rule funkyheatmap:
         pdf=out_dir / 'plots' / 'all' / 'funky_heatmap.pdf',
         tsv=out_dir / 'plots' / 'all' / 'funky_heatmap.tsv'
     params:
-        weight_batch=0.4,
-        id_vars=['dataset', 'method', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
+        id_vars=['dataset', 'method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'], # TODO: 'hyperparams'
         variable_var='metric',
         value_var='score',
+        weight_batch=0.4,
         n_top=50,
     conda:
         '../envs/plots.yaml'
@@ -151,6 +151,12 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
     output:
         pdf=out_dir / 'plots' / 'per_dataset' / '{dataset}' / 'funky_heatmap.pdf',
         tsv=out_dir / 'plots' / 'per_dataset' / '{dataset}' / 'funky_heatmap.tsv',
+    params:
+        id_vars=['method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'],
+        variable_var='metric',
+        value_var='score',
+        weight_batch=0.4,
+        n_top=50,
 
 
 use rule funkyheatmap as funkyheatmap_per_method with:
@@ -159,6 +165,12 @@ use rule funkyheatmap as funkyheatmap_per_method with:
     output:
         pdf=out_dir / 'plots' / 'per_method' / '{method}' / 'funky_heatmap.pdf',
         tsv=out_dir / 'plots' / 'per_method' / '{method}' / 'funky_heatmap.tsv',
+    params:
+        id_vars=['method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'],
+        variable_var='metric',
+        value_var='score',
+        weight_batch=0.4,
+        n_top=50,
 
 
 rule funkyheatmap_standalone:

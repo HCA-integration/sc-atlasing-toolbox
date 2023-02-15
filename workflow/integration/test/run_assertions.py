@@ -2,7 +2,7 @@ import glob
 import numpy as np
 import scanpy as sc
 
-outputs = glob.glob('test/out/integration/test/**/**/*.h5ad')
+outputs = glob.glob('test/out/integration/**/**/**/*.h5ad')
 print(outputs)
 
 for file in outputs:
@@ -11,7 +11,6 @@ for file in outputs:
     try:
         # Metadata
         assert 'dataset' in adata.uns
-        assert adata.uns['dataset'] == 'test'
         assert 'methods' in adata.uns
         assert 'integration' in adata.uns
         for key in ['method', 'label_key', 'batch_key', 'output_type']:

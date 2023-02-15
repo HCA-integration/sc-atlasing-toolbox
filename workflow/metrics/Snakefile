@@ -2,7 +2,9 @@
 Metrics
 """
 from pathlib import Path
+import numpy as np
 import pandas as pd
+from snakemake.utils import Paramspace
 
 from utils import all_but, get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
     set_defaults, wildcards_to_str
@@ -22,31 +24,34 @@ out_dir = Path(config['output_dir']) / module_name
 wildcards_df = get_wildcards_from_config(
     config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
-    config_params=['integration', 'metrics', 'label', 'batch'],
-    wildcard_names=['dataset', 'method', 'metric', 'label', 'batch'],
-    explode_by=['method', 'metric'],
+    config_params=['integration', 'metrics', 'label', 'batch', 'lineage'],
+    wildcard_names=['dataset', 'method', 'metric', 'label', 'batch', 'lineage_key'],
+    explode_by=['method', 'metric', 'lineage_key'],
 )
-
-# # get wildcards from input directory
-# datasets, methods = glob_wildcards(in_path)
-# integration_wildcards = pd.DataFrame({'dataset': datasets, 'method': methods})
-# # get full parameters
-# wildcards_df = get_wildcards_from_config(
-#     config=config,
-#     config_params=['metrics', 'label', 'batch'],
-#     wildcard_names=['dataset', 'metric', 'label', 'batch'],
-#     explode_by='metric'
-# ).merge(
-#     integration_wildcards,
-#     on='dataset'
-# )
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters = wildcards_df \
     .merge(parameters,on='metric') \
     .merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
+parameters['lineage_key'] = parameters['lineage_key'].astype(str)
 
-wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams']
+# setup lineage specific integration
+def determine_lineage_specific(lineage_key):
+    if lineage_key == 'None':
+        return ['global']
+    return ['per_lineage', 'global']
+
+parameters['lineage_specific'] = parameters.apply(
+    lambda row: determine_lineage_specific(row['lineage_key']), axis=1
+)
+parameters = parameters.explode('lineage_specific')
+
+wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams', 'lineage_key', 'lineage_specific']
+paramspace = Paramspace(
+    parameters[[w for w in wildcard_names if w != 'metric']],
+    filename_params=['batch', 'label', 'hyperparams', 'lineage_key'],
+    filename_sep=',',
+)
 
 wildcard_constraints:
     dataset='\w+',
@@ -54,6 +59,7 @@ wildcard_constraints:
     batch='\w+',
     label='\w+',
     hyperparams='((?![/]).)*',
+    lineage_key='((?![/]).)*',
 
 module common:
     snakefile: "../common/Snakefile"

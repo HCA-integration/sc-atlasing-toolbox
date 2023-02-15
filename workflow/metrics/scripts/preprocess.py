@@ -1,19 +1,33 @@
 import scanpy as sc
+import muon as mu
 from metrics.utils import compute_neighbors, get_from_adata
 
 
 input_adata = snakemake.input.h5ad
-output_file = snakemake.output.h5ad
-
+output_file = snakemake.output.h5mu
+lineage_key = snakemake.wildcards.lineage_key
 
 adata = sc.read(input_adata)
 meta = get_from_adata(adata)
 
-for output_type in meta['output_types']:
-    # compute neighbors
-    ad_knn = compute_neighbors(adata, output_type)
-    adata.obsp['connectivities_' + output_type] = ad_knn.obsp['connectivities']
-    adata.obsp['distances_' + output_type] = ad_knn.obsp['distances']
+if lineage_key not in adata.obs.columns:
+    mudata = mu.MuData({lineage_key: adata})
+else:
+    mudata = mu.MuData(
+        {
+            str(lineage): adata[adata.obs[lineage_key] == lineage]
+             for lineage in adata.obs[lineage_key].unique()
+        }
+    )
+mudata.uns = adata.uns
 
-print(adata)
-adata.write(output_file)
+for lineage in mudata.mod:
+    ad = mudata[lineage]
+    for output_type in meta['output_types']:
+        # compute neighbors by output type
+        ad_knn = compute_neighbors(ad, output_type)
+        ad.obsp['connectivities_' + output_type] = ad_knn.obsp['connectivities']
+        ad.obsp['distances_' + output_type] = ad_knn.obsp['distances']
+
+print(mudata)
+mudata.write(output_file)

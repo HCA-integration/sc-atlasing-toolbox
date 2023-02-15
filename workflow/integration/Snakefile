@@ -3,6 +3,7 @@ Integration
 """
 from pathlib import Path
 import pandas as pd
+from snakemake.utils import Paramspace
 
 from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults, wildcards_to_str
 
@@ -30,11 +31,18 @@ parameters = get_wildcards_from_config(
     config_keys=config['defaults']['datasets'],
     config_params=['integration', 'label', 'batch', 'lineage'],
     wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
-    explode_by='method',
+    explode_by=['method', 'lineage_key'],
 ).merge(parameters,on='method')
+parameters['lineage_key'] = parameters['lineage_key'].astype(str)
 
 parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams']
+wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage_key']
+
+paramspace = Paramspace(
+    parameters[wildcard_names],
+    filename_params=['batch', 'label', 'hyperparams', 'lineage_key'],
+    filename_sep=',',
+)
 
 wildcard_constraints:
     dataset='\w+',
@@ -42,6 +50,7 @@ wildcard_constraints:
     batch='\w+',
     label='\w+',
     hyperparams='((?![/]).)*',
+    lineage_key='((?![/]).)*',
 
 
 module common:
@@ -60,7 +69,7 @@ include: 'rules/benchmark.smk'
 rule all:
     input:
         rules.run_all.input,
-        #rules.run_lineages_all.input,
+        rules.run_lineages_all.input,
         rules.plots.input
     default_target: True
 

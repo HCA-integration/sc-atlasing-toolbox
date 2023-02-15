@@ -10,8 +10,10 @@ rule run:
     input:
         h5ad=get_input
     output:
-        h5ad=out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/adata.h5ad',
-        model=touch(directory(out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/model'))
+        h5ad=out_dir / paramspace.wildcard_pattern / 'adata.h5ad',
+        model=touch(directory(out_dir / paramspace.wildcard_pattern / 'model'))
+    benchmark:
+        out_dir / paramspace.wildcard_pattern / 'benchmark.tsv'
     params:
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
@@ -23,8 +25,6 @@ rule run:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-    benchmark:
-        out_dir / '{dataset}/{method}/batch={batch},label={label},hyperparams={hyperparams}/benchmark.tsv'
     shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'

@@ -4,8 +4,10 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - scanpy=1.9
+  - numpy<1.24
+  - matplotlib<3.7
   - zarr
   - pip
   - pip:
-    - scanpy==1.9
     - git+https://github.com/YosefLab/scib-metrics.git
