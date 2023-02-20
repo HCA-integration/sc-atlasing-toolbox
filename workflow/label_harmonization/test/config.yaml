@@ -1,0 +1,29 @@
+output_dir: test/out
+images: test/images
+
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+    gpu: 0
+  gpu:
+    partition: gpu_p
+    qos: gpu
+    gpu: 1
+
+
+# defaults:
+#   datasets:
+#     - Lee2020
+
+DATASETS:
+  blood_harmonized:
+    input:
+      label_harmonization: test/input/load_data/load_data/filtered/Lee2020.zarr
+    label_harmonization:
+      mapping:
+        file:  test/input/mapping.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage

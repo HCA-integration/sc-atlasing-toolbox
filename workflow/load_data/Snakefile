@@ -99,7 +99,7 @@ rule merge_study:
             dataset=get_wildcards(dataset_df,'dataset',wildcards)['dataset']
         )
     output:
-        zarr=directory(out_dir / 'merged' / '{study}.zarr'),
+        zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
     params:
         dataset=lambda wildcards: wildcards.study
     resources:

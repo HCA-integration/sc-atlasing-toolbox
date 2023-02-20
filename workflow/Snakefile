@@ -11,6 +11,7 @@ configfile: "configs/config.yaml"
 configfile: "configs/load_data.yaml"
 configfile: "configs/exploration.yaml"
 configfile: "configs/label_transfer.yaml"
+configfile: "configs/label_harmonization.yaml"
 configfile: "configs/benchmark.yaml"
 
 params = pd.read_table('configs/modules.tsv',comment='#')
@@ -38,7 +39,7 @@ module exploration:
 
 module subset:
     snakefile: "subset/Snakefile"
-    config: config
+    config: config_for_module(config, module='subset')
 
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
@@ -47,6 +48,10 @@ module preprocessing:
 module label_transfer:
     snakefile: "label_transfer/Snakefile"
     config: config
+
+module label_harmonization:
+    snakefile: "label_harmonization/Snakefile"
+    config: config_for_module(config, module='label_harmonization')
 
 module integration:
     snakefile: "integration/Snakefile"
@@ -67,6 +72,8 @@ use rule * from exploration as exploration_ *
 use rule * from subset as subset_ *
 
 use rule * from label_transfer as label_transfer_ *
+
+use rule * from label_harmonization as label_harmonization_ *
 
 use rule * from integration as integration_ *
 

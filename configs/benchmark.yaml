@@ -46,24 +46,34 @@ defaults:
     - pcr
   datasets:
     - blood_benchmark
-    - blood_benchmark_donor
+    # - blood_benchmark_donor
     # - test
   subset:
     n_cells: 500000
 
 output_map:
+  label_harmonization: data/out/label_harmonization/remap_labels/{dataset}.zarr
   subset: data/out/subset/{dataset}/by_sample.zarr
   preprocessing: data/out/preprocessing/{dataset}/neighbors.zarr
 
 DATASETS:
   blood_benchmark:
     input:
-      subset: data/out/load_data/merged/subset/blood-benchmark.zarr
+      label_harmonization: data/out/load_data/merged/subset/blood-benchmark.zarr
+      subset: label_harmonization
       preprocessing: subset
       integration: preprocessing
-    label: cell_type
+    label_harmonization:
+      mapping:
+        file: data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage
+    label: harmonized_label
     batch: study
     sample: sample
+    lineage: lineage
   blood_benchmark_donor:
     input:
       integration: data/out/preprocessing/blood_benchmark/neighbors.zarr

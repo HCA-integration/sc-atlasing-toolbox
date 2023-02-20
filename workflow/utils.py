@@ -11,7 +11,7 @@ def wildcards_to_str(wildcards):
     return ' '.join([f'{key}={value}' for key, value in wildcards.items()])
 
 
-def set_defaults(config, modules=None):
+def set_defaults(config, modules=None, warn=True):
     if 'defaults' not in config:
         config['defaults'] = {}
     if 'datasets' not in config['defaults']:
@@ -24,7 +24,13 @@ def set_defaults(config, modules=None):
 
     for module in modules:
         for dataset in config['DATASETS'].keys():
-            entry = _get_or_default_from_config(config['DATASETS'], config['defaults'], dataset, module)
+            entry = _get_or_default_from_config(
+                config['DATASETS'],
+                config['defaults'],
+                dataset,
+                module,
+                warn=warn,
+            )
             # for TSV input make sure integration methods have the proper types
             if module == 'integration' and isinstance(entry, list):
                 # get parameters from config
@@ -87,7 +93,7 @@ def get_wildcards_from_config(
     return df.reset_index(drop=True)
 
 
-def _get_or_default_from_config(config, defaults, key, value):
+def _get_or_default_from_config(config, defaults, key, value, warn=True):
     """
     Get entry from config or return defaults if not present
 
@@ -106,7 +112,8 @@ def _get_or_default_from_config(config, defaults, key, value):
     try:
         assert value in defaults.keys()
     except AssertionError:
-        warnings.warn(f'No default defined for "{value}" for "{key}", returning None')
+        if warn:
+            warnings.warn(f'No default defined for "{value}" for "{key}", returning None')
         return None
     return defaults[value]
 

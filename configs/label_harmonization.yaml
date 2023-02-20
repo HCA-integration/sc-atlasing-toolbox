@@ -1,0 +1,26 @@
+defaults:
+  datasets:
+    - Lee2020_harmonized
+    # - blood_coarse
+
+DATASETS:
+  Lee2020_harmonized:
+    input:
+      label_harmonization: data/out/load_data/filtered/Lee2020.zarr
+    label_harmonization:
+      mapping:
+        file:  data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage
+  blood_coarse:
+    input:
+      label_harmonization: data/out/load_data/merged/subset/blood-benchmark.zarr
+    label_harmonization:
+      mapping:
+        file:  data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage
