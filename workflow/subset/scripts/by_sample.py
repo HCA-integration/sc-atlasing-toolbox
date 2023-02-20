@@ -18,7 +18,7 @@ except KeyError:
 samples = []
 n_cells = 0
 
-for sample, count in adata.obs[sample_key].value_counts(sort=False).items():
+for sample, count in adata.obs[sample_key].value_counts().sample(frac=1).items():
     n_cells += count
     print('sample:', sample)
     print('count:', count)

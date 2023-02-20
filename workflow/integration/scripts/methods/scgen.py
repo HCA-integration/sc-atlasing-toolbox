@@ -11,8 +11,11 @@ params = snakemake.params
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 
 adata_raw = read_anndata(input_file)
-adata = adata_raw.copy()
 
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+
+adata = adata_raw.copy()
 scgen.SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)
 
 # train model

@@ -65,7 +65,3 @@ rule merge_lineage:
     shadow: 'minimal'
     script:
         '../scripts/merge_anndata.py'
-
-
-rule run_lineages_all:
-    input: expand(rules.merge_lineage.output,zip,**parameters[wildcard_names].to_dict('list'))

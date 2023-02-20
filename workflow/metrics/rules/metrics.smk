@@ -2,12 +2,11 @@ import os
 
 
 def get_integration_output(wildcards):
-    if wildcards.lineage_specific == 'true':
-        return rules.merge_lineage.output.h5ad
-    return rules.integration_run.output.h5ad
+    if wildcards.lineage_specific == 'global':
+        return rules.integration_run.output.h5ad
+    return rules.merge_lineage.output.h5ad
 
 
-# TODO: lineage-specific?
 rule preprocess:
     input:
         h5ad=get_integration_output

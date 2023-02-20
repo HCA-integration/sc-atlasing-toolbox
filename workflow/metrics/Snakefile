@@ -10,6 +10,13 @@ from utils import all_but, get_hyperparams, expand_per, get_params, get_resource
     set_defaults, wildcards_to_str
 
 
+os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
+os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'FALSE'
+
+envvars:
+   'LD_LIBRARY_PATH',
+   'XLA_PYTHON_CLIENT_PREALLOCATE'
+
 module integration:
     snakefile: "../integration/Snakefile"
     config: config
@@ -60,6 +67,8 @@ wildcard_constraints:
     label='\w+',
     hyperparams='((?![/]).)*',
     lineage_key='((?![/]).)*',
+    lineage_specific='((?![/]).)*',
+
 
 module common:
     snakefile: "../common/Snakefile"

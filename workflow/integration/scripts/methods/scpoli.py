@@ -1,3 +1,4 @@
+from scipy.sparse import csr_matrix
 import torch
 from scarches.models.scpoli import scPoli
 
@@ -15,10 +16,16 @@ early_stopping_kwargs = hyperparams['early_stopping_kwargs'] if 'early_stopping_
 
 # check GPU
 print('GPU available:', torch.cuda.is_available())
+# scvi.settings.batch_size = 32
 
 adata_raw = read_anndata(input_file)
+
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+
+# prepare anndata for training
 adata = adata_raw.copy()
-adata.X = adata.layers['counts']
+adata.X = adata.layers['counts'].todense()
 
 # train model
 model = scPoli(
@@ -39,7 +46,7 @@ model.save(output_model, overwrite=True)
 
 # prepare output adata
 adata = adata_raw.copy()
-adata.obsm["X_emb"] = model.get_latent()
+adata.obsm["X_emb"] = csr_matrix(model.get_latent())
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 

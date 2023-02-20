@@ -1,4 +1,4 @@
 dataset	module	submodules
 SciTranslMed2021_covid19	load_data
-test2	integration	scvi,scanvi,bbknn
+test2	integration	scvi,scanvi
 test2	metrics

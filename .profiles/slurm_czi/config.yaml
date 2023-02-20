@@ -11,7 +11,7 @@ cluster:
 default-resources:
   - partition=cpu
   - gpu=0
-  - mem_mb=90000
+  - mem_mb=32000
   - disk_mb=20000
 restart-times: 0
 max-jobs-per-second: 10

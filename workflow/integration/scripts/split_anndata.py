@@ -1,6 +1,6 @@
 from pathlib import Path
-import scanpy as sc
 
+from methods.utils import read_anndata
 
 input_file = snakemake.input.h5ad
 output_dir = snakemake.output[0]
@@ -10,7 +10,7 @@ out_dir = Path(output_dir)
 if not out_dir.exists():
     out_dir.mkdir()
 
-adata = sc.read(input_file)
+adata = read_anndata(input_file)
 
 for split in adata.obs[split_key]:
     split_file = split.replace(' ', '_').replace('/', '_')

@@ -11,6 +11,9 @@ params = snakemake.params
 adata_raw = read_anndata(input_adata)
 adata_raw.X = adata_raw.layers['normcounts'].copy()
 
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+
 # run method
 adata = scib.ig.bbknn(adata_raw, batch=wildcards.batch)
 

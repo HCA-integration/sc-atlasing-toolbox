@@ -23,11 +23,12 @@ suppressPackageStartupMessages({
 
 dt <- fread(input_file)
 dt[, (id_vars) := lapply(.SD, as.character), .SDcols = id_vars]
+print(dt)
 
 # define groups of interest to be plotted in funkyheatmap
 integration_setup <- id_vars
-bio_metrics <- unique(dt[metric_type == 'bio_conservation', metric])  # c('ari', 'clisi_y', 'asw_label', 'asw_label_y', 'isolated_label_asw', 'isolated_label_f1', 'clisi', 'nmi', 'cell_cycle')
-batch_metrics <- unique(dt[metric_type == 'batch_correction', metric])  # c('graph_connectivity', 'asw_batch', 'asw_batch_y', 'ilisi', 'ilisi_y', 'pcr')
+bio_metrics <- unique(dt[metric_type == 'bio_conservation' & !is.na(score), metric]) 
+batch_metrics <- unique(dt[metric_type == 'batch_correction' & !is.na(score), metric])
 metrics <- c(bio_metrics, batch_metrics)
 
 # subset data.table to columns of interest & transform
@@ -40,10 +41,15 @@ metrics_tab <- dcast(
   value.var = value_var,
   fun.aggregate = mean
 )
+print(metrics_tab)
 
 # scores should be already scaled [0,1] - however, we aim to compute the scores based on the min-max scaled metrics
 scaled_metrics_tab <- as.matrix(metrics_tab[, metrics, with=FALSE])
-scaled_metrics_tab <- as.data.table(apply(scaled_metrics_tab, 2, function(x) scale_minmax(x)))
+if (nrow(scaled_metrics_tab) > 1) {
+  scaled_metrics_tab <- as.data.table(apply(scaled_metrics_tab, 2, function(x) scale_minmax(x)))
+} else {
+  scaled_metrics_tab <- as.data.table(scaled_metrics_tab)
+}
 
 # calculate average score by group and 
 score_group_batch <- rowMeans(scaled_metrics_tab[, batch_metrics, with=FALSE], na.rm = T)

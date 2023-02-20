@@ -21,9 +21,9 @@ def clisi_y(adata, output_type, meta):
     labels = rename_categories(adata, meta['label'])
 
     return scib_metrics.clisi_knn(
-        X=adata.obsp['distances'].toarray(),
+        X=adata.obsp['distances'],
         labels=labels
-    )
+    ).mean()
 
 
 def ilisi(adata, output_type, meta):
@@ -45,6 +45,6 @@ def ilisi_y(adata, output_type, meta):
     batches = rename_categories(adata, meta['batch'])
 
     return scib_metrics.ilisi_knn(
-        X=adata.obsp['distances'].toarray(),
+        X=adata.obsp['distances'],
         batches=batches
-    )
+    ).mean()

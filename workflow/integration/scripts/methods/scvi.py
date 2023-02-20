@@ -9,7 +9,9 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 adata_raw = read_anndata(input_adata)
-adata = adata_raw.copy()
+
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 # run method
 # adata = scib.ig.scvi(adata_raw, batch=wildcards.batch, **params['hyperparams'])
@@ -19,6 +21,7 @@ train_params = ['max_epochs', 'observed_lib_size']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
+adata = adata_raw.copy()
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",

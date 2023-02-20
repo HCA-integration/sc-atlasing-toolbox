@@ -23,10 +23,14 @@ def cell_cycle(adata, output_type, meta):
     if output_type == 'knn':
         np.nan
 
+    adata_raw = adata.raw.to_adata()
+
     if 'feature_name' in adata.var.columns:
         adata.var_names = adata.var['feature_name']
+        adata_raw.var_names = adata_raw.var['feature_name']
 
-    adata_raw = adata.raw.to_adata()
+    print(adata.var)
+    print(adata.var_names)
 
     return scib.me.cell_cycle(
         adata_pre=adata_raw,

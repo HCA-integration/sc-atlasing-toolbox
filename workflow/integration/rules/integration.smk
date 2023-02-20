@@ -25,7 +25,7 @@ rule run:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-    shadow: 'minimal'
+    # shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
 

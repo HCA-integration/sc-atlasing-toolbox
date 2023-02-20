@@ -6,6 +6,7 @@ dependencies:
   - python=3.9
   - scanpy=1.9
   - numpy<1.24
+  - matplotlib<3.7
   - cudatoolkit
   - zarr
   - pip
@@ -13,5 +14,5 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - scvi-tools
-    - scgen==2.1.0
+    - git+https://github.com/theislab/scgen.git@fix_concatenation
+    - scvi-tools==0.19

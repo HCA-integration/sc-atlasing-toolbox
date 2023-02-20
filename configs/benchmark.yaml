@@ -33,13 +33,13 @@ defaults:
         lr_patience: 13
         lr_factor: 0.1
   metrics:
-    - nmi
-    - ari
-    - asw_label
-    - asw_batch
+    - nmi_leiden_y
+    - ari_leiden_y
+    - asw_label_y
+    - asw_batch_y
     - cell_cycle
-    - clisi
-    - ilisi
+    # - clisi_y
+    # - ilisi_y
     - graph_connectivity
     - isolated_label_asw
     # - isolated_label_f1
@@ -64,34 +64,12 @@ DATASETS:
     label: cell_type
     batch: study
     sample: sample
-    metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      # - isolated_label_f1
-      - pcr
   blood_benchmark_donor:
     input:
       integration: data/out/preprocessing/blood_benchmark/neighbors.zarr
     label: cell_type
     batch: donor
     sample: sample
-    metrics:
-      - nmi
-      - ari
-      - asw_label
-      - asw_batch
-      - clisi
-      - ilisi
-      - graph_connectivity
-      - isolated_label_asw
-      # - isolated_label_f1
-      - pcr
   test:
     input:
       subset: data/pbmc68k.h5ad

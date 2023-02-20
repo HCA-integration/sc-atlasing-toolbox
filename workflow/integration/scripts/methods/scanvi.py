@@ -9,7 +9,9 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 adata_raw = read_anndata(input_adata)
-adata = adata_raw.copy()
+
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 # run method
 # adata = scib.ig.scanvi(adata_raw, batch=wildcards.batch, labels=wildcards.label, **params['hyperparams'])
@@ -20,6 +22,7 @@ model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
 # train SCVI
+adata = adata_raw.copy()
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",

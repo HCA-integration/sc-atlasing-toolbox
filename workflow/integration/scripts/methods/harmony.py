@@ -11,6 +11,9 @@ params = snakemake.params
 adata_raw = read_anndata(input_adata)
 adata_raw.X = adata_raw.layers['normcounts'].copy()
 
+# subset to HVGs
+adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+
 # run method
 adata = adata_raw.copy()
 adata.obsm["X_emb"] = harmonize(adata.obsm["X_pca"], adata.obs, batch_key=wildcards.batch)

@@ -136,7 +136,7 @@ rule funkyheatmap:
         weight_batch=0.4,
         n_top=50,
     conda:
-        '../envs/plots.yaml'
+        '../envs/funkyheatmap.yaml'
     singularity:
         'ghcr.io/dynverse/funky_heatmap:latest'
     group:

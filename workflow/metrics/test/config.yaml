@@ -60,8 +60,8 @@ defaults:
       early_stopping: True
       early_stopping_patience: 25
   datasets:
-    - test
-    # - test_2
+    # - test
+    - scib_metrics
 
 
 DATASETS:
@@ -98,7 +98,7 @@ DATASETS:
       - asw_label_y
       - asw_batch
       - asw_batch_y
-      - ilisi
+      # - ilisi
       - ilisi_y
-      - clisi
+      # - clisi
       - clisi_y

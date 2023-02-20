@@ -107,3 +107,16 @@ To use a profile e.g. the local profile, call
 ```commandline
 snakemake --profile .profiles/local
 ```
+
+## Working with GPUs and Conda environments
+
+Currently, whether the GPU version of pytorch is installed depends on which node you install the environment on.
+That means that if you want to your code to reconnise GPUs when working on a cluster, please make sure you install the conda environments from a node that has access to a GPU.
+You can install all missing dependencies in advance:
+
+```
+snakemake --use-conda --conda-create-envs-only --cores 1
+```
+
+In case you already have an environment installed that doesn't recognise the GPU on a GPU node, gather the environment name from the Snakemake log, remove it manually and then call the pipeline again with `--use-conda` or a corresponding profile.
+Snakemake should automatically reinstall that environment.

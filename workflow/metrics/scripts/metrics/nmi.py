@@ -1,3 +1,4 @@
+import numpy as np
 import scanpy as sc
 from .utils import cluster_optimal, select_neighbors, rename_categories
 
@@ -24,12 +25,12 @@ def nmi_leiden_y(adata, output_type, meta):
     adata = select_neighbors(adata, output_type)
     labels = rename_categories(adata, meta['label'])
 
-    score, _ = scib_metrics.nmi_ari_cluster_labels_leiden(
-        X=adata.obsp['connectivities'].toarray(),
+    scores = scib_metrics.nmi_ari_cluster_labels_leiden(
+        X=adata.obsp['connectivities'],
         labels=labels,
         optimize_resolution=True,
     )
-    return score
+    return scores['nmi']
 
 
 def nmi_kmeans_y(adata, output_type, meta):
@@ -37,8 +38,12 @@ def nmi_kmeans_y(adata, output_type, meta):
 
     labels = rename_categories(adata, meta['label'])
     adata = select_neighbors(adata, output_type)
-    score, _ = scib_metrics.nmi_ari_cluster_labels_kmeans(
-        X=adata.obsp['connectivities'].toarray(),
+
+    X = adata.obsp['connectivities']
+    X = X if isinstance(X, np.ndarray) else X.to_array()
+
+    scores = scib_metrics.nmi_ari_cluster_labels_kmeans(
+        X=X,
         labels=labels,
     )
-    return score
+    return scores['nmi']
