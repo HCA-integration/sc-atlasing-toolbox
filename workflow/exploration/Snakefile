@@ -4,7 +4,7 @@ Exploration
 from pathlib import Path
 import pandas as pd
 
-from utils import get_resource
+from utils.config import get_resource
 
 
 module_name = 'exploration'

@@ -112,7 +112,8 @@ rule compare_metrics:
     input:
         tsv=rules.merge.output.tsv
     output:
-        png=out_dir / 'plots' / 'comparison.png'
+        time=out_dir / 'plots' / 'comparison_time.png',
+        score=out_dir / 'plots' / 'comparison_score.png',
     conda:
         '../envs/plots.yaml'
     group:
@@ -202,3 +203,5 @@ rule plots_all:
         expand(rules.metrics_swarmplot.output,metric='score'),
         expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**get_wildcards(parameters,'dataset')),
         expand(rules.metrics_swarmplot_per_method.output,metric='score',**get_wildcards(parameters,'method')),
+        # comparison
+        rules.compare_metrics.output,

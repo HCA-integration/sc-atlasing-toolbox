@@ -40,7 +40,7 @@ def ari_kmeans_y(adata, output_type, meta):
     adata = select_neighbors(adata, output_type)
 
     X = adata.obsp['connectivities']
-    X = X if isinstance(X, np.ndarray) else X.to_array()
+    X = X if isinstance(X, np.ndarray) else X.toarray()
 
     scores = scib_metrics.nmi_ari_cluster_labels_kmeans(
         X=X,

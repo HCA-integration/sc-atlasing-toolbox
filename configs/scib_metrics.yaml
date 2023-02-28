@@ -1,6 +1,6 @@
 # Note: relative paths must be relative to the project root, not the directory of the config file.
 
-output_dir: data/out
+output_dir: data/out/scib-metrics/
 dataset_meta: configs/datasets.tsv
 
 defaults:
@@ -28,51 +28,110 @@ defaults:
         lr_patience: 13
         lr_factor: 0.1
   datasets:
-    - pancreas
-    #- pancreas_ari
-    #- pancreas_nmi
-    #- pancreas_asw
-    #- pancreas_lisi
+    - lung
+    # - pancreas
+    # - pancreas_ari
+    # - pancreas_nmi
+    # - pancreas_asw
+    # - pancreas_lisi
 
 DATASETS:
-  pancreas:
+  lung:
     input:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
-  pancreas_ari:
-    input:
-    adata_file: data/pancreas.h5ad
-    label: celltype
-    batch: tech
+      integration: data/input/lung.h5ad
+    label: cell_type
+    batch: batch
+    integration:
+      unintegrated:
+      # harmony:
     metrics:
       - ari
       - ari_leiden_y
       - ari_kmeans_y
-  pancreas_nmi:
+      - nmi
+      - nmi_leiden_y
+      - nmi_kmeans_y
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
+      - ilisi
+      - ilisi_y
+      - clisi
+      - clisi_y
+      - kbet_y
+      - isolated_label_asw
+      - isolated_label_asw_y
+      - graph_connectivity
+      - graph_connectivity_y
+
+  pancreas:
     input:
-    adata_file: data/pancreas.h5ad
+      integration: data/input/pancreas.h5ad
     label: celltype
     batch: tech
+    integration:
+      unintegrated:
+    metrics:
+      - ari
+      - ari_leiden_y
+      - ari_kmeans_y
+      - nmi
+      - nmi_leiden_y
+      - nmi_kmeans_y
+      - asw_label
+      - asw_label_y
+      - asw_batch
+      - asw_batch_y
+      - ilisi
+      - ilisi_y
+      - clisi
+      - clisi_y
+  
+  pancreas_ari:
+    input:
+      integration: data/input/pancreas.h5ad
+    label: celltype
+    batch: tech
+    integration:
+      unintegrated:
+    metrics:
+      - ari
+      - ari_leiden_y
+      - ari_kmeans_y
+  
+  pancreas_nmi:
+    input:
+      integration: data/input/pancreas.h5ad
+    label: celltype
+    batch: tech
+    integration:
+      unintegrated:
     metrics:
       - nmi
       - nmi_leiden_y
       - nmi_kmeans_y
+  
   pancreas_asw:
     input:
-    adata_file: data/pancreas.h5ad
+      integration: data/input/pancreas.h5ad
     label: celltype
     batch: tech
+    integration:
+      unintegrated:
     metrics:
       - asw_label
       - asw_label_y
       - asw_batch
       - asw_batch_y
+  
   pancreas_lisi:
     input:
-    adata_file: data/pancreas.h5ad
+      integration: data/input/pancreas.h5ad
     label: celltype
     batch: tech
+    integration:
+      unintegrated:
     metrics:
       - ilisi
       - ilisi_y

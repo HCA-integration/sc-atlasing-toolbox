@@ -1,16 +1,19 @@
 import scanpy as sc
 import muon as mu
 from metrics.utils import compute_neighbors, get_from_adata
+from utils.io import read_anndata_or_mudata
 
 
 input_adata = snakemake.input.h5ad
 output_file = snakemake.output.h5mu
 lineage_key = snakemake.wildcards.lineage_key
 
-adata = sc.read(input_adata)
+adata = read_anndata_or_mudata(input_adata)
 meta = get_from_adata(adata)
 
-if lineage_key not in adata.obs.columns:
+if isinstance(adata, mu.MuData):
+    mudata = adata
+elif lineage_key not in adata.obs.columns:
     mudata = mu.MuData({lineage_key: adata})
 else:
     mudata = mu.MuData(

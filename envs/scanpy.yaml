@@ -9,4 +9,6 @@ dependencies:
   - matplotlib<3.7
   - muon
   - dask
-  - zarr
+  - pip
+  - pip:
+    - zarr

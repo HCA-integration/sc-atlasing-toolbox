@@ -1,4 +1,4 @@
-import scib
+import scanpy as sc
 
 from utils import add_metadata, read_anndata, process
 
@@ -7,6 +7,7 @@ input_adata = snakemake.input.h5ad
 output_adata = snakemake.output.h5ad
 wildcards = snakemake.wildcards
 params = snakemake.params
+batch_key = wildcards.batch
 
 adata_raw = read_anndata(input_adata)
 adata_raw.X = adata_raw.layers['normcounts'].copy()
@@ -14,8 +15,11 @@ adata_raw.X = adata_raw.layers['normcounts'].copy()
 # subset to HVGs
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
+# quickfix: remove batches with fewer than 3 cells
+adata_raw = adata_raw[adata_raw.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index]
+
 # run method
-adata = scib.ig.bbknn(adata_raw, batch=wildcards.batch)
+adata = sc.external.pp.bbknn(adata_raw, batch_key=batch_key, use_rep='X_pca', copy=True)
 
 # prepare output adata
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])

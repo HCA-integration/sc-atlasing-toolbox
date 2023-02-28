@@ -1,14 +1,16 @@
 import glob
+from pprint import pprint
 import numpy as np
 import scanpy as sc
 
-outputs = glob.glob('test/out/integration/**/**/**/*.h5ad')
-print(outputs)
+outputs = glob.glob('test/out/integration/**/**/**/adata.h5ad')
+# pprint(outputs)
 
 for file in outputs:
     adata = sc.read(file)
 
     try:
+ 
         # Metadata
         assert 'dataset' in adata.uns
         assert 'methods' in adata.uns
@@ -17,8 +19,10 @@ for file in outputs:
             assert key in adata.uns['integration']
 
         # Unintegrated data
-        assert 'counts' in adata.layers
-        assert 'normcounts' in adata.layers
+        adata_raw = adata.raw.to_adata()
+        assert 'X_pca' in adata_raw.obsm
+        assert 'connectivities' in adata_raw.obsp
+        assert 'distances' in adata_raw.obsp
 
         # Output type specific outputs
         output_types = adata.uns['integration']['output_type']
@@ -38,12 +42,11 @@ for file in outputs:
             assert 'X_emb' in adata.obsm
         if 'full' in output_types:
             # check that counts are different from input
-            adata_raw = adata.raw.to_adata()
             if adata.uns['integration']['method'] != 'unintegrated':
                 assert adata.X.data.shape != adata_raw.X.data.shape or np.any(adata.X.data != adata_raw.X.data)
             assert 'X_pca' in adata.obsm
 
-    except AssertionError as e:
-        print(file)
-        print(adata)
+    except Exception as e:
+        print('Error for:', file)
+        print('adata:', adata)
         raise e

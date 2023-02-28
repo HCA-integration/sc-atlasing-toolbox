@@ -1,10 +1,11 @@
 from .ari import ari, ari_kmeans_y, ari_leiden_y
 from .asw import asw_batch, asw_batch_y, asw_label, asw_label_y
-from .graph_connectivity import graph_connectivity
-from .isolated_labels import isolated_label_asw, isolated_label_f1
+from .graph_connectivity import graph_connectivity, graph_connectivity_y
+from .isolated_labels import isolated_label_asw, isolated_label_f1, isolated_label_asw_y
 from .lisi import clisi, clisi_y, ilisi, ilisi_y
 from .nmi import nmi, nmi_kmeans_y, nmi_leiden_y
 from .pcr import cell_cycle, pcr
+from .kbet import kbet_y
 
 
 metric_map = {
@@ -17,7 +18,9 @@ metric_map = {
     'asw_label_y': asw_label_y,
     'asw_label_y': asw_label_y,
     'graph_connectivity': graph_connectivity,
+    'graph_connectivity_y': graph_connectivity_y,
     'isolated_label_asw': isolated_label_asw,
+    'isolated_label_asw_y': isolated_label_asw_y,
     'isolated_label_f1': isolated_label_f1,
     'clisi': clisi,
     'clisi_y': clisi_y,
@@ -30,4 +33,5 @@ metric_map = {
     'nmi_leiden_y': nmi_leiden_y,
     'cell_cycle': cell_cycle,
     'pcr': pcr,
+    'kbet_y': kbet_y,
 }

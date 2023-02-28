@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils_pipeline import update_module_configs, config_for_module
+from utils.pipeline import update_module_configs, config_for_module
 
 
 min_version("6.0")

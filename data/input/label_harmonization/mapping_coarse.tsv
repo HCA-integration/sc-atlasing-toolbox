@@ -71,3 +71,23 @@ erythrocyte	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
 erythroid progenitor cell, mammalian	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
 myeloid lineage restricted progenitor cell	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
 platelet	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+T cells	T cell	lymphoid	T cell
+NK cells	NK cell	lymphoid	NK cell
+Monocytes	monocyte	myeloid	monocyte
+B cells	B cell	lymphoid	B cell
+cDC	dendritic cell	myeloid	dendritic cell
+Platelets	platelet	lymphoid	platelet
+pDC	dendritic cell	myeloid	dendritic cell
+Plasma B	B cell	lymphoid	B cell
+blood cell			
+B cell	B cell	lymphoid	B cell
+hematopoietic stem cell	hematopoietic stem cell	progenitor	hematopoietic stem cell
+native cell			
+innate lymphoid cell	innate lymphoid cell	lymphoid	innate lymphoid cell
+lymphocyte	lymphocyte	lymphoid	lymphocyte
+CD34-positive, CD38-negative hematopoietic stem cell	hematopoietic stem cell	progenitor	hematopoietic stem cell
+monocyte	monocyte	myeloid	monocyte
+hematopoietic precursor cell	hematopoietic stem cell	progenitor	hematopoietic stem cell
+progenitor cell	hematopoietic stem cell	progenitor	hematopoietic stem cell
+peripheral blood mononuclear cell			
+animal cell			
