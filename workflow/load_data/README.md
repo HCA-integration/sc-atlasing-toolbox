@@ -13,6 +13,18 @@ Complete dataset configurations should be available at the top-level pipeline (g
 
 ## Testing
 
+### Prepare test data
+For the from file loader feature, you must download a test dataset first before you test the complete pipeline.
+The following script downloads the SchulteSchrepping dataset and then copies it to the location that is defined in `dataset.tsv`.
+
+```
+bash download_test_data.sh -c1
+```
+
+This needs to be done only once.
+
+### Run pipeline on test configuration
+
 Activate the snakemake environment and call `test/run_test.sh` with run specific Snakemake parameters.
 
 ```

@@ -61,12 +61,19 @@ rule download:
 
 rule download_all:
     input:
-        expand(rules.download.output,dataset=dataset_df['dataset'])
+        expand(rules.download.output,dataset=dataset_df['dataset'])  # TODO: filter for only non-file URL entries
+
+
+def get_h5ad(wildcards):
+    file_path = dataset_df[dataset_df['dataset'] == wildcards.dataset].astype(str).reset_index()['url'][0]
+    if Path(str(file_path)).exists():
+        return file_path
+    return rules.download.output.h5ad
 
 
 rule metadata:
     input:
-        h5ad=rules.download.output.h5ad
+        h5ad=get_h5ad
     params:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df,columns=all_but(dataset_df.columns,'subset'),wildcards=wildcards)
