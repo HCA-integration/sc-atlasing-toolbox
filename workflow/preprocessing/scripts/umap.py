@@ -1,16 +1,14 @@
 """
 UMAP
 """
+import anndata
 import scanpy as sc
-from utils.io import read_anndata
 
-input_file = snakemake.input[0]
-output_file = snakemake.output[0]
+input_zarr = snakemake.input.zarr
+output_zarr = snakemake.output.zarr
 
-print('read...')
-adata = read_anndata(input_file)
+adata = anndata.read_zarr(input_zarr)
 
-sc.tl.umap(adata, method='rapids')
+sc.tl.umap(adata)
 
-print('write...')
-adata.write(output_file)
+adata.write_zarr(output_zarr)

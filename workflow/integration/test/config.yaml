@@ -25,6 +25,10 @@ defaults:
       max_epochs: 10
       use_observed_lib_size: true
     scgen:
+      max_epochs: 50
+      batch_size: 32
+      early_stopping: True
+      early_stopping_patience: 25
     scpoli:
       supervised: true
       early_stopping_kwargs:
@@ -45,18 +49,14 @@ defaults:
       max_epochs: 10
       use_observed_lib_size: true
     unintegrated:
-  datasets:
-    - test
 
 DATASETS:
   test:
     input:
       integration: test/data/pbmc68k.h5ad
     label: bulk_labels
-    batch:
-      - phase
-      - batch_2
-    lineage: batch
+    batch: batch
+    lineage: phase
 
   test2:
     input:

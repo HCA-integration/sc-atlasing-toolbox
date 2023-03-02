@@ -67,9 +67,7 @@ defaults:
 DATASETS:
   test:
     label: bulk_labels
-    batch:
-      - louvain
-      - phase
+    batch: phase
     lineage:
       - batch
       - 
@@ -77,11 +75,6 @@ DATASETS:
       integration: test/data/pbmc68k.h5ad
     integration:
       unintegrated:
-    metrics:
-      - nmi
-      - pcr
-      - asw_batch
-  
   test_2:
     label: bulk_labels
     batch: phase
@@ -89,7 +82,6 @@ DATASETS:
       integration: test/data/pbmc68k.h5ad
     integration:
       unintegrated:
-  
   scib_metrics:
     label: bulk_labels
     batch: batch
@@ -98,7 +90,7 @@ DATASETS:
     metrics:
       - ari
       - ari_leiden_y
-      # - ari_kmeans_y
+      - ari_kmeans_y
       - nmi
       - nmi_leiden_y
       - nmi_kmeans_y
@@ -110,6 +102,3 @@ DATASETS:
       - ilisi_y
       # - clisi
       - clisi_y
-      - isolated_label_asw_y
-      - kbet_y
-      - graph_connectivity_y

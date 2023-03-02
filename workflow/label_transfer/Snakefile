@@ -4,8 +4,7 @@ Label transfer and harmonisation
 import os
 from pathlib import Path
 
-from utils.config import get_resource, get_wildcards_from_config, set_defaults
-from utils.wildcards import get_params, get_wildcards
+from utils import get_params, get_resource, get_wildcards_from_config, set_defaults, get_wildcards
 
 
 def get_h5ad(wildcards):

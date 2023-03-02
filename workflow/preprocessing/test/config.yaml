@@ -30,6 +30,4 @@ filter_per_study:
 DATASETS:
   blood:
     input:
-      preprocessing: test/input/load_data/merged/organ/blood.zarr
-    batch: donor
-    lineage: development_stage
+      preprocessing: test/out/load_data/merged/organ/blood.zarr

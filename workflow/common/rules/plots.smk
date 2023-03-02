@@ -1,4 +1,4 @@
-from utils.wildcards import wildcards_to_str
+from utils import wildcards_to_str
 
 
 rule barplot:

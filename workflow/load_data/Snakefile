@@ -4,10 +4,8 @@ Data Loader
 from pathlib import Path
 import pandas as pd
 
-from scripts.utils import get_url
-from utils.misc import all_but, unlist_dict
-from utils.config import get_resource
-from utils.wildcards import get_wildcards
+from scripts.utils import get_url, unlist_dict
+from utils import all_but, get_wildcards, get_resource
 
 
 def load_dataset_df(file):
@@ -86,7 +84,7 @@ rule metadata:
     conda:
         '../../envs/scanpy.yaml'
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
     shadow: 'shallow'
     script:
@@ -112,11 +110,11 @@ rule merge_study:
     params:
         dataset=lambda wildcards: wildcards.study
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -138,11 +136,11 @@ rule filter:
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study]
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,'cpu',resource_key='mem_mb'),
         disk_mb=20000,
     conda:
         '../../envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/filter.py'
 
@@ -162,13 +160,13 @@ rule merge_organ:
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -184,13 +182,13 @@ rule merge_organ_filter:
     params:
         dataset=lambda wildcards: wildcards.organ
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 
@@ -206,13 +204,13 @@ rule merge_subset:
     params:
         dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}'
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
     conda:
         '../../envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/merge.py'
 

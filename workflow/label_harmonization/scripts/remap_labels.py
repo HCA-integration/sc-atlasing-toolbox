@@ -1,21 +1,26 @@
 import pandas as pd
+import anndata
 import scanpy as sc
-
-from utils.io import read_anndata
 
 input_anndata = snakemake.input.anndata
 input_mapping = snakemake.input.mapping
-output_file = snakemake.output.h5ad
+output_file = snakemake.output.zarr
 mapping_order = snakemake.params.mapping_order
 
 
-print('mapping order:', mapping_order)
+def read_anndata(file):
+    if file.endswith('.zarr'):
+        adata = anndata.read_zarr(file)
+    else:
+        adata = sc.read(file)
+    return adata
 
-print(f'read adata...')
+
 adata = read_anndata(input_anndata)
-
 label_mapping = pd.read_table(input_mapping)
 label_key = None
+
+print('mapping order:', mapping_order)
 
 for mapping_label in mapping_order:
 
@@ -31,15 +36,13 @@ for mapping_label in mapping_order:
         continue
 
     print(f'mapping "{label_key}" to "{mapping_label}"...')
-    df = label_mapping[[mapping_label, label_key]].drop_duplicates()
-    map_dict = df.set_index(label_key)[mapping_label].to_dict()
-    
-    # map...
-    mapped = adata.obs[label_key].map(map_dict)
-    adata.obs[mapping_label] = pd.Series(mapped, dtype="category")
 
-    # set current mapping label as new label key
+    df = label_mapping[[mapping_label, label_key]].drop_duplicates()
+
+    adata.obs[mapping_label] = adata.obs[label_key].map(
+        df.set_index(label_key)[mapping_label]
+    )
+
     label_key = mapping_label
 
-print('write...')
-adata.write_h5ad(output_file)
+adata.write_zarr(output_file)

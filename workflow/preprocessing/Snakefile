@@ -3,7 +3,7 @@ Preprocessing
 """
 from pathlib import Path
 import pandas as pd
-from utils.config import get_datasets_for_module, get_resource
+from utils import get_datasets_for_module, get_resource
 
 
 module_name = 'preprocessing'
@@ -28,83 +28,78 @@ use rule * from common as common_ *
 
 rule normalize:
     input:
-        get_input
+        zarr=get_input
     output:
-        h5ad=out_dir / '{dataset}' / 'normalized.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'normalized.zarr')
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/normalize.py'
 
 
 rule highly_variable_genes:
     input:
-        h5ad=rules.normalize.output.h5ad
+        zarr=rules.normalize.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'highly_variable_genes.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'highly_variable_genes.zarr')
     params:
         n_hvgs=2000,
         batch=lambda wildcards: config['DATASETS'][wildcards.dataset]['batch'],
-        lineage=lambda wildcards: config['DATASETS'][wildcards.dataset]['lineage'],
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
         'envs/scanpy.yaml'
-    # shadow: 'minimal'
+    shadow: 'minimal'
     script:
         'scripts/highly_variable_genes.py'
 
 
 rule pca:
     input:
-        h5ad=rules.highly_variable_genes.output.h5ad
+        zarr=rules.highly_variable_genes.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'pca.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'pca.zarr')
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
-    # shadow: 'minimal'
+        'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/pca.py'
 
 
 rule neighbors:
     input:
-        h5ad=rules.pca.output.h5ad
+        zarr=rules.pca.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'neighbors.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'neighbors.zarr')
     resources:
-        partition=get_resource(config,profile='gpu',resource_key='partition'),
-        qos=get_resource(config,profile='gpu',resource_key='qos'),
-        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
-    # shadow: 'minimal'
+        'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/neighbors.py'
 
 
 rule umap:
     input:
-        h5ad=rules.neighbors.output.h5ad
+        zarr=rules.neighbors.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'umap.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'umap.zarr')
     resources:
-        partition=get_resource(config,profile='gpu',resource_key='partition'),
-        qos=get_resource(config,profile='gpu',resource_key='qos'),
-        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
-    # shadow: 'minimal'
+        'envs/scanpy.yaml'
+    shadow: 'minimal'
     script:
         'scripts/umap.py'
 

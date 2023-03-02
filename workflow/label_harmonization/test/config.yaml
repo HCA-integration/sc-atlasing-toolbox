@@ -19,7 +19,7 @@ resources:
 DATASETS:
   blood_harmonized:
     input:
-      label_harmonization: test/input/load_data/load_data/filtered/SchulteSchrepping2020.zarr
+      label_harmonization: test/input/load_data/load_data/filtered/Lee2020.zarr
     label_harmonization:
       mapping:
         file:  test/input/mapping.tsv

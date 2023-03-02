@@ -2,13 +2,10 @@
 Integration
 """
 from pathlib import Path
-import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
 
-from utils.misc import unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults
-from utils.wildcards import get_params, wildcards_to_str
+from utils import get_hyperparams, get_params, get_resource, get_wildcards_from_config, set_defaults, wildcards_to_str
 
 
 def get_input(wildcards):
@@ -34,13 +31,9 @@ parameters = get_wildcards_from_config(
     config_keys=config['defaults']['datasets'],
     config_params=['integration', 'label', 'batch', 'lineage'],
     wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
-    explode_by=['method', 'lineage_key', 'batch'],
+    explode_by=['method', 'lineage_key'],
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
-
-# TODO: remove redundant wildcards
-# parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], np.nan)
-# parameters = unique_dataframe(parameters)
 
 parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage_key']
@@ -70,20 +63,13 @@ use rule * from common as common_ *
 
 include: 'rules/integration.smk'
 include: 'rules/lineage.smk'
-include: 'rules/plots.smk'
-
-
-rule per_lineage_all:
-    input:
-        rules.run_per_lineage_all.input,
-        rules.plots_per_lineage_all.input,
+include: 'rules/benchmark.smk'
 
 
 rule all:
     input:
         rules.run_all.input,
-        rules.plots_all.input,
-        rules.per_lineage_all.input,
+        rules.plots.input
     default_target: True
 
 

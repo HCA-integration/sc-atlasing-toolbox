@@ -30,9 +30,4 @@ adata.obsm["X_emb"] = corrected_adata.obsm["latent"]
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-print(adata.raw)
-print(adata.raw.to_adata())
-
-print(adata_raw)
-
 adata.write(output_file)

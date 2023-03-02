@@ -6,9 +6,8 @@ import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
 
-from utils.misc import all_but
-from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
-from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults
+from utils import all_but, get_hyperparams, expand_per, get_params, get_resource, get_wildcards, get_wildcards_from_config, \
+    set_defaults, wildcards_to_str
 
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
@@ -34,7 +33,7 @@ wildcards_df = get_wildcards_from_config(
     config_keys=config['defaults']['datasets'],
     config_params=['integration', 'metrics', 'label', 'batch', 'lineage'],
     wildcard_names=['dataset', 'method', 'metric', 'label', 'batch', 'lineage_key'],
-    explode_by=['method', 'metric', 'lineage_key', 'batch'],
+    explode_by=['method', 'metric', 'lineage_key'],
 )
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))

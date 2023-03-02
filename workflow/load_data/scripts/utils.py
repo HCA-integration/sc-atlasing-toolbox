@@ -99,3 +99,10 @@ def get_url(dataset_df, wildcards):
         asset = [a for a in assets if a["filetype"] == "H5AD"][0]
         url = asset["presigned_url"]
     return url
+
+
+def unlist_dict(dictionary):
+    return {
+        k: v[0] if isinstance(v, list) and len(v) == 1 else v
+        for k, v in dictionary.items()
+    }

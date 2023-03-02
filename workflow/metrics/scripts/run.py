@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import mudata as mu
 from metrics.utils import write_metrics, get_from_adata
@@ -36,9 +35,6 @@ for output_type in meta['output_types']:
         output_types.append(output_type)
     else:
         for lineage in mudata.mod:
-            score = np.nan
-            if mudata[lineage].obs[meta['label']].nunique() == 1:
-                continue
             score = metric_function(
                 mudata[lineage],
                 output_type,

@@ -3,8 +3,8 @@ import scanpy as sc
 
 from utils import read_anndata
 
-input_file = snakemake.input[0]
-output_file = snakemake.output[0]
+input_file = snakemake.input.zarr
+output_file = snakemake.output.zarr
 strategy = snakemake.wildcards.strategy
 n_cell_max = snakemake.params.n_cells
 sample_key = snakemake.params.sample_key
@@ -35,4 +35,4 @@ print(f'Subset to {adata.n_obs} cells, {n_samples} samples')
 print(adata)
 
 # save
-adata.write(output_file)
+adata.write_zarr(output_file)

@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from utils.config import get_resource, get_wildcards_from_config, set_defaults
-from utils.wildcards import get_params, get_wildcards
+from utils import get_params, get_resource, get_wildcards_from_config, set_defaults, get_wildcards
 
 
 module_name = 'label_harmonization'
@@ -29,15 +28,11 @@ rule remap_labels:
         anndata=get_input,
         mapping=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'file'])
     output:
-        h5ad=out_dir / 'remap_labels' / '{dataset}.h5ad',
+        zarr=directory(out_dir / 'remap_labels' / '{dataset}.zarr'),
     params:
         mapping_order=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'order']),
     conda:
         'envs/scanpy.yaml'
-    resources:
-        partition=lambda w: get_resource(config,resource_key='partition'),
-        qos=lambda w: get_resource(config,resource_key='qos'),
-        mem_mb=lambda w: get_resource(config,resource_key='mem_mb'),
     script:
         'scripts/remap_labels.py'
 

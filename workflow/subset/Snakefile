@@ -3,8 +3,7 @@ Data Subsetting for benchmark
 """
 from pathlib import Path
 
-from utils.config import set_defaults, get_datasets_for_module, get_resource, get_wildcards_from_config
-from utils.wildcards import get_params
+from utils import set_defaults, get_datasets_for_module, get_params, get_resource, get_wildcards_from_config
 
 
 module_name = 'subset'
@@ -14,8 +13,8 @@ out_dir = Path(config['output_dir']) / module_name
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
-    config_params=['sample', 'label'],  # TODO: add strategy
-    wildcard_names=['dataset', 'sample', 'label'],
+    config_params=['sample'],  # TODO: add strategy
+    wildcard_names=['dataset', 'sample'],
 )
 
 
@@ -40,16 +39,15 @@ use rule * from common as common_ *
 
 rule subset:
     input:
-        get_input
+        zarr=get_input
     output:
-        out_dir / '{dataset}' / '{strategy}.h5ad'
+        zarr=directory(out_dir / '{dataset}' / '{strategy}.zarr')
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=get_resource(config,'cpu_merged',resource_key='mem_mb'),
+        disk_mb=get_resource(config,'cpu_merged',resource_key='disk_mb'),
     params:
         n_cells=lambda wildcards: get_param(wildcards,'n_cells'),
-        sample_key=lambda wildcards: get_params(wildcards,parameters,'sample'),
-        label_key=lambda wildcards: get_params(wildcards,parameters,'label')
+        sample_key=lambda wildcards: get_params(wildcards,parameters,'sample')
     conda:
         'envs/scanpy.yaml'
     script:

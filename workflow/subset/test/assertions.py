@@ -1,23 +1,22 @@
 import yaml
+import anndata
 import glob
-import scanpy as sc
 
 
 with open('test/config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 
-files = glob.glob('test/out/subset/*/*.h5ad')
+files = glob.glob('test/out/subset/*/*.zarr')
 print(files)
 
 for file in files:
-    adata = sc.read(file)
+    adata = anndata.read_zarr(file)
     assert 'subset' in adata.uns
 
     n_cells = adata.n_obs
     n_cells_threshold = config['DATASETS']['blood']['subset']['n_cells']
 
-    print(file)
-    print('\tthreshold: ', n_cells_threshold)
-    print('\tadata.n_obs: ', n_cells)
+    print('adata.n_obs: ', n_cells)
+    print('n_cells: ', n_cells_threshold)
     assert adata.n_obs < n_cells_threshold

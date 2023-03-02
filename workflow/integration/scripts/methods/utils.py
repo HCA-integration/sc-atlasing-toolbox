@@ -1,4 +1,4 @@
-import anndata as ad
+import anndata
 import scanpy as sc
 from scipy.sparse import csr_matrix
 
@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 # TODO: put in common location
 def read_anndata(file):
     if file.endswith('.zarr'):
-        adata = ad.read_zarr(file)
+        adata = anndata.read_zarr(file)
     else:
         adata = sc.read(file)
     return adata
@@ -24,41 +24,28 @@ def process(adata, adata_raw, output_type):
     if isinstance(output_type, str):
         output_type = [output_type]
 
-    # # save unintegrated count layers
-    # adata.layers['counts'] = adata_raw.layers['counts']
-    # adata.layers['normcounts'] = adata_raw.layers['normcounts']
+    # save unintegrated count layers
+    adata.layers['counts'] = adata_raw.layers['counts']
+    adata.layers['normcounts'] = adata_raw.layers['normcounts']
+    adata.raw = adata_raw
 
-    # # save kNN graph of unintegrated object
-    # adata.obsp['connectivities_uni'] = adata_raw.obsp['connectivities']
-    # adata.obsp['distances_uni'] = adata_raw.obsp['distances']
+    # save kNN graph of unintegrated object
+    adata.obsp['connectivities_uni'] = adata_raw.obsp['connectivities']
+    adata.obsp['distances_uni'] = adata_raw.obsp['distances']
 
     if 'full' in output_type:
-        adata.layers['corrected_counts'] = adata.X.copy()
         sc.pp.pca(adata)
+        adata.layers['corrected_counts'] = adata.X.copy()
+        # TODO: use same parameters as in .uns['preprocessing']
 
-    elif 'embed' in output_type:
-        assert 'X_emb' in adata.obsm
+    elif 'embed' in output_type or 'knn' in output_type:
         # remove unintegrated entries for embed and knn
-        adata = ad.AnnData(
-            adata.obsm['X_emb'],
-            obs=adata.obs,
-            obsm=adata.obsm,
-        )
+        adata.X = csr_matrix((adata.n_obs, adata.n_vars), dtype='float32')
         if 'X_pca' in adata.obsm:
             del adata.obsm['X_pca']
 
-
-    elif 'knn' in output_type:
-        # remove unintegrated entries for embed and knn
-        adata.X = csr_matrix((adata.n_obs, adata.n_vars), dtype='float32')
-
     else:
         raise ValueError(f'Invalid output type {output_type}')
-
-    # add unintegrated data
-    adata_raw.X = adata_raw.layers['normcounts']
-    adata.raw = adata_raw.copy()
-
     return adata
 
 
@@ -70,8 +57,6 @@ def add_metadata(adata, wildcards, params):
     :param params:
     :return:
     """
-    # TODO: transfer parameters from .uns['preprocessing']
-
     adata.uns['dataset'] = wildcards.dataset
 
     if 'methods' in adata.uns:

@@ -1,14 +1,11 @@
-import anndata as ad
-import mudata as mu
+import anndata
 
 input_files = snakemake.input
-output_file = snakemake.output.h5mu
-lineages = snakemake.input.keys()
+output_file = snakemake.output.h5ad
 
-print(lineages)
+adatas = [anndata.read(file) for file in input_files]
 
-adatas = [ad.read(file) for file in input_files]
-mudata = mu.MuData({str(lineage): adata for lineage, adata in zip(lineages, adatas)})
-mudata.uns = adatas[0].uns
+adata = anndata.concat(adatas, merge='same', uns_merge='same')
+print(adata)
 
-mudata.write(output_file)
+adata.write(output_file)
