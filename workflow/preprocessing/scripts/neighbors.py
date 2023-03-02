@@ -1,14 +1,20 @@
 """
 Build kNN graph on embedding
 """
-import anndata
 import scanpy as sc
+from utils.io import read_anndata
 
-input_file = snakemake.input.zarr
-output_file = snakemake.output.zarr
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 
-adata = anndata.read_zarr(input_file)
+print('read...')
+adata = read_anndata(input_file)
 
-sc.pp.neighbors(adata, use_rep='X_pca')
+if adata.n_obs == 0:
+    adata.write(output_file)
+    exit(0)
 
-adata.write_zarr(output_file)
+sc.pp.neighbors(adata, use_rep='X_pca', method='rapids')
+
+print('write...')
+adata.write(output_file)

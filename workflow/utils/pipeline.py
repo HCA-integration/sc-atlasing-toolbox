@@ -4,7 +4,7 @@ Utils that are specific to the overall pipeline but not the modules
 
 from pathlib import Path
 
-from utils import _get_or_default_from_config, set_defaults
+from .config import _get_or_default_from_config, set_defaults
 
 
 def update_module_configs(config, params):

@@ -12,7 +12,7 @@ adata_raw.X = adata_raw.layers['normcounts'].copy()
 
 # prepare output adata
 adata = adata_raw
-adata = process(adata=adata, adata_raw=adata_raw, output_type='full')
+adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 sc.pp.neighbors(adata)
 add_metadata(adata, wildcards, params)

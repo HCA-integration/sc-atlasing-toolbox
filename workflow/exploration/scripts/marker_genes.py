@@ -11,6 +11,12 @@ markers = snakemake.params.markers
 
 adata = anndata.read_zarr(input_file)
 
+# if no cells filtered out, save empty plots
+if adata.n_obs == 0:
+    plt.savefig(output_png)
+    exit()
+
+
 author_label = 'author_annotation'
 ontology_label = 'cell_type'
 print(adata)

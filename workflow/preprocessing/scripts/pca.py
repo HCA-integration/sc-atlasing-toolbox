@@ -1,14 +1,20 @@
 """
 PCA on highly variable genes
 """
-import anndata
 import scanpy as sc
+from utils.io import read_anndata
 
-input_zarr = snakemake.input.zarr
-output_zarr = snakemake.output.zarr
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 
-adata = anndata.read_zarr(input_zarr)
+print('read...')
+adata = read_anndata(input_file)
 
-sc.pp.pca(adata)
+if adata.n_obs == 0:
+    adata.write(output_file)
+    exit(0)
 
-adata.write_zarr(output_zarr)
+sc.pp.pca(adata, use_highly_variable=True)
+
+print('write...')
+adata.write(output_file)

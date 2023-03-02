@@ -11,14 +11,20 @@ try:
 except ImportError:
     print(f'no hardware acceleration for sklearn')
 
-input_zarr = snakemake.input.zarr
+from utils.io import read_anndata
+
+input_file = snakemake.input.zarr
 output_barplot = snakemake.output.barplot
 dataset = snakemake.params.dataset
 covariates = snakemake.params['covariates']
 perm_covariates = snakemake.params['permutation_covariates']
 sample_key = snakemake.params['sample_key']
 
-adata = anndata.read_zarr(input_zarr)
+adata = read_anndata(input_file)
+
+if adata.n_obs == 0:
+    plt.savefig(output_barplot)
+    exit(0)
 
 # PCR for permuted covariates
 for covariate in perm_covariates:

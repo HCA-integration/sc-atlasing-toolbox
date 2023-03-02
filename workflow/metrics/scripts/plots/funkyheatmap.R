@@ -23,7 +23,17 @@ suppressPackageStartupMessages({
 
 dt <- fread(input_file)
 dt[, (id_vars) := lapply(.SD, as.character), .SDcols = id_vars]
-print(dt)
+print(head(dt))
+
+# remove unintegrated output types without corresponding method
+if ('unintegrated' %in% dt$method & uniqueN(dt$method) > 1) {
+  ot_count <- dt[method != 'unintegrated', .(output_type, method)] %>%
+    unique %>%
+    .[, output_type] %>%
+    table
+  keep_ot <- ot_count[ot_count > 1]
+  df <- dt[, output_type %in% keep_ot]
+}
 
 # define groups of interest to be plotted in funkyheatmap
 integration_setup <- id_vars

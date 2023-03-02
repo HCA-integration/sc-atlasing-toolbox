@@ -114,6 +114,14 @@ dataset = snakemake.params.dataset
 print(f'Read {input_zarr}...')
 adata = anndata.read_zarr(input_zarr)
 
+# if no cells filtered out, save empty plots
+if adata.n_obs == 0:
+    plt.savefig(output_joint)
+    plt.savefig(output_joint_log)
+    plt.savefig(output_violin)
+    plt.savefig(output_avg)
+    exit()
+
 print('Calculate QC stats...')
 adata.var["mito"] = adata.var['feature_name'].str.startswith("MT-")
 sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)

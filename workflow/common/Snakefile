@@ -1,7 +1,14 @@
 include: 'rules/dependency_graph.smk'
 include: 'rules/plots.smk'
+include: 'rules/umap.smk'
+
 
 rule test_plots:
     input:
         expand(rules.barplot.output,out_dir='test/out/benchmark',metric=['s', 'max_uss', 'mean_load']),
         expand(rules.swarmplot.output,out_dir='test/out/benchmark',metric=['score']),
+
+
+rule test_umap:
+    input:
+        expand(rules.umap.output,filename='test/data/pbmc68k'),

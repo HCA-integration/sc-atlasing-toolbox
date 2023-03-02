@@ -7,6 +7,7 @@ for study in dataset_df['study']:
             'preprocessing': expand(rules.load_data_filter.output.zarr,study=study)[0],
         },
         'batch': 'dataset',
+        'lineage' : None,
     }
 
 

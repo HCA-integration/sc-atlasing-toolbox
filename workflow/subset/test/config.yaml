@@ -9,9 +9,10 @@ defaults:
 DATASETS:
   blood:
     input:
-      subset: test/out/load_data/merged/organ/blood.zarr
+      subset: test/input/load_data/merged/organ/blood.zarr
     batch: study
     sample: sample
+    label: cell_type
     subset:
       n_cells: 1000
       per_sample: 50
@@ -19,6 +20,7 @@ DATASETS:
     input:
       subset: ../../data/pbmc68k.h5ad
     sample: phase
+    label: bulk_labels
     subset:
       n_cells: 1000
       per_sample: 50

@@ -33,6 +33,14 @@ colors = color if isinstance(color, list) else [color]
 dataset = snakemake.params.dataset
 
 adata = anndata.read_zarr(input_zarr)
+
+if adata.n_obs == 0:
+    plt.savefig(output_pca_1_2)
+    plt.savefig(output_pca_2_3)
+    plt.savefig(output_pca_scree)
+    exit(0)
+
+# normalize counts
 sc.pp.normalize_total(adata)
 
 # make sure all columns are present for bulk

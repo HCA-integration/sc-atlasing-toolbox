@@ -42,19 +42,22 @@ defaults:
     # - ilisi_y
     - graph_connectivity
     - isolated_label_asw
+    - isolated_label_asw_y
     # - isolated_label_f1
     - pcr
+    # - kbet_y
   datasets:
     - blood_benchmark
+    - blood_lineage_specific
     # - blood_benchmark_donor
     # - test
   subset:
     n_cells: 500000
 
 output_map:
-  label_harmonization: data/out/label_harmonization/remap_labels/{dataset}.zarr
-  subset: data/out/subset/{dataset}/by_sample.zarr
-  preprocessing: data/out/preprocessing/{dataset}/neighbors.zarr
+  label_harmonization: data/out/label_harmonization/remap_labels/{dataset}.h5ad
+  subset: data/out/subset/{dataset}/by_sample.h5ad
+  preprocessing: data/out/preprocessing/{dataset}/neighbors.h5ad
 
 DATASETS:
   blood_benchmark:
@@ -73,13 +76,29 @@ DATASETS:
     label: harmonized_label
     batch: study
     sample: sample
-    lineage: lineage
+    lineage: 
+  
   blood_benchmark_donor:
     input:
       integration: data/out/preprocessing/blood_benchmark/neighbors.zarr
     label: cell_type
     batch: donor
     sample: sample
+  
+  blood_lineage_specific:
+    input:
+      integration: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+    label: harmonized_label
+    batch: study
+    sample: sample
+    lineage: lineage
+    # integration:
+    #   unintegrated:
+    #   scvi:
+    #     n_hidden: 128
+    #     dispersion: gene
+    #     max_epochs: 10
+    #     use_observed_lib_size: true
   test:
     input:
       subset: data/pbmc68k.h5ad

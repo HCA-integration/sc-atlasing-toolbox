@@ -17,20 +17,41 @@ def pcr(adata, output_type, meta):
     )
 
 
+def pcr_y(adata, output_type, meta):
+    import scib_metrics
+
+    if output_type == 'knn':
+        return np.nan
+
+    adata_raw = adata.raw.to_adata()
+    X_pre = adata_raw.X
+
+    if output_type == 'embed':
+        X_post = adata.obsm['X_emb']
+    else:
+        X_post = adata.X
+
+    X_pre, X_post = [X if isinstance(X, np.ndarray) else X.todense() for X in [X_pre, X_post]]
+
+    return scib_metrics.pcr_comparison(
+        X_pre=X_pre,
+        X_post=X_post,
+        covariate=adata.obs[meta['batch']],
+        categorical=True
+    )
+
+
 def cell_cycle(adata, output_type, meta):
     import scib
 
     if output_type == 'knn':
-        np.nan
+        return np.nan
 
     adata_raw = adata.raw.to_adata()
+    print(adata_raw)
 
-    if 'feature_name' in adata.var.columns:
-        adata.var_names = adata.var['feature_name']
+    if 'feature_name' in adata_raw.var.columns:
         adata_raw.var_names = adata_raw.var['feature_name']
-
-    print(adata.var)
-    print(adata.var_names)
 
     return scib.me.cell_cycle(
         adata_pre=adata_raw,

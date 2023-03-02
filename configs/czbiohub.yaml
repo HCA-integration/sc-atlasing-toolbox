@@ -13,7 +13,7 @@ resources:
   cpu:
     partition: cpu
     gpu: 0
-    mem_mb: 400000
+    mem_mb: 300000
   gpu:
     partition: gpu
     gpu: 1
