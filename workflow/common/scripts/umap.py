@@ -21,23 +21,39 @@ if 'use_rep' in snakemake.params.keys():
         )
         use_rep = 'X'
 
+# convert to dense matrix
 try:
-    adata.obsm[use_rep] = np.array(adata.obsm[use_rep].todense())
+    if use_rep == 'X':
+        adata.X = np.array(adata.X.todense())
+    else:
+        adata.obsm[use_rep] = np.array(adata.obsm[use_rep].todense())
 except:
     print(f'{use_rep} already dense')
 
 
+# compute neighbors if required
 if 'neighbors' not in adata.uns.keys():
     print(f'recompute neighbors using {use_rep}...')
-    sc.pp.neighbors(adata, use_rep=use_rep, method='rapids')
+    try:
+        sc.pp.neighbors(adata, use_rep=use_rep, method='rapids')
+    except:
+        print('Rapids failed, defaulting to UMAP implementation')
+        sc.pp.neighbors(adata, use_rep=use_rep)
 
-sc.tl.umap(adata, method='rapids')
+# compute UMAP
+try:
+    sc.tl.umap(adata, method='rapids')
+except:
+    print('Rapids failed, defaulting to UMAP implementation')
+    sc.tl.umap(adata)
 
+# pick colours for plot
 if 'color' in snakemake.params.keys():
     color = snakemake.params['color']
 else:
     color = None
 
+# plot UMAP
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.umap(adata, color=color, ncols=1)
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
