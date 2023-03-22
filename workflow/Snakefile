@@ -92,7 +92,16 @@ rule all:
     default_target: True
 
 
-modules = ['load_data', 'exploration', 'subset', 'integration', 'metrics']
+modules = [
+    'load_data',
+    'exploration',
+    'subset',
+    'integration',
+    'metrics',
+    'preprocessing',
+    'label_transfer',
+    'label_harmonization'
+]
 
 rule dependency_graph:
     input:

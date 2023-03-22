@@ -1,4 +1,4 @@
-# Commonly used workflows
+# Common: commonly used workflows
 
 Module for workflows that are commonly used in other modules.
 

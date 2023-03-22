@@ -114,3 +114,12 @@ rule all:
         expand(rules.neighbors.output,dataset=get_datasets_for_module(config,module='preprocessing')),
         expand(rules.umap.output,dataset=get_datasets_for_module(config,module='preprocessing'))
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

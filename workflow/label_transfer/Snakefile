@@ -72,3 +72,12 @@ rule all:
     input:
         expand(rules.run.output,zip,**get_wildcards(parameters, ['dataset', 'method', 'model']))
     default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )

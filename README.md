@@ -20,7 +20,7 @@ Create a conda environment for snakemake
 mamba env create -f envs/snakemake.yaml
 ```
 
-> Note: [mamba](https://mamba.readthedocs.io/en/latest/installation.html_) improves install times drastically.
+> Note: [mamba](https://mamba.readthedocs.io/en/latest/installation.html) improves install times drastically.
 > All mamba commands can be replaced by `conda`.
 
 ## Running the pipeline

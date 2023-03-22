@@ -1,0 +1,14 @@
+name: docs
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - sphinx>=4
+  - sphinx-book-theme>=1.0.0
+  - myst-nb
+  - sphinxcontrib-bibtex
+  - sphinx-autodoc-typehints
+  - ipykernel
+  - ipython
+  - sphinx-copybutton
