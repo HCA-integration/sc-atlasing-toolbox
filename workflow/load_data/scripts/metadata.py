@@ -55,7 +55,7 @@ adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axi
 
 if 'batch_condition' in adata.uns.keys():
     batch_columns = adata.uns['batch_condition']
-    adata.obs['batch'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+    adata.obs['batch'] = adata.obs[batch_columns].apply(lambda x: '-'.join(x), axis=1)
 else:
     adata.obs['batch'] = meta['study']
 

@@ -1,4 +1,5 @@
 dataset_meta: configs/datasets.tsv
+dcp_metadata: configs/dcp_metadata.tsv
 
 filter_per_organ:
   blood:

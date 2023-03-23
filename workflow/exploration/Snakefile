@@ -4,11 +4,12 @@ Exploration
 from pathlib import Path
 import pandas as pd
 
+from utils.data import load_dataset_df
 from utils.config import get_resource
 
 
 module_name = 'exploration'
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
+dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 out_dir = Path(config['output_dir']) / module_name
 
 wildcard_constraints:
@@ -24,18 +25,21 @@ module common:
 use rule * from common as common_ *
 
 
-module preprocessing:
-    snakefile: "../preprocessing/Snakefile"
-    config: config
-
-use rule * from preprocessing as preprocessing_*
-
+config['dataset_meta'] = Path(config['dataset_meta']).resolve()
 
 module load_data:
     snakefile: "../load_data/Snakefile"
     config: config
 
 use rule * from load_data as load_data_ *
+
+
+module preprocessing:
+    snakefile: "../preprocessing/Snakefile"
+    config: config
+
+use rule * from preprocessing as preprocessing_*
+
 
 include: 'rules/summary.smk'
 include: 'rules/pseudobulk.smk'

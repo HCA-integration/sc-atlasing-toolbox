@@ -1,5 +1,6 @@
 output_dir: test/out
 dataset_meta: test/datasets.tsv
+dcp_metadata: test/dcp_metadata.tsv
 images: test/images
 
 filter_per_organ:

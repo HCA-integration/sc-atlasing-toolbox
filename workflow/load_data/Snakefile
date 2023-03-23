@@ -5,20 +5,18 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.utils import get_url
+from utils.data import load_dataset_df
 from utils.misc import all_but, unlist_dict
 from utils.config import get_resource
 from utils.wildcards import get_wildcards
 
 
-def load_dataset_df(file):
-    df = pd.read_table(file,comment='#')
-    df['subset'] = df['subset'].str.split(',')
-    df = df.explode('subset')
-    return df
-
-
 module_name = 'load_data'
-dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
+
+if 'dataset_df' in config.keys():
+    dataset_df = config['dataset_df']
+else:
+    dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 out_dir = Path(config['output_dir']) / module_name
 
 # set default filter settings per values per study filters
@@ -224,6 +222,7 @@ rule  merge_subset_all:
             **get_wildcards(dataset_df,['organ', 'subset'],drop_na=True)
         )
 
+include: 'rules/metadata.smk'
 
 rule all:
     input:
