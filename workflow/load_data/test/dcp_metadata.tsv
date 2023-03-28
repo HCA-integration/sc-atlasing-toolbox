@@ -1,3 +1,4 @@
-study	url
+study	url	id_mapping
 Lee2020	https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp24&format=compact&filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%2295f07e6e-6a73-4e1b-a880-c83996b3aa5c%22%5D%7D%7D&objectKey=manifests%2F299a44b6-5af2-5995-9965-77f008c7a0ba.ad738b13-97cf-556d-a2f5-be3e4b6b062c.tsv
 SchulteSchrepping2020	https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp24&format=compact&filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22cd9d6360-ce38-4321-97df-f13c79e3cb84%22%5D%7D%7D&objectKey=manifests%2F9d7cdaff-e90f-50cd-8acb-a42872321851.ad738b13-97cf-556d-a2f5-be3e4b6b062c.tsv
+AIDA_pilot	https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp24&format=compact&filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22f0f89c14-7460-4bab-9d42-22228a91f185%22%5D%7D%7D&objectKey=manifests%2Fe155a6b4-10ca-5a75-af3c-96ae729dabe0.ad738b13-97cf-556d-a2f5-be3e4b6b062c.tsv	test/data/AIDA_match_donor_ID_sample_uuid.csv

@@ -1,3 +1,4 @@
+from pathlib import Path
 from pprint import pprint
 import pandas as pd
 
@@ -13,12 +14,26 @@ def explode_table(df, col, sep=' \|\| '):
 
 
 id_cols = snakemake.params.id_cols
+id_mapping_file = snakemake.params.id_mapping
 
+# optional ID mapping
+if not pd.isna(id_mapping_file):
+    print(f'check if ID mapping file {id_mapping_file} exists')
+    assert Path(id_mapping_file).exists()
+
+# read data
 obs_df = pd.read_table(in_file)
 dcp_tsv = pd.read_table(in_dcp)
 
 obs_ids = set(obs_df['donor_id'].unique())
 n_donors = len(obs_ids)
+
+# add optional ID mapping
+if not pd.isna(id_mapping_file):
+    print(f'Add IDs from {id_mapping_file}...')
+    id_mapping = pd.read_csv(id_mapping_file)
+    dcp_tsv = dcp_tsv.join(id_mapping, how='left')
+    print(dcp_tsv)
 
 # identify ID column
 cols = []
