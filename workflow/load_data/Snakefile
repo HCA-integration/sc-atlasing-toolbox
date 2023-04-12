@@ -16,7 +16,7 @@ module_name = 'load_data'
 if 'dataset_df' in config.keys():
     dataset_df = config['dataset_df']
 else:
-    dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
+    dataset_df = load_dataset_df(config['dataset_meta'])
 out_dir = Path(config['output_dir']) / module_name
 
 # set default filter settings per values per study filters

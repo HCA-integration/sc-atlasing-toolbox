@@ -1,16 +1,16 @@
 """
-Label transfer and harmonisation
+Label transfer
 """
 import os
 from pathlib import Path
 
 from utils.config import get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
+from utils.misc import unpack_dict_in_df
 
 
 def get_h5ad(wildcards):
     return config['DATASETS'][wildcards.dataset]['adata_file']
-
 
 
 module common:
@@ -31,13 +31,19 @@ envvars:
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],
     config_keys=config['defaults']['datasets'],
-    config_params=['label_transfer', 'label'],
-    wildcard_names=['dataset', 'label_transfer', 'label'],
+    config_params=[module_name, 'label'],
+    wildcard_names=['dataset', module_name, 'label'],
 )
-parameters['method'] = [k for d in parameters['label_transfer'] for k,v in d.items()]
-parameters['model'] = [list(v) for d in parameters['label_transfer'] for k,v in d.items()]
-parameters = parameters.explode('model').reset_index(drop=True)
 
+# subset to datasets that have module defined
+parameters = parameters[(~parameters[module_name].isnull()) & (parameters[module_name] != {})]
+if parameters.empty:
+    parameters['method'] = []
+    parameters['model'] = []
+else:
+    parameters['method'] = [k for d in parameters[module_name] for k,v in d.items()]
+    parameters['model'] = [list(v) for d in parameters[module_name] for k,v in d.items()]
+    parameters = parameters.explode('model').reset_index(drop=True)
 
 rule get_model:
     output:

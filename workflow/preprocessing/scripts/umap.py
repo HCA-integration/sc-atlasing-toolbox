@@ -1,6 +1,7 @@
 """
 UMAP
 """
+from scipy import sparse
 import scanpy as sc
 from utils.io import read_anndata
 
@@ -15,6 +16,8 @@ try:
 except:
     print('Rapids failed, defaulting to UMAP implementation')
     sc.tl.umap(adata)
+adata.obsm['X_umap'] = sparse.csr_matrix(adata.obsm['X_umap'])
 
 print('write...')
-adata.write(output_file)
+adata.X = sparse.csr_matrix(adata.X)
+adata.write(output_file, compression='lzf')

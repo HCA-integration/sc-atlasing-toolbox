@@ -13,13 +13,15 @@ resources:
 
 
 # defaults:
-#   datasets:
-#     - Lee2020
+#   label_harmonization:
+#     celltypist:
+#       use_rep: 'X_pca'
+#       use_pct: true
 
 DATASETS:
-  blood_harmonized:
+  blood_relabel:
     input:
-      label_harmonization: test/input/load_data/load_data/filtered/SchulteSchrepping2020.zarr
+      label_harmonization: test/input/load_data/filtered/SchulteSchrepping2020.zarr
     label_harmonization:
       mapping:
         file:  test/input/mapping.tsv
@@ -27,3 +29,12 @@ DATASETS:
           - cell_type
           - harmonized_label
           - lineage
+  test_celltypist:
+    input:
+      label_harmonization: test/input/preprocessing/test/neighbors.h5ad
+    label_harmonization:
+      dataset_key: phase
+      author_label_key: bulk_labels
+      celltypist:
+        use_rep: 'X_pca'
+        use_pct: true

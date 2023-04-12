@@ -7,7 +7,7 @@ import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults
+from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults, get_datasets_for_module
 from utils.wildcards import get_params, wildcards_to_str
 
 
@@ -30,13 +30,16 @@ envvars:
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_wildcards_from_config(
-    config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
-    config_params=['integration', 'label', 'batch', 'lineage'],
+    config=get_datasets_for_module(config, module_name),
+    # config_keys=config['defaults']['datasets'],
+    config_params=[module_name, 'label', 'batch', 'lineage'],
     wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
     explode_by=['method', 'lineage_key', 'batch'],
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
+
+# subset to datasets that have module defined
+parameters = parameters[~parameters['method'].isnull()]
 
 # TODO: remove redundant wildcards
 # parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], np.nan)

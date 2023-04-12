@@ -1,5 +1,4 @@
 import anndata as ad
-import mudata as mu
 
 
 def read_anndata(file):
@@ -12,6 +11,7 @@ def read_anndata(file):
 
 def read_anndata_or_mudata(file):
     if file.endswith('.h5mu'):
+        import mudata as mu
         print('Read as mudata...')
         adata = mu.read(file)
     else:

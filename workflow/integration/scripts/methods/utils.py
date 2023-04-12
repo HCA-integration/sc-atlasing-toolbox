@@ -38,24 +38,29 @@ def process(adata, adata_raw, output_type):
 
     elif 'embed' in output_type:
         assert 'X_emb' in adata.obsm
-        # remove unintegrated entries for embed and knn
-        adata = ad.AnnData(
-            adata.obsm['X_emb'],
-            obs=adata.obs,
-            obsm=adata.obsm,
-        )
+        # # remove unintegrated entries for embed and knn
+        # adata = ad.AnnData(
+        #     adata.obsm['X_emb'],
+        #     obs=adata.obs,
+        #     obsm=adata.obsm,
+        # )
         if 'X_pca' in adata.obsm:
             del adata.obsm['X_pca']
 
 
     elif 'knn' in output_type:
+        assert 'connectivities' in adata.obsp
+        assert 'distances' in adata.obsp
         # remove unintegrated entries for embed and knn
-        adata.X = csr_matrix((adata.n_obs, adata.n_vars), dtype='float32')
+        # adata.X = csr_matrix((adata.n_obs, adata.n_vars), dtype='float32')
+        if 'X_pca' in adata.obsm:
+            del adata.obsm['X_pca']
 
     else:
         raise ValueError(f'Invalid output type {output_type}')
 
     # add unintegrated data
+    adata.X = adata_raw.X
     adata_raw.X = adata_raw.layers['normcounts']
     adata.raw = adata_raw.copy()
 

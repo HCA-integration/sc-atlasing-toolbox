@@ -5,4 +5,10 @@ channels:
 dependencies:
   - python=3.9
   - scanpy=1.9
-  - celltypist
+  - numpy<1.24
+  - matplotlib<3.7
+  - zarr
+  - plotly
+  - pip
+  - pip:
+    - git+https://github.com/mumichae/celltypist.git@CONTRO

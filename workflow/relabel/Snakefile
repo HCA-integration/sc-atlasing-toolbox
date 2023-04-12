@@ -6,7 +6,7 @@ from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
 
 
-module_name = 'label_harmonization'
+module_name = 'relabel'
 config = set_defaults(config,module_name,warn=False)
 out_dir = Path(config['output_dir']) / module_name
 
@@ -18,9 +18,12 @@ parameters = get_wildcards_from_config(
 )
 # subset to datasets that have module defined
 parameters = parameters[~parameters['module'].isnull()]
-
-# unpack dictionary
 parameters = unpack_dict_in_df(parameters, 'module')
+
+try:
+    relabel_datasets = parameters[['dataset', 'mapping']].dropna()['dataset'].unique()
+except KeyError:
+    relabel_datasets = []
 
 
 def get_input(wildcards, query=['input', module_name]):
@@ -30,12 +33,32 @@ def get_input(wildcards, query=['input', module_name]):
     return value
 
 
-include: 'rules/map_labels.smk'
+rule relabel:
+    input:
+        anndata=get_input,
+        mapping=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'file'])
+    output:
+        h5ad=out_dir / '{dataset}.h5ad',
+    params:
+        mapping_order=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'order']),
+    conda:
+        'envs/scanpy.yaml'
+    resources:
+        partition=lambda w: get_resource(config,resource_key='partition'),
+        qos=lambda w: get_resource(config,resource_key='qos'),
+        mem_mb=lambda w: get_resource(config,resource_key='mem_mb'),
+    script:
+        'script.py'
+
+
+rule relabel_all:
+    input:
+        expand(rules.relabel.output, dataset=relabel_datasets)
 
 
 rule all:
     input:
-        rules.celltypist_all.input,
+        rules.relabel_all.input
     default_target: True
 
 

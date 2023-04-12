@@ -1,0 +1,87 @@
+defaults:
+  datasets:
+    - blood_benchmark
+    - blood_harm_pca
+    # - blood_scvi
+    - blood_scvi_donor
+    - blood_label_harm_scvi
+    # - blood_coarse
+
+DATASETS:
+
+  blood_benchmark:
+    input:
+      relabel: data/out/load_data/merged/subset/blood-benchmark.zarr/
+      preprocessing: relabel
+    relabel:
+      mapping:
+        file: data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage
+    batch: study
+    lineage: lineage
+
+  blood_harm_pca:
+    input:
+      label_harmonization: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+    label_harmonization:
+      dataset_key: study
+      author_label_key: author_annotation
+      celltypist:
+        use_rep: 'X_pca'
+        use_pct: true
+        minimum_unique_percents: [0.5, 0.6, 0.7]
+        minimum_divide_percents: [0.1, 0.15]
+
+  blood_scvi:
+    input:
+      integration: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+    batch: study
+    lineage: None
+    label: harmonized_label
+    integration:
+      scvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 5
+        use_observed_lib_size: true
+
+  blood_scvi_donor:
+    input:
+      integration: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+    batch: donor
+    lineage: 
+    label: harmonized_label
+    integration:
+      scvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 5
+        use_observed_lib_size: true
+
+  blood_label_harm_scvi:
+    input:
+      label_harmonization:
+        # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
+        data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
+    label_harmonization:
+      dataset_key: study
+      author_label_key: author_annotation
+      celltypist:
+        use_rep: 'X_emb'
+        use_pct: true
+        minimum_unique_percents: [0.5, 0.6, 0.7]
+        minimum_divide_percents: [0.1, 0.15]
+
+  blood_coarse:
+    input:
+      label_harmonization: data/out/load_data/merged/subset/blood-benchmark.zarr
+    label_harmonization:
+      mapping:
+        file:  data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage

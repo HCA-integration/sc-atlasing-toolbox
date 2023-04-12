@@ -1,7 +1,7 @@
 """
 Build kNN graph on embedding
 """
-
+from scipy import sparse
 import scanpy as sc
 from utils.io import read_anndata
 
@@ -22,4 +22,5 @@ except:
     sc.pp.neighbors(adata, use_rep='X_pca')
 
 print('write...')
-adata.write(output_file)
+adata.X = sparse.csr_matrix(adata.X)
+adata.write(output_file, compression='lzf')

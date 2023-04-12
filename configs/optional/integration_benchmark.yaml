@@ -5,7 +5,7 @@ defaults:
     harmony:
     scgen:
       max_epochs: 50
-      batch_size: 32
+      batch_size: 32d
       early_stopping: True
       early_stopping_patience: 25
     scvi:
@@ -54,10 +54,6 @@ defaults:
   subset:
     n_cells: 500000
 
-output_map:
-  label_harmonization: data/out/label_harmonization/remap_labels/{dataset}.h5ad
-  subset: data/out/subset/{dataset}/by_sample.h5ad
-  preprocessing: data/out/preprocessing/{dataset}/neighbors.h5ad
 
 DATASETS:
   blood_benchmark:

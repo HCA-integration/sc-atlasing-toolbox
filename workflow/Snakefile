@@ -7,17 +7,15 @@ from utils.pipeline import update_module_configs, config_for_module
 
 min_version("6.0")
 container: "docker://condaforge/mambaforge:latest"
-configfile: "configs/config.yaml"
-configfile: "configs/load_data.yaml"
-configfile: "configs/exploration.yaml"
-configfile: "configs/label_transfer.yaml"
-configfile: "configs/label_harmonization.yaml"
-configfile: "configs/benchmark.yaml"
+configfile: "configs/imported/outputs.yaml"
+configfile: "configs/imported/load_data.yaml"
+configfile: "configs/imported/exploration.yaml"
 
-params = pd.read_table('configs/modules.tsv',comment='#')
-params['submodules'] = params['submodules'].str.split(',')
-config = update_module_configs(config, params)
+# params = pd.read_table('configs/modules.tsv',comment='#')
+# params['submodules'] = params['submodules'].str.split(',')
+# config = update_module_configs(config, params)
 
+config['dataset_meta'] = Path(config['dataset_meta']).resolve()
 out_dir = Path(config['output_dir'])
 
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
@@ -82,13 +80,14 @@ use rule * from metrics as metrics_ *
 
 rule all:
     input:
-        #rules.load_data_all.input,
-        #rules.exploration_all.input,
-        #rules.preprocessing_all.input,
-        #rules.subset_all.input,
-        #rules.label_transfer_all.input,
-        rules.integration_all.input,
-        rules.metrics_all.input
+        # rules.load_data_all.input,
+        # rules.exploration_all.input,
+        # rules.preprocessing_all.input,
+        # rules.subset_all.input,
+        # rules.label_transfer_all.input,
+        # rules.integration_all.input,
+        # rules.metrics_all.input
+        rules.dependency_graph.input
     default_target: True
 
 

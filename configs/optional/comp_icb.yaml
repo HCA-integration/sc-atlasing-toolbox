@@ -1,8 +1,3 @@
-# Note: relative paths must be relative to the project root, not the directory of the config file.
-
-output_dir: data/out
-images: images
-
 resources:
   cpu_merged:
     partition: cpu_p

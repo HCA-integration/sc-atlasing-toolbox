@@ -1,6 +1,7 @@
 """
 Normalisation
 """
+from scipy import sparse
 import scanpy as sc
 from utils.io import read_anndata
 
@@ -9,6 +10,7 @@ output_file = snakemake.output[0]
 
 print('read...')
 adata = read_anndata(input_file)
+adata.X = sparse.csr_matrix(adata.X)
 
 if adata.n_obs == 0:
     adata.write(output_file)
@@ -18,8 +20,9 @@ adata.layers['counts'] = adata.X.copy()
 
 sc.pp.normalize_total(adata)
 sc.pp.log1p(adata)
+adata.X = sparse.csr_matrix(adata.X)
 
 adata.layers['normcounts'] = adata.X
 
 print('write...')
-adata.write(output_file)
+adata.write(output_file, compression='lzf')

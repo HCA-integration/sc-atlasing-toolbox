@@ -3,7 +3,9 @@ Preprocessing
 """
 from pathlib import Path
 import pandas as pd
+
 from utils.config import get_datasets_for_module, get_resource
+from utils.misc import ifelse
 
 
 module_name = 'preprocessing'
@@ -69,7 +71,10 @@ rule pca:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
+        ifelse(
+            'os' not in config.keys() or config['os'] == 'm1',
+            _if='envs/scanpy.yaml', _else='envs/scanpy_rapids.yaml'
+        )
     # shadow: 'minimal'
     script:
         'scripts/pca.py'
@@ -86,7 +91,10 @@ rule neighbors:
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
+        ifelse(
+            'os' not in config.keys() or config['os'] == 'm1',
+            _if='envs/scanpy.yaml', _else='envs/scanpy_rapids.yaml'
+        )
     # shadow: 'minimal'
     script:
         'scripts/neighbors.py'
@@ -103,7 +111,10 @@ rule umap:
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
     conda:
-        'envs/scanpy_rapids.yaml'
+        ifelse(
+            'os' not in config.keys() or config['os'] == 'm1',
+            _if='envs/scanpy.yaml', _else='envs/scanpy_rapids.yaml'
+        )
     # shadow: 'minimal'
     script:
         'scripts/umap.py'

@@ -34,6 +34,8 @@ def update_module_configs(config, params):
 
 
 def config_for_module(config, module):
+    if 'DATASETS' not in config:
+        config['DATASETS'] = {}
     datasets = config['DATASETS']
     for dataset in datasets.keys():
         # for module in datasets[dataset]['input'].keys():

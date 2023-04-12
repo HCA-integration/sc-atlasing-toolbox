@@ -7,6 +7,8 @@ def all_but(_list, is_not):
 
 
 def unique_dataframe(df):
+    if df.empty:
+        return df
     hashable_columns = [col for col in df.columns if isinstance(df[col].iloc[0], typing.Hashable)]
     duplicated = df[hashable_columns].duplicated()
     return df[~duplicated]
@@ -37,3 +39,19 @@ def unlist_dict(dictionary):
         k: v[0] if isinstance(v, list) and len(v) == 1 else v
         for k, v in dictionary.items()
     }
+
+def unpack_dict_in_df(df, column):
+    """
+    Given a column in a pandas dataframe containing dictionies, extract these to top level
+    
+    :param df: pandas dataframe
+    :param column: column name containing dictionaries 
+    """
+    return df.drop(columns=column).assign(**df[column].dropna().apply(pd.Series, dtype=object))
+
+
+def ifelse(statement, _if, _else):
+    if statement:
+        return _if
+    else:
+        return _else

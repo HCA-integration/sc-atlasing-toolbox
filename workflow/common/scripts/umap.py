@@ -32,19 +32,19 @@ except:
 
 
 # compute neighbors if required
-if 'neighbors' not in adata.uns.keys():
+if 'neighbors' not in adata.uns.keys() or adata.uns['neighbors']['params'].get('use_rep') != use_rep:
     print(f'recompute neighbors using {use_rep}...')
     try:
         sc.pp.neighbors(adata, use_rep=use_rep, method='rapids')
     except:
-        print('Rapids failed, defaulting to UMAP implementation')
+        print('sc.pp.neighbors: Rapids failed, defaulting to UMAP implementation')
         sc.pp.neighbors(adata, use_rep=use_rep)
 
 # compute UMAP
 try:
     sc.tl.umap(adata, method='rapids')
 except:
-    print('Rapids failed, defaulting to UMAP implementation')
+    print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
     sc.tl.umap(adata)
 
 # pick colours for plot

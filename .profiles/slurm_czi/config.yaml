@@ -6,7 +6,8 @@ cluster:
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name=smk-{rule}-{wildcards}
-    --output=logs/{rule}/{rule}-{wildcards}-%j.out
+    --output=logs/{rule}/%j-{rule}-{wildcards}.out
+    --error=logs/{rule}/%j-{rule}-{wildcards}.err
     --parsable
 default-resources:
   - partition=cpu
@@ -35,4 +36,4 @@ show-failed-logs: True
 #shadow-prefix: /hpc/projects/data_lg/michaela.mueller/scratch
 shadow-prefix: /tmp/michaela.mueller
 latency-wait: 90
-configfile: configs/czbiohub.yaml
+configfile: configs/optional/comp_czbiohub.yaml

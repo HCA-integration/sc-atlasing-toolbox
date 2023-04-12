@@ -1,0 +1,73 @@
+cell_type	reference	lineage	harmonized_label
+CD4-positive helper T cell	T cell	lymphoid	T cell
+CD4-positive, alpha-beta T cell	T cell	lymphoid	T cell
+CD4-positive, alpha-beta cytotoxic T cell	T cell	lymphoid	T cell
+CD4-positive, alpha-beta memory T cell	T cell	lymphoid	T cell
+CD8-positive, alpha-beta T cell	T cell	lymphoid	T cell
+CD8-positive, alpha-beta cytotoxic T cell	T cell	lymphoid	T cell
+CD8-positive, alpha-beta memory T cell	T cell	lymphoid	T cell
+T follicular helper cell	T cell	lymphoid	T cell
+T-helper 1 cell	T cell	lymphoid	T cell
+T-helper 17 cell	T cell	lymphoid	T cell
+T-helper 2 cell	T cell	lymphoid	T cell
+T-helper 22 cell	T cell	lymphoid	T cell
+central memory CD4-positive, alpha-beta T cell	T cell	lymphoid	T cell
+central memory CD8-positive, alpha-beta T cell	T cell	lymphoid	T cell
+double negative thymocyte	T cell	lymphoid	T cell
+double-positive, alpha-beta thymocyte	T cell	lymphoid	T cell
+effector CD4-positive, alpha-beta T cell	T cell	lymphoid	T cell
+effector CD8-positive, alpha-beta T cell	T cell	lymphoid	T cell
+effector memory CD4-positive, alpha-beta T cell	T cell	lymphoid	T cell
+effector memory CD8-positive, alpha-beta T cell	T cell	lymphoid	T cell
+effector memory CD8-positive, alpha-beta T cell, terminally differentiated	T cell	lymphoid	T cell
+gamma-delta T cell	T cell	lymphoid	T cell
+memory T cell	T cell	lymphoid	T cell
+memory regulatory T cell	T cell	lymphoid	T cell
+mucosal invariant T cell	T cell	lymphoid	T cell
+naive regulatory T cell	T cell	lymphoid	T cell
+naive thymus-derived CD4-positive, alpha-beta T cell	T cell	lymphoid	T cell
+naive thymus-derived CD8-positive, alpha-beta T cell	T cell	lymphoid	T cell
+regulatory T cell	T cell	lymphoid	T cell
+double negative T regulatory cell	T cell	lymphoid	T cell
+mature NK T cell	T cell	lymphoid	T cell
+IgA plasma cell	B cell	lymphoid	B cell
+IgG memory B cell	B cell	lymphoid	B cell
+IgG plasma cell	B cell	lymphoid	B cell
+IgG-negative class switched memory B cell	B cell	lymphoid	B cell
+IgM plasma cell	B cell	lymphoid	B cell
+class switched memory B cell	B cell	lymphoid	B cell
+memory B cell	B cell	lymphoid	B cell
+naive B cell	B cell	lymphoid	B cell
+plasma cell	B cell	lymphoid	B cell
+plasmablast	B cell	lymphoid	B cell
+transitional stage B cell	B cell	lymphoid	B cell
+unswitched memory B cell	B cell	lymphoid	B cell
+immature B cell	B cell	lymphoid	B cell
+CD14-low, CD16-positive monocyte	monocyte	myeloid	monocyte
+CD14-positive monocyte	monocyte	myeloid	monocyte
+classical monocyte	monocyte	myeloid	monocyte
+non-classical monocyte	monocyte	myeloid	monocyte
+intermediate monocyte	monocyte	myeloid	monocyte
+CD16-negative, CD56-bright natural killer cell, human	innate lymphoid cell	lymphoid	innate lymphoid cell
+CD16-positive, CD56-dim natural killer cell, human	innate lymphoid cell	lymphoid	innate lymphoid cell
+natural killer cell	innate lymphoid cell	lymphoid	innate lymphoid cell
+group 2 innate lymphoid cell, human	innate lymphoid cell	lymphoid	innate lymphoid cell
+ILC1, human	innate lymphoid cell	lymphoid	innate lymphoid cell
+conventional dendritic cell	dendritic cell	myeloid	dendritic cell
+dendritic cell	dendritic cell	myeloid	dendritic cell
+dendritic cell, human	dendritic cell	myeloid	dendritic cell
+myeloid dendritic cell	dendritic cell	myeloid	dendritic cell
+myeloid dendritic cell, human	dendritic cell	myeloid	dendritic cell
+plasmacytoid dendritic cell	dendritic cell	myeloid	dendritic cell
+plasmacytoid dendritic cell, human	dendritic cell	myeloid	dendritic cell
+granulocyte	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+mast cell	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+neutrophil	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+immature neutrophil	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+megakaryocyte	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+megakaryocyte-erythroid progenitor cell	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+enucleated reticulocyte	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+erythrocyte	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+erythroid progenitor cell, mammalian	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+myeloid lineage restricted progenitor cell	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell
+platelet	non-monocyte myeloid cell	myeloid	non-monocyte myeloid cell

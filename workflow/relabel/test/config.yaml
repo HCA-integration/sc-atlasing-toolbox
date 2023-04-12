@@ -1,0 +1,15 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  blood_relabel:
+    input:
+      relabel: test/input/load_data/filtered/SchulteSchrepping2020.zarr
+    relabel:
+      mapping:
+        file:  test/input/mapping.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage

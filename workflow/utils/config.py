@@ -1,3 +1,4 @@
+from pprint import pprint
 import warnings
 import pandas as pd
 
@@ -16,19 +17,31 @@ def set_defaults(config, modules=None, warn=True):
         modules = [modules]
 
     for module in modules:
+
+        # initialise if module defaults not defined
+        if module not in config['defaults']:
+            config['defaults'][module] = {}
+
+        # update entries for each dataset
         for dataset in config['DATASETS'].keys():
             entry = _get_or_default_from_config(
                 config['DATASETS'],
                 config['defaults'],
                 dataset,
                 module,
+                return_missing={},
                 warn=warn,
+                update=True,
             )
+
             # for TSV input make sure integration methods have the proper types
             if module == 'integration' and isinstance(entry, list):
                 # get parameters from config
                 entry = {k: config['defaults'][module][k] for k in entry}
+
+            # set entry in config
             config['DATASETS'][dataset][module] = entry
+
     return config
 
 
@@ -42,7 +55,7 @@ def get_wildcards_from_config(
     """
 
     :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
-    :param config_params: list of parameters for each config entry
+    :param config_params: list oxf parameters for each config entry
         e.g. ['integration', 'label', 'batch']
     :param wildcard_names: names of wildcards to be extracted.
         Must map to config keys, and prepended by a wildcard name for the config entries
@@ -51,6 +64,8 @@ def get_wildcards_from_config(
     :param config_keys: list of entries to subset the config by., otherwise use all keys
     :return: dataframe with wildcard mapping. Wildcard names in columns and wildcard values as entries
     """
+    if not config:
+        return pd.DataFrame(columns=[*wildcard_names])
 
     if config_keys is None:
         config_keys = config.keys()
@@ -66,28 +81,43 @@ def get_wildcards_from_config(
     return df.reset_index(drop=True)
 
 
-def _get_or_default_from_config(config, defaults, key, value, warn=True):
+def _get_or_default_from_config(
+    config,
+    defaults,
+    key,
+    value,
+    return_missing=None,
+    warn=True,
+    update=False
+):
     """
     Get entry from config or return defaults if not present
 
     :param config: part of the config with multiple entries of the same structure
     :param defaults: config defaults for keys with missing value
     :param key: top-level key of config dictionary
-    :param value: key of
+    :param value: points to entry within key
+    :param return_missing: return value if no defaults for key, value
+    :param warn: warn if no defaults are defined for key, value
+    :param update: wether to update existing entry with defaults, otherwise only return existsing entry
     :return:
     """
     if key not in config.keys():
+        print(key, value)
         print('config:', config)
         raise KeyError(f'Key "{key}" not found in config')
 
     if value in config[key]:
-        return config[key][value]
+        entry = config[key][value]
+        if update and isinstance(entry, dict) and value in defaults:
+            entry.update(defaults[value])
+        return entry
     try:
         assert value in defaults.keys()
     except AssertionError:
         if warn:
             warnings.warn(f'No default defined for "{value}" for "{key}", returning None')
-        return None
+        return return_missing
     return defaults[value]
 
 
@@ -140,14 +170,14 @@ def get_datasets_for_module(config, module):
 
     :param config: config dictionary passed from Snakemake
     :param module: name of module to collect valid datasets for
-    :return: list of valid dataset names from config["DATASETS"]
+    :return: sbuset of config["DATASETS"] that is valid for module
     """
     if 'DATASETS' not in config:
         warnings.warn('No datasets specified in config, cannot collect any datasets')
-        return []
-    return [
-        dataset for dataset in config['DATASETS'].keys()
+        return {}
+    return {
+        dataset: entry for dataset, entry in config['DATASETS'].items()
         if 'input' in config['DATASETS'][dataset]
            and config['DATASETS'][dataset]['input'] is not None
            and module in config['DATASETS'][dataset]['input']
-    ]
+    }
