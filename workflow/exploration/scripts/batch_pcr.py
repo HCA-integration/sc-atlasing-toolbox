@@ -46,8 +46,9 @@ for covariate in perm_covariates:
 # PC regression for all covariates
 pcr_scores = []
 for covariate in list(covariates):
+    print(f'Covariate: {covariate}', end=' ')
     if adata.obs[covariate].nunique() == 1:
-        print(f'skip {covariate}')
+        print('skip')
         covariates.remove(covariate)
         continue
     # X = adata.X
@@ -59,9 +60,14 @@ for covariate in list(covariates):
     #     categorical=True,
     #     n_components=50
     # )
-    pcr = scib.me.pcr(adata, covariate=covariate, recompute_pca=False, verbose=False)
+    try:
+        pcr = scib.me.pcr(adata, covariate=covariate, recompute_pca=False, verbose=False)
+    except Exception as e:
+        print(e)
+        covariates.remove(covariate)
+        continue
     pcr_scores.append(pcr)
-    print(covariate, pcr)
+    print(pcr)
 
 df = pd.DataFrame.from_dict(dict(covariate=covariates, pcr=pcr_scores))
 df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')

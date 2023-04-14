@@ -74,6 +74,8 @@ plt.plot(adata_bulk.uns['pca']['variance_ratio'], marker='.')
 plt.title('Scree plot: PC variance contribution')
 plt.savefig(output_pca_scree)
 
+# remove empty columns
+colors = [c for c in colors if not adata_bulk.obs[c].isna().all()]
 # remove colors if too many entries
 colors = [c for c in colors if adata_bulk.obs[c].nunique() <= 64]
 
