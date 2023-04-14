@@ -4,6 +4,8 @@ import anndata
 import pandas as pd
 import scanpy as sc
 
+import warnings
+warnings.simplefilter("ignore", UserWarning)
 
 def get_pseudobulks(adata, group_key, agg='mean'):
     pseudobulk = {'Genes': adata.var_names.values}
