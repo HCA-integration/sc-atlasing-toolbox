@@ -14,6 +14,7 @@ except ImportError:
 from utils.io import read_anndata
 
 input_file = snakemake.input.zarr
+input_metadata = snakemake.input.metadata
 output_barplot = snakemake.output.barplot
 dataset = snakemake.params.dataset
 covariates = snakemake.params['covariates']
@@ -21,6 +22,9 @@ perm_covariates = snakemake.params['permutation_covariates']
 sample_key = snakemake.params['sample_key']
 
 adata = read_anndata(input_file)
+obs = pd.read_table(input_metadata)
+
+adata.obs = obs
 
 if adata.n_obs == 0:
     plt.savefig(output_barplot)

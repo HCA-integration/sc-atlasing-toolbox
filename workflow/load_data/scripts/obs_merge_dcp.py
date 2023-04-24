@@ -49,10 +49,11 @@ id_col = intersect_df.index.tolist()[argmax]
 
 metadata_columns  = [id_col] + snakemake.params.metadata_cols
 metadata_columns = [c for c in metadata_columns if c in dcp_tsv.columns]
-print('DCP metadata columns:', metadata_columns)
+print('DCP metadata columns:')
+pprint(metadata_columns)
 
 # merge on ID column
-dcp_tsv = explode_table(dcp_tsv, id_col).dropna()
+dcp_tsv = explode_table(dcp_tsv, id_col).dropna(subset=[id_col])
 dcp_tsv = dcp_tsv[metadata_columns].drop_duplicates()
 print(dcp_tsv)
 obs_df = obs_df.merge(
@@ -63,9 +64,9 @@ obs_df = obs_df.merge(
 )
 print(obs_df)
 
-obs_df.to_csv(out_obs, sep='\t')
+obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
-intersect_df.loc[id_col,:][['intersection', 'cxg_donors', 'intersection_fraction']].to_csv(out_stats, sep='\t')
+intersect_df.loc[id_col,:][['intersection', 'cxg_donors', 'intersection_fraction']].to_csv(out_stats, sep='\t', index=False)
 # TODO: metadata column completeness
 # TODO: aggregatedness of donor ID
