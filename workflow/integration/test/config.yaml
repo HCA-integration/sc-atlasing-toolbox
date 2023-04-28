@@ -3,13 +3,13 @@ images: test/images
 
 resources:
   cpu:
-    partition: cpu_p
-    qos: icb
+    partition: cpu
+    qos: normal
     gpu: 0
     mem_mb: 1000
   gpu:
-    partition: gpu_p
-    qos: gpu
+    partition: gpu
+    qos: normal
     gpu: 1
     mem_mb: 1000
 
