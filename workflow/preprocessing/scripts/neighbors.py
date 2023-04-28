@@ -1,6 +1,7 @@
 """
 Build kNN graph on embedding
 """
+import sys
 from scipy import sparse
 import scanpy as sc
 from utils.io import read_anndata
@@ -23,7 +24,7 @@ if adata.n_obs == 0:
 try:
     sc.pp.neighbors(adata, method='rapids', **args)
 except:
-    print('Rapids failed, defaulting to UMAP implementation')
+    print('Rapids failed, defaulting to UMAP implementation', file=sys.stderr)
     sc.pp.neighbors(adata, **args)
 
 print('write...')

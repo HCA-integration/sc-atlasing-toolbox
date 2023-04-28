@@ -20,8 +20,6 @@ if adata.n_obs == 0:
 if scale:
     sc.pp.scale(adata, max_value=10, zero_center=True)
     sc.pp.pca(adata, use_highly_variable=True)
-    adata.layers['scaled'] = adata.X
-    adata.X = adata.layers['normcounts']
 else:
     sc.pp.pca(adata, use_highly_variable=True)
 
