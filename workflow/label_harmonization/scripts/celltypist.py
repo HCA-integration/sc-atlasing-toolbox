@@ -1,3 +1,4 @@
+import scanpy as sc
 from scipy import sparse
 import celltypist
 
@@ -5,32 +6,44 @@ from utils.io import read_anndata
 
 
 input_file = snakemake.input[0]
-author_label_key = snakemake.params.author_label_key
-dataset_key = snakemake.params.dataset_key
-params = snakemake.params.params
 output_h5ad = snakemake.output.h5ad
 output_reannotation = snakemake.output.reannotation
 output_relation = snakemake.output.relation
 output_model = snakemake.output.model
+author_label_key = snakemake.params.author_label_key
+dataset_key = snakemake.params.dataset_key
+params = snakemake.params.params
+subsample = snakemake.params.subsample
+
+print(params)
 
 print('read...')
 adata = read_anndata(input_file)
+
+# subsample genes
+if subsample:
+    assert 0 < subsample < 1
+    sc.pp.subsample(adata, fraction=subsample)
 
 # subset to HVGs
 if 'highly_variable' in adata.var:
     adata = adata[:, adata.var['highly_variable']].copy()
 
-# if sparse.issparse(adata.X):
-#     # adata.X.indices = adata.X.indices.astype('int32')
-#     # adata.X.indptr = adata.X.indptr.astype('int32')
-#     adata.X = adata.X.toarray()
+try:
+    scale = adata.uns['preprocessing']['scaled']
+except KeyError:
+    scale = False
+
+# scale for PCT if not already scaled
+if 'use_pct' in params and not scale:
+    sc.pp.scale(adata, max_value=10)
 
 print(adata)
 
 alignment = celltypist.harmonize(
-    adata,
-    dataset_key,
-    author_label_key,
+    adata=adata,
+    dataset=dataset_key,
+    cell_type=author_label_key,
     reannotate=True,
     **params
 )

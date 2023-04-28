@@ -3,16 +3,17 @@ rule celltypist:
     Map author labels of datasets
     """
     input:
-        anndata=get_input,
+        anndata=lambda w: get_for_dataset(config, w.dataset, ['input', module_name]),
     output:
         h5ad=out_dir / 'celltypist' / '{dataset}' / 'adata.h5ad',
         reannotation=out_dir / 'celltypist' / '{dataset}' / 'reannotation.tsv',
         relation=out_dir / 'celltypist' / '{dataset}' / 'relation.tsv',
         model=out_dir / 'celltypist' / '{dataset}' / 'model.pkl',
     params:
-        author_label_key=lambda w: get_input(w,query=[module_name,'author_label_key']),
-        dataset_key=lambda w: get_input(w,query=[module_name,'dataset_key']),
-        params=lambda w: get_input(w,query=[module_name,'celltypist']),
+        author_label_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'author_label_key']),
+        dataset_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'dataset_key']),
+        params=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'celltypist']),
+        subsample=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'subsample']),
     conda:
         '../envs/celltypist.yaml'
     resources:
@@ -33,6 +34,8 @@ rule celltypist_plots:
         treeplot=out_dir / 'celltypist' / '{dataset}' / 'treeplot.pdf',
         heatmap=out_dir / 'celltypist' / '{dataset}' / 'heatmap.pdf',
         # sankeyplot=out_dir / 'celltypist' / '{dataset}_sankeyplot.pdf',
+    params:
+        coarse_cell_type=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'author_label_key']),
     conda:
         '../envs/celltypist.yaml'
     script:

@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import seaborn as sns
 import celltypist
-
+plt.rcParams['figure.dpi'] = 300
 
 input_file = snakemake.input[0]
 output_treeplot = snakemake.output.treeplot
@@ -15,6 +15,7 @@ celltypist.treeplot(
     alignment,
     order_dataset=False,
     label_size=8,
+    figsize = (20, 30),
     title=f'CellTypist label harmonization: {dataset}',
     show=False,
     save=output_treeplot
