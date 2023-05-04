@@ -5,13 +5,14 @@ import scanpy as sc
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
+params = {k: v for k, v in snakemake.params.items()}
 
 adata = sc.read(input_file)
 print(adata)
 
 use_rep = 'X'
-if 'use_rep' in snakemake.params.keys():
-    use_rep = snakemake.params['use_rep']
+if 'use_rep' in params.keys():
+    use_rep = params['use_rep']
     if use_rep in adata.obsm.keys():
         use_rep = use_rep
     else:
@@ -20,6 +21,7 @@ if 'use_rep' in snakemake.params.keys():
             file=sys.stderr
         )
         use_rep = 'X'
+    del params['use_rep']
 
 # convert to dense matrix
 try:
@@ -47,13 +49,7 @@ except:
     print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
     sc.tl.umap(adata)
 
-# pick colours for plot
-if 'color' in snakemake.params.keys():
-    color = snakemake.params['color']
-else:
-    color = None
-
 # plot UMAP
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
-sc.pl.umap(adata, color=color, ncols=1)
+sc.pl.umap(adata, **params)
 plt.savefig(output_file, bbox_inches='tight', dpi=200)

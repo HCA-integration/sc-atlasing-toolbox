@@ -10,6 +10,7 @@ from utils.config import get_for_dataset
 module_name = 'label_harmonization'
 config = set_defaults(config,module_name,warn=False)
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],

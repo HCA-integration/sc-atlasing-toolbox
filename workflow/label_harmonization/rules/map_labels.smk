@@ -14,6 +14,7 @@ rule celltypist:
         dataset_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'dataset_key']),
         params=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'celltypist']),
         subsample=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'subsample']),
+        force_scale=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'force_scale']),
     conda:
         '../envs/celltypist.yaml'
     resources:
@@ -31,8 +32,8 @@ rule celltypist_plots:
     input:
         model=rules.celltypist.output.model,
     output:
-        treeplot=out_dir / 'celltypist' / '{dataset}' / 'treeplot.pdf',
-        heatmap=out_dir / 'celltypist' / '{dataset}' / 'heatmap.pdf',
+        treeplot=image_dir / '{dataset}' / 'celltypist--treeplot.pdf',
+        heatmap=image_dir / '{dataset}' / 'celltypist--heatmap.pdf',
         # sankeyplot=out_dir / 'celltypist' / '{dataset}_sankeyplot.pdf',
     params:
         coarse_cell_type=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'author_label_key']),
