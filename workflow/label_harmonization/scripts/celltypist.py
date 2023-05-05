@@ -67,4 +67,10 @@ adata.obs = adata.obs.merge(
     how='left'
 )
 print(adata.obs)
-adata.write(output_h5ad)
+
+# remove count matrices
+del adata.X
+del adata.layers
+
+logger.info('Write file...')
+adata.write(output_h5ad, compression='lzf')
