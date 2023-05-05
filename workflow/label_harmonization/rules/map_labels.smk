@@ -51,4 +51,5 @@ except KeyError:
 
 rule celltypist_all:
     input:
-        expand(rules.celltypist_plots.output, dataset=celltypist_datasets)
+        expand(rules.celltypist.output, dataset=celltypist_datasets),
+        expand(rules.celltypist_plots.output, dataset=celltypist_datasets),
