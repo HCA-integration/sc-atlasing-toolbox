@@ -51,5 +51,5 @@ except:
 
 # plot UMAP
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
-sc.pl.umap(adata, **params)
+sc.pl.umap(adata, **params, show=False)
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
