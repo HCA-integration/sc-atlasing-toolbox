@@ -51,6 +51,10 @@ module label_harmonization:
     snakefile: "label_harmonization/Snakefile"
     config: config_for_module(config, module='label_harmonization')
 
+module relabel:
+    snakefile: "relabel/Snakefile"
+    config: config_for_module(config, module='relabel')
+
 module integration:
     snakefile: "integration/Snakefile"
     config: config_for_module(config, module='integration')
@@ -72,6 +76,8 @@ use rule * from subset as subset_ *
 use rule * from label_transfer as label_transfer_ *
 
 use rule * from label_harmonization as label_harmonization_ *
+
+use rule * from relabel as relabel_ *
 
 use rule * from integration as integration_ *
 

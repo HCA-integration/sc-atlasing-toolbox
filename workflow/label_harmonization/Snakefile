@@ -4,11 +4,13 @@ import pandas as pd
 from utils.config import get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
+from utils.config import get_for_dataset
 
 
 module_name = 'label_harmonization'
 config = set_defaults(config,module_name,warn=False)
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 parameters = get_wildcards_from_config(
     config=config['DATASETS'],
@@ -23,19 +25,14 @@ parameters = parameters[~parameters['module'].isnull()]
 parameters = unpack_dict_in_df(parameters, 'module')
 
 
-def get_input(wildcards, query=['input', module_name]):
-    value = config['DATASETS'][wildcards.dataset]
-    for q in query:
-        value = value[q]
-    return value
-
-
 include: 'rules/map_labels.smk'
+include: 'rules/plots.smk'
 
 
 rule all:
     input:
         rules.celltypist_all.input,
+        rules.plots_all.input,
     default_target: True
 
 

@@ -1,4 +1,5 @@
 from pprint import pprint
+from typing import Union
 import warnings
 import pandas as pd
 
@@ -181,3 +182,35 @@ def get_datasets_for_module(config, module):
            and config['DATASETS'][dataset]['input'] is not None
            and module in config['DATASETS'][dataset]['input']
     }
+
+
+def get_for_dataset(
+    config: dict,
+    dataset: str,
+    query: list,
+    default: Union[str,bool,float,int,dict,list, None] = None,
+) -> Union[str,bool,float,int,dict,list, None]:
+    """Get any key from the config via query
+
+    Args:
+        config (dict): config passed to Snakemake
+        dataset (str): dataset key in config['DATASETS']
+        query (list): list of keys to walk down the config
+        default (Union[str,bool,float,int,dict,list, None], optional): default value if key not found. Defaults to None.
+
+    Returns:
+        Union[str,bool,float,int,dict,list, None]: value of query in config
+    """
+    assert 'DATASETS' in config
+    assert dataset in config['DATASETS']
+    
+    # start at top level
+    value = config['DATASETS'][dataset]
+    
+    # walk down query
+    for q in query:
+        if q not in value:
+            warnings.warn(f'key {q} not found in config')
+            return default
+        value = value[q]
+    return value
