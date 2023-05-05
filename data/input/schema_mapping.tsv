@@ -1,0 +1,75 @@
+custom	dcp	cellxgene
+institute	project.contributors.institution	
+study_PI	project.contributors.name	study
+sample_ID	specimen_from_organism.biomaterial_core.biomaterial_id	sample
+subject_ID	donor_organism.biomaterial_core.biomaterial_id	donor_id
+library_ID		
+publication_ID		
+repository_ID		
+subject_ID_published		
+subject_developmental_state	donor_organism.development_stage.text	development_stage
+age_years	donor_organism.organism_age	
+age_range	donor_organism.organism_age	
+sex	donor_organism.sex	sex
+ethnicity_1	donor_organism.human_specific.ethnicity.ontology	
+ethnicity_2	donor_organism.human_specific.ethnicity.ontology_label	
+ethnicity_free_text	donor_organism.human_specific.ethnicity.text	self_reported_ethnicity
+smoking_status	donor_organism.medical_history.smoking_history	
+smoking_history		
+bmi	donor_organism.human_specific.body_mass_index	
+skin_disorder		
+disease_known		
+disease_condition	donor_organism.diseases.text	
+systemic_disorder		
+autoimmune_component		
+menopause_status		
+puberty_status		
+sun_exposure		
+skin_tone		
+skin_care		
+subject_type	donor_organism.is_living	
+cause_of_death		
+sample_type	collection_protocol.method.text	
+sampled_site_condition	specimen_from_organism.diseases.text	
+anatomical_region_organ	specimen_from_organism.organ.text	
+anatomical_region_level1		
+anatomical_region_level2		
+anatomical_region_level3	specimen_from_organism.organ_parts.text	
+protocol_tissue_dissociation	collection_protocol.protocol_core.protocol_id	
+biological_unit	library_preparation_protocol.nucleic_acid_source	suspension_type
+library_platform	library_preparation_protocol.library_construction_method.text	assay
+strand_sequence	library_preparation_protocol.end_bias	
+cell_enrichment		
+library_construction_batch		
+sequencing_platform	sequencing_protocol.instrument_manufacturer_model.text	
+reference_genome		
+reference_genome_ensembl_release		
+reads_processing		
+sample_collection_year	specimen_from_organism.collection_time	
+sample_collection_relative_timepoint		
+disease_status		disease
+treatment_status		
+sample_status	specimen_from_organism.preservation_storage.storage_method	
+sample_cultured		
+cell_number_loaded		
+cell_viability_percentage		
+comments		
+species	donor_organism.genus_species.text	organism
+test_type_pulmonary_function		
+test_result_pulmonary_function		
+	donor_organism.height	
+	donor_organism.weight	
+	specimen_from_organism.state_of_specimen.autolysis_score	
+	specimen_from_organism.state_of_specimen.gross_description	
+	specimen_from_organism.state_of_specimen.ischemic_temperature	
+	specimen_from_organism.state_of_specimen.ischemic_time	
+	specimen_from_organism.state_of_specimen.microscopic_description	
+	specimen_from_organism.state_of_specimen.postmortem_interval	
+	specimen_from_organism.preservation_storage.storage_time	
+	specimen_from_organism.preservation_storage.preservation_method	
+dataset		title
+cell_type		cell_type
+		tissue
+		batch_condition
+		is_primary_data
+		schema_version

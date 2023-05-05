@@ -1,4 +1,5 @@
 dataset_meta: configs/datasets.tsv
+schema_file: data/input/schema_mapping.tsv
 dcp_metadata: configs/dcp_metadata.tsv
 
 filter_per_organ:

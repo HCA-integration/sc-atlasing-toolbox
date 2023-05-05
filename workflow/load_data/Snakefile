@@ -52,16 +52,25 @@ use rule * from common as common_ *
 
 
 rule download:
+    """
+    Download files
+    TODO: better warning message
+    """
     output:
-        h5ad=out_dir / 'download/{dataset}.h5ad'
-    run:
-        url = get_url(dataset_df,wildcards)
-        shell("wget -O {output} '{url}'")
+        h5ad=out_dir / 'download' / '{dataset}.h5ad'
+    params:
+        dataset_df=dataset_df
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/download.py'
 
-
+datasets_to_download = dataset_df[
+    dataset_df['url'].apply(lambda x: not Path(x).is_file())
+]['dataset']
 rule download_all:
     input:
-        expand(rules.download.output,dataset=dataset_df['dataset'])  # TODO: filter for only non-file URL entries
+        expand(rules.download.output, dataset=datasets_to_download)
 
 
 def get_h5ad(wildcards):
@@ -73,7 +82,8 @@ def get_h5ad(wildcards):
 
 rule metadata:
     input:
-        h5ad=get_h5ad
+        h5ad=get_h5ad,
+        schema=config["schema_file"]
     params:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df,columns=all_but(dataset_df.columns,'subset'),wildcards=wildcards)
