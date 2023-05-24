@@ -16,7 +16,7 @@ if isinstance(url, tuple):
 adata_file = f'{tmpdir}/{wildcards.dataset}.{file_type}'
 print(adata_file)
 
-subprocess.run(["wget", "-O", adata_file, url])
+subprocess.run(["wget", "-O", adata_file, url], check=True)
 
 # read file and write to h5ad
 if file_type == 'h5ad':
