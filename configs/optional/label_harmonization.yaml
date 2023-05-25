@@ -1,10 +1,14 @@
-# defaults:
-#   datasets:
-#     - blood_benchmark
-#     - blood_harm_pca
-#     - blood_scvi_donor
-#     - blood_label_harm_scvi
-#     - blood_coarse
+defaults:
+  datasets:
+    - blood_benchmark
+    - blood_harm_pca
+    - blood_scvi_donor
+    - blood_label_harm_scvi
+    - blood_label_harm_scimilarity
+    # - blood_harm_pca_pct
+    # - blood_label_harm_scvi_pct
+    # - blood_label_harm_scimilarity_pct
+    # - blood_coarse
 
 DATASETS:
 
