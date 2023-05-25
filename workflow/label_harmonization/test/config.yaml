@@ -40,4 +40,4 @@ DATASETS:
       author_label_key: bulk_labels
       celltypist:
         use_rep: X_pca
-        use_pct: false
+        use_pct: true

@@ -38,7 +38,7 @@ except KeyError:
     scaled = False
 
 # scale for PCT if not already scaled
-if 'use_pct' in params and (force_scale or not scaled):
+if 'use_pct' in params and params['use_pct'] and (force_scale or not scaled):
     logger.info("Scale .X for PCT")
     sc.pp.scale(adata, max_value=10)
 
@@ -60,11 +60,6 @@ print(df)
 df.to_csv(output_relation, sep='\t', index=False)
 
 print(adata.obs)
-adata.obs = adata.obs.merge(
-    alignment.reannotation[['reannotation', 'group']],
-    left_index=True,
-    right_index=True,
-    how='left'
-)
+adata.obs[['low_hierarchy', 'high_hierarchy']] = alignment.reannotation.loc[adata.obs_names, ['reannotation', 'group']]
 print(adata.obs)
 adata.write(output_h5ad)

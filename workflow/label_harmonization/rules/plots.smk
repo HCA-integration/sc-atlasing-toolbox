@@ -40,7 +40,7 @@ use rule umap from plots as label_harmonization_celltypist_umap with:
     output:
         png=image_dir / '{dataset}' / 'celltypist--umap.png'
     params:
-        color=['reannotation', 'group'],
+        color='high_hierarchy',
         use_rep=lambda w: get_for_dataset(config, w.dataset, [module_name, 'celltypist', 'use_rep']),
         ncols=1,
     resources:
