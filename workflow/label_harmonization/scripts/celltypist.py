@@ -59,6 +59,11 @@ df['group'] = alignment.groups
 print(df)
 df.to_csv(output_relation, sep='\t', index=False)
 
+# remove count matrices
+del adata.X
+del adata.raw
+del adata.layers
+
 print(adata.obs)
 adata.obs[['low_hierarchy', 'high_hierarchy']] = alignment.reannotation.loc[adata.obs_names, ['reannotation', 'group']]
 print(adata.obs)
