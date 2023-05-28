@@ -1,4 +1,5 @@
 from utils.wildcards import wildcards_to_str
+from utils.misc import ifelse
 
 
 rule embedding:
@@ -19,12 +20,16 @@ rule umap:
     input:
         anndata='{filename}.h5ad'
     output:
-        plot='{filename}_umap.png'
+        plot='{filename}_umap.png',
+        coordinates='{filename}_coordinates.npy',
     params:
         color='bulk_labels',
         use_rep='X_pca',
     conda:
-        '../envs/scanpy_rapids.yaml'
+        ifelse(
+            'os' not in config.keys() or config['os'] == 'm1',
+            _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
+        )
     script:
         '../scripts/umap.py'
 

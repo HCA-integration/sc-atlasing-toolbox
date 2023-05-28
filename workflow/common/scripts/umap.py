@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 import scanpy as sc
 
 input_file = snakemake.input[0]
-output_file = snakemake.output[0]
+output_plot = snakemake.output.plot
+output_coordinates = snakemake.output.coordinates
 params = {k: v for k, v in snakemake.params.items()}
 
 adata = sc.read(input_file)
@@ -51,5 +52,8 @@ except:
 
 # plot UMAP
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
-sc.pl.umap(adata, **params)
-plt.savefig(output_file, bbox_inches='tight', dpi=200)
+sc.pl.umap(adata, show=False, **params)
+plt.savefig(output_plot, bbox_inches='tight', dpi=200)
+
+# save coordinates
+np.save(output_coordinates, adata.obsm['X_umap'])
