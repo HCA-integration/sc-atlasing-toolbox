@@ -37,21 +37,23 @@ use rule umap from plots as label_harmonization_umap with:
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
 
 
-use rule umap from plots as label_harmonization_celltypist_umap with:
+rule celltypist_umap:
     input:
         anndata=rules.celltypist.output.h5ad,
+        group_assignment=rules.celltypist.output.reannotation,
+        coordinates=rules.label_harmonization_umap.output.coordinates,
     output:
         plot=image_dir / '{dataset}' / 'celltypist--umap.png',
-        coordinates=out_dir / 'celltypist' / '{dataset}' / 'label_harmonization_celltypist_umap.npy',
-    params:
-        color='high_hierarchy',
-        use_rep=lambda w: get_for_dataset(config, w.dataset, [module_name, 'celltypist', 'use_rep']),
-        ncols=1,
+        per_group=directory(image_dir / '{dataset}' / 'umap_per_group'),
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
+    conda:
+        '../envs/scanpy.yaml'
+    script:
+        '../scripts/celltypist_umap.py'
 
 
 rule dotplot:
@@ -91,5 +93,5 @@ rule plots_all:
     input:
         expand(rules.label_harmonization_embedding.output, dataset=plot_datasets),
         expand(rules.label_harmonization_umap.output, dataset=plot_datasets),
-        expand(rules.label_harmonization_celltypist_umap.output, dataset=plot_datasets),
+        expand(rules.celltypist_umap.output, dataset=plot_datasets),
         expand(rules.dotplot.output, dataset=plot_datasets),

@@ -7,6 +7,8 @@ input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
 output_file = snakemake.output[0]
 output_per_group = Path(snakemake.output.per_group)
+output_per_group.mkdir(exist_ok=True)
+
 kwargs = snakemake.params.kwargs
 marker_genes = snakemake.params.marker_genes
 
@@ -17,7 +19,6 @@ else:
 
 adata = sc.read(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
-print(group_assignment)
 
 # add group assignment to adata
 group_cols = ['group', 'reannotation']
@@ -45,8 +46,6 @@ sc.pl.dotplot(
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
 
 # per group
-output_per_group.mkdir(exist_ok=True)
-
 for group in adata.obs['group'].unique():
     sc.pl.dotplot(
         adata[adata.obs['group'] == group],
