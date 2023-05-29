@@ -12,6 +12,7 @@ use rule embedding from plots as label_harmonization_embedding with:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'plot_colors']),
         basis=lambda w: get_for_dataset(config, w.dataset, [module_name, 'celltypist', 'use_rep']),
         ncols=2,
+        wspace=0.2,
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -28,6 +29,7 @@ use rule umap from plots as label_harmonization_umap with:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'plot_colors']),
         use_rep=lambda w: get_for_dataset(config, w.dataset, [module_name, 'celltypist', 'use_rep']),
         ncols=2,
+        wspace=0.2,
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -58,6 +60,7 @@ rule dotplot:
         group_assignment=rules.celltypist.output.reannotation,
     output:
         plot=image_dir / '{dataset}' / 'celltypist--dotplot.png',
+        per_group=directory(image_dir / '{dataset}' / 'dotplot_per_group'),
     params:
         marker_genes=lambda w: config['ORGANS'][get_for_dataset(config, w.dataset, [module_name, 'organ'])]['marker_genes'],
         kwargs=dict(

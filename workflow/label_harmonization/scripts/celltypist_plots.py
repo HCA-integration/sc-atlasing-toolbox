@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import seaborn as sns
 import celltypist
-plt.rcParams['figure.dpi'] = 300
+plt.rcParams['figure.dpi'] = 200
 
 input_file = snakemake.input[0]
 output_treeplot = snakemake.output.treeplot
@@ -15,7 +15,7 @@ celltypist.treeplot(
     alignment,
     order_dataset=False,
     label_size=8,
-    figsize = (20, 30),
+    # figsize = (20, 30),
     title=f'CellTypist label harmonization: {dataset}',
     show=False,
     save=output_treeplot
@@ -23,6 +23,6 @@ celltypist.treeplot(
 
 plot = sns.clustermap(alignment.base_distance.to_meta())
 plot.fig.suptitle(dataset)
-plt.savefig(output_heatmap, dpi=300, bbox_inches='tight')
+plt.savefig(output_heatmap, dpi=200, bbox_inches='tight')
 
 # celltypist.sankeyplot(alignment, show=False, save=output_sankeyplot)

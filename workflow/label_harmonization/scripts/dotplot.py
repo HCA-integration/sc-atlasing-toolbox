@@ -1,3 +1,4 @@
+from pathlib import Path
 from matplotlib import pyplot as plt
 import pandas as pd
 import scanpy as sc
@@ -5,6 +6,7 @@ import scanpy as sc
 input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
 output_file = snakemake.output[0]
+output_per_group = Path(snakemake.output.per_group)
 kwargs = snakemake.params.kwargs
 marker_genes = snakemake.params.marker_genes
 
@@ -15,12 +17,13 @@ else:
 
 adata = sc.read(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
+print(group_assignment)
 
 # add group assignment to adata
-adata.obs['group'] = group_assignment.loc[adata.obs_names, 'group']
+group_cols = ['group', 'reannotation']
+adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
 
 # match marker genes and var_names
-print(adata.var)
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name'].astype(str)
 
@@ -36,6 +39,21 @@ sc.pl.dotplot(
     groupby='group',
     var_names=marker_genes,
     show=False,
+    title=f'Markers vs groups for {snakemake.wildcards.dataset}',
     **kwargs,
 )
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
+
+# per group
+output_per_group.mkdir(exist_ok=True)
+
+for group in adata.obs['group'].unique():
+    sc.pl.dotplot(
+        adata[adata.obs['group'] == group],
+        groupby='reannotation',
+        var_names=marker_genes,
+        show=False,
+        title=f'Group: {group}',
+        **kwargs,
+    )
+    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)
