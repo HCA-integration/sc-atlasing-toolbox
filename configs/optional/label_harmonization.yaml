@@ -34,6 +34,7 @@ DATASETS:
     input:
       label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
     label_harmonization:
+      organ: blood
       plot_colors:
         - study
         - lineage
@@ -54,6 +55,7 @@ DATASETS:
     input:
       label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
     label_harmonization:
+      organ: blood
       plot_colors: study
       dataset_key: study
       author_label_key: author_annotation
@@ -83,6 +85,7 @@ DATASETS:
         # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
         data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
     label_harmonization:
+      organ: blood
       plot_colors:
         - study
         - lineage
@@ -105,6 +108,7 @@ DATASETS:
         # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
         data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
     label_harmonization:
+      organ: blood
       plot_colors: study
       dataset_key: study
       author_label_key: author_annotation
@@ -120,6 +124,7 @@ DATASETS:
     input:
       label_harmonization: data/input/scimilarity/blood-public-embedded.h5ad 
     label_harmonization:
+      organ: blood
       plot_colors:
         - study
         - disease
@@ -139,6 +144,7 @@ DATASETS:
     input:
       label_harmonization: data/input/scimilarity/blood-public-embedded.h5ad 
     label_harmonization:
+      organ: blood
       plot_colors: study
       dataset_key: study
       author_label_key: author_annotation
