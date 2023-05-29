@@ -2,6 +2,25 @@ from utils.wildcards import wildcards_to_str
 from utils.misc import ifelse
 
 
+rule dotplot:
+    input: anndata='{filename}.h5ad'
+    output:
+        plot='{filename}_dotplot.png'
+    params:
+        var_names=[
+            'TNFRSF4', 'SSU72', 'PARK7', 'RBP7', 'SRM',
+            'MAD2L2', 'AGTRAP', 'TNFRSF1B', 'EFHD2'
+        ],
+        groupby='louvain',
+        use_raw=False,
+        standard_scale='var',
+        dendrogram=False,
+        swap_axes=False,
+    conda:
+        '../envs/scanpy.yaml'
+    script:
+        '../scripts/dotplot.py'
+
 rule embedding:
     input:
         anndata='{filename}.h5ad'

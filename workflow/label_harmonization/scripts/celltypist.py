@@ -65,6 +65,7 @@ del adata.raw
 del adata.layers
 
 print(adata.obs)
-adata.obs[['low_hierarchy', 'high_hierarchy']] = alignment.reannotation.loc[adata.obs_names, ['reannotation', 'group']]
+adata.obs[['low_hierarchy', 'high_hierarchy']] = \
+    alignment.reannotation.loc[adata.obs_names, ['reannotation', 'group']]
 print(adata.obs)
 adata.write(output_h5ad)
