@@ -1,16 +1,27 @@
 from pathlib import Path
 from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
 import scanpy as sc
 
+kwargs = dict(
+    frameon=False,
+    size=2,
+)
+
 input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
+input_coordinates = snakemake.input.coordinates
 output_file = snakemake.output[0]
 output_per_group = Path(snakemake.output.per_group)
 output_per_group.mkdir(exist_ok=True)
 
 adata = sc.read(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
+umap = np.load(input_coordinates)
+
+# add UMAP coordinates to adata
+adata.obsm['X_umap'] = umap
 
 # add grouq assignment to adata
 group_cols = ['group', 'reannotation']

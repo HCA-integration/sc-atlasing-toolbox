@@ -46,10 +46,7 @@ rule celltypist_umap:
         plot=image_dir / '{dataset}' / 'celltypist--umap.png',
         per_group=directory(image_dir / '{dataset}' / 'umap_per_group'),
     resources:
-        partition=get_resource(config,profile='gpu',resource_key='partition'),
-        qos=get_resource(config,profile='gpu',resource_key='qos'),
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
-        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
     conda:
         '../envs/scanpy.yaml'
     script:
@@ -69,13 +66,10 @@ rule dotplot:
             use_raw=False,
             standard_scale='var',
             dendrogram=False,
-            swap_axes=True,
+            swap_axes=False,
         )
     resources:
-        partition=get_resource(config,profile='gpu',resource_key='partition'),
-        qos=get_resource(config,profile='gpu',resource_key='qos'),
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
-        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
     conda:
         '../envs/scanpy.yaml'
     script:
@@ -88,6 +82,9 @@ try:
 except KeyError:
     plot_datasets = []
 
+
+rule dotplot_all:
+    input: expand(rules.dotplot.output, dataset=plot_datasets)
 
 rule plots_all:
     input:

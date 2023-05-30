@@ -82,7 +82,6 @@ DATASETS:
   blood_label_harm_scvi:
     input:
       label_harmonization:
-        # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
         data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
     label_harmonization:
       organ: blood
