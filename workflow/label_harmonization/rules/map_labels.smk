@@ -33,6 +33,7 @@ rule celltypist_plots:
         model=rules.celltypist.output.model,
     output:
         treeplot=image_dir / '{dataset}' / 'celltypist--treeplot.png',
+        treeplot_ordered=image_dir / '{dataset}' / 'celltypist--treeplot_ordered.png',
         heatmap=image_dir / '{dataset}' / 'celltypist--heatmap.png',
         # sankeyplot=out_dir / 'celltypist' / '{dataset}_sankeyplot.pdf',
     params:
