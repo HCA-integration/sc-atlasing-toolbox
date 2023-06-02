@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import anndata
 import scib
+import numpy as np
 
 try:
     from sklearnex import patch_sklearn
@@ -21,6 +22,9 @@ perm_covariates = snakemake.params['permutation_covariates']
 sample_key = snakemake.params['sample_key']
 
 adata = read_anndata(input_file)
+# make sure the PCA embedding is an array
+if not isinstance(adata.obsm["X_pca"], np.ndarray):
+    adata.obsm["X_pca"] = adata.obsm["X_pca"].toarray()
 
 if adata.n_obs == 0:
     plt.savefig(output_barplot)
