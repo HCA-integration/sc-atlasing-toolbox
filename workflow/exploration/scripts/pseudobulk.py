@@ -47,6 +47,7 @@ sc.pp.normalize_total(adata)
 
 # make sure all columns are present for bulk
 adata.obs['bulk_by'] = adata.obs[bulk_by].str.cat(adata.obs[color].astype(str)).astype('category')
+print("Number of pseudobulks:", adata.obs['bulk_by'].nunique())
 
 pbulks_df = get_pseudobulks(adata, group_key='bulk_by')
 
@@ -76,10 +77,23 @@ plt.plot(adata_bulk.uns['pca']['variance_ratio'], marker='.')
 plt.title('Scree plot: PC variance contribution')
 plt.savefig(output_pca_scree)
 
+# Check if it's enough for at least the first two componenets
+if adata.obs['bulk_by'].nunique() < 3:
+    plt.savefig(output_pca_1_2)
+    plt.savefig(output_pca_2_3)
+    exit(0)
+
 # remove empty columns
 colors = [c for c in colors if not adata_bulk.obs[c].isna().all()]
 # remove colors if too many entries
 colors = [c for c in colors if adata_bulk.obs[c].nunique() <= 64]
+# also remove empty columns
+colors = [c for c in colors if adata_bulk.obs[c].nunique() > 0]
+# abort if none will be plotted
+if len(colors) == 0:
+    plt.savefig(output_pca_1_2)
+    plt.savefig(output_pca_2_3)
+    exit(0)
 
 n_rows = len(colors)
 height = np.max([7, n_rows * 0.2 * 7])
@@ -95,6 +109,11 @@ sc.pl.pca(
 )
 plt.tight_layout()
 plt.savefig(output_pca_1_2, bbox_inches='tight')
+
+# missing third component
+if len(adata_bulk.uns['pca']['variance_ratio']) < 3:
+    plt.savefig(output_pca_2_3)
+    exit(0)
 
 sc.pl.pca(
     adata_bulk[adata_bulk.obs.sample(adata_bulk.n_obs).index],
