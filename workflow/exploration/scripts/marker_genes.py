@@ -30,16 +30,21 @@ markers = {
 print({k: len(v) for k, v in markers.items()})
 
 fig, axes = plt.subplots(nrows=2, ncols=1)
-sc.pl.dotplot(
-    adata,
-    markers,
-    groupby=author_label,
-    use_raw=False,
-    standard_scale='var',
-    title=f'Marker genes on {dataset} for author cell types, colummn: "{author_label}"',
-    show=False,
-    ax=axes[0],
-)
+try:
+    sc.pl.dotplot(
+        adata,
+        markers,
+        groupby=author_label,
+        use_raw=False,
+        standard_scale='var',
+        title=f'Marker genes on {dataset} for author cell types, colummn: "{author_label}"',
+        show=False,
+        ax=axes[0],
+    )
+except Exception as e:
+    print(e)
+    print("author_label:", adata.obs[author_label].unique())
+
 sc.pl.dotplot(
     adata,
     markers,
