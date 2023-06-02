@@ -5,7 +5,7 @@ rule marker_genes:
         png=out_dir / 'marker_genes' / '{study}.png',
     params:
         dataset=lambda wildcards: wildcards.study,
-        markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
+        markers=lambda wildcards: config['ORGANS'][wildcards.organ]['marker_genes'] # TODO: organ per dataset
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -16,4 +16,4 @@ rule marker_genes:
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,study=dataset_df['study'].unique())
+        expand(rules.marker_genes.output,study=dataset_df['study'].unique(),organ=dataset_df['organ'].unique())
