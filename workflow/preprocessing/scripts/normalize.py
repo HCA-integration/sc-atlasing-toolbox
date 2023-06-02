@@ -3,6 +3,7 @@ Normalisation
 """
 from scipy import sparse
 import scanpy as sc
+
 from utils.io import read_anndata
 
 input_file = snakemake.input[0]
@@ -23,6 +24,13 @@ sc.pp.log1p(adata)
 adata.X = sparse.csr_matrix(adata.X)
 
 adata.layers['normcounts'] = adata.X
+
+# add preprocessing metadata
+if 'preprocessing' not in adata.uns:
+    adata.uns['preprocessing'] = {}
+
+adata.uns['preprocessing']['normalization'] = 'default'
+adata.uns['preprocessing']['log-transformed'] = True
 
 print('write...')
 adata.write(output_file, compression='lzf')

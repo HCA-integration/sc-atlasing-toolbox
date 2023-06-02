@@ -3,11 +3,6 @@ module plots:
    config: config
 
 
-module umap:
-   snakefile: "../../common/rules/umap.smk"
-   config: config
-
-
 rule benchmark:
     input:
         benchmark=expand(rules.run.benchmark,zip,**parameters[wildcard_names].to_dict('list'))
@@ -41,7 +36,7 @@ use rule barplot from plots as integration_barplot with:
         dodge=True,
 
 
-use rule umap from umap as integration_umap with:
+use rule umap from plots as integration_umap with:
     input:
         anndata=rules.run.output.h5ad
     output:
@@ -65,7 +60,7 @@ rule plots_all:
         expand(rules.integration_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
 
 
-use rule umap from umap as integration_umap_lineage with:
+use rule umap from plots as integration_umap_lineage with:
     input:
         anndata=rules.run_per_lineage.output.h5ad
     output:

@@ -31,10 +31,20 @@ DATASETS:
   blood:
     input:
       preprocessing: test/input/load_data/merged/organ/blood.zarr
-    batch: donor
-    lineage: development_stage
+    preprocessing:
+      batch: donor
+      lineage: development_stage
+      scale: true
+      highly_variable_genes:
+        n_top_genes: 2000
+        flavor: seurat
+        subset: true
+      neighbors:
+        n_neighbors: 15
+        n_pcs: 50
+
   test:
     input:
       preprocessing: test/input/pbmc68k.h5ad
-    batch:
-    lineage:
+    preprocessing:
+      scale: false

@@ -4,17 +4,12 @@ Preprocessing
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_datasets_for_module, get_resource
+from utils.config import get_for_dataset, get_datasets_for_module, get_resource
 from utils.misc import ifelse
 
 
 module_name = 'preprocessing'
-dataset_df = pd.read_table(workflow.source_path(config['dataset_meta']),comment='#')
 out_dir = Path(config['output_dir']) / module_name
-
-
-def get_input(wildcards):
-    return config['DATASETS'][wildcards.dataset]['input']['preprocessing']
 
 
 wildcard_constraints:
@@ -30,7 +25,7 @@ use rule * from common as common_ *
 
 rule normalize:
     input:
-        get_input
+        lambda w: get_for_dataset(config, w.dataset, ['input', module_name])
     output:
         h5ad=out_dir / '{dataset}' / 'normalized.h5ad'
     resources:
@@ -49,9 +44,9 @@ rule highly_variable_genes:
     output:
         h5ad=out_dir / '{dataset}' / 'highly_variable_genes.h5ad'
     params:
-        n_hvgs=2000,
-        batch=lambda wildcards: config['DATASETS'][wildcards.dataset]['batch'],
-        lineage=lambda wildcards: config['DATASETS'][wildcards.dataset]['lineage'],
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'highly_variable_genes']),
+        batch=lambda w: get_for_dataset(config, w.dataset, [module_name, 'batch']),
+        lineage=lambda w: get_for_dataset(config, w.dataset, [module_name, 'lineage']),
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -67,6 +62,8 @@ rule pca:
         h5ad=rules.highly_variable_genes.output.h5ad
     output:
         h5ad=out_dir / '{dataset}' / 'pca.h5ad'
+    params:
+        scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale'])
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -85,6 +82,8 @@ rule neighbors:
         h5ad=rules.pca.output.h5ad
     output:
         h5ad=out_dir / '{dataset}' / 'neighbors.h5ad'
+    params:
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'neighbors']),
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),

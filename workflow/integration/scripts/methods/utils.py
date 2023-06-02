@@ -61,7 +61,6 @@ def process(adata, adata_raw, output_type):
 
     # add unintegrated data
     adata.X = adata_raw.X
-    adata_raw.X = adata_raw.layers['normcounts']
     adata.raw = adata_raw.copy()
 
     return adata

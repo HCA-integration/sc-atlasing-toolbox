@@ -5,12 +5,12 @@ import pandas as pd
 import scanpy as sc
 import anndata
 
-from utils import CELLxGENE_VARS
+from utils import SCHEMAS
 
 
 def read_adata(file):
     ad = anndata.read_zarr(file)
-    ad.var = ad.var[CELLxGENE_VARS]
+    ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
     del ad.uns
     del ad.layers
@@ -43,13 +43,17 @@ else:
         _adata = read_adata(file)
         print(_adata)
 
+        if _adata.n_obs == 0:
+            print('skip concatenation...')
+            continue
+
         print('Concatenate...')
         # merge genes
         var_map = pd.merge(
             adata.var,
             _adata.var,
             how='outer',
-            on=['feature_id'] + CELLxGENE_VARS
+            on=['feature_id'] + SCHEMAS['CELLxGENE_VARS']
         )
         var_map = var_map[~var_map.index.duplicated()]
 
@@ -60,7 +64,8 @@ else:
         del _adata
         gc.collect()
 
-    organ = adata.obs['organ'].unique()[0]
+    organ = adata.obs['organ'].unique()
+    assert not len(organ) > 1
     adata.uns['dataset'] = dataset
     adata.uns['organ'] = organ
     adata.uns['meta'] = {'dataset': dataset, 'organ': organ}

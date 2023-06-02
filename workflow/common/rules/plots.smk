@@ -1,6 +1,34 @@
 from utils.wildcards import wildcards_to_str
 
 
+rule embedding:
+    input:
+        anndata='{filename}.h5ad'
+    output:
+        plot='{filename}_embedding.png'
+    params:
+        color='bulk_labels',
+        basis='X_pca',
+    conda:
+        '../envs/scanpy.yaml'
+    script:
+        '../scripts/embedding.py'
+
+
+rule umap:
+    input:
+        anndata='{filename}.h5ad'
+    output:
+        plot='{filename}_umap.png'
+    params:
+        color='bulk_labels',
+        use_rep='X_pca',
+    conda:
+        '../envs/scanpy_rapids.yaml'
+    script:
+        '../scripts/umap.py'
+
+
 rule barplot:
     input:
         tsv='test/data/integration.benchmark.tsv'

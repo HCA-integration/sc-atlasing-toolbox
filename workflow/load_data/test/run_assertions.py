@@ -2,9 +2,7 @@ import pandas as pd
 import anndata
 import glob
 
-from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS
-
-datasets_df = pd.read_table('test/datasets.tsv')
+from utils import SCHEMAS
 
 # single dataset
 single_outputs = glob.glob('test/out/*/processed/*.zarr')
@@ -19,7 +17,7 @@ for file in single_outputs:
     assert 'organ' in adata.obs
     assert 'meta' in adata.uns
     try:
-        for key in CELLxGENE_OBS + EXTRA_COLUMNS:
+        for key in SCHEMAS['CELLxGENE_OBS'] + SCHEMAS['EXTRA_COLUMNS']:
             assert key in adata.obs.columns
     except AssertionError:
         raise AssertionError(f'Single dataset: "{key}" not in "{file}"')
@@ -33,13 +31,16 @@ for file in merged_outputs:
     adata = anndata.read_zarr(file)
     print('Check that CELLxGENES mandatory columns present')
     try:
-        for col in CELLxGENE_OBS + EXTRA_COLUMNS:
+        for col in SCHEMAS['CELLxGENE_OBS'] + SCHEMAS['EXTRA_COLUMNS']:
             assert col in adata.obs.columns
+            assert not adata.obs[col].isna().all()
 
-        for col in CELLxGENE_VARS:
+        for col in SCHEMAS['CELLxGENE_VARS']:
             assert col in adata.var.columns
+            assert not adata.var[col].isna().all()
 
         for col in ['organ', 'dataset']:
             assert col in adata.uns
     except AssertionError:
         raise AssertionError(f'Merged dataset: column "{col}" not in "{file}"')
+

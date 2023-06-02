@@ -1,0 +1,5 @@
+output_dir: test/out
+dataset_meta: test/configs/dataset_info/hlca.tsv
+dcp_metadata: test/configs/dataset_info/hlca.tsv
+schema_file: test/data/schema_mapping.tsv
+images: test/images

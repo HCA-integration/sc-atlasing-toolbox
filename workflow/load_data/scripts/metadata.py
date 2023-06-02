@@ -1,18 +1,23 @@
 from pathlib import Path
+from pprint import pprint
 
 import pandas as pd
 from scipy.sparse import csr_matrix
 from matplotlib import pyplot as plt
 import anndata
 import scanpy as sc
-from utils import CELLxGENE_OBS, CELLxGENE_VARS, EXTRA_COLUMNS, get_union
+import numpy as np
+from utils import SCHEMAS, get_union
 
 in_file = snakemake.input.h5ad
 out_file = snakemake.output.zarr
 out_plot = snakemake.output.plot
 wildcards = snakemake.wildcards
 meta = snakemake.params.meta
-print(meta)
+schema_file = snakemake.input.schema
+
+print('meta:')
+pprint(meta)
 
 # optional annotations file
 annotation_file = meta['annotation_file']
@@ -21,18 +26,18 @@ if not pd.isna(annotation_file):
     assert Path(annotation_file).exists()
 
 # h5ad
-print(f'read {in_file}...')
-adata = sc.read(in_file, as_sparse=['X'])
+print(f'\033[0;36mread\033[0m {in_file}...')
+try:
+    adata = sc.read(in_file, as_sparse=['X'])
+except:
+    adata = sc.read_loom(in_file, sparse=True)
 print(adata)
 
+# Adding general dataset info to uns and obs
 adata.uns['meta'] = meta
-adata.uns['dataset'] = meta['dataset']
-adata.uns['organ'] = meta['organ']
-adata.uns['dataset'] = meta['dataset']
-
-adata.obs['organ'] = meta['organ']
-adata.obs['study'] = meta['study']
-adata.obs['dataset'] = meta['dataset']
+for meta_i in ["organ", "study", "dataset"]:
+    adata.obs[meta_i] = meta[meta_i]
+    adata.uns[meta_i] = meta[meta_i]
 
 # add annotation if available
 author_annotation = meta['author_annotation']
@@ -53,23 +58,28 @@ adata.obs['donor'] = adata.obs[donor_column]
 sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
 adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
 
+# CELLxGENE specific
 if 'batch_condition' in adata.uns.keys():
     batch_columns = adata.uns['batch_condition']
     adata.obs['batch'] = adata.obs[batch_columns].apply(lambda x: '-'.join(x), axis=1)
 else:
     adata.obs['batch'] = meta['study']
 
+# Checking schema version
+if not 'schema_version' in adata.uns.keys():
+    adata.uns['schema_version'] = '0.0.0'
 if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity'] = adata.obs['ethnicity']
     adata.obs['self_reported_ethnicity_ontology_term_id'] = adata.obs['ethnicity_ontology_term_id']
     adata.obs['donor_id'] = adata.obs['donor']
 
+# Assigning other keys in meta to obs
 for key, value in meta.items():
     if isinstance(value, list):
         continue
     adata.obs[key] = value
 
-# ensure only raw counts are kept
+# ensure raw counts are kept in .X
 adata.layers['final'] = adata.X.copy()
 if isinstance(adata.raw, anndata._core.raw.Raw):
     adata.X = adata.raw.X.copy()
@@ -77,9 +87,11 @@ else:
     adata.X = adata.X.copy()
 adata.X = csr_matrix(adata.X)
 
-# add author annotations
+# add author annotations column
 adata.obs['author_annotation'] = adata.obs[author_annotation]
 # use author annotations if no cell ontology available
+if not 'cell_type' in adata.obs.columns:
+    adata.obs['cell_type'] = 'nan'
 if adata.obs['cell_type'].nunique() == 1:
     adata.obs['cell_type'] = adata.obs['author_annotation']
 
@@ -87,9 +99,33 @@ if adata.obs['cell_type'].nunique() == 1:
 adata.obs['barcode'] = adata.obs_names
 adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index(drop=True).index.astype(str)
 
+# schemas translation
+schemas_df = pd.read_table(schema_file).dropna()
+print(schemas_df)
+from_schema = meta['schema']
+assert from_schema in schemas_df.columns
+to_schema = 'cellxgene'
+SCHEMAS["NAMES"] = dict(zip(schemas_df[from_schema], schemas_df[to_schema]))
+adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
+
+# making sure all columns are in the object
+all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
+for column in all_columns:
+    if not column in adata.obs.columns:
+        adata.obs[column] = np.nan
 # keep only relevant columns
-adata.obs = adata.obs[get_union(CELLxGENE_OBS, EXTRA_COLUMNS)].copy()
-adata.var = adata.var[CELLxGENE_VARS]
+adata.obs = adata.obs[all_columns].copy()
+
+# make sure all vars are present
+if not "feature_name" in adata.var.columns:
+    adata.var["feature_name"] = adata.var_names.tolist()
+for column in SCHEMAS["CELLxGENE_VARS"]:
+    if not column in adata.var.columns:
+        adata.var[column] = np.nan
+adata.var = adata.var[SCHEMAS["CELLxGENE_VARS"]]
+
+if 'feature_id' not in adata.var.columns:
+    adata.var['feature_id'] = adata.var_names
 adata.var.index.set_names('feature_id', inplace=True)
 
 adata.write_zarr(out_file)
