@@ -12,9 +12,11 @@ output_removed = snakemake.output.removed
 params = snakemake.params['filter']
 
 adata = anndata.read_zarr(input_zarr)
+print(adata)
 
-# subset to available annotations
-adata_filtered = adata[adata.obs['cell_type'].notna()]
+# subset to available annotations TODO: make this more generic
+if 'cell_type' in adata.obs.columns:
+    adata_filtered = adata[adata.obs['cell_type'].notna()]
 
 # explicit filter
 if 'remove_by_colum' in params:
@@ -45,6 +47,7 @@ if 'cells_per_sample' in params.keys():
     adata_filtered = adata_filtered[adata_filtered.obs['sample'].isin(samples_to_keep)]
 
 print('Save filtered...')
+print(adata_filtered)
 adata_filtered.write_zarr(output_zarr)
 
 adata_removed = adata.n_obs - sum(adata.obs_names.isin(adata_filtered.obs_names))
