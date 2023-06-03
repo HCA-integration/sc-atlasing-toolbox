@@ -11,4 +11,4 @@ dependencies:
   - plotly
   - pip
   - pip:
-    - celltypist==1.5.0
+    - celltypist==1.5.1
