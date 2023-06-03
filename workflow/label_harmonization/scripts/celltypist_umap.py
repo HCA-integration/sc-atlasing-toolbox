@@ -3,6 +3,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import warnings
+
+warnings.filterwarnings("ignore", message="No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 
 kwargs = dict(
     frameon=False,
@@ -32,8 +35,12 @@ plt.savefig(output_file, bbox_inches='tight', dpi=200)
 
 # per group
 for group in adata.obs['group'].unique():
+    adata.obs['reannotation_tmp'] = np.where(adata.obs['group'] == group, adata.obs['reannotation'], '')
     sc.pl.umap(
-        adata[adata.obs['group'] == group],
-        color='reannotation',
+        adata,
+        groups=adata[adata.obs['group'] == group].obs['reannotation'].unique(),
+        color='reannotation_tmp',
+        title=f'Group: {group}',
     )
     plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)
+    del adata.obs['reannotation_tmp']
