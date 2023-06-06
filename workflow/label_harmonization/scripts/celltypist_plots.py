@@ -17,8 +17,8 @@ alignment = celltypist.DistanceAlignment.load(input_file)
 celltypist.treeplot(
     alignment,
     order_dataset=False,
-    label_size=14,
-    figsize = (20, 30),
+    label_size=12,
+    # figsize = (20, 30),
     title=f'CellTypist label harmonization: {dataset}',
     show=False,
     save=output_treeplot
@@ -27,8 +27,8 @@ celltypist.treeplot(
 celltypist.treeplot(
     alignment,
     order_dataset=True,
-    label_size=14,
-    figsize = (20, 30),
+    label_size=12,
+    # figsize = (20, 30),
     title=f'CellTypist label harmonization: {dataset}',
     show=False,
     save=output_treeplot_ordered
