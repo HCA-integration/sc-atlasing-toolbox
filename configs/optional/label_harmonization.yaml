@@ -4,7 +4,7 @@ defaults:
     - blood_harm_pca
     - blood_scvi_donor
     - blood_label_harm_scvi
-    - blood_label_harm_scimilarity
+    # - blood_label_harm_scimilarity
     # - blood_harm_pca_pct
     # - blood_label_harm_scvi_pct
     # - blood_label_harm_scimilarity_pct
@@ -28,6 +28,7 @@ DATASETS:
       batch: study
       lineage: lineage
       highly_variable_genes:
+        n_top_genes: 4000
         subset: true
 
   blood_harm_pca:
