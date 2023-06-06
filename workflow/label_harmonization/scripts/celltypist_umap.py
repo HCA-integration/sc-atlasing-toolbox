@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import warnings
-
 warnings.filterwarnings("ignore", message="No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
+
+from utils.misc import remove_outliers
+
 
 kwargs = dict(
     frameon=False,
@@ -30,6 +32,12 @@ adata.obsm['X_umap'] = umap
 group_cols = ['group', 'reannotation']
 adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
 
+
+# remove outliers
+adata = remove_outliers(adata, 'max')
+adata = remove_outliers(adata, 'min')
+
+# plot
 sc.pl.umap(adata, color='group')
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
 

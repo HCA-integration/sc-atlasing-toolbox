@@ -1,5 +1,16 @@
+import numpy as np
 import pandas as pd
 import typing
+
+
+def remove_outliers(adata, extrema='max', factor=10):
+    umap = adata.obsm['X_umap']
+    if extrema == 'max':
+        abs_values = np.abs(umap.max(axis=1))
+    elif extrema == 'min':
+        abs_values = np.abs(umap.min(axis=1))
+    outlier_mask = abs_values < factor * abs_values.mean()
+    return adata[outlier_mask]
 
 
 def all_but(_list, is_not):
