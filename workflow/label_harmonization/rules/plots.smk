@@ -65,7 +65,7 @@ rule dotplot:
         kwargs=dict(
             use_raw=False,
             standard_scale='var',
-            dendrogram=False,
+            # dendrogram=True,
             swap_axes=False,
         )
     resources:

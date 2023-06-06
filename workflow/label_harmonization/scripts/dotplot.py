@@ -7,10 +7,11 @@ import scanpy as sc
 
 def filter_markers(markers, _keys):
     if isinstance(markers, dict):
-        return {
+        markers = {
             k: [g for g in _keys if g in v]
             for k, v in markers.items()
         }
+        return {k: l for k, l in markers.items() if len(l) > 0}
     elif isinstance(markers, list):
         return [g for g in markers if g in _keys]
     else:
