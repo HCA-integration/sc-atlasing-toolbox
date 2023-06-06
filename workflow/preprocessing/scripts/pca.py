@@ -26,6 +26,8 @@ if adata.n_obs == 0:
 if scale:
     logging.info('Scale data...')
     sc.pp.scale(adata, max_value=10, zero_center=True)
+else:
+    adata.X = sparse.csr_matrix(adata.X)
 
 logging.info('PCA...')
 sc.pp.pca(adata, use_highly_variable=True)
@@ -38,5 +40,4 @@ if 'preprocessing' not in adata.uns:
 adata.uns['preprocessing']['scaled'] = scale
 
 logging.info(f'Write to "{output_file}"...')
-adata.X = sparse.csr_matrix(adata.X)
 adata.write(output_file, compression='lzf')
