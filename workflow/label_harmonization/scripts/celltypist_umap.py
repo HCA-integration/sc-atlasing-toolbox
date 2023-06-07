@@ -38,6 +38,7 @@ adata = remove_outliers(adata, 'max')
 adata = remove_outliers(adata, 'min')
 
 # plot
+sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.umap(adata, color='group')
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
 
@@ -49,6 +50,7 @@ for group in adata.obs['group'].unique():
         groups=adata[adata.obs['group'] == group].obs['reannotation'].unique(),
         color='reannotation_tmp',
         title=f'Group: {group}',
+        palette=sc.pl.palettes.default_20 if adata.obs['reannotation_tmp'].nunique() <= 20 else sc.pl.palettes.default_102,
     )
     plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)
     del adata.obs['reannotation_tmp']
