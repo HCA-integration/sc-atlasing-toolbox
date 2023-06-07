@@ -3,7 +3,7 @@ ORGANS:
     marker_genes:
       "Pan-immune": [ "CD44" ]
       "T": [ "CD3D","CD4","CD8A" ]
-      "Naive T": [ "CCR7","LEF1","CD27","SELL" ]
+      "Naive T": [ "CCR7","LEF1","CD27" ]  # "SELL"
       "Memory": [ "IL7R","GZMK" ]
       "Cytotoxic": [ "GZMH", "GZMA", "GZMB", "PRF1" ]
       "G/D T": [ "TRGV9", "TRDV2" ]
