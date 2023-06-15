@@ -3,12 +3,12 @@ images: test/images
 
 resources:
   cpu:
-    partition: cpu_p
-    qos: icb
+    partition: cpu
+    qos: normal
     gpu: 0
   gpu:
-    partition: gpu_p
-    qos: gpu
+    partition: gpu
+    qos: normal
     gpu: 1
 
 
@@ -31,10 +31,34 @@ DATASETS:
           - lineage
   test_celltypist:
     input:
-      label_harmonization: test/input/preprocessing/test/neighbors.h5ad
+      label_harmonization: test/input/preprocessing/test/pca.h5ad
     label_harmonization:
+      plot_colors:
+        - phase
+        - bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
+      organ: blood
       celltypist:
-        use_rep: 'X_pca'
+        use_rep: X_pca
+        use_pct: false
+  test_celltypist_pct:
+    input:
+      label_harmonization: test/input/preprocessing/test/pca.h5ad
+    label_harmonization:
+      plot_colors: bulk_labels
+      dataset_key: phase
+      author_label_key: bulk_labels
+      organ: blood
+      celltypist:
+        use_rep: X_pca
         use_pct: true
+
+ORGANS:
+  blood:
+    marker_genes:
+      - ITGB2
+      - HES4
+      - CD14
+      - SSU72
+      - S100B

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import gc
 
@@ -5,12 +6,14 @@ import pandas as pd
 import scanpy as sc
 import anndata
 
-from utils import CELLxGENE_VARS
+from utils import SCHEMAS
 
+
+logging.basicConfig(level=logging.INFO)
 
 def read_adata(file):
     ad = anndata.read_zarr(file)
-    ad.var = ad.var[CELLxGENE_VARS]
+    ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
     del ad.uns
     del ad.layers
@@ -22,6 +25,7 @@ def read_adata(file):
 dataset = snakemake.params.dataset
 files = snakemake.input
 out_file = snakemake.output.zarr
+merge_strategy = snakemake.params.merge_strategy
 
 if len(files) == 1:
     in_file = Path(files[0])
@@ -34,33 +38,39 @@ if len(files) == 1:
         new_file = out_dir / f.name
         new_file.symlink_to(f.resolve())
 else:
-    print(f'Read first file {files[0]}...')
+    logging.info(f'Read first file {files[0]}...')
     adata = read_adata(files[0])
     print(adata)
 
     for file in files[1:]:
-        print(f'Read {file}...')
+        logging.info(f'Read {file}...')
         _adata = read_adata(file)
         print(_adata)
 
-        print('Concatenate...')
+        if _adata.n_obs == 0:
+            logging.info('skip concatenation...')
+            continue
+
+        logging.info('Concatenate...')
         # merge genes
         var_map = pd.merge(
             adata.var,
             _adata.var,
-            how='outer',
-            on=['feature_id'] + CELLxGENE_VARS
+            how=merge_strategy,
+            on=['feature_id'] + SCHEMAS['CELLxGENE_VARS']
         )
         var_map = var_map[~var_map.index.duplicated()]
 
         # merge adata
         adata = sc.concat([adata, _adata], join='outer')
+        adata = adata[:, var_map.index]
         adata.var = var_map.loc[adata.var_names]
 
         del _adata
         gc.collect()
 
-    organ = adata.obs['organ'].unique()[0]
+    organ = adata.obs['organ'].unique()
+    assert not len(organ) > 1
     adata.uns['dataset'] = dataset
     adata.uns['organ'] = organ
     adata.uns['meta'] = {'dataset': dataset, 'organ': organ}
@@ -69,5 +79,5 @@ else:
 
     assert 'feature_name' in adata.var
 
-    print('Write...')
+    logging.info('Write...')
     adata.write_zarr(out_file)

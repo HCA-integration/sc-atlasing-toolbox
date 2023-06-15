@@ -52,16 +52,25 @@ use rule * from common as common_ *
 
 
 rule download:
+    """
+    Download files
+    TODO: better warning message
+    """
     output:
-        h5ad=out_dir / 'download/{dataset}.h5ad'
-    run:
-        url = get_url(dataset_df,wildcards)
-        shell("wget -O {output} '{url}'")
+        h5ad=out_dir / 'download' / '{dataset}.h5ad'
+    params:
+        dataset_df=dataset_df
+    conda:
+        '../../envs/scanpy.yaml'
+    script:
+        'scripts/download.py'
 
-
+datasets_to_download = dataset_df[
+    dataset_df['url'].apply(lambda x: not Path(x).is_file())
+]['dataset']
 rule download_all:
     input:
-        expand(rules.download.output,dataset=dataset_df['dataset'])  # TODO: filter for only non-file URL entries
+        expand(rules.download.output, dataset=datasets_to_download)
 
 
 def get_h5ad(wildcards):
@@ -73,7 +82,8 @@ def get_h5ad(wildcards):
 
 rule metadata:
     input:
-        h5ad=get_h5ad
+        h5ad=get_h5ad,
+        schema=config["schema_file"]
     params:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df,columns=all_but(dataset_df.columns,'subset'),wildcards=wildcards)
@@ -108,7 +118,8 @@ rule merge_study:
     output:
         zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
     params:
-        dataset=lambda wildcards: wildcards.study
+        dataset=lambda wildcards: wildcards.study,
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
@@ -158,7 +169,8 @@ rule merge_organ:
     output:
         zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
-        dataset=lambda wildcards: wildcards.organ
+        dataset=lambda wildcards: wildcards.organ,
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -180,7 +192,8 @@ rule merge_organ_filter:
     output:
         zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
-        dataset=lambda wildcards: wildcards.organ
+        dataset=lambda wildcards: wildcards.organ,
+        merge_strategy='outer'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -202,7 +215,8 @@ rule merge_subset:
     output:
         zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
-        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}'
+        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),

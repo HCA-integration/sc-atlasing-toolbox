@@ -2,9 +2,12 @@ defaults:
   datasets:
     - blood_benchmark
     - blood_harm_pca
-    # - blood_scvi
     - blood_scvi_donor
     - blood_label_harm_scvi
+    # - blood_label_harm_scimilarity
+    # - blood_harm_pca_pct
+    # - blood_label_harm_scvi_pct
+    # - blood_label_harm_scimilarity_pct
     # - blood_coarse
 
 DATASETS:
@@ -20,37 +23,53 @@ DATASETS:
           - cell_type
           - harmonized_label
           - lineage
-    batch: study
-    lineage: lineage
+    preprocessing:
+      scale: true
+      batch: study
+      lineage: lineage
+      highly_variable_genes:
+        n_top_genes: 4000
+        subset: true
 
   blood_harm_pca:
     input:
-      label_harmonization: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+      label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
     label_harmonization:
+      organ: blood
+      plot_colors:
+        - study
+        - lineage
+        - harmonized_label
+        - disease
+        - sex
+        - institution
+        - self_reported_ethnicity
       dataset_key: study
       author_label_key: author_annotation
       celltypist:
-        use_rep: 'X_pca'
+        use_rep: X_pca
+        use_pct: false
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
+
+  blood_harm_pca_pct:
+    input:
+      label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
+    label_harmonization:
+      organ: blood
+      plot_colors: study
+      dataset_key: study
+      author_label_key: author_annotation
+      subsample: 0.3
+      celltypist:
+        use_rep: X_pca
         use_pct: true
         minimum_unique_percents: [0.5, 0.6, 0.7]
         minimum_divide_percents: [0.1, 0.15]
 
-  blood_scvi:
-    input:
-      integration: data/out/preprocessing/blood_benchmark/neighbors.h5ad
-    batch: study
-    lineage: None
-    label: harmonized_label
-    integration:
-      scvi:
-        n_hidden: 128
-        dispersion: gene
-        max_epochs: 5
-        use_observed_lib_size: true
-
   blood_scvi_donor:
     input:
-      integration: data/out/preprocessing/blood_benchmark/neighbors.h5ad
+      integration: data/out/preprocessing/blood_benchmark/highly_variable_genes.h5ad
     batch: donor
     lineage: 
     label: harmonized_label
@@ -64,16 +83,78 @@ DATASETS:
   blood_label_harm_scvi:
     input:
       label_harmonization:
-        # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
         data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
     label_harmonization:
+      organ: blood
+      plot_colors:
+        - study
+        - lineage
+        - harmonized_label
+        - disease
+        - sex
+        - institution
+        - self_reported_ethnicity
       dataset_key: study
       author_label_key: author_annotation
       celltypist:
-        use_rep: 'X_emb'
+        use_rep: X_emb
+        use_pct: false
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
+
+  blood_label_harm_scvi_pct:
+    input:
+      label_harmonization:
+        # data/out/integration/dataset~blood_scvi/method~scvi/batch~study,label~cell_type,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~study/adata.h5ad
+        data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
+    label_harmonization:
+      organ: blood
+      plot_colors: study
+      dataset_key: study
+      author_label_key: author_annotation
+      subsample: 0.3
+      force_scale: true
+      celltypist:
+        use_rep: X_emb
         use_pct: true
-        minimum_unique_percents: [0.5, 0.6, 0.7]
-        minimum_divide_percents: [0.1, 0.15]
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
+
+  blood_label_harm_scimilarity:
+    input:
+      label_harmonization: data/input/scimilarity/blood-public-embedded.h5ad 
+    label_harmonization:
+      organ: blood
+      plot_colors:
+        - study
+        - disease
+        - sex
+        - institution
+        - self_reported_ethnicity
+      dataset_key: study
+      author_label_key: author_annotation
+      celltypist:
+        use_rep: X_triplet
+        use_pct: false
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
+
+
+  blood_label_harm_scimilarity_pct:
+    input:
+      label_harmonization: data/input/scimilarity/blood-public-embedded.h5ad 
+    label_harmonization:
+      organ: blood
+      plot_colors: study
+      dataset_key: study
+      author_label_key: author_annotation
+      subsample: 0.1
+      force_scale: true
+      celltypist:
+        use_rep: X_triplet
+        use_pct: true
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
 
   blood_coarse:
     input:

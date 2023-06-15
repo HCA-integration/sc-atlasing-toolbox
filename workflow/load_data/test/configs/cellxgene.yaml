@@ -1,6 +1,7 @@
 output_dir: test/out
-dataset_meta: test/datasets.tsv
-dcp_metadata: test/dcp_metadata.tsv
+dataset_meta: test/configs/dataset_info/cellxgene.tsv
+dcp_metadata: test/configs/dataset_info/dcp_metadata.tsv
+schema_file: test/data/schema_mapping.tsv
 images: test/images
 
 filter_per_organ:
