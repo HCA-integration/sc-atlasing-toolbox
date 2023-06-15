@@ -32,8 +32,9 @@ rule celltypist_plots:
     input:
         model=rules.celltypist.output.model,
     output:
-        treeplot=image_dir / '{dataset}' / 'celltypist--treeplot.pdf',
-        heatmap=image_dir / '{dataset}' / 'celltypist--heatmap.pdf',
+        treeplot=image_dir / '{dataset}' / 'celltypist--treeplot.png',
+        treeplot_ordered=image_dir / '{dataset}' / 'celltypist--treeplot_ordered.png',
+        heatmap=image_dir / '{dataset}' / 'celltypist--heatmap.png',
         # sankeyplot=out_dir / 'celltypist' / '{dataset}_sankeyplot.pdf',
     params:
         coarse_cell_type=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'author_label_key']),

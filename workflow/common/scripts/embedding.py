@@ -28,5 +28,5 @@ except:
 
 # plot embedding
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
-sc.pl.embedding(adata, **params, show=False)
+sc.pl.embedding(adata, show=False, **params)
 plt.savefig(output_file, bbox_inches='tight', dpi=200)

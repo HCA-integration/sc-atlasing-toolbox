@@ -38,6 +38,27 @@ DATASETS:
         - bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
+      organ: blood
       celltypist:
         use_rep: X_pca
         use_pct: false
+  test_celltypist_pct:
+    input:
+      label_harmonization: test/input/preprocessing/test/pca.h5ad
+    label_harmonization:
+      plot_colors: bulk_labels
+      dataset_key: phase
+      author_label_key: bulk_labels
+      organ: blood
+      celltypist:
+        use_rep: X_pca
+        use_pct: true
+
+ORGANS:
+  blood:
+    marker_genes:
+      - ITGB2
+      - HES4
+      - CD14
+      - SSU72
+      - S100B
