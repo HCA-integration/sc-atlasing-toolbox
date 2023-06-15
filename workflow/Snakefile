@@ -26,6 +26,7 @@ envvars:
 # Import modules
 module common:
     snakefile: "common/Snakefile"
+    config: config
 
 module load_data:
     snakefile: "load_data/Snakefile"

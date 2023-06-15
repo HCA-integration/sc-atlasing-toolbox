@@ -118,7 +118,8 @@ rule merge_study:
     output:
         zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
     params:
-        dataset=lambda wildcards: wildcards.study
+        dataset=lambda wildcards: wildcards.study,
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
@@ -168,7 +169,8 @@ rule merge_organ:
     output:
         zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
-        dataset=lambda wildcards: wildcards.organ
+        dataset=lambda wildcards: wildcards.organ,
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -190,7 +192,8 @@ rule merge_organ_filter:
     output:
         zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
-        dataset=lambda wildcards: wildcards.organ
+        dataset=lambda wildcards: wildcards.organ,
+        merge_strategy='outer'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -212,7 +215,8 @@ rule merge_subset:
     output:
         zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
-        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}'
+        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
+        merge_strategy='inner'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),

@@ -5,4 +5,4 @@ WORKDIR=$(dirname $(dirname $0))
 cd $WORKDIR
 
 #--snakefile $WORKDIR/Snakefile
-snakemake --use-conda $@
+snakemake --configfile test/config.yaml --use-conda $@
