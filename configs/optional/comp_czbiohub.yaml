@@ -9,7 +9,7 @@ resources:
     partition: cpu
     qos: normal
     gpu: 0
-    mem_mb: 800000
+    mem_mb: 500000
   gpu:
     partition: gpu
     qos: normal

@@ -11,4 +11,4 @@ dependencies:
   - plotly
   - pip
   - pip:
-    - git+https://github.com/mumichae/celltypist.git@CONTRO
+    - celltypist==1.5.1

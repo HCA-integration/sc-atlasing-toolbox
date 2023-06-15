@@ -16,3 +16,7 @@ rule test_embedding:
 
 rule test_umap:
     input: expand(rules.umap.output,filename='test/data/pbmc68k'),
+
+
+rule test_dotplot:
+    input: expand(rules.dotplot.output,filename='test/data/pbmc68k'),

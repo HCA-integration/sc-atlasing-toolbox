@@ -1,5 +1,25 @@
 from utils.wildcards import wildcards_to_str
+from utils.misc import ifelse
 
+
+rule dotplot:
+    input: anndata='{filename}.h5ad'
+    output:
+        plot='{filename}_dotplot.png'
+    params:
+        var_names=[
+            'TNFRSF4', 'SSU72', 'PARK7', 'RBP7', 'SRM',
+            'MAD2L2', 'AGTRAP', 'TNFRSF1B', 'EFHD2'
+        ],
+        groupby='louvain',
+        use_raw=False,
+        standard_scale='var',
+        dendrogram=False,
+        swap_axes=False,
+    conda:
+        '../envs/scanpy.yaml'
+    script:
+        '../scripts/dotplot.py'
 
 rule embedding:
     input:
@@ -19,12 +39,16 @@ rule umap:
     input:
         anndata='{filename}.h5ad'
     output:
-        plot='{filename}_umap.png'
+        plot='{filename}_umap.png',
+        coordinates='{filename}_coordinates.npy',
     params:
         color='bulk_labels',
         use_rep='X_pca',
     conda:
-        '../envs/scanpy_rapids.yaml'
+        ifelse(
+            'os' not in config.keys() or config['os'] == 'm1',
+            _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
+        )
     script:
         '../scripts/umap.py'
 
