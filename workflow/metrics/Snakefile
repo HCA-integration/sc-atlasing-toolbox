@@ -78,8 +78,8 @@ paramspace = Paramspace(
 wildcard_constraints:
     dataset='\w+',
     method='\w+',
-    batch='\w+',
-    label='\w+',
+    batch='((?![/]).)*',
+    label='((?![/]).)*',
     hyperparams='((?![/]).)*',
     lineage_key='((?![/]).)*',
     lineage_specific='((?![/]).)*',
