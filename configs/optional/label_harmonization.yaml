@@ -70,15 +70,16 @@ DATASETS:
   blood_scvi_donor:
     input:
       integration: data/out/preprocessing/blood_benchmark/highly_variable_genes.h5ad
-    batch: donor
-    lineage: 
-    label: harmonized_label
     integration:
-      scvi:
-        n_hidden: 128
-        dispersion: gene
-        max_epochs: 5
-        use_observed_lib_size: true
+      batch: donor
+      lineage: 
+      label: harmonized_label
+      methods:
+        scvi:
+          n_hidden: 128
+          dispersion: gene
+          max_epochs: 5
+          use_observed_lib_size: true
 
   blood_label_harm_scvi:
     input:

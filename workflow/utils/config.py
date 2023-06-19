@@ -46,6 +46,63 @@ def set_defaults(config, modules=None, warn=True):
     return config
 
 
+def get_params_from_config(
+        config,
+        module_name,
+        config_params,
+        wildcard_names,
+        defaults,
+        explode_by=None,
+        config_keys=None,
+        warn=True,
+):
+    """
+    Collect wildcards and parameters from an configuration instance (e.g. dataset) for a given module.
+    This function assumes that the keys of the given config keys are the different instances that contain specific parameters for different modules.
+
+    :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
+    :param module_name: Name of the module to extract the config from
+    :param config_params: List of parameters for each config entry of a module
+        e.g. ['integration', 'label', 'batch']
+    :param wildcard_names: names of wildcards to be extracted.
+        Must map to config keys, and prepended by a wildcard name for the config entries
+        e.g. ['dataset', 'method', 'label', 'batch']
+    :param explode_by: column to explode by, expecting list entry for that column
+    :param config_keys: list of entries to subset the config by., otherwise use all keys
+    :return: dataframe with wildcard mapping. Wildcard names in columns and wildcard values as entries
+    """
+    if not config:
+        return pd.DataFrame(columns=[*wildcard_names])
+
+    # set default config keys
+    if config_keys is None:
+        config_keys = config.keys()
+
+    # collect entries for dataframe
+    records = [
+        (
+            key,
+            *[
+                _get_or_default_from_config(
+                    config=config[key],
+                    defaults=defaults[module_name],
+                    key=module_name,
+                    value=param,
+                    update=True,
+                    warn=warn,
+                    )
+                for param in config_params
+            ]
+        )
+        for key in config_keys
+    ]
+    df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
+    if explode_by is not None:
+        explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
+        for column in explode_by:
+            df = df.explode(column)
+    return df.reset_index(drop=True)
+
 def get_wildcards_from_config(
         config,
         config_params,
@@ -54,6 +111,7 @@ def get_wildcards_from_config(
         config_keys=None,
 ):
     """
+    Deprecated
 
     :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
     :param config_params: list oxf parameters for each config entry
@@ -110,9 +168,10 @@ def _get_or_default_from_config(
 
     if value in config[key]:
         entry = config[key][value]
-        if update and isinstance(entry, dict) and value in defaults:
+        if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, dict) for x in entry.values()):
             entry.update(defaults[value])
         return entry
+
     try:
         assert value in defaults.keys()
     except AssertionError:
@@ -122,7 +181,7 @@ def _get_or_default_from_config(
     return defaults[value]
 
 
-def get_hyperparams(config, module='integration'):
+def get_hyperparams(config, module_name='integration', methods_key='methods'):
     """
     Get hyperparameters specific to each method of a module for all datasets
 
@@ -130,9 +189,13 @@ def get_hyperparams(config, module='integration'):
     :param module: name of module, key must be present for each dataset entry
     :return: DataFrame with hyperparameters
     """
+    # set empty methods defaults if missing
+    if methods_key not in config['defaults'][module_name]:
+        config['defaults'][module_name][methods_key] = {}
+
     records = []
     for dataset, dataset_dict in config['DATASETS'].items():
-        for method, hyperparams_dict in dataset_dict[module].items():
+        for method, hyperparams_dict in dataset_dict[module_name][methods_key].items():
             if isinstance(hyperparams_dict, dict):
                 for rec in expand_dict(hyperparams_dict):
                     records.append((dataset, method, *rec))

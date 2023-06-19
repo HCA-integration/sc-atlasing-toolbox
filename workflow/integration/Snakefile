@@ -7,15 +7,15 @@ import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults, get_datasets_for_module
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module
 from utils.wildcards import get_params, wildcards_to_str
 
 
 def get_input(wildcards):
-  assert wildcards.dataset in config['DATASETS'].keys()
-  assert 'input' in config['DATASETS'][wildcards.dataset].keys()
-  assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
-  return config['DATASETS'][wildcards.dataset]['input']['integration']
+    assert wildcards.dataset in config['DATASETS'].keys()
+    assert 'input' in config['DATASETS'][wildcards.dataset].keys()
+    assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
+    return config['DATASETS'][wildcards.dataset]['input']['integration']
 
 
 module_name = 'integration'
@@ -29,11 +29,12 @@ envvars:
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
-parameters = get_wildcards_from_config(
+parameters = get_params_from_config(
     config=get_datasets_for_module(config, module_name),
-    # config_keys=config['defaults']['datasets'],
-    config_params=[module_name, 'label', 'batch', 'lineage'],
+    module_name=module_name,
+    config_params=['methods', 'label', 'batch', 'lineage'],
     wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
+    defaults=config['defaults'],
     explode_by=['method', 'lineage_key', 'batch'],
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
@@ -45,7 +46,8 @@ parameters = parameters[~parameters['method'].isnull()]
 # parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], np.nan)
 # parameters = unique_dataframe(parameters)
 
-parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
+hyperparams_df = get_hyperparams(config,module_name=module_name)
+parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage_key']
 
 paramspace = Paramspace(

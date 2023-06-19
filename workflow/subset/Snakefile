@@ -3,7 +3,7 @@ Data Subsetting for benchmark
 """
 from pathlib import Path
 
-from utils.config import set_defaults, get_datasets_for_module, get_resource, get_wildcards_from_config
+from utils.config import set_defaults, get_datasets_for_module, get_resource, get_params_from_config
 from utils.wildcards import get_params
 
 
@@ -11,11 +11,12 @@ module_name = 'subset'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
 
-parameters = get_wildcards_from_config(
+parameters = get_params_from_config(
     config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
+    module_name=module_name,
     config_params=['sample', 'label'],  # TODO: add strategy
     wildcard_names=['dataset', 'sample', 'label'],
+    defaults=config['defaults']
 )
 
 
