@@ -1,0 +1,79 @@
+defaults:
+  integration:
+    batch: batch_donor_dataset
+    label: cell.type
+    methods:
+      unintegrated:
+      bbknn:
+      harmony:
+      scgen:
+        max_epochs: 50
+        batch_size: 32
+        early_stopping: True
+        early_stopping_patience: 25
+      scvi:
+        n_hidden: 128
+        dispersion:
+          - gene
+          #- gene-batch
+          #- gene-label
+          #- gene-cell
+        max_epochs: 10
+        use_observed_lib_size: true
+      scanvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 10
+        use_observed_lib_size: true
+      scpoli:
+        supervised: true
+        early_stopping_kwargs:
+          early_stopping_metric: val_prototype_loss
+          mode: min
+          threshold: 0
+          patience: 20
+          reduce_lr: true
+          lr_patience: 13
+          lr_factor: 0.1
+  metrics:
+    batch: batch_donor_dataset
+    label: cell.type
+    methods:
+      - nmi_leiden_y
+      - ari_leiden_y
+      - asw_label_y
+      - asw_batch_y
+      - cell_cycle
+      # - clisi_y
+      # - ilisi_y
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_asw_y
+      # - isolated_label_f1
+      - pcr
+      # - kbet_y
+  datasets:
+    - retina_sc_1k
+  subset:
+    n_cells: 500000
+
+
+DATASETS:
+  retina_sc_1k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sc_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.1K/adata_pre.h5ad
+  retina_sc_3k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sc_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.3K/adata_pre.h5ad
+  retina_sn_1k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sn_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.1K/adata_pre.h5ad
+  retina_sn_3k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sn_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.3K/adata_pre.h5ad
+  retina_sn_sc_1k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sn+sc_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.1K/adata_pre.h5ad
+  retina_sn_sc_3k:
+    input:
+      integration: data/input/retina_integration/retina_all_cells_all_sn+sc_batch_donor_dataset_cell.type_2022/prepare/unscaled/HVG.3K/adata_pre.h5ad
