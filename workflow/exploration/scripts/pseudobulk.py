@@ -85,10 +85,8 @@ if adata.obs['bulk_by'].nunique() < 3:
 
 # remove empty columns
 colors = [c for c in colors if not adata_bulk.obs[c].isna().all()]
-# remove colors if too many entries
-colors = [c for c in colors if adata_bulk.obs[c].nunique() <= 64]
-# also remove empty columns
-colors = [c for c in colors if adata_bulk.obs[c].nunique() > 0]
+# remove colors if zero or too many entries
+colors = [c for c in colors if 0 < adata_bulk.obs[c].nunique() <= 64]
 # abort if none will be plotted
 if len(colors) == 0:
     plt.savefig(output_pca_1_2)
