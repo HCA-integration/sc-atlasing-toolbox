@@ -87,11 +87,9 @@ if adata.obs['bulk_by'].nunique() < 3:
 colors = [c for c in colors if not adata_bulk.obs[c].isna().all()]
 # remove colors if zero or too many entries
 colors = [c for c in colors if 0 < adata_bulk.obs[c].nunique() <= 64]
-# abort if none will be plotted
+# plot without colors, if no colors are available
 if len(colors) == 0:
-    plt.savefig(output_pca_1_2)
-    plt.savefig(output_pca_2_3)
-    exit(0)
+    colors = None
 
 n_rows = len(colors)
 height = np.max([7, n_rows * 0.2 * 7])
