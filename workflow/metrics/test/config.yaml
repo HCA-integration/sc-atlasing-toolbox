@@ -74,6 +74,8 @@ DATASETS:
         - sddgj/wildcard_name=wildcard_value.h5ad
         - ...
     integration:
+      raw_counts: counts
+      norm_counts: X
       label: bulk_labels
       batch:
         - louvain
@@ -100,6 +102,8 @@ DATASETS:
     input:
       integration: test/data/pbmc68k.h5ad
     integration:
+      raw_counts: counts
+      norm_counts: X
       label: bulk_labels
       batch: phase
       methods:
@@ -108,9 +112,14 @@ DATASETS:
   scib_metrics:
     input:
       integration: test/data/pbmc68k.h5ad
+    integration:
+      raw_counts: counts
+      norm_counts: X
+      label: bulk_labels
+      batch: batch
     metrics:
       label: bulk_labels
-      batch: batch  
+      batch: batch
       methods:
         - ari
         - ari_leiden_y

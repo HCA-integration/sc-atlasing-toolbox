@@ -12,6 +12,12 @@ def read_anndata(file):
     return adata
 
 
+def select_layer(adata, layer):  # sourcery skip: assign-if-exp, reintroduce-else
+    if layer == 'X' or layer is None:
+        return adata.X
+    return adata.layers[layer]
+
+
 def process(adata, adata_raw, output_type):
     """
     Process data based on output type.

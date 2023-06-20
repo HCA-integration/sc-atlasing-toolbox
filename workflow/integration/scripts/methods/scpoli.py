@@ -2,7 +2,7 @@ from scipy.sparse import csr_matrix
 import torch
 from scarches.models.scpoli import scPoli
 
-from utils import add_metadata, read_anndata, process
+from utils import add_metadata, read_anndata, process, select_layer
 
 input_file = snakemake.input.h5ad
 output_file = snakemake.output.h5ad
@@ -25,14 +25,15 @@ adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 # prepare anndata for training
 adata = adata_raw.copy()
-adata.X = adata.layers['counts'].todense()
+adata.X = select_layer(adata, params['raw_counts']).todense()
 
 # train model
 model = scPoli(
     adata=adata,
-    condition_key=wildcards.batch,
+    condition_keys=wildcards.batch,
     cell_type_keys=cell_type_keys,
-    embedding_dim=3,
+    embedding_dims=5,
+    recon_loss='nb',
 )
 
 model.train(
@@ -46,7 +47,7 @@ model.save(output_model, overwrite=True)
 
 # prepare output adata
 adata = adata_raw.copy()
-adata.obsm["X_emb"] = csr_matrix(model.get_latent())
+adata.obsm["X_emb"] = model.get_latent(adata, mean=True)
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 

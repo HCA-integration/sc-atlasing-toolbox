@@ -1,5 +1,7 @@
 defaults:
   integration:
+    norm_counts: normcounts
+    raw_counts: X
     methods:
       unintegrated:
       bbknn:

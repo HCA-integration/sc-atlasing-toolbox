@@ -34,6 +34,8 @@ rule run_per_lineage:
     benchmark:
         out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/benchmark.tsv'
     params:
+        norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
+        raw_counts=lambda wildcards: get_params(wildcards,parameters,'raw_counts'),
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
         env=lambda wildcards: get_params(wildcards,parameters,'env'),

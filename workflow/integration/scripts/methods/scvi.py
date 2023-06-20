@@ -1,6 +1,6 @@
 import scvi
 
-from utils import add_metadata, read_anndata, process
+from utils import add_metadata, read_anndata, process, select_layer
 
 input_adata = snakemake.input.h5ad
 output_adata = snakemake.output.h5ad
@@ -22,6 +22,7 @@ model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
 adata = adata_raw.copy()
+adata.layers['counts'] = select_layer(adata, params['raw_counts'])
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",

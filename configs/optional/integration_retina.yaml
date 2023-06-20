@@ -2,6 +2,8 @@ defaults:
   integration:
     batch: batch_donor_dataset
     label: cell.type
+    norm_counts: X
+    raw_counts: counts
     methods:
       unintegrated:
       bbknn:
@@ -43,7 +45,7 @@ defaults:
       - ari_leiden_y
       - asw_label_y
       - asw_batch_y
-      - cell_cycle
+      # - cell_cycle
       # - clisi_y
       # - ilisi_y
       - graph_connectivity

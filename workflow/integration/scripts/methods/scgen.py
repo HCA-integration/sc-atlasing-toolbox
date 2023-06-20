@@ -1,6 +1,6 @@
 import scgen
 
-from utils import add_metadata, read_anndata, process
+from utils import add_metadata, read_anndata, process, select_layer
 
 input_file = snakemake.input.h5ad
 output_file = snakemake.output.h5ad
@@ -16,6 +16,7 @@ adata_raw = read_anndata(input_file)
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 adata = adata_raw.copy()
+adata.X = select_layer(adata, params['raw_counts'])
 scgen.SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)
 
 # train model
