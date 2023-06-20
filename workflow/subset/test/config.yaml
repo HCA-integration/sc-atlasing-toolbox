@@ -10,17 +10,17 @@ DATASETS:
   blood:
     input:
       subset: test/input/load_data/merged/organ/blood.zarr
-    batch: study
-    sample: sample
-    label: cell_type
     subset:
+      batch: study
+      sample: sample
+      label: cell_type
       n_cells: 1000
       per_sample: 50
   test:
     input:
       subset: ../../data/pbmc68k.h5ad
-    sample: phase
-    label: bulk_labels
     subset:
+      sample: phase
+      label: bulk_labels
       n_cells: 1000
       per_sample: 50
