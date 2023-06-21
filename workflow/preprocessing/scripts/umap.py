@@ -26,7 +26,13 @@ except:
     sc.tl.umap(adata)
 # adata.obsm['X_umap'] = sparse.csr_matrix(adata.obsm['X_umap'])
 
+# remove redundant data
+del adata.uns['neighbors']
+del adata.obsp['distances']
+del adata.obsp['connectivities']
+
+
 logging.info(f'Write to {output_file}...')
-if not adata.uns['preprocessing']['scaled']:
-    adata.X = sparse.csr_matrix(adata.X)
+# if not adata.uns['preprocessing']['scaled']:
+#     adata.X = sparse.csr_matrix(adata.X)
 adata.write(output_file, compression='lzf')

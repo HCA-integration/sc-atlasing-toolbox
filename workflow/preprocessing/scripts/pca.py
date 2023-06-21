@@ -39,5 +39,9 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['scaled'] = scale
 
+# remove counts
+del adata.X
+del adata.layers
+
 logging.info(f'Write to "{output_file}"...')
 adata.write(output_file, compression='lzf')

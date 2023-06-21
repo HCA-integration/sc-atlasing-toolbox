@@ -21,7 +21,7 @@ if adata.n_obs == 0:
     adata.write(output_file)
     exit(0)
 
-adata.layers['counts'] = adata.X.copy()
+# adata.layers['counts'] = adata.X.copy()
 
 logging.info('normalize_total...')
 sc.pp.normalize_total(adata)
@@ -29,7 +29,7 @@ logging.info('log-transform...')
 sc.pp.log1p(adata)
 adata.X = sparse.csr_matrix(adata.X)
 
-adata.layers['normcounts'] = adata.X
+# adata.layers['normcounts'] = adata.X
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
