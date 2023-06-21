@@ -49,11 +49,7 @@ rule pca:
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
-    conda:
-        ifelse(
-            'os' not in config.keys() or config['os'] == 'm1',
-            _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
-        )
+    conda: '../envs/scanpy.yaml'
     # shadow: 'minimal'
     script:
         '../scripts/pca.py'

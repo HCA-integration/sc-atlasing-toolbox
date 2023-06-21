@@ -28,7 +28,8 @@ if adata.n_obs == 0:
 try:
     logging.info('Compute kNN graph...')
     sc.pp.neighbors(adata, method='rapids', **args)
-except:
+except Exception as e:
+    logging.info(e)
     logging.info('Rapids failed, defaulting to UMAP implementation')
     sc.pp.neighbors(adata, **args)
 

@@ -9,11 +9,11 @@ def collect_files(wildcards):
         'highly_variable_genes': rules.highly_variable_genes.output.h5ad,
         'pca': rules.pca.output.h5ad,
         'neighbors': rules.neighbors.output.h5ad,
-        'umap': rules.umap.output.h5ad,
+        # 'umap': rules.umap.output.h5ad,
     }
     assembly_config = get_for_dataset(config, wildcards.dataset, [module_name, 'assemble'])
     if assembly_config is None:
-        return {'counts': get_for_dataset(config, wildcards.dataset, ['input', module_name])}
+        return file_dict
     return {k: v for k, v in file_dict.items() if k in assembly_config}
 
 

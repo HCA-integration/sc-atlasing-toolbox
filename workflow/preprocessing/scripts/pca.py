@@ -31,7 +31,6 @@ else:
 
 logging.info('PCA...')
 sc.pp.pca(adata, use_highly_variable=True)
-adata.obsm['X_pca'] = sparse.csr_matrix(adata.obsm['X_pca'])
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
