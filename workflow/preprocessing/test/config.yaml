@@ -27,6 +27,15 @@ filter_per_study:
       disease:
         - influenza
 
+defaults:
+  preprocessing:
+    assemble:
+      - counts
+      - normalize
+      - highly_variable_genes
+      - pca
+      - neighbors
+
 DATASETS:
   blood:
     input:
@@ -42,13 +51,7 @@ DATASETS:
       neighbors:
         n_neighbors: 15
         n_pcs: 50
-      assemble:
-        - counts
-        - normalize
-        - highly_variable_genes
-        - pca
-        - neighbors
-
+  
   test:
     input:
       preprocessing: test/input/pbmc68k.h5ad
@@ -58,6 +61,3 @@ DATASETS:
       assemble:
         - counts
         - normalize
-        - highly_variable_genes
-        - pca
-        - neighbors
