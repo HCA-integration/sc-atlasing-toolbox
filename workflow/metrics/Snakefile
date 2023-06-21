@@ -13,10 +13,12 @@ from utils.config import get_hyperparams, get_resource, get_params_from_config, 
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'FALSE'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 envvars:
    'LD_LIBRARY_PATH',
-   'XLA_PYTHON_CLIENT_PREALLOCATE'
+   'XLA_PYTHON_CLIENT_PREALLOCATE',
+   'TF_CPP_MIN_LOG_LEVEL',
 
 module integration:
     snakefile: "../integration/Snakefile"

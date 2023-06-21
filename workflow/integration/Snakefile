@@ -24,9 +24,11 @@ out_dir = Path(config['output_dir']) / module_name
 image_dir = Path(config['images']) / module_name
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 envvars:
-   'LD_LIBRARY_PATH'
+   'LD_LIBRARY_PATH',
+   'TF_CPP_MIN_LOG_LEVEL',
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
@@ -39,6 +41,7 @@ parameters = get_params_from_config(
     explode_by=['method', 'lineage_key', 'batch'],
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
+
 
 # subset to datasets that have module defined
 parameters = parameters[~parameters['method'].isnull()]
