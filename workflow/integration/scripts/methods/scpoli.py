@@ -1,4 +1,4 @@
-from scipy.sparse import csr_matrix
+from scipy.sparse import issparse
 import torch
 from scarches.models.scpoli import scPoli
 
@@ -19,13 +19,14 @@ print('GPU available:', torch.cuda.is_available())
 # scvi.settings.batch_size = 32
 
 adata_raw = read_anndata(input_file)
+adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 
 # subset to HVGs
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 # prepare anndata for training
 adata = adata_raw.copy()
-adata.X = select_layer(adata, params['raw_counts']).todense()
+adata.X = select_layer(adata, params['raw_counts'], force_dense=True)
 
 # train model
 model = scPoli(
@@ -51,4 +52,4 @@ adata.obsm["X_emb"] = model.get_latent(adata, mean=True)
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write(output_file)
+adata.write(output_file, compression='lzf')

@@ -11,6 +11,7 @@ params = snakemake.params
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 
 adata_raw = read_anndata(input_file)
+adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 
 # subset to HVGs
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]

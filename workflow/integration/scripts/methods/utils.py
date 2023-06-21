@@ -1,21 +1,27 @@
 import anndata as ad
 import scanpy as sc
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
 
 # TODO: put in common location
 def read_anndata(file):
-    if file.endswith('.zarr'):
-        adata = ad.read_zarr(file)
-    else:
-        adata = sc.read(file)
-    return adata
+    return ad.read_zarr(file) if file.endswith('.zarr') else sc.read(file)
 
 
-def select_layer(adata, layer):  # sourcery skip: assign-if-exp, reintroduce-else
-    if layer == 'X' or layer is None:
-        return adata.X
-    return adata.layers[layer]
+def select_layer(adata, layer, force_dense=False, force_sparse=False):
+    # select matrix
+    matrix = adata.X  if layer == 'X' or layer is None else adata.layers[layer]
+
+    if force_dense and force_sparse:
+        raise ValueError('force_dense and force_sparse cannot both be True')
+
+    if force_dense:
+        return matrix.todense() if issparse(matrix) else matrix
+
+    if force_sparse:
+        return matrix if issparse(matrix) else csr_matrix(matrix)
+
+    return matrix
 
 
 def process(adata, adata_raw, output_type):
@@ -37,6 +43,10 @@ def process(adata, adata_raw, output_type):
     # # save kNN graph of unintegrated object
     # adata.obsp['connectivities_uni'] = adata_raw.obsp['connectivities']
     # adata.obsp['distances_uni'] = adata_raw.obsp['distances']
+
+    # ensure matrix is sparse
+    adata.X = csr_matrix(adata.X)
+    adata_raw.X = csr_matrix(adata_raw.X)
 
     if 'full' in output_type:
         adata.layers['corrected_counts'] = adata.X.copy()
