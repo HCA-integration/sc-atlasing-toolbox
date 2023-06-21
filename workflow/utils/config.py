@@ -6,7 +6,7 @@ import pandas as pd
 from .misc import expand_dict
 
 
-def set_defaults(config, modules=None, warn=True):
+def set_defaults(config, modules=None, warn=False):
     if 'defaults' not in config:
         config['defaults'] = {}
     if 'datasets' not in config['defaults']:
@@ -26,10 +26,10 @@ def set_defaults(config, modules=None, warn=True):
         # update entries for each dataset
         for dataset in config['DATASETS'].keys():
             entry = _get_or_default_from_config(
-                config['DATASETS'],
-                config['defaults'],
-                dataset,
-                module,
+                config=config['DATASETS'],
+                defaults=config['defaults'],
+                key=dataset,
+                value=module,
                 return_missing={},
                 warn=warn,
                 update=True,
@@ -158,7 +158,7 @@ def _get_or_default_from_config(
     :param value: points to entry within key
     :param return_missing: return value if no defaults for key, value
     :param warn: warn if no defaults are defined for key, value
-    :param update: wether to update existing entry with defaults, otherwise only return existsing entry
+    :param update: wether to update existing entry with defaults, otherwise only return existing entry
     :return:
     """
     if key not in config.keys():
@@ -168,8 +168,10 @@ def _get_or_default_from_config(
 
     if value in config[key]:
         entry = config[key][value]
-        if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, dict) for x in entry.values()):
+        if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
+            # don't update lists or nested dictionaries
             entry.update(defaults[value])
+
         return entry
 
     try:
@@ -189,16 +191,21 @@ def get_hyperparams(config, module_name='integration', methods_key='methods'):
     :param module: name of module, key must be present for each dataset entry
     :return: DataFrame with hyperparameters
     """
-    # set empty methods defaults if missing
-    if methods_key not in config['defaults'][module_name]:
-        config['defaults'][module_name][methods_key] = {}
 
     records = []
     for dataset, dataset_dict in config['DATASETS'].items():
-        for method, hyperparams_dict in dataset_dict[module_name][methods_key].items():
+        methods_config = _get_or_default_from_config(
+            config=dataset_dict,
+            defaults=config['defaults'][module_name],
+            key=module_name,
+            value=methods_key,
+        )
+        for method, hyperparams_dict in methods_config.items():
             if isinstance(hyperparams_dict, dict):
-                for rec in expand_dict(hyperparams_dict):
-                    records.append((dataset, method, *rec))
+                records.extend(
+                    (dataset, method, *rec)
+                    for rec in expand_dict(hyperparams_dict)
+                )
             else:
                 records.append((dataset, method, str(hyperparams_dict), hyperparams_dict))
     return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
@@ -230,20 +237,29 @@ def get_datasets_for_module(config, module):
     """
     Collect dataset names e.g. for wildcard expansion from config["DATASETS"] for a given module
     If the "DATASETS" key is not available in the config, warn and return an empty list
-    A dataset is valid if it contains an input file for the given module.
+    A dataset is valid if it contains an input file for the given module and it is included in config['defaults']['datasets'].
+    If config['defaults']['datasets'] is not defined, all datasets are valid.
 
     :param config: config dictionary passed from Snakemake
     :param module: name of module to collect valid datasets for
-    :return: sbuset of config["DATASETS"] that is valid for module
+    :return: subset of config["DATASETS"] that is valid for module
     """
+    try:
+        dataset_config = {
+            k: v for k, v in config['DATASETS'].items()
+            if k in config['defaults']['datasets']
+        }
+    except KeyError:
+        dataset_config = config['DATASETS']
+
     if 'DATASETS' not in config:
         warnings.warn('No datasets specified in config, cannot collect any datasets')
         return {}
     return {
-        dataset: entry for dataset, entry in config['DATASETS'].items()
+        dataset: entry for dataset, entry in dataset_config.items()
         if 'input' in config['DATASETS'][dataset]
-           and config['DATASETS'][dataset]['input'] is not None
-           and module in config['DATASETS'][dataset]['input']
+           and dataset_config[dataset]['input'] is not None
+           and module in dataset_config[dataset]['input']
     }
 
 
