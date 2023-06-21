@@ -22,6 +22,11 @@ if adata.n_obs == 0:
     exit(0)
 
 # adata.layers['counts'] = adata.X.copy()
+# select counts layer
+logging.info('Select layer...')
+layer = snakemake.params['raw_counts']
+layer = 'X' if layer is None else layer
+adata.X = adata.X if layer == 'X' or layer is None else adata.layers[layer]
 
 logging.info('normalize_total...')
 sc.pp.normalize_total(adata)

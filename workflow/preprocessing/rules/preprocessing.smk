@@ -8,6 +8,8 @@ rule normalize:
         lambda w: get_for_dataset(config, w.dataset, ['input', module_name])
     output:
         h5ad=out_dir / '{dataset}' / 'normalized.h5ad'
+    params:
+        raw_counts=lambda w: get_for_dataset(config, w.dataset, [module_name, 'raw_counts']),
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
