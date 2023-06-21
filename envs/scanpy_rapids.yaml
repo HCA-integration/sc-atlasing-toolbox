@@ -6,9 +6,9 @@ channels:
 dependencies:
   - python
   - scanpy
-  # - numpy<1.24
-  - mudata
-  - matplotlib
+  - numpy<1.24
+  - matplotlib<3.7
+  - muon
   - cudatoolkit
   - rapidsai::cuml
   - rapidsai::cudf
