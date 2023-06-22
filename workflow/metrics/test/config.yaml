@@ -62,7 +62,7 @@ defaults:
         early_stopping: True
         early_stopping_patience: 25
   datasets:
-    - test
+    # - test
     - scib_metrics
 
 
@@ -117,6 +117,8 @@ DATASETS:
       norm_counts: X
       label: bulk_labels
       batch: batch
+      methods:
+        unintegrated:
     metrics:
       label: bulk_labels
       batch: batch
