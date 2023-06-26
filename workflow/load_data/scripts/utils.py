@@ -105,6 +105,10 @@ def get_url(dataset_df, wildcards):
     Check if URL exists
     """
     url = get_from_dataset(dataset_df, 'dataset', wildcards.dataset, 'url').iloc[0]
+    if url in ['', 'nan', None]:
+        raise ValueError(
+            f'File location is empty for {wildcards.dataset}. Make sure it is either a valid URL or one of the valid schemas'
+        )
     #if not isinstance(url, str):
     if url in ['CxG', 'CELLxGENE', 'cxg', 'cellxgene']:
         collection_id = get_from_dataset(dataset_df, 'dataset', wildcards.dataset, 'collection_id').iloc[0]

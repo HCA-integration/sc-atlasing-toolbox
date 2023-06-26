@@ -30,6 +30,10 @@ markers = {
 print({k: len(v) for k, v in markers.items()})
 
 fig, axes = plt.subplots(nrows=2, ncols=1)
+# check if author labels column is empty
+if adata.obs[author_label].nunique() == 0:
+    raise ValueError(f'No author labels in adata["{author_label}"]')
+
 sc.pl.dotplot(
     adata,
     markers,
@@ -40,6 +44,7 @@ sc.pl.dotplot(
     show=False,
     ax=axes[0],
 )
+
 sc.pl.dotplot(
     adata,
     markers,

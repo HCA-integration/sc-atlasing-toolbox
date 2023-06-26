@@ -30,7 +30,7 @@ stats = {
     'n_donors': [obs_per_donor.shape[0]],
     'median_cells_per_sample': [obs_per_sample.median()],
     'median_cells_per_donor': [obs_per_donor.median()],
-    'disease_states': [','.join(adata.obs['disease'].unique().to_list())],
+    'disease_states': [','.join(adata.obs['disease'].value_counts().index.tolist())],
 }
 
 pd.DataFrame(stats).to_csv(output, sep='\t', index=False)
