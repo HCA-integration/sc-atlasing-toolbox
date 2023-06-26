@@ -5,7 +5,9 @@ DCP Metadata
 if 'dcp_metadata' in config.keys():
     metadata_df = pd.read_csv(config['dcp_metadata'],sep='\t')
 else:
-    metadata_df = pd.DataFrame(columns=['study', 'url'])
+    metadata_df = pd.DataFrame(columns=['study', 'filename'])
+
+studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
 
 # rule download_dcp_tsv:
 #     output:
@@ -87,14 +89,14 @@ rule obs_merge_dcp:
 
 rule obs_merge_dcp_all:
     input:
-        expand(rules.obs_merge_dcp.output,study=metadata_df['study'])
+        expand(rules.obs_merge_dcp.output,study=studies)
 
 
 def collect_stats(wildcards):
     return {
         study:
         expand(rules.obs_merge_dcp.output.stats,study=study)[0]
-        for study in metadata_df['study']
+        for study in studies
     }
 
 
