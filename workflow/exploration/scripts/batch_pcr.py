@@ -55,21 +55,20 @@ for covariate in list(covariates):
         print('skip')
         covariates.remove(covariate)
         continue
-    # X = adata.X
-    # if isinstance(adata.X, (sparse.csr_matrix, sparse.csc_matrix)):
-    #     X = X.todense()
+    if isinstance(adata.X, (sparse.csr_matrix, sparse.csc_matrix)):
+        adata.X = adata.X.todense()
     # pcr = scib_metrics.utils.principal_component_regression(
-    #     X,
+    #     adata.X,
     #     covariate=adata.obs[covariate],
     #     categorical=True,
     #     n_components=50
     # )
-    try:
-        pcr = scib.me.pcr(adata, covariate=covariate, recompute_pca=False, verbose=False)
-    except Exception as e:
-        print(e)
-        covariates.remove(covariate)
-        continue
+    # try:
+    pcr = scib.me.pcr(adata, covariate=covariate, recompute_pca=False, verbose=False)
+    #except Exception as e:
+    #    print(e)
+    #    covariates.remove(covariate)
+    #    continue
     pcr_scores.append(pcr)
     print(pcr)
 
