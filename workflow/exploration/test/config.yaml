@@ -1,5 +1,6 @@
 output_dir: test/out
 dataset_meta: test/datasets.tsv
+schema_file: test/data/schema_mapping.tsv
 images: test/images
 
 filter_per_organ:

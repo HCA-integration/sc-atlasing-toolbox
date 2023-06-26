@@ -1,3 +1,8 @@
+def get_markers(wildcards):
+    organ = dataset_df[dataset_df['study'] ==  wildcards.study]['organ'].tolist()[0]
+    return config['ORGANS'][organ]['marker_genes']
+
+
 rule marker_genes:
     input:
         zarr=rules.load_data_filter.output.zarr
@@ -5,7 +10,7 @@ rule marker_genes:
         png=out_dir / 'marker_genes' / '{study}.png',
     params:
         dataset=lambda wildcards: wildcards.study,
-        markers=lambda wildcards: config['ORGANS']['blood']['marker_genes']  # TODO: organ per dataset
+        markers=get_markers
     conda:
         '../envs/scanpy.yaml'
     resources:

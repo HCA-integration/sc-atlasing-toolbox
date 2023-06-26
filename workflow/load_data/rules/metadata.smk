@@ -2,7 +2,10 @@
 DCP Metadata
 """
 
-metadata_df = pd.read_csv(config['dcp_metadata'],sep='\t')
+if 'dcp_metadata' in config.keys():
+    metadata_df = pd.read_csv(config['dcp_metadata'],sep='\t')
+else:
+    metadata_df = pd.DataFrame(columns=['study', 'url'])
 
 # rule download_dcp_tsv:
 #     output:

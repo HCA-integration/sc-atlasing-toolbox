@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import anndata
 import scib
+import numpy as np
 
 try:
     from sklearnex import patch_sklearn
@@ -25,6 +26,10 @@ adata = read_anndata(input_file)
 obs = pd.read_table(input_metadata)
 
 adata.obs = obs
+
+# make sure the PCA embedding is an array
+if not isinstance(adata.obsm["X_pca"], np.ndarray):
+    adata.obsm["X_pca"] = adata.obsm["X_pca"].toarray()
 
 if adata.n_obs == 0:
     plt.savefig(output_barplot)
@@ -50,22 +55,27 @@ for covariate in perm_covariates:
 # PC regression for all covariates
 pcr_scores = []
 for covariate in list(covariates):
+    print(f'Covariate: {covariate}', end=' ')
     if adata.obs[covariate].nunique() == 1:
-        print(f'skip {covariate}')
+        print('skip')
         covariates.remove(covariate)
         continue
-    # X = adata.X
-    # if isinstance(adata.X, (sparse.csr_matrix, sparse.csc_matrix)):
-    #     X = X.todense()
+    if isinstance(adata.X, (sparse.csr_matrix, sparse.csc_matrix)):
+        adata.X = adata.X.todense()
     # pcr = scib_metrics.utils.principal_component_regression(
-    #     X,
+    #     adata.X,
     #     covariate=adata.obs[covariate],
     #     categorical=True,
     #     n_components=50
     # )
+    # try:
     pcr = scib.me.pcr(adata, covariate=covariate, recompute_pca=False, verbose=False)
+    #except Exception as e:
+    #    print(e)
+    #    covariates.remove(covariate)
+    #    continue
     pcr_scores.append(pcr)
-    print(covariate, pcr)
+    print(pcr)
 
 df = pd.DataFrame.from_dict(dict(covariate=covariates, pcr=pcr_scores))
 df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')
