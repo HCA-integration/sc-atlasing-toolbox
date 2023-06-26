@@ -13,7 +13,7 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - git+https://github.com/theislab/scarches.git
+    - scarches
     #- scvi-tools==0.12.1
     #- pytorch-lightning==1.3.8
     #- torchmetrics<0.5

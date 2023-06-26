@@ -23,7 +23,7 @@ use rule barplot from plots as integration_barplot with:
     input:
         tsv=rules.benchmark.output.benchmark
     output:
-        png=out_dir / 'plots' / '{metric}.png'
+        png=image_dir / 'benchmark' / '{metric}.png'
     group:
         'integration'
     params:
@@ -40,7 +40,8 @@ use rule umap from plots as integration_umap with:
     input:
         anndata=rules.run.output.h5ad
     output:
-        png=out_dir / paramspace.wildcard_pattern / '{method}_umap.png'
+        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
+        coordinates=out_dir / paramspace.wildcard_pattern / 'umap_coordinates.npy'
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
@@ -64,7 +65,8 @@ use rule umap from plots as integration_umap_lineage with:
     input:
         anndata=rules.run_per_lineage.output.h5ad
     output:
-        png=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '{method}-{lineage}_umap.png'
+        plot=image_dir / 'umap' / 'lineage~{lineage}' / f'{paramspace.wildcard_pattern}.png',
+        coordinates=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap_coordinates.npy'
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
@@ -82,7 +84,7 @@ def collect_umap_lineages(wildcards):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
     lineages = glob_wildcards(str(checkpoint_output / "{lineage}.h5ad")).lineage
     return [
-        expand(rules.integration_umap_lineage.output.png,lineage=lineage,**wildcards)
+        expand(rules.integration_umap_lineage.output.plot,lineage=lineage,**wildcards)
         for lineage in lineages
     ]
 

@@ -1,6 +1,6 @@
 import scvi
 
-from utils import add_metadata, read_anndata, process
+from utils import add_metadata, read_anndata, process, select_layer
 
 input_adata = snakemake.input.h5ad
 output_adata = snakemake.output.h5ad
@@ -9,6 +9,7 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 adata_raw = read_anndata(input_adata)
+adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 
 # subset to HVGs
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
@@ -23,6 +24,8 @@ train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
 # train SCVI
 adata = adata_raw.copy()
+adata.layers['counts'] = select_layer(adata, params['raw_counts'])
+
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",

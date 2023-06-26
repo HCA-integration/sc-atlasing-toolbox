@@ -6,7 +6,7 @@ import pandas as pd
 from .misc import expand_dict
 
 
-def set_defaults(config, modules=None, warn=True):
+def set_defaults(config, modules=None, warn=False):
     if 'defaults' not in config:
         config['defaults'] = {}
     if 'datasets' not in config['defaults']:
@@ -26,10 +26,10 @@ def set_defaults(config, modules=None, warn=True):
         # update entries for each dataset
         for dataset in config['DATASETS'].keys():
             entry = _get_or_default_from_config(
-                config['DATASETS'],
-                config['defaults'],
-                dataset,
-                module,
+                config=config['DATASETS'],
+                defaults=config['defaults'],
+                key=dataset,
+                value=module,
                 return_missing={},
                 warn=warn,
                 update=True,
@@ -46,6 +46,63 @@ def set_defaults(config, modules=None, warn=True):
     return config
 
 
+def get_params_from_config(
+        config,
+        module_name,
+        config_params,
+        wildcard_names,
+        defaults,
+        explode_by=None,
+        config_keys=None,
+        warn=True,
+):
+    """
+    Collect wildcards and parameters from an configuration instance (e.g. dataset) for a given module.
+    This function assumes that the keys of the given config keys are the different instances that contain specific parameters for different modules.
+
+    :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
+    :param module_name: Name of the module to extract the config from
+    :param config_params: List of parameters for each config entry of a module
+        e.g. ['integration', 'label', 'batch']
+    :param wildcard_names: names of wildcards to be extracted.
+        Must map to config keys, and prepended by a wildcard name for the config entries
+        e.g. ['dataset', 'method', 'label', 'batch']
+    :param explode_by: column to explode by, expecting list entry for that column
+    :param config_keys: list of entries to subset the config by., otherwise use all keys
+    :return: dataframe with wildcard mapping. Wildcard names in columns and wildcard values as entries
+    """
+    if not config:
+        return pd.DataFrame(columns=[*wildcard_names])
+
+    # set default config keys
+    if config_keys is None:
+        config_keys = config.keys()
+
+    # collect entries for dataframe
+    records = [
+        (
+            key,
+            *[
+                _get_or_default_from_config(
+                    config=config[key],
+                    defaults=defaults[module_name],
+                    key=module_name,
+                    value=param,
+                    update=True,
+                    warn=warn,
+                    )
+                for param in config_params
+            ]
+        )
+        for key in config_keys
+    ]
+    df = pd.DataFrame.from_records(records, columns=[*wildcard_names])
+    if explode_by is not None:
+        explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
+        for column in explode_by:
+            df = df.explode(column)
+    return df.reset_index(drop=True)
+
 def get_wildcards_from_config(
         config,
         config_params,
@@ -54,6 +111,7 @@ def get_wildcards_from_config(
         config_keys=None,
 ):
     """
+    Deprecated
 
     :param config: Part of the Snakemake config dictionary. The config_params must be contained per entry.
     :param config_params: list oxf parameters for each config entry
@@ -100,7 +158,7 @@ def _get_or_default_from_config(
     :param value: points to entry within key
     :param return_missing: return value if no defaults for key, value
     :param warn: warn if no defaults are defined for key, value
-    :param update: wether to update existing entry with defaults, otherwise only return existsing entry
+    :param update: wether to update existing entry with defaults, otherwise only return existing entry
     :return:
     """
     if key not in config.keys():
@@ -110,9 +168,12 @@ def _get_or_default_from_config(
 
     if value in config[key]:
         entry = config[key][value]
-        if update and isinstance(entry, dict) and value in defaults:
+        if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
+            # don't update lists or nested dictionaries
             entry.update(defaults[value])
+
         return entry
+
     try:
         assert value in defaults.keys()
     except AssertionError:
@@ -122,7 +183,7 @@ def _get_or_default_from_config(
     return defaults[value]
 
 
-def get_hyperparams(config, module='integration'):
+def get_hyperparams(config, module_name='integration', methods_key='methods'):
     """
     Get hyperparameters specific to each method of a module for all datasets
 
@@ -130,12 +191,21 @@ def get_hyperparams(config, module='integration'):
     :param module: name of module, key must be present for each dataset entry
     :return: DataFrame with hyperparameters
     """
+
     records = []
     for dataset, dataset_dict in config['DATASETS'].items():
-        for method, hyperparams_dict in dataset_dict[module].items():
+        methods_config = _get_or_default_from_config(
+            config=dataset_dict,
+            defaults=config['defaults'][module_name],
+            key=module_name,
+            value=methods_key,
+        )
+        for method, hyperparams_dict in methods_config.items():
             if isinstance(hyperparams_dict, dict):
-                for rec in expand_dict(hyperparams_dict):
-                    records.append((dataset, method, *rec))
+                records.extend(
+                    (dataset, method, *rec)
+                    for rec in expand_dict(hyperparams_dict)
+                )
             else:
                 records.append((dataset, method, str(hyperparams_dict), hyperparams_dict))
     return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
@@ -167,20 +237,29 @@ def get_datasets_for_module(config, module):
     """
     Collect dataset names e.g. for wildcard expansion from config["DATASETS"] for a given module
     If the "DATASETS" key is not available in the config, warn and return an empty list
-    A dataset is valid if it contains an input file for the given module.
+    A dataset is valid if it contains an input file for the given module and it is included in config['defaults']['datasets'].
+    If config['defaults']['datasets'] is not defined, all datasets are valid.
 
     :param config: config dictionary passed from Snakemake
     :param module: name of module to collect valid datasets for
-    :return: sbuset of config["DATASETS"] that is valid for module
+    :return: subset of config["DATASETS"] that is valid for module
     """
+    try:
+        dataset_config = {
+            k: v for k, v in config['DATASETS'].items()
+            if k in config['defaults']['datasets']
+        }
+    except KeyError:
+        dataset_config = config['DATASETS']
+
     if 'DATASETS' not in config:
         warnings.warn('No datasets specified in config, cannot collect any datasets')
         return {}
     return {
-        dataset: entry for dataset, entry in config['DATASETS'].items()
+        dataset: entry for dataset, entry in dataset_config.items()
         if 'input' in config['DATASETS'][dataset]
-           and config['DATASETS'][dataset]['input'] is not None
-           and module in config['DATASETS'][dataset]['input']
+           and dataset_config[dataset]['input'] is not None
+           and module in dataset_config[dataset]['input']
     }
 
 

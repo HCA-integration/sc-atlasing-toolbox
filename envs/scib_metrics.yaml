@@ -1,23 +1,30 @@
 name: scib_metrics
 channels:
+  - nvidia/label/cuda-11.4.1
   - conda-forge
   - bioconda
-  - nvidia
 dependencies:
   - python=3.9
   - scanpy=1.9
   - numpy<1.24
   - matplotlib<3.7
   - muon
-  - cudatoolkit
   - cuda-nvcc
-  - jax
-  - jaxlib
+  - cuda-toolkit=11.4
+  - cudnn=8.4.1.50
+  # - jax=0.4.6
+  # - jaxlib=0.4.6
+  - scvi-tools
   # - faiss-gpu
   - zarr
   - pip
   - pip:
-    - torch
-    - torchvision
-    - torchaudio
-    - git+https://github.com/YosefLab/scib-metrics.git
+    # requirements taken from https://github.com/google/jax/issues/13758#issuecomment-1384857047
+    - clu==0.0.6
+    - flax==0.6.3
+    - --find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+    - jax==0.3.25
+    - jaxlib==0.3.25+cuda11.cudnn82
+    - ml-collections==0.1.0
+    - optax==0.1.4
+    - scib-metrics

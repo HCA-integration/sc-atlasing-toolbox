@@ -31,13 +31,16 @@ else:
 
 logging.info('PCA...')
 sc.pp.pca(adata, use_highly_variable=True)
-adata.obsm['X_pca'] = sparse.csr_matrix(adata.obsm['X_pca'])
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['scaled'] = scale
+
+# remove counts
+del adata.X
+del adata.layers
 
 logging.info(f'Write to "{output_file}"...')
 adata.write(output_file, compression='lzf')

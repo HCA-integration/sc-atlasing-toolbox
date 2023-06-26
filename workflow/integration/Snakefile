@@ -7,36 +7,41 @@ import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_wildcards_from_config, set_defaults, get_datasets_for_module
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module
 from utils.wildcards import get_params, wildcards_to_str
 
 
 def get_input(wildcards):
-  assert wildcards.dataset in config['DATASETS'].keys()
-  assert 'input' in config['DATASETS'][wildcards.dataset].keys()
-  assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
-  return config['DATASETS'][wildcards.dataset]['input']['integration']
+    assert wildcards.dataset in config['DATASETS'].keys()
+    assert 'input' in config['DATASETS'][wildcards.dataset].keys()
+    assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
+    return config['DATASETS'][wildcards.dataset]['input']['integration']
 
 
 module_name = 'integration'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 envvars:
-   'LD_LIBRARY_PATH'
+   'LD_LIBRARY_PATH',
+   'TF_CPP_MIN_LOG_LEVEL',
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
-parameters = get_wildcards_from_config(
+parameters = get_params_from_config(
     config=get_datasets_for_module(config, module_name),
-    # config_keys=config['defaults']['datasets'],
-    config_params=[module_name, 'label', 'batch', 'lineage'],
-    wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key'],
+    module_name=module_name,
+    config_params=['methods', 'label', 'batch', 'lineage', 'norm_counts', 'raw_counts'],
+    wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key', 'norm_counts', 'raw_counts'],
+    defaults=config['defaults'],
     explode_by=['method', 'lineage_key', 'batch'],
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
+
 
 # subset to datasets that have module defined
 parameters = parameters[~parameters['method'].isnull()]
@@ -45,7 +50,8 @@ parameters = parameters[~parameters['method'].isnull()]
 # parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], np.nan)
 # parameters = unique_dataframe(parameters)
 
-parameters = parameters.merge(get_hyperparams(config,module='integration'),on=['dataset', 'method'],how='left')
+hyperparams_df = get_hyperparams(config,module_name=module_name)
+parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage_key']
 
 paramspace = Paramspace(
@@ -57,8 +63,8 @@ paramspace = Paramspace(
 wildcard_constraints:
     dataset='\w+',
     method='\w+',
-    batch='\w+',
-    label='\w+',
+    batch='((?![/]).)*',
+    label='((?![/]).)*',
     hyperparams='((?![/]).)*',
     lineage_key='((?![/]).)*',
 

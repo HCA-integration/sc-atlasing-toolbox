@@ -15,50 +15,52 @@ resources:
 
 defaults:
   metrics:
-    - nmi
-    - ari
-    - asw_label
-    - asw_batch
-    - cell_cycle
-    - clisi
-    - ilisi
-    - graph_connectivity
-    - isolated_label_asw
-    - isolated_label_f1
-    - pcr
+    methods:
+      - nmi
+      - ari
+      - asw_label
+      - asw_batch
+      - cell_cycle
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
+      - pcr
   integration:
-    unintegrated:
-    bbknn:
-    harmony:
-    scvi:
-      n_hidden: 128
-      dispersion:
-        - gene
-        - gene-batch
-        - gene-label
-        - gene-cell
-      max_epochs: 10
-      use_observed_lib_size: true
-    scanvi:
-      n_hidden: 128
-      dispersion: gene
-      max_epochs: 10
-      use_observed_lib_size: true
-    scpoli:
-      supervised: true
-      early_stopping_kwargs:
-        early_stopping_metric: val_prototype_loss
-        mode: min
-        threshold: 0
-        patience: 20
-        reduce_lr: true
-        lr_patience: 13
-        lr_factor: 0.1
-    scgen:
-      max_epochs: 50
-      batch_size: 32
-      early_stopping: True
-      early_stopping_patience: 25
+    methods:
+      unintegrated:
+      bbknn:
+      harmony:
+      scvi:
+        n_hidden: 128
+        dispersion:
+          - gene
+          - gene-batch
+          - gene-label
+          - gene-cell
+        max_epochs: 10
+        use_observed_lib_size: true
+      scanvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 10
+        use_observed_lib_size: true
+      scpoli:
+        supervised: true
+        early_stopping_kwargs:
+          early_stopping_metric: val_prototype_loss
+          mode: min
+          threshold: 0
+          patience: 20
+          reduce_lr: true
+          lr_patience: 13
+          lr_factor: 0.1
+      scgen:
+        max_epochs: 50
+        batch_size: 32
+        early_stopping: True
+        early_stopping_patience: 25
   datasets:
     # - test
     - scib_metrics
@@ -66,51 +68,76 @@ defaults:
 
 DATASETS:
   test:
-    label: bulk_labels
-    batch:
-      - louvain
-      - phase
-    lineage:
-      - batch
-      - 
     input:
       integration: test/data/pbmc68k.h5ad
+      metrics:
+        - sddgj/wildcard_name=wildcard_value.h5ad
+        - ...
     integration:
-      unintegrated:
+      raw_counts: counts
+      norm_counts: X
+      label: bulk_labels
+      batch:
+        - louvain
+        - phase
+      lineage:
+        - batch
+        -
+      methods:
+        unintegrated:
     metrics:
-      - nmi
-      - pcr
-      - asw_batch
+      label: bulk_labels
+      batch:
+        - louvain
+        - phase
+      lineage:
+        - batch
+        -
+      methods:
+        - nmi
+        - pcr
+        - asw_batch
   
   test_2:
-    label: bulk_labels
-    batch: phase
     input:
       integration: test/data/pbmc68k.h5ad
     integration:
-      unintegrated:
+      raw_counts: counts
+      norm_counts: X
+      label: bulk_labels
+      batch: phase
+      methods:
+        unintegrated:
   
   scib_metrics:
-    label: bulk_labels
-    batch: batch
     input:
       integration: test/data/pbmc68k.h5ad
+    integration:
+      raw_counts: counts
+      norm_counts: X
+      label: bulk_labels
+      batch: batch
+      methods:
+        unintegrated:
     metrics:
-      - ari
-      - ari_leiden_y
-      # - ari_kmeans_y
-      - nmi
-      - nmi_leiden_y
-      - nmi_kmeans_y
-      - asw_label
-      - asw_label_y
-      - asw_batch
-      - asw_batch_y
-      # - ilisi
-      - ilisi_y
-      # - clisi
-      - clisi_y
-      - isolated_label_asw_y
-      - kbet_y
-      - graph_connectivity_y
-      - pcr_y
+      label: bulk_labels
+      batch: batch
+      methods:
+        - ari
+        - ari_leiden_y
+        # - ari_kmeans_y
+        - nmi
+        - nmi_leiden_y
+        - nmi_kmeans_y
+        - asw_label
+        - asw_label_y
+        - asw_batch
+        - asw_batch_y
+        # - ilisi
+        - ilisi_y
+        # - clisi
+        - clisi_y
+        - isolated_label_asw_y
+        - kbet_y
+        - graph_connectivity_y
+        - pcr_y
