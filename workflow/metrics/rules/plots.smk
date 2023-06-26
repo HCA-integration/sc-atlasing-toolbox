@@ -139,7 +139,7 @@ rule funkyheatmap:
     conda:
         '../envs/funkyheatmap.yaml'
     singularity:
-        'ghcr.io/dynverse/funky_heatmap:latest'
+      'docker://ghcr.io/dynverse/funky_heatmap:latest'
     group:
         'metrics_plots'
     script:
