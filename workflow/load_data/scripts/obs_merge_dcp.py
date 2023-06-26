@@ -67,6 +67,6 @@ print(obs_df)
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
-intersect_df.loc[id_col,:][['intersection', 'cxg_donors', 'intersection_fraction']].to_csv(out_stats, sep='\t', index=False)
+intersect_df.loc[id_col,:][['intersection', 'cxg_donors', 'intersection_fraction']].to_csv(out_stats, sep='\t', index=True)
 # TODO: metadata column completeness
 # TODO: aggregatedness of donor ID
