@@ -1,3 +1,3 @@
-study	url
-Lee2020	https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp24&format=compact&filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%2295f07e6e-6a73-4e1b-a880-c83996b3aa5c%22%5D%7D%7D&objectKey=manifests%2F299a44b6-5af2-5995-9965-77f008c7a0ba.ad738b13-97cf-556d-a2f5-be3e4b6b062c.tsv
-SchulteSchrepping2020	https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp24&format=compact&filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22cd9d6360-ce38-4321-97df-f13c79e3cb84%22%5D%7D%7D&objectKey=manifests%2F9d7cdaff-e90f-50cd-8acb-a42872321851.ad738b13-97cf-556d-a2f5-be3e4b6b062c.tsv
+study	filename
+Lee2020	test/data/dcp_metadata/Lee2020.tsv
+SchulteSchrepping2020	test/data/dcp_metadata/SchulteSchrepping2020.tsv

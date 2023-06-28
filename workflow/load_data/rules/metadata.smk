@@ -5,20 +5,22 @@ DCP Metadata
 if 'dcp_metadata' in config.keys():
     metadata_df = pd.read_csv(config['dcp_metadata'],sep='\t')
 else:
-    metadata_df = pd.DataFrame(columns=['study', 'url'])
+    metadata_df = pd.DataFrame(columns=['study', 'filename'])
 
-rule download_dcp_tsv:
-    output:
-        tsv=out_dir / 'dcp_metadata' / '{study}' / 'dcp_metadata.tsv'
-    params:
-        url=lambda wildcards: metadata_df.query('study == @wildcards.study')['url'].values[0]
-    run:
-        shell("wget -O {output} '{params.url}'")
+studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
+
+# rule download_dcp_tsv:
+#     output:
+#         tsv=out_dir / 'dcp_metadata' / '{study}' / 'dcp_metadata.tsv'
+#     params:
+#         url=lambda wildcards: metadata_df.query('study == @wildcards.study')['url'].values[0]
+#     run:
+#         shell("wget -O {output} '{params.url}'")
 
 
-rule download_dcp_all:
-    input:
-        expand(rules.download_dcp_tsv.output,study=dataset_df['study'])
+# rule download_dcp_all:
+#     input:
+#         expand(rules.download_dcp_tsv.output,study=dataset_df['study'])
 
 
 rule save_obs:
@@ -35,7 +37,8 @@ rule save_obs:
 rule obs_merge_dcp:
     input:
         obs=rules.save_obs.output.obs,
-        dcp=rules.download_dcp_tsv.output.tsv,
+        dcp=lambda wildcards: metadata_df.query('study == @wildcards.study')['filename'].values[0],
+        # dcp=rules.download_dcp_tsv.output.tsv,
     output:
         obs=out_dir / 'dcp_metadata' / '{study}' / 'obs_merged.tsv',
         stats=out_dir / 'dcp_metadata' / '{study}' / 'stats.tsv'
@@ -50,7 +53,8 @@ rule obs_merge_dcp:
             'sequencing_input.biomaterial_core.biomaterial_id',
             'specimen_from_organism.uuid',
             'specimen_from_organism.biomaterial_core.biomaterial_id',
-            'specimen_from_organism.biomaterial_core.biomaterial_name'
+            'specimen_from_organism.biomaterial_core.biomaterial_name',
+            'donor_id',
         ],
         metadata_cols=[
             'sequencing_protocol.instrument_manufacturer_model',
@@ -85,14 +89,14 @@ rule obs_merge_dcp:
 
 rule obs_merge_dcp_all:
     input:
-        expand(rules.obs_merge_dcp.output,study=metadata_df['study'])
+        expand(rules.obs_merge_dcp.output,study=studies)
 
 
 def collect_stats(wildcards):
     return {
         study:
         expand(rules.obs_merge_dcp.output.stats,study=study)[0]
-        for study in metadata_df['study']
+        for study in studies
     }
 
 
