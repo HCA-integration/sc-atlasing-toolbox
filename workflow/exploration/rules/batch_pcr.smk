@@ -7,7 +7,7 @@ for study in dataset_df['study']:
             'preprocessing': expand(rules.load_data_filter.output.zarr,study=study)[0],
         },
         'preprocessing': {
-            'raw_counts': 'counts',
+            'raw_counts': 'X',
             'sample': 'sample',
             # 'label': 'cell_type',
             'batch': 'dataset',
@@ -22,10 +22,22 @@ module preprocessing:
 
 use rule * from preprocessing as preprocessing_*
 
+def get_batch_pcr_input(wildcards):
+    adata_file = expand(rules.preprocessing_pca.output,dataset=wildcards.study)[0]
+    try:
+        # try if metadata DCP file exists
+        rules.load_data_obs_merge_dcp.input.dcp(wildcards)
+        return dict(
+            zarr=adata_file,
+            metadata=rules.load_data_obs_merge_dcp.output.obs,
+        )
+    except IndexError as e:
+        return dict(zarr=adata_file)
+
+
 rule batch_pcr:
     input:
-        zarr=lambda wildcards: expand(rules.preprocessing_pca.output,dataset=wildcards.study)[0],
-        metadata=rules.load_data_obs_merge_dcp.output.obs,
+        unpack(get_batch_pcr_input)
     output:
         barplot=out_dir / 'batch_pcr' / '{study}.png',
     params:
