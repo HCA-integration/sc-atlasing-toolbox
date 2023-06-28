@@ -68,6 +68,9 @@ rule batch_pcr:
         ],
         permutation_covariates=[
             'assay',
+            'sample',
+            'batch',
+            'donor',
             'sequencing_protocol.method.ontology',
             'library_preparation_protocol.cell_barcode.barcode_read',
             'library_preparation_protocol.cell_barcode.barcode_offset',
