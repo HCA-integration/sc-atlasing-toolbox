@@ -4,6 +4,8 @@ schema_file: test/data/schema_mapping.tsv
 dcp_metadata: test/dcp_metadata.tsv
 images: test/images
 
+os: intel
+
 filter_per_organ:
   blood:
     cells_per_sample:
