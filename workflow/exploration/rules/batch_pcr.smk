@@ -6,14 +6,21 @@ for study in dataset_df['study']:
         'input': {
             'preprocessing': expand(rules.load_data_filter.output.zarr,study=study)[0],
         },
-        'sample': 'sample',
-        'label': 'cell_type',
-        'batch': 'dataset',
-        'lineage' : None,
+        'preprocessing': {
+            'raw_counts': 'counts',
+            'sample': 'sample',
+            # 'label': 'cell_type',
+            'batch': 'dataset',
+            'lineage' : None,
+        },
     }
 
 
-resource_mode = 'cpu'
+module preprocessing:
+    snakefile: "../../preprocessing/Snakefile"
+    config: config
+
+use rule * from preprocessing as preprocessing_*
 
 rule batch_pcr:
     input:
@@ -69,10 +76,10 @@ rule batch_pcr:
     conda:
         '../envs/scib_accel.yaml' if 'os' in config.keys() and config['os'] == 'intel' else '../envs/scib.yaml'
     resources:
-        partition=lambda w: get_resource(config,profile=resource_mode,resource_key='partition'),
-        mem_mb=get_resource(config,profile=resource_mode,resource_key='mem_mb'),
-        qos= lambda w: get_resource(config,profile=resource_mode,resource_key='qos'),
-        gpu=lambda w: get_resource(config,profile=resource_mode,resource_key='gpu'),
+        partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        qos= lambda w: get_resource(config,profile='cpu',resource_key='qos'),
+        gpu=lambda w: get_resource(config,profile='cpu',resource_key='gpu'),
     script:
         '../scripts/batch_pcr.py'
 

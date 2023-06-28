@@ -34,13 +34,6 @@ module load_data:
 use rule * from load_data as load_data_ *
 
 
-module preprocessing:
-    snakefile: "../preprocessing/Snakefile"
-    config: config
-
-use rule * from preprocessing as preprocessing_*
-
-
 include: 'rules/summary.smk'
 include: 'rules/pseudobulk.smk'
 include: 'rules/marker_genes.smk'
