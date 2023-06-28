@@ -7,7 +7,6 @@ cluster:
     --mem={resources.mem_mb}
     --job-name=smk-{rule}-{wildcards}
     --output=logs/{rule}/%j-{rule}-{wildcards}.out
-    --error=logs/{rule}/%j-{rule}-{wildcards}.err
     --parsable
 default-resources:
   - partition=cpu
