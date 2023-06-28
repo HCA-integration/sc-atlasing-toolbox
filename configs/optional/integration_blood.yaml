@@ -8,7 +8,7 @@ defaults:
       harmony:
       scgen:
         max_epochs: 50
-        batch_size: 32d
+        batch_size: 32
         early_stopping: True
         early_stopping_patience: 25
       scvi:
@@ -42,40 +42,70 @@ defaults:
       - asw_label_y
       - asw_batch_y
       - cell_cycle
-      # - clisi_y
-      # - ilisi_y
+      - clisi_y
+      - ilisi_y
       - graph_connectivity
       - isolated_label_asw
       - isolated_label_asw_y
-      # - isolated_label_f1
+      - isolated_label_f1_y
       - pcr
-      # - kbet_y
+      - kbet_y
   datasets:
-    - blood_benchmark
-    - blood_lineage_specific
+    - blood_benchmark_test
+    # - blood_lineage_specific
     # - blood_benchmark_donor
     # - test
-  subset:
-    n_cells: 500000
-
+  # subset:
+  #   n_cells: 1000000
+  preprocessing:
+    raw_counts: X
+    batch: study
+    lineage: lineage
+    assemble:
+      - counts
+      - normalize
+      - pca
+      - neighbors
 
 DATASETS:
-  blood_benchmark:
+
+  blood_benchmark_test:
     input:
-      label_harmonization: data/out/load_data/merged/subset/blood-benchmark.zarr
-      subset: label_harmonization
+      subset: data/out/relabel/blood_benchmark.h5ad
       preprocessing: subset
       integration: preprocessing
-    label_harmonization:
+    subset:
+      label: harmonized_label
+      sample: sample
+      n_cells: 1000
+    preprocessing:
+      raw_counts: X
+      assemble:
+        - counts
+        - normalize
+        - pca
+        - neighbors
+    integration:
+      label: harmonized_label
+      batch: study
+    metrics:
+      label: harmonized_label
+      batch: study
+
+  blood_benchmark:
+    input:
+      relabel: data/out/load_data/merged/subset/blood-benchmark.zarr
+      # subset: relabel
+      preprocessing: relabel
+      integration: preprocessing
+    relabel:
       mapping:
         file: data/input/label_harmonization/mapping_coarse.tsv
         order:
           - cell_type
           - harmonized_label
           - lineage
-    subset:
-      label: harmonized_label
-      sample: sample
+          - lineage_coarse
     integration:
       label: harmonized_label
       batch: study
@@ -106,6 +136,7 @@ DATASETS:
     #     dispersion: gene
     #     max_epochs: 10
     #     use_observed_lib_size: true
+
   test:
     input:
       subset: data/pbmc68k.h5ad
