@@ -64,6 +64,7 @@ rule batch_pcr:
             'enrichment_protocol.method.ontology',
             'cell_suspension.biomaterial_core.biomaterial_id'
         ],
+        n_permute=5,
         sample_key='sample'
     conda:
         '../envs/scib_accel.yaml' if 'os' in config.keys() and config['os'] == 'intel' else '../envs/scib.yaml'
