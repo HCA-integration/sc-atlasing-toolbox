@@ -7,7 +7,7 @@ rule marker_genes:
     input:
         zarr=rules.load_data_filter.output.zarr
     output:
-        png=out_dir / 'marker_genes' / '{study}.png',
+        png=images_dir / 'marker_genes' / '{study}.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         markers=get_markers

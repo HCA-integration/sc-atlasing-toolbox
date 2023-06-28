@@ -13,7 +13,7 @@ rule barcode_matching:
     input:
         tsv=rules.get_barcodes.output.tsv
     output:
-        png=out_dir / 'barcode_matching' / '{dataset}.png',
+        png=images_dir / 'barcode_matching' / '{dataset}.png',
     params:
         min_size=5
     conda:

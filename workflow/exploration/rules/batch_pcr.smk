@@ -39,7 +39,7 @@ rule batch_pcr:
     input:
         unpack(get_batch_pcr_input)
     output:
-        barplot=out_dir / 'batch_pcr' / '{study}.png',
+        barplot=images_dir / 'batch_pcr' / '{study}.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         covariates=[

@@ -2,9 +2,9 @@ rule pseudobulk:
     input:
         zarr=rules.load_data_filter.output.zarr
     output:
-        pca_1_2=out_dir / 'pseudobulk' / '{study}_1_2.png',
-        pca_2_3=out_dir / 'pseudobulk' / '{study}_2_3.png',
-        pca_scree=out_dir / 'pseudobulk' / '{study}_scree.png',
+        pca_1_2=images_dir / 'pseudobulk' / '{study}_1_2.png',
+        pca_2_3=images_dir / 'pseudobulk' / '{study}_2_3.png',
+        pca_scree=images_dir / 'pseudobulk' / '{study}_scree.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         bulk_by='sample',
@@ -37,9 +37,9 @@ use rule pseudobulk as pseudobulk_organ with:
             'development_stage'
         ],
     output:
-        pca_1_2=out_dir / 'pseudobulk' / 'organ' / '{organ}_1_2.png',
-        pca_2_3=out_dir / 'pseudobulk' / 'organ' / '{organ}_2_3.png',
-        pca_scree=out_dir / 'pseudobulk' / 'organ' / '{organ}_scree.png',
+        pca_1_2=images_dir / 'pseudobulk' / 'organ' / '{organ}_1_2.png',
+        pca_2_3=images_dir / 'pseudobulk' / 'organ' / '{organ}_2_3.png',
+        pca_scree=images_dir / 'pseudobulk' / 'organ' / '{organ}_scree.png',
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb')
 
