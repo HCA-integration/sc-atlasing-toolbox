@@ -20,7 +20,7 @@ def covariate_invalid(adata, covariate):
     return (covariate not in adata.obs.columns) or (adata.obs[covariate][adata.obs[covariate].notna()].nunique() < 2)
 
 input_file = snakemake.input.zarr
-input_metadata = snakemake.input.metadata if 'metadata' in snakemake.input else None
+input_metadata = snakemake.input.metadata if 'metadata' in snakemake.input.keys() else None
 output_barplot = snakemake.output.barplot
 dataset = snakemake.params.dataset
 covariates = snakemake.params['covariates']
