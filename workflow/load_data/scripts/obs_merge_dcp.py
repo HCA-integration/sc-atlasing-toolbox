@@ -62,8 +62,12 @@ obs_df = obs_df.merge(
     right_on=id_col,
     how='left'
 )
-print(obs_df)
 
+# make unique per barcode
+obs_df = obs_df.drop_duplicates(subset=["barcode"])
+
+# save obs
+print(obs_df)
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
