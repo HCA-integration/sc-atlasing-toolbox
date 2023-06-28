@@ -11,6 +11,7 @@ from utils.config import get_resource
 module_name = 'exploration'
 dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 out_dir = Path(config['output_dir']) / module_name
+images_dir = Path(config['images']) / module_name
 
 wildcard_constraints:
     dataset='\w+',
@@ -32,13 +33,6 @@ module load_data:
     config: config
 
 use rule * from load_data as load_data_ *
-
-
-module preprocessing:
-    snakefile: "../preprocessing/Snakefile"
-    config: config
-
-use rule * from preprocessing as preprocessing_*
 
 
 include: 'rules/summary.smk'

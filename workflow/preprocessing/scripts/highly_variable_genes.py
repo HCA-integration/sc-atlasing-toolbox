@@ -48,6 +48,9 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['highly_variable_genes'] = args
 
+# remove counts
+del adata.X
+del adata.layers
+
 logging.info(f'Write to {output_file}...')
-adata.X = sparse.csr_matrix(adata.X)
 adata.write(output_file, compression='lzf')

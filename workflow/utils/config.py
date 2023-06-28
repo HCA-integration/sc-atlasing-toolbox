@@ -200,6 +200,8 @@ def get_hyperparams(config, module_name='integration', methods_key='methods'):
             key=module_name,
             value=methods_key,
         )
+        if methods_config is None:
+            return pd.DataFrame(columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
         for method, hyperparams_dict in methods_config.items():
             if isinstance(hyperparams_dict, dict):
                 records.extend(

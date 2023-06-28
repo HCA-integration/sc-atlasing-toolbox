@@ -11,11 +11,13 @@ from utils.io import read_anndata
 
 
 input_file = snakemake.input[0]
+input_counts = snakemake.input.counts
 output_file = snakemake.output[0]
 scale = snakemake.params['scale']
 
 logging.info(f'Read "{input_file}"...')
 adata = read_anndata(input_file)
+adata.X = read_anndata(input_counts)[adata.obs_names, adata.var_names].X
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')

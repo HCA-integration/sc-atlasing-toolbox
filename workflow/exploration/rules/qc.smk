@@ -2,10 +2,10 @@ rule qc:
     input:
         zarr=rules.load_data_filter.output.zarr
     output:
-        joint=out_dir / 'qc' / '{study}' / 'joint.png',
-        joint_log=out_dir / 'qc' / '{study}' / 'joint_log.png',
-        violin=out_dir / 'qc' / '{study}' / 'violin.png',
-        average_jitter=out_dir / 'qc' / '{study}' / 'average_jitter.png',
+        joint=images_dir / 'qc' / '{study}' / 'joint.png',
+        joint_log=images_dir / 'qc' / '{study}' / 'joint_log.png',
+        violin=images_dir / 'qc' / '{study}' / 'violin.png',
+        average_jitter=images_dir / 'qc' / '{study}' / 'average_jitter.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         hue='donor'
@@ -21,10 +21,10 @@ use rule qc as qc_organ with:
     input:
         zarr=rules.load_data_merge_organ.output.zarr
     output:
-        joint=out_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
-        joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
-        violin=out_dir / 'qc' / 'organ' / '{organ}' / 'violin.png',
-        average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'average_jitter.png',
+        joint=images_dir / 'qc' / 'organ' / '{organ}' / 'joint.png',
+        joint_log=images_dir / 'qc' / 'organ' / '{organ}' / 'joint_log.png',
+        violin=images_dir / 'qc' / 'organ' / '{organ}' / 'violin.png',
+        average_jitter=images_dir / 'qc' / 'organ' / '{organ}' / 'average_jitter.png',
     params:
         dataset=lambda wildcards: wildcards.organ,
         hue='study'
@@ -36,10 +36,10 @@ use rule qc as qc_filtered with:
     input:
         zarr=rules.merge_organ_filter.output.zarr
     output:
-        joint=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
-        joint_log=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',
-        violin=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_violin.png',
-        average_jitter=out_dir / 'qc' / 'organ' / '{organ}' / 'filtered_average_jitter.png',
+        joint=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
+        joint_log=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',
+        violin=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_violin.png',
+        average_jitter=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_average_jitter.png',
     params:
         dataset=lambda wildcards: wildcards.organ,
         hue='study'

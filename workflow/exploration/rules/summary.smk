@@ -9,9 +9,9 @@ rule summary_stats:
     input:
         zarr=rules.load_data_filter.output.zarr
     output:
-        tsv=out_dir / 'summary' / 'datasets' / '{study}.tsv',
-        sample=out_dir / 'summary' / 'datasets' / '{study}_sample.png',
-        donor=out_dir / 'summary' / 'datasets' / '{study}_donor.png',
+        tsv=images_dir / 'summary' / 'datasets' / '{study}.tsv',
+        sample=images_dir / 'summary' / 'datasets' / '{study}_sample.png',
+        donor=images_dir / 'summary' / 'datasets' / '{study}_donor.png',
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -24,9 +24,9 @@ use rule summary_stats as summary_stats_filtered with:
     input:
         zarr=rules.load_data_filter.output.removed
     output:
-        tsv=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}.tsv',
-        sample=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}_sample.png',
-        donor=out_dir / 'summary' / 'datasets' / 'filtered' / '{study}_donor.png',
+        tsv=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}.tsv',
+        sample=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}_sample.png',
+        donor=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}_donor.png',
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -37,9 +37,9 @@ rule summary_stats_all:
     input:
         tsv=expand(rules.summary_stats.output.tsv,study=dataset_df['study'].unique()),
     output:
-        tsv=out_dir / 'summary' / 'all_datasets.tsv',
-        aggregate=out_dir / 'summary' / 'all_datasets_aggregated.tsv',
-        png=out_dir / 'summary' / 'all_datasets.png',
+        tsv=images_dir / 'summary' / 'all_datasets.tsv',
+        aggregate=images_dir / 'summary' / 'all_datasets_aggregated.tsv',
+        png=images_dir / 'summary' / 'all_datasets.png',
     conda:
         '../envs/scanpy.yaml'
     script:
