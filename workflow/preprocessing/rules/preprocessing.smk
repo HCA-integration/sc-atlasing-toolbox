@@ -41,7 +41,8 @@ rule highly_variable_genes:
 
 rule pca:
     input:
-        h5ad=rules.highly_variable_genes.output.h5ad
+        h5ad=rules.highly_variable_genes.output.h5ad,
+        counts=rules.normalize.output.h5ad,
     output:
         h5ad=out_dir / '{dataset}' / 'pca.h5ad'
     params:
