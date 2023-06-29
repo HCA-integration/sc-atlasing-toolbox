@@ -1,7 +1,7 @@
 defaults:
   integration:
+    raw_counts: counts
     norm_counts: normcounts
-    raw_counts: X
     methods:
       unintegrated:
       bbknn:
@@ -26,15 +26,11 @@ defaults:
         max_epochs: 10
         use_observed_lib_size: true
       scpoli:
-        supervised: true
-        early_stopping_kwargs:
-          early_stopping_metric: val_prototype_loss
-          mode: min
-          threshold: 0
-          patience: 20
-          reduce_lr: true
-          lr_patience: 13
-          lr_factor: 0.1
+        supervised: [true, false]
+        model:
+          embedding_dims: 5
+          recon_loss: nb
+
   metrics:
     methods:
       - nmi_leiden_y
@@ -52,18 +48,20 @@ defaults:
       - kbet_y
   datasets:
     - blood_benchmark_test
-    # - blood_lineage_specific
+    # - blood_benchmark
     # - blood_benchmark_donor
     # - test
   # subset:
   #   n_cells: 1000000
   preprocessing:
     raw_counts: X
+    norm_counts: normcounts
     batch: study
     lineage: lineage
     assemble:
       - counts
       - normalize
+      - highly_variable_genes
       - pca
       - neighbors
 
@@ -77,20 +75,24 @@ DATASETS:
     subset:
       label: harmonized_label
       sample: sample
-      n_cells: 1000
+      n_cells: 10000
     preprocessing:
       raw_counts: X
+      norm_counts: normcounts
       assemble:
         - counts
         - normalize
+        - highly_variable_genes
         - pca
         - neighbors
     integration:
       label: harmonized_label
-      batch: study
+      batch: sample
+      lineage: lineage
     metrics:
       label: harmonized_label
-      batch: study
+      batch: sample
+      lineage: lineage
 
   blood_benchmark:
     input:
@@ -109,9 +111,11 @@ DATASETS:
     integration:
       label: harmonized_label
       batch: study
+      lineage: lineage
     metrics:
       label: harmonized_label
       batch: study
+      lineage: lineage
 
   blood_benchmark_donor:
     input:

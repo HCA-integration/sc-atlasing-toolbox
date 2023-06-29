@@ -12,7 +12,18 @@ params = snakemake.params
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyperparams['supervised'] else None
-early_stopping_kwargs = hyperparams['early_stopping_kwargs'] if 'early_stopping_kwargs' in hyperparams.keys() else {}
+model_params = hyperparams['model'] if 'model' in hyperparams.keys() else {}
+train_params = hyperparams['train'] if 'train' in hyperparams.keys() else {}
+early_stopping_kwargs = {
+    "early_stopping_metric": "val_prototype_loss",
+    "mode": "min",
+    "threshold": 0,
+    "patience": 20,
+    "reduce_lr": True,
+    "lr_patience": 13,
+    "lr_factor": 0.1,
+}
+
 
 # check GPU
 print('GPU available:', torch.cuda.is_available())
@@ -33,15 +44,12 @@ model = scPoli(
     adata=adata,
     condition_keys=wildcards.batch,
     cell_type_keys=cell_type_keys,
-    embedding_dims=5,
-    recon_loss='nb',
+    **model_params,
 )
 
 model.train(
-    n_epochs=50,
-    pretraining_epochs=40,
+    **train_params,
     early_stopping_kwargs=early_stopping_kwargs,
-    eta=5,
 )
 
 model.save(output_model, overwrite=True)
