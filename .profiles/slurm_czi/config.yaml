@@ -13,8 +13,8 @@ default-resources:
   - gpu=0
   - mem_mb=32000
   - disk_mb=20000
-restart-times: 0
-max-jobs-per-second: 10
+restart-times: 1
+max-jobs-per-second: 5
 max-status-checks-per-second: 1
 local-cores: 1
 latency-wait: 30
@@ -25,6 +25,7 @@ printshellcmds: True
 scheduler: greedy
 use-conda: True
 cluster-cancel: scancel
+cluster-status: .profiles/slurm_czi/slurm-status.py
 rerun-triggers:
   - mtime
   - params
