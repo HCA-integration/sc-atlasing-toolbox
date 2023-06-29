@@ -5,8 +5,8 @@ cluster:
     --gpus={resources.gpu}
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
-    --job-name=smk-{rule}-{wildcards}
-    --output=logs/{rule}/%j-{rule}-{wildcards}.out
+    --job-name={rule}
+    --output=logs/{rule}/%j-{rule}.out
     --parsable
 default-resources:
   - partition=cpu
