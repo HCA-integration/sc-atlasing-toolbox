@@ -14,6 +14,8 @@ checkpoint split_lineage:
         h5ad=get_input
     output:
         directory(out_dir / 'dataset~{dataset}' / 'batch~{batch},lineage_key~{lineage_key}')
+    params:
+        label=lambda wildcards: get_params(wildcards,parameters,'label'),
     conda:
         '../envs/scanpy.yaml'
     resources:
