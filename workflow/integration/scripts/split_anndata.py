@@ -25,10 +25,8 @@ adata = read_anndata(input_file)
 # remove unannoted cells
 logging.info(f'Before filtering: {adata.shape}')
 val_counts = adata.obs[split_key].value_counts()
-adata = adata[
-    adata.obs[split_key].notna() and
-    adata.obs[split_key].isin(val_counts[val_counts > 100].index)
-]
+adata = adata[adata.obs[split_key].isin(val_counts[val_counts > 100].index)]
+adata = adata[adata.obs[split_key].notna()]
 adata = adata[adata.obs[label_key].notna()]
 logging.info(f'After filtering: {adata.shape}')
 
