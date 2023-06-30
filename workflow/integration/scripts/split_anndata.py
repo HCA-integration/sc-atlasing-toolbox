@@ -22,11 +22,13 @@ if not out_dir.exists():
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
 
-# remove unannoted cells
 logging.info(f'Before filtering: {adata.shape}')
+# remove splits with less than 100 cells
 val_counts = adata.obs[split_key].value_counts()
 adata = adata[adata.obs[split_key].isin(val_counts[val_counts > 100].index)]
 adata = adata[adata.obs[split_key].notna()]
+
+# remove unannotated cells
 adata = adata[adata.obs[label_key].notna()]
 logging.info(f'After filtering: {adata.shape}')
 

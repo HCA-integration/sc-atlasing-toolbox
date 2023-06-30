@@ -6,11 +6,9 @@ defaults:
       unintegrated:
       bbknn:
       harmony:
+      scanorama:
       scgen:
         max_epochs: 50
-        batch_size: 32
-        early_stopping: True
-        early_stopping_patience: 25
       scvi:
         n_hidden: 128
         dispersion:
@@ -86,11 +84,11 @@ DATASETS:
         - pca
         - neighbors
     integration:
-      label: harmonized_label
+      label: author_annotation
       batch: sample
       lineage: lineage
     metrics:
-      label: harmonized_label
+      label: author_annotation
       batch: sample
       lineage: lineage
 
@@ -109,11 +107,11 @@ DATASETS:
           - lineage
           - lineage_coarse
     integration:
-      label: harmonized_label
+      label: author_annotation
       batch: study
       lineage: lineage
     metrics:
-      label: harmonized_label
+      label: author_annotation
       batch: study
       lineage: lineage
 
