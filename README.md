@@ -1,4 +1,4 @@
-# HCA pipelines
+# HCA integration QC pipelines
 
 Pipelines for standard analyses of HCA datasets.
 
