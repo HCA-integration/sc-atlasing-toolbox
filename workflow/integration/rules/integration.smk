@@ -1,4 +1,4 @@
-rule run:
+rule run_method:
     message:
        """
        Integration: Run {wildcards.method} on {wildcards.dataset}
@@ -33,4 +33,4 @@ rule run:
 
 
 rule run_all:
-    input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
+    input: expand(rules.run_method.output,zip,**parameters[wildcard_names].to_dict('list'))

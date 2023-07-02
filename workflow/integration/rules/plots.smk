@@ -3,9 +3,12 @@ module plots:
    config: config
 
 
+# dataset = parameters['dataset'][0]
+# print(expand(rules.run_method.benchmark,zip,**parameters.query(f'dataset == "{dataset}"')[wildcard_names].to_dict('list')))
+
 rule benchmark_per_dataset:
     input:
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
+        benchmark=lambda wildcards: expand_per(rules.run_method.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
     output:
         benchmark=out_dir / '{dataset}' / 'integration.benchmark.tsv'
     params:
@@ -21,7 +24,7 @@ rule benchmark_per_dataset:
 
 rule benchmark:
     input:
-        benchmark=expand(rules.run.benchmark,zip,**parameters[wildcard_names].to_dict('list')),
+        benchmark=expand(rules.run_method.benchmark,zip,**parameters[wildcard_names].to_dict('list')),
     output:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
@@ -71,7 +74,6 @@ use rule barplot from plots as integration_barplot_per_dataset with:
     wildcard_constraints:
         metric='((?![/]).)*'
 
-print(rules.integration_barplot_per_dataset.output)
 
 rule benchmark_all:
     input:
@@ -85,7 +87,7 @@ rule benchmark_all:
 
 use rule umap from plots as integration_umap with:
     input:
-        anndata=rules.run.output.h5ad
+        anndata=rules.run_method.output.h5ad
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
         coordinates=out_dir / paramspace.wildcard_pattern / 'umap_coordinates.npy'
