@@ -26,6 +26,10 @@ try:
 except:
     pass
 
+# manage colors
+if 'color' in params:
+    params['color'] = [color for color in params['color'] if adata.obs[color].nunique() <= 128] or None
+
 # plot embedding
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.embedding(adata, show=False, **params)
