@@ -1,3 +1,4 @@
+import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
 
@@ -21,6 +22,9 @@ early_stopping_kwargs = {
     "lr_factor": 0.1,
 }
 
+# check GPU
+print('GPU available:', torch.cuda.is_available())
+
 adata_raw = read_anndata(input_file)
 adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 
@@ -28,7 +32,8 @@ adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 
 adata = adata_raw.copy()
-adata.X = select_layer(adata, params['raw_counts'])
+adata.X = select_layer(adata, params['norm_counts'])
+adata.X = adata.X.astype('float32')
 adata = remove_sparsity(adata) # remove sparsity
 
 # scgen.SCGEN.setup_anndata(adata, batch_key=wildcards.batch, labels_key=wildcards.label)

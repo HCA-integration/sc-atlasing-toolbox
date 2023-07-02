@@ -24,6 +24,11 @@ def select_layer(adata, layer, force_dense=False, force_sparse=False):
     return matrix
 
 
+def ensure_sparse(adata):
+    if not issparse(adata.X):
+        adata.X = csr_matrix(adata.X)
+
+
 def process(adata, adata_raw, output_type):
     """
     Process data based on output type.
@@ -45,8 +50,8 @@ def process(adata, adata_raw, output_type):
     # adata.obsp['distances_uni'] = adata_raw.obsp['distances']
 
     # ensure matrix is sparse
-    adata.X = csr_matrix(adata.X)
-    adata_raw.X = csr_matrix(adata_raw.X)
+    ensure_sparse(adata)
+    ensure_sparse(adata_raw)
 
     if 'full' in output_type:
         adata.layers['corrected_counts'] = adata.X.copy()

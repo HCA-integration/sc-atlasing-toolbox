@@ -38,6 +38,7 @@ adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 # prepare anndata for training
 adata = adata_raw.copy()
 adata.X = select_layer(adata, params['raw_counts'], force_dense=True)
+adata.X = adata.X.astype('float32')
 
 # train model
 model = scPoli(
