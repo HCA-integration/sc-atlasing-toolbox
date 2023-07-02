@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
 
-from utils.misc import unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module
-from utils.wildcards import get_params, wildcards_to_str
+from utils.misc import all_but, unique_dataframe
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
+from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 
 
 def get_input(wildcards):
@@ -42,12 +42,11 @@ parameters = get_params_from_config(
 ).merge(parameters,on='method')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
 
-
 # subset to datasets that have module defined
 parameters = parameters[~parameters['method'].isnull()]
 
 # TODO: remove redundant wildcards
-# parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], np.nan)
+# parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], 'None')
 # parameters = unique_dataframe(parameters)
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
