@@ -49,7 +49,7 @@ DATASETS:
         - pca
         - neighbors
   
-  test:
+  pbmc:
     input:
       preprocessing: test/input/pbmc68k.h5ad
     preprocessing:
@@ -64,3 +64,13 @@ DATASETS:
         - highly_variable_genes
         - pca
         - neighbors
+
+  no_hvg:
+    input:
+      preprocessing: test/input/pbmc68k.h5ad
+    preprocessing:
+      raw_counts: counts
+      highly_variable_genes: false
+      assemble:
+        - highly_variable_genes
+        - pca
