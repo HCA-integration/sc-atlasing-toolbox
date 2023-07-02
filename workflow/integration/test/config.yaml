@@ -73,3 +73,6 @@ DATASETS:
       lineage: phase
       methods:
         combat:
+      umap_colors:
+        - bulk_labels
+        - phase
