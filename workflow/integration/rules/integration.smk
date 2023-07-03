@@ -22,10 +22,11 @@ rule run_method:
         env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
         lambda wildcards, params: f'../envs/{params.env}.yaml'
+    retries: 3
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
-        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb', attempt=attempt),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
     # shadow: 'minimal'
     script:
