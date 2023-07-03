@@ -4,7 +4,8 @@ defaults:
     norm_counts: normcounts
     methods:
       unintegrated:
-      bbknn:
+      # bbknn:
+      # combat:
       harmony:
       scanorama:
       scgen:
@@ -24,10 +25,17 @@ defaults:
         max_epochs: 10
         use_observed_lib_size: true
       scpoli:
-        supervised: [true, false]
+        supervised:
+          - true
+          - false
         model:
-          embedding_dims: 5
+          latent_dim: 30
+          embedding_dims: 10
+          # hidden_layer_sizes: [512, 512]
           recon_loss: nb
+        train:
+          n_epochs: 50
+          eta: 10
 
   metrics:
     methods:
@@ -46,7 +54,7 @@ defaults:
       - kbet_y
   datasets:
     - blood_benchmark_test
-    # - blood_benchmark
+    - blood_benchmark
     # - blood_benchmark_donor
     # - test
   # subset:
@@ -77,6 +85,8 @@ DATASETS:
     preprocessing:
       raw_counts: X
       norm_counts: normcounts
+      highly_variable_genes:
+        n_top_genes: 3000
       assemble:
         - counts
         - normalize
@@ -106,10 +116,25 @@ DATASETS:
           - harmonized_label
           - lineage
           - lineage_coarse
+    preprocessing:
+      raw_counts: X
+      norm_counts: normcounts
+      highly_variable_genes:
+        n_top_genes: 3000
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
     integration:
       label: author_annotation
       batch: study
       lineage: lineage
+      umap_colors:
+        - harmonized_label
+        - donor
+        - lineage
     metrics:
       label: author_annotation
       batch: study
