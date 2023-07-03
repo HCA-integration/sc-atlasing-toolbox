@@ -17,7 +17,7 @@ scale = snakemake.params['scale']
 
 logging.info(f'Read "{input_file}"...')
 adata = read_anndata(input_file)
-adata.X = read_anndata(input_counts)[adata.obs_names, adata.var_names].X
+adata.X = read_anndata(input_counts)[:, adata.var_names].X
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
