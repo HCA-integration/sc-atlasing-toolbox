@@ -1,6 +1,6 @@
 defaults:
   datasets:
-    - blood_benchmark
+    - blood_harm_pp
     - blood_harm_pca
     - blood_scvi_donor
     - blood_label_harm_scvi
@@ -12,7 +12,7 @@ defaults:
 
 DATASETS:
 
-  blood_benchmark:
+  blood_harm_pp:
     input:
       relabel: data/out/load_data/merged/subset/blood-benchmark.zarr/
       preprocessing: relabel
@@ -30,10 +30,15 @@ DATASETS:
       highly_variable_genes:
         n_top_genes: 4000
         subset: true
+      assemble:
+        - counts
+        - normcounts
+        - highly_variable_genes
+        - pca
 
   blood_harm_pca:
     input:
-      label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
+      label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.h5ad
     label_harmonization:
       organ: blood
       plot_colors:
@@ -54,7 +59,7 @@ DATASETS:
 
   blood_harm_pca_pct:
     input:
-      label_harmonization: data/out/preprocessing/blood_benchmark/pca.h5ad
+      label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.h5ad
     label_harmonization:
       organ: blood
       plot_colors: study
@@ -69,10 +74,9 @@ DATASETS:
 
   blood_scvi_donor:
     input:
-      integration: data/out/preprocessing/blood_benchmark/highly_variable_genes.h5ad
+      integration: data/out/preprocessing/blood_harm_pp/preprocessed.h5ad
     integration:
       batch: donor
-      lineage: 
       label: harmonized_label
       methods:
         scvi:
@@ -84,7 +88,7 @@ DATASETS:
   blood_label_harm_scvi:
     input:
       label_harmonization:
-        data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n_hidden:128-dispersion:gene-max_epochs:5-use_observed_lib_size:True,lineage_key~None/adata.h5ad
+        data/out/integration/dataset~blood_scvi_donor/method~scvi/batch~donor,label~harmonized_label,hyperparams~n:128-d:gene-m:5-u:True,lineage_key~None/adata.h5ad
     label_harmonization:
       organ: blood
       plot_colors:
