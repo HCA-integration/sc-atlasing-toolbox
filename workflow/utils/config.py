@@ -54,7 +54,7 @@ def get_params_from_config(
         defaults,
         explode_by=None,
         config_keys=None,
-        warn=True,
+        warn=False,
 ):
     """
     Collect wildcards and parameters from an configuration instance (e.g. dataset) for a given module.
@@ -199,9 +199,10 @@ def get_hyperparams(config, module_name='integration', methods_key='methods'):
             defaults=config['defaults'][module_name],
             key=module_name,
             value=methods_key,
+            update=False,
         )
         if methods_config is None:
-            return pd.DataFrame(columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
+            continue
         for method, hyperparams_dict in methods_config.items():
             if isinstance(hyperparams_dict, dict):
                 records.extend(
@@ -270,6 +271,7 @@ def get_for_dataset(
     dataset: str,
     query: list,
     default: Union[str,bool,float,int,dict,list, None] = None,
+    warn: bool = False,
 ) -> Union[str,bool,float,int,dict,list, None]:
     """Get any key from the config via query
 
@@ -291,7 +293,8 @@ def get_for_dataset(
     # walk down query
     for q in query:
         if q not in value:
-            warnings.warn(f'key {q} not found in config')
+            if warn:
+                warnings.warn(f'key {q} not found in config')
             return default
         value = value[q]
     return value
