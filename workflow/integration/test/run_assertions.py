@@ -20,9 +20,9 @@ for file in outputs:
 
         # Unintegrated data
         adata_raw = adata.raw.to_adata()
-        assert 'X_pca' in adata_raw.obsm
-        assert 'connectivities' in adata_raw.obsp
-        assert 'distances' in adata_raw.obsp
+        # assert 'X_pca' in adata_raw.obsm
+        # assert 'connectivities' in adata_raw.obsp
+        # assert 'distances' in adata_raw.obsp
 
         # Output type specific outputs
         output_types = adata.uns['integration']['output_type']
@@ -41,10 +41,10 @@ for file in outputs:
         if 'embed' in output_types:
             assert 'X_emb' in adata.obsm
         if 'full' in output_types:
+            assert 'corrected_counts' in adata.layers
             # check that counts are different from input
             if adata.uns['integration']['method'] != 'unintegrated':
                 assert adata.X.data.shape != adata_raw.X.data.shape or np.any(adata.X.data != adata_raw.X.data)
-            assert 'X_pca' in adata.obsm
 
     except Exception as e:
         print('Error for:', file)

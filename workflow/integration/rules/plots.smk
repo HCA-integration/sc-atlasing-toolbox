@@ -3,9 +3,28 @@ module plots:
    config: config
 
 
+# dataset = parameters['dataset'][0]
+# print(expand(rules.run_method.benchmark,zip,**parameters.query(f'dataset == "{dataset}"')[wildcard_names].to_dict('list')))
+
+rule benchmark_per_dataset:
+    input:
+        benchmark=lambda wildcards: expand_per(rules.run_method.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
+    output:
+        benchmark=out_dir / '{dataset}' / 'integration.benchmark.tsv'
+    params:
+        wildcards=lambda wildcards: parameters.query(f'dataset == "{wildcards.dataset}"')[wildcard_names]
+    group:
+        'integration'
+    run:
+        benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
+        benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
+        print(benchmark_df)
+        benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
+
+
 rule benchmark:
     input:
-        benchmark=expand(rules.run.benchmark,zip,**parameters[wildcard_names].to_dict('list'))
+        benchmark=expand(rules.run_method.benchmark,zip,**parameters[wildcard_names].to_dict('list')),
     output:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
@@ -31,23 +50,60 @@ use rule barplot from plots as integration_barplot with:
         category='method',
         #hue='hyperparams',
         facet_col='dataset',
-        title='Integration benchmark methods',
+        title='Integration runtime',
         description=wildcards_to_str,
         dodge=True,
+    wildcard_constraints:
+        metric='((?![/]).)*'
+
+
+use rule barplot from plots as integration_barplot_per_dataset with:
+    input:
+        tsv=rules.benchmark_per_dataset.output.benchmark
+    output:
+        png=image_dir / 'benchmark' / '{dataset}' / '{metric}.png'
+    group:
+        'integration'
+    params:
+        metric=lambda wildcards: wildcards.metric,
+        category='method',
+        #hue='hyperparams',
+        title=lambda wildcards: f'Integration runtime for {wildcards.dataset}',
+        description=wildcards_to_str,
+        dodge=True,
+    wildcard_constraints:
+        metric='((?![/]).)*'
+
+
+rule benchmark_all:
+    input:
+        expand(rules.integration_barplot.output,metric=['s', 'max_uss', 'mean_load']),
+        expand(
+            rules.integration_barplot_per_dataset.output,
+            metric=['s', 'max_uss', 'mean_load'],
+            dataset=parameters['dataset'].unique().tolist()
+        )
 
 
 use rule umap from plots as integration_umap with:
     input:
-        anndata=rules.run.output.h5ad
+        anndata=rules.run_method.output.h5ad
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
         coordinates=out_dir / paramspace.wildcard_pattern / 'umap_coordinates.npy'
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
-            get_params(wildcards,parameters,'batch')
+            get_params(wildcards,parameters,'batch'),
+            *get_for_dataset(
+                config=config,
+                dataset=wildcards.dataset,
+                query = [module_name, 'umap_colors'],
+                default=[]
+            ),
         ],
-        use_rep='X_emb'
+        use_rep='X_emb',
+        ncols=1,
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -57,7 +113,7 @@ use rule umap from plots as integration_umap with:
 
 rule plots_all:
     input:
-        expand(rules.integration_barplot.output,metric=['s', 'max_uss', 'mean_load']),
+        rules.benchmark_all.input,
         expand(rules.integration_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
 
 
@@ -70,9 +126,16 @@ use rule umap from plots as integration_umap_lineage with:
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
-            get_params(wildcards,parameters,'batch')
+            get_params(wildcards,parameters,'batch'),
+            *get_for_dataset(
+                config=config,
+                dataset=wildcards.dataset,
+                query = [module_name, 'umap_colors'],
+                default=[]
+            ),
         ],
-        use_rep='X_emb'
+        use_rep='X_emb',
+        ncols=1,
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),

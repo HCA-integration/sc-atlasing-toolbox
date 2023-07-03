@@ -29,12 +29,9 @@ filter_per_study:
 
 defaults:
   preprocessing:
-    assemble:
-      - counts
-      - normalize
-      - highly_variable_genes
-      - pca
-      - neighbors
+    neighbors:
+      n_neighbors: 15
+      n_pcs: 50
 
 DATASETS:
   blood:
@@ -43,21 +40,37 @@ DATASETS:
     preprocessing:
       batch: donor
       lineage: development_stage
-      scale: true
+      scale: false
       highly_variable_genes:
         n_top_genes: 2000
-        flavor: seurat
         subset: true
-      neighbors:
-        n_neighbors: 15
-        n_pcs: 50
+      assemble:
+        - highly_variable_genes
+        - pca
+        - neighbors
   
-  test:
+  pbmc:
     input:
       preprocessing: test/input/pbmc68k.h5ad
     preprocessing:
       raw_counts: counts
-      scale: false
+      scale: true
+      highly_variable_genes:
+        n_top_genes: 100
+        subset: true
       assemble:
         - counts
         - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
+
+  no_hvg:
+    input:
+      preprocessing: test/input/pbmc68k.h5ad
+    preprocessing:
+      raw_counts: counts
+      highly_variable_genes: false
+      assemble:
+        - highly_variable_genes
+        - pca

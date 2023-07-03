@@ -60,6 +60,10 @@ np.save(output_coordinates, adata.obsm['X_umap'])
 adata = remove_outliers(adata, 'max')
 adata = remove_outliers(adata, 'min')
 
+# manage colors
+if 'color' in params:
+    params['color'] = [color for color in params['color'] if adata.obs[color].nunique() <= 128] or None
+
 # plot UMAP
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.umap(adata, show=False, **params)

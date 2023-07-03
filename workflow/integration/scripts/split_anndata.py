@@ -4,6 +4,8 @@ from scipy.sparse import csr_matrix
 import scanpy as sc
 import warnings
 warnings.filterwarnings("ignore")
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from methods.utils import read_anndata
 
@@ -11,44 +13,62 @@ input_file = snakemake.input.h5ad
 output_dir = snakemake.output[0]
 split_key = snakemake.wildcards.lineage_key
 batch_key = snakemake.wildcards.batch
+label_key = snakemake.params.label
 
 out_dir = Path(output_dir)
 if not out_dir.exists():
     out_dir.mkdir()
 
+logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
+
+logging.info(f'Before filtering: {adata.shape}')
+# remove splits with less than 100 cells
+val_counts = adata.obs[split_key].value_counts()
+adata = adata[adata.obs[split_key].isin(val_counts[val_counts > 100].index)]
+adata = adata[adata.obs[split_key].notna()]
+
+# remove unannotated cells
+adata = adata[adata.obs[label_key].notna()]
+logging.info(f'After filtering: {adata.shape}')
+
+if adata.shape[0] == 0:
+    raise AssertionError('No cells left after filtering')
+
+splits = adata.obs[split_key].astype(str).unique()
+logging.info(f'splits: {splits}')
 
 # preprocessing
 if 'preprocessing' in adata.uns:
-    n_top_genes = adata.uns['preprocessing']['hvg']
-else:
-    n_top_genes = 2000
-    adata.uns['preprocessing'] = {'hvg': n_top_genes}
+    highly_variable_genes_args = adata.uns['preprocessing']['highly_variable_genes']
 
-splits = adata.obs[split_key].unique()
-print(f'splits: {splits}', file=sys.stderr)
+n_top_genes = 0
+if 'highly_variable_genes' in adata.var.columns:
+    n_top_genes = adata.var['highly_variable'].sum()
 
 for split in splits:
     # split anndata
     adata_sub = adata[adata.obs[split_key] == split].copy()
+
+    # preprocessing
     adata_sub.uns["log1p"] = {"base": None}
     adata_sub.X = csr_matrix(adata_sub.X)
 
     if n_top_genes > 0:
         sc.pp.filter_genes(adata_sub, min_cells=1)
-        print(f'HVGs to {n_top_genes} genes...', file=sys.stderr)
+        logging.info(f'HVGs to {n_top_genes} genes...')
         sc.pp.highly_variable_genes(adata_sub, n_top_genes=n_top_genes, batch_key=batch_key)
-        print('PCA...', file=sys.stderr)
+        logging.info('PCA...')
         sc.pp.pca(adata_sub, use_highly_variable=True, svd_solver='arpack')
     else:
         sc.pp.pca(adata_sub, use_highly_variable=False, svd_solver='arpack')
 
-    print('compute neighbors...', file=sys.stderr)
+    logging.info('compute neighbors...')
     sc.pp.neighbors(adata_sub, use_rep='X_pca')
 
     # write to file
     split_file = split.replace(' ', '_').replace('/', '_')
     out_file = out_dir / f"{split_file}.h5ad"
 
-    print(f'write to {out_file}...', file=sys.stderr)
+    logging.info(f'write to {out_file}...')
     adata_sub.write(out_file, compression='lzf')

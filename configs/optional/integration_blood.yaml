@@ -1,16 +1,15 @@
 defaults:
   integration:
+    raw_counts: counts
     norm_counts: normcounts
-    raw_counts: X
     methods:
       unintegrated:
-      bbknn:
+      # bbknn:
+      # combat:
       harmony:
+      scanorama:
       scgen:
         max_epochs: 50
-        batch_size: 32d
-        early_stopping: True
-        early_stopping_patience: 25
       scvi:
         n_hidden: 128
         dispersion:
@@ -26,15 +25,18 @@ defaults:
         max_epochs: 10
         use_observed_lib_size: true
       scpoli:
-        supervised: true
-        early_stopping_kwargs:
-          early_stopping_metric: val_prototype_loss
-          mode: min
-          threshold: 0
-          patience: 20
-          reduce_lr: true
-          lr_patience: 13
-          lr_factor: 0.1
+        supervised:
+          - true
+          - false
+        model:
+          latent_dim: 30
+          embedding_dims: 10
+          # hidden_layer_sizes: [512, 512]
+          recon_loss: nb
+        train:
+          n_epochs: 50
+          eta: 10
+
   metrics:
     methods:
       - nmi_leiden_y
@@ -42,46 +44,101 @@ defaults:
       - asw_label_y
       - asw_batch_y
       - cell_cycle
-      # - clisi_y
-      # - ilisi_y
+      - clisi_y
+      - ilisi_y
       - graph_connectivity
       - isolated_label_asw
       - isolated_label_asw_y
-      # - isolated_label_f1
+      - isolated_label_f1_y
       - pcr
-      # - kbet_y
+      - kbet_y
   datasets:
+    - blood_benchmark_test
     - blood_benchmark
-    - blood_lineage_specific
     # - blood_benchmark_donor
     # - test
-  subset:
-    n_cells: 500000
-
+  # subset:
+  #   n_cells: 1000000
+  preprocessing:
+    raw_counts: X
+    norm_counts: normcounts
+    batch: study
+    lineage: lineage
+    assemble:
+      - counts
+      - normalize
+      - highly_variable_genes
+      - pca
+      - neighbors
 
 DATASETS:
-  blood_benchmark:
+
+  blood_benchmark_test:
     input:
-      label_harmonization: data/out/load_data/merged/subset/blood-benchmark.zarr
-      subset: label_harmonization
+      subset: data/out/relabel/blood_benchmark.h5ad
       preprocessing: subset
       integration: preprocessing
-    label_harmonization:
+    subset:
+      label: harmonized_label
+      sample: sample
+      n_cells: 10000
+    preprocessing:
+      raw_counts: X
+      norm_counts: normcounts
+      highly_variable_genes:
+        n_top_genes: 3000
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
+    integration:
+      label: author_annotation
+      batch: sample
+      lineage: lineage
+    metrics:
+      label: author_annotation
+      batch: sample
+      lineage: lineage
+
+  blood_benchmark:
+    input:
+      relabel: data/out/load_data/merged/subset/blood-benchmark.zarr
+      # subset: relabel
+      preprocessing: relabel
+      integration: preprocessing
+    relabel:
       mapping:
         file: data/input/label_harmonization/mapping_coarse.tsv
         order:
           - cell_type
           - harmonized_label
           - lineage
-    subset:
-      label: harmonized_label
-      sample: sample
+          - lineage_coarse
+    preprocessing:
+      raw_counts: X
+      norm_counts: normcounts
+      highly_variable_genes:
+        n_top_genes: 3000
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
     integration:
-      label: harmonized_label
+      label: author_annotation
       batch: study
+      lineage: lineage
+      umap_colors:
+        - harmonized_label
+        - donor
+        - lineage
     metrics:
-      label: harmonized_label
+      label: author_annotation
       batch: study
+      lineage: lineage
 
   blood_benchmark_donor:
     input:
@@ -106,6 +163,7 @@ DATASETS:
     #     dispersion: gene
     #     max_epochs: 10
     #     use_observed_lib_size: true
+
   test:
     input:
       subset: data/pbmc68k.h5ad

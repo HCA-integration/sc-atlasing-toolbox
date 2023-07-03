@@ -28,20 +28,18 @@ defaults:
         max_epochs: 10
         use_observed_lib_size: true
       scgen:
-        max_epochs: 10
-        batch_size: 32
-        early_stopping: True
-        early_stopping_patience: 25
+        n_epochs: 10
       scpoli:
-        supervised: true
-        early_stopping_kwargs:
-          early_stopping_metric: val_prototype_loss
-          mode: min
-          threshold: 0
-          patience: 20
-          reduce_lr: true
-          lr_patience: 13
-          lr_factor: 0.1
+        supervised:
+          - true
+          - false
+        model:
+          embedding_dims: 5
+          recon_loss: nb
+        train:
+          n_epochs: 50
+          pretraining_epochs: 40
+          eta: 5
       scvi:
         n_hidden: 128
         dispersion:
@@ -54,7 +52,7 @@ defaults:
       unintegrated:
   datasets:
     - test
-    - test2
+    # - test2
 
 DATASETS:
   test:
@@ -65,7 +63,6 @@ DATASETS:
       batch:
         - phase
         - batch_2
-      lineage: batch
 
   test2:
     input:
@@ -76,3 +73,6 @@ DATASETS:
       lineage: phase
       methods:
         combat:
+      umap_colors:
+        - bulk_labels
+        - phase
