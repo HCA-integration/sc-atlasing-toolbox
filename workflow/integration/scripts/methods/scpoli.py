@@ -50,6 +50,8 @@ model = scPoli(
 
 model.train(
     **train_params,
+    pretraining_epochs=4,
+    alpha_epoch_anneal=100,
     early_stopping_kwargs=early_stopping_kwargs,
 )
 
