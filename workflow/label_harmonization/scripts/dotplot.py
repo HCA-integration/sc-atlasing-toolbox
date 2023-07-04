@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 from pathlib import Path
 from typing import MutableMapping
 from matplotlib import pyplot as plt
@@ -31,8 +33,6 @@ output_per_group.mkdir(exist_ok=True)
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
 
-print(marker_genes)
-
 adata = sc.read(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
 
@@ -41,13 +41,17 @@ group_cols = ['group', 'reannotation']
 adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
 
 # match marker genes and var_names
-print(adata.var)
+logging.info(adata.var)
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name'].astype(str)
 
+logging.info('Marker genes before filtering:')
+logging.info(marker_genes)
 marker_genes = filter_markers(marker_genes, adata.var_names)
-print(marker_genes)
+logging.info('Marker genes after filtering:')
+logging.info(marker_genes)
 
+logging.info('Plotting...')
 sc.pl.dotplot(
     adata,
     groupby='group',
@@ -63,6 +67,7 @@ for group in adata.obs['group'].unique():
     ad = adata[adata.obs['group'] == group]
     if ad.n_obs == 0: continue
 
+    logging.info(f'Plotting for {group}...')
     sc.pl.dotplot(
         ad,
         groupby='reannotation',
