@@ -29,7 +29,7 @@ DATASETS:
       lineage: lineage
       highly_variable_genes:
         n_top_genes: 4000
-        subset: true
+        subset: false
       assemble:
         - counts
         - normcounts
