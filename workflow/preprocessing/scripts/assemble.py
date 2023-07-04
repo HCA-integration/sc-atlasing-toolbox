@@ -20,13 +20,13 @@ for file_type, file in snakemake.input.items():
     
     if file_type == 'counts':
         logging.debug('add raw counts')
-        adata.X = sparse.csr_matrix(adata_pp[adata.obs_names, adata.var_names].X)
+        adata.X = sparse.csr_matrix(adata_pp[:, adata.var_names].X)
         adata.layers['counts'] = adata.X
         print(adata.layers)
 
     elif file_type == 'normalize':
         logging.debug('add normalised counts')
-        adata.layers['normcounts'] = sparse.csr_matrix(adata_pp[adata.obs_names, adata.var_names].X)
+        adata.layers['normcounts'] = sparse.csr_matrix(adata_pp[:, adata.var_names].X)
 
     elif file_type == 'highly_variable_genes':
         logging.debug('add highly variable gene info')

@@ -79,7 +79,7 @@ cDC	dendritic cell	Myeloid	myeloid	dendritic cell
 Platelets	platelet	Myeloid	lymphoid	platelet
 pDC	dendritic cell	Myeloid	myeloid	dendritic cell
 Plasma B	B cell	B cell	lymphoid	B cell
-blood cell			
+blood cell	RBC	other	progenitor	RBC
 B cell	B cell	B cell	lymphoid	B cell
 hematopoietic stem cell	hematopoietic stem cell	other	progenitor	hematopoietic stem cell
 native cell			
@@ -91,3 +91,36 @@ hematopoietic precursor cell	hematopoietic stem cell	other	progenitor	hematopoie
 progenitor cell	hematopoietic stem cell	other	progenitor	hematopoietic stem cell
 peripheral blood mononuclear cell			
 animal cell			
+# AIDA cell types
+B	B cell	B cell	lymphoid	B cell
+IGHMhi_memory_B	B cell	B cell	lymphoid	B cell
+IGHMlo_memory_B	B cell	B cell	lymphoid	B cell
+atypical_B	B cell	B cell	lymphoid	B cell
+naive_B	B cell	B cell	lymphoid	B cell
+Plasma_B	B cell	B cell	lymphoid	B cell
+T	T cell	T cell + NK cell + ILC	lymphoid	T cell
+dnT	T cell	T cell + NK cell + ILC	lymphoid	T cell
+gdT	T cell	T cell + NK cell + ILC	lymphoid	T cell
+Treg	T cell	T cell + NK cell + ILC	lymphoid	T cell
+MAIT	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD4+_T	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD4+_T_cm	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD4+_T_cyt	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD4+_T_em	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD4+_T_naive	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD8+_T	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD8+_T_GZMBhi	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD8+_T_GZMKhi	T cell	T cell + NK cell + ILC	lymphoid	T cell
+CD8+_T_naive	T cell	T cell + NK cell + ILC	lymphoid	T cell
+ILC	innate lymphoid cell	T cell + NK cell + ILC	lymphoid	innate lymphoid cell
+DC	dendritic cell	Myeloid	myeloid	dendritic cell
+cDC1	dendritic cell	Myeloid	myeloid	dendritic cell
+cDC2	dendritic cell	Myeloid	myeloid	dendritic cell
+Monocyte	monocyte	Myeloid	myeloid	monocyte
+CD14+_Monocyte	monocyte	Myeloid	myeloid	monocyte
+CD16+_Monocyte	monocyte	Myeloid	myeloid	monocyte
+NK	NK cell	T cell + NK cell + ILC	lymphoid	NK cell
+CD16+_NK	NK cell	T cell + NK cell + ILC	lymphoid	NK cell
+CD56+_NK	NK cell	T cell + NK cell + ILC	lymphoid	NK cell
+Plateletnon-monocyte myeloid cell	Myeloid	myeloid	non-monocyte myeloid cell
+RBC	RBC	other	other	RBC

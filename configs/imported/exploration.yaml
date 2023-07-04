@@ -1,29 +1,257 @@
 ORGANS:
   blood:
     marker_genes:
-      "Pan-immune": [ "CD44" ]
-      "T": [ "CD3D","CD4","CD8A" ]
-      "Naive T": [ "CCR7","LEF1","CD27" ]  # "SELL"
-      "Memory": [ "IL7R","GZMK" ]
-      "Cytotoxic": [ "GZMH", "GZMA", "GZMB", "PRF1" ]
-      "G/D T": [ "TRGV9", "TRDV2" ]
-      "T Reg": [ "FOXP3", "IL2RA" ]
-      "MAIT": [ "TRAV1-2", "SLC4A10" ]
-      "NK": [ "KLRB1", "NCR1", "NCAM1", "GNLY" ]
-      "ILC": [ "TNFRSF18", "TNFRSF4" ]
-      "Monocyte": [ "FCER1G", "CD14", "FCGR3A" ]
-      "cDC1": [ "CLEC9A" ]
-      "cDC2": [ "CD1C", "FCER1A" ]
-      "pDC": [ "CLEC4C" ]
-      "AS-DC": [ "AXL", "SIGLEC6" ]
-      "B": [ "CD19", "CD79A" ]
-      "Naive B": [ "FCER2", "TCL1A" ]
-      "B Memory": [ "CD24" ]
-      "B non-switched": [ "IGHM", "IGHD" ]
-      "Antibody secreting": [ "TNFRSF13B", "JCHAIN", "CHPF", "IGHG1" ]
-      "Cycling": [ "MKI67" ]
-      "IFN stim": [ "IFIT1", "MX2" ]
-      "HPC": [ "KIT", "CD34" ]
-      "Platelet": [ "PPBP", "PF4" ]
-      "RBC": [ "HBB" ]
-      "Baso/Eos": [ "EPX" ]
+      Monocyte:
+        - CD68
+      CD14+ Monocyte:
+        - CD14
+        - CSF3R
+        - S100A12
+        - S100A8
+        - S100A9
+      CD16+_Monocyte:
+        - FCGR3A # CD16
+        - CX3CR1
+        - CDKN1C
+        - CSF1R
+      cDC1:
+        - CLEC9A
+        - THBD
+        - CADM1
+        - BATF3
+        - C1orf54
+      cDC2:
+        - CLEC10A
+        - CD1C
+        - FCER1A
+      ASDC:
+        - AXL
+        - PPP1R14A
+        - SIGLEC6
+        - CD22
+      pDC:
+        - ITM2C
+        - PLD4
+        - TCF4
+        - LILRA4
+        - IL3RA
+        - SERPINF1
+        - CLEC4C
+      Plasma cell:
+        - MZB1
+        - JCHAIN
+        - TNFRSF17
+        - ITM2C
+        - DERL3
+        - POU2AF1
+        - IGHA1 # (Igs)
+        - TXNDC11
+        - CD79A
+      B cell:
+        - MS4A1
+        - CD79A
+      naive B:
+        - TCL1A
+        - IGHM
+        - IGHD
+      memory B:
+        - CD27
+        - TNFRSF13B
+      memory B IGHMlo:
+        - IGHA1
+        - IGHA2
+        - IGHG1
+      atypical B:
+        - FCRL5
+        - FGR
+      T cell:
+        - CD3D
+        - CD3G
+      dnT:
+        - GZMK
+        - FXYD2
+        - AC004585.1
+        - PTPN3
+        - MIR4422HG
+      gdT:
+        - TRDC
+        - TRDV2
+        - TRGV9
+        - GZMK
+        - GZMB
+      CD4+ T:
+        - CD4
+      CD4+ T naive:
+        - CCR7
+        - SELL
+        - LEF1
+        - TCF7
+        - IL7R
+        - BACH2
+      CD4+ T central memory:
+        - CCR7
+        - SELL
+        - LEF1
+        - ITGB1
+      CD4+ T effector memory:
+        - ITGB1
+        - KLRB1
+        - CCL5
+        - GZMA
+        - GZMK
+      CD4+ T cytotoxic:
+        - ITGB1
+        - KLRB1
+        - CCL5
+        - GZMA
+        - GZMB
+        - GZMH
+        - GNLY
+        - FGFBP2
+      Treg:
+        - FOXP3
+        - RTKN2
+        - IL2RA
+        - CTLA4
+      CD8+ T:
+        - CD8A
+        - CD8B
+      CD8+ T naive:
+        - CCR7
+        - SELL
+        - LEF1
+        - TCF7
+        - IL7R
+      CD8+ T GZMKhi:
+        - GZMK
+        - CCL5
+        - CST7
+        - TCF7
+        - IL7R
+      CD8+ T GZMBhi:
+        - GZMB
+        - CCL5
+        - CST7
+        - GNLY
+        - FGFBP2
+        - GZMH
+        - PRF1
+      CD8+ MAIT:
+        - TRAV1-2
+        - NCR3
+        - SLC4A10
+        - KLRB1
+      NK cell:
+        - NKG7
+        - GNLY
+        - TYROBP
+        - KLRD1
+      CD16+ NK:
+        - FCGR3A # (CD16)
+        - PRF1
+        - FGFBP2
+      CD56+ NK:
+        - NCAM1 # (CD56)
+        - XCL1
+        - XCL2
+        - KLRC1
+      ILC:
+        - KIT
+        - LINC01229
+        - TTLL10
+        - TNFRSF18
+        - KLRB1
+        - TRDC
+      Platelet:
+        - PPBP
+        - TUBB1
+        - ITGA2B
+        - PF4
+        - GP1BB
+      Red Blood Cell:
+        - HBA1
+        - HBA2
+        - HBB
+  blood_Rik:
+    marker_genes:
+      Pan-immune:
+        - CD44
+      T:
+        - CD3D
+        - CD4
+        - CD8A
+      Naive T:
+        - CCR7
+        - LEF1
+        - CD27
+        # - SELL
+      Memory:
+        - IL7R
+        - GZMK
+      Cytotoxic:
+        - GZMH
+        - GZMA
+        - GZMB
+        - PRF1
+      G/D T:
+        - TRGV9
+        - TRDV2
+      T Reg:
+        - FOXP3
+        - IL2RA
+      MAIT: 
+        - TRAV1-2
+        - SLC4A10
+      NK:
+        - KLRB1
+        - NCR1
+        - NCAM1
+        - GNLY
+      ILC:
+        - TNFRSF18
+        - TNFRSF4
+      Monocyte:
+        - FCER1G
+        - CD14
+        - FCGR3A
+      cDC1: 
+        - CLEC9A
+      cDC2: 
+        - CD1C
+        - FCER1A
+      pDC:
+        - CLEC4C
+      AS-DC:
+        - AXL
+        - SIGLEC6
+      B:
+        - CD19
+        - CD79A
+      Naive B:
+        - FCER2
+        - TCL1A
+      B Memory:
+        - CD24
+      B non-switched:
+        - IGHM
+        - IGHD
+      Antibody secreting:
+        - TNFRSF13B
+        - JCHAIN
+        - CHPF
+        - IGHG1
+      Cycling:
+        - MKI67
+      IFN stim:
+        - IFIT1
+        - MX2
+      HPC:
+        - KIT
+        - CD34
+      Platelet: 
+        - PPBP
+        - PF4
+      Red blood cell:
+        - HBB
+      Baso/Eos:
+        - EPX
