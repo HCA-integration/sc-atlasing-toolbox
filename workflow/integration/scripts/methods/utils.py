@@ -1,5 +1,6 @@
 import anndata as ad
 import scanpy as sc
+import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
 
@@ -8,7 +9,7 @@ def read_anndata(file):
     return ad.read_zarr(file) if file.endswith('.zarr') else sc.read(file)
 
 
-def select_layer(adata, layer, force_dense=False, force_sparse=False):
+def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float64'):
     # select matrix
     matrix = adata.X  if layer == 'X' or layer is None else adata.layers[layer]
 
@@ -16,10 +17,11 @@ def select_layer(adata, layer, force_dense=False, force_sparse=False):
         raise ValueError('force_dense and force_sparse cannot both be True')
 
     if force_dense:
-        return matrix.todense() if issparse(matrix) else matrix
+        matrix = np.asarray(matrix.todense()) if issparse(matrix) else matrix
+        return matrix.astype(dtype)
 
     if force_sparse:
-        return matrix if issparse(matrix) else csr_matrix(matrix)
+        return matrix if issparse(matrix) else csr_matrix(matrix, dtype=dtype)
 
     return matrix
 
