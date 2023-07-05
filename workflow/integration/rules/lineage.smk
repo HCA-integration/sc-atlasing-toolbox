@@ -16,12 +16,15 @@ checkpoint split_lineage:
         directory(out_dir / 'dataset~{dataset}' / 'batch~{batch},lineage_key~{lineage_key}')
     params:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
+        norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
     conda:
-        '../envs/scanpy.yaml'
+        '../envs/scanpy_rapids.yaml'
+    retries: 3
     resources:
-        partition=get_resource(config,profile='cpu',resource_key='partition'),
-        qos=get_resource(config,profile='cpu',resource_key='qos'),
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        partition=get_resource(config,profile='gpu',resource_key='partition'),
+        qos=get_resource(config,profile='gpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
+        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
     # shadow: 'minimal'
     script:
         '../scripts/split_anndata.py'
