@@ -8,6 +8,8 @@ dependencies:
   - scanpy
   - numpy<1.24
   - matplotlib<3.7
+  - pandas<2.0.0
+  - scipy<1.11
   - muon
   - cudatoolkit
   - rapidsai::cuml
