@@ -31,7 +31,7 @@ DATASETS:
           - lineage
   test_celltypist:
     input:
-      label_harmonization: test/input/preprocessing/test/pca.h5ad
+      label_harmonization: test/input/preprocessing/pbmc/preprocessed.h5ad
     label_harmonization:
       plot_colors:
         - phase
@@ -44,7 +44,7 @@ DATASETS:
         use_pct: false
   test_celltypist_pct:
     input:
-      label_harmonization: test/input/preprocessing/test/pca.h5ad
+      label_harmonization: test/input/preprocessing/pbmc/preprocessed.h5ad
     label_harmonization:
       plot_colors: bulk_labels
       dataset_key: phase

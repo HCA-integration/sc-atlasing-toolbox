@@ -25,6 +25,24 @@ rule celltypist:
         '../scripts/celltypist.py'
 
 
+rule celltypist_index_reannotations:
+    """
+    Add a column for reannotations (should make relabeling easier)
+    """
+    input:
+        reannotation=rules.celltypist.output.reannotation
+    output:
+        reannotation=out_dir / 'celltypist' / '{dataset}' / 'reannotation_index.tsv',
+    conda:
+        '../envs/celltypist.yaml'
+    resources:
+        partition=lambda w: get_resource(config,resource_key='partition'),
+        qos=lambda w: get_resource(config,resource_key='qos'),
+        mem_mb=lambda w: get_resource(config,resource_key='mem_mb'),
+    script:
+        '../scripts/celltypist_reindex.py'
+
+
 rule celltypist_plots:
     """
     Plots for celltypist output
