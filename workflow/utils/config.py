@@ -238,6 +238,7 @@ def get_resource(config, resource_key, profile='cpu', attempt=1):
 def get_resource_customized(config, config_customized=False, dataset_name=None, resource_key=None, profile='cpu', attempt=1):
     """
     Retrieve resource information from config['resources'_customized']
+    :param config_customized=True to get the customized resources
     :param config: config passed from Snakemake
     :param profile: resource profile, key under config['resources']
     :param dataset_name: name of the dataset
