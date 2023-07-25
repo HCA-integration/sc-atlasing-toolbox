@@ -22,7 +22,7 @@ rule run_method:
         env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
         lambda wildcards, params: f'../envs/{params.env}.yaml'
-    retries: 3
+    retries: 2
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
