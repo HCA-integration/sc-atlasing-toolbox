@@ -14,6 +14,7 @@ hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyperparams['supervised'] else None
 model_params = hyperparams['model'] if 'model' in hyperparams.keys() else {}
 train_params = hyperparams['train'] if 'train' in hyperparams.keys() else {}
+pretrain_epochs = int(0.8 * model_params['n_epochs']) if 'n_epochs' in model_params else None
 early_stopping_kwargs = {
     "early_stopping_metric": "val_prototype_loss",
     "mode": "min",
@@ -50,9 +51,10 @@ model = scPoli(
 
 model.train(
     **train_params,
-    pretraining_epochs=4,
-    alpha_epoch_anneal=100,
+    pretraining_epochs=pretrain_epochs,
+    # alpha_epoch_anneal=100,
     early_stopping_kwargs=early_stopping_kwargs,
+    batch_size=256,
 )
 
 model.save(output_model, overwrite=True)
