@@ -28,7 +28,8 @@ except:
 
 # manage colors
 if 'color' in params:
-    params['color'] = [color for color in params['color'] if adata.obs[color].nunique() <= 128] or None
+    colors = params['color'] if isinstance(params['color'], list) else [params['color']]
+    params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128] or None
 
 # plot embedding
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
