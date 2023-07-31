@@ -10,6 +10,7 @@ dependencies:
   - matplotlib<3.7
   - pandas<2.0.0
   - scipy<1.11
+  - leidenalg
   - muon
   - cudatoolkit
   - rapidsai::cuml
