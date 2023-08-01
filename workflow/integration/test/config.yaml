@@ -49,7 +49,7 @@ defaults:
         use_observed_lib_size: true
       unintegrated:
   datasets:
-    # - test
+    - test
     - test2
 
 DATASETS:
