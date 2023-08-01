@@ -1,7 +1,4 @@
-import sys
-from pathlib import Path
 import scanpy as sc
-from scipy import sparse
 import warnings
 warnings.filterwarnings("ignore")
 import logging
