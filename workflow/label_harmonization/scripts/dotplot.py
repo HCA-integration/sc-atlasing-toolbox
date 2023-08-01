@@ -37,8 +37,8 @@ adata = sc.read(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
 
 # add group assignment to adata
-group_cols = ['group', 'reannotation']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
+group_cols = ['group', 'reannotation', 'reannotation_index']
+adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols].astype(str)
 
 # match marker genes and var_names
 logging.info(adata.var)
@@ -70,7 +70,7 @@ for group in adata.obs['group'].unique():
     logging.info(f'Plotting for {group}...')
     sc.pl.dotplot(
         ad,
-        groupby='reannotation',
+        groupby=['reannotation_index', 'reannotation'],
         var_names=filter_markers(marker_genes, ad.var_names),
         show=False,
         title=f'Group: {group}',

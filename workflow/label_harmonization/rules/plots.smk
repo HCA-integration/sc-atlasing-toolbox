@@ -40,7 +40,7 @@ use rule umap from plots as label_harmonization_umap with:
 rule celltypist_umap:
     input:
         anndata=rules.celltypist.output.h5ad,
-        group_assignment=rules.celltypist.output.reannotation,
+        group_assignment=rules.celltypist_index_reannotations.output.reannotation,
         coordinates=rules.label_harmonization_umap.output.coordinates,
     output:
         plot=image_dir / '{dataset}' / 'celltypist--umap.png',
@@ -56,7 +56,7 @@ rule celltypist_umap:
 rule dotplot:
     input:
         anndata=lambda w: get_for_dataset(config, w.dataset, ['input', module_name]),
-        group_assignment=rules.celltypist.output.reannotation,
+        group_assignment=rules.celltypist_index_reannotations.output.reannotation,
     output:
         plot=image_dir / '{dataset}' / 'celltypist--dotplot.png',
         per_group=directory(image_dir / '{dataset}' / 'dotplot_per_group'),
