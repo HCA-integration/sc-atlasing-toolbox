@@ -19,6 +19,7 @@ rule preprocess:
         qos=get_resource(config,profile='cpu',resource_key='qos'),
         gpu=get_resource(config,profile='cpu',resource_key='gpu'),
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        time="1-00:00:00",
     # shadow: 'copy-minimal'
     script:
         '../scripts/preprocess.py'
@@ -31,7 +32,7 @@ rule run:
        input: {input}
        output: {output}
        wildcards: {wildcards}
-       resources: gpu={resources.gpu}
+       resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
         h5mu=rules.preprocess.output.h5mu,
@@ -47,7 +48,8 @@ rule run:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
         mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
-        disk_mb=100
+        disk_mb=100,
+        time="1-08:00:00",
     benchmark:
         out_dir / paramspace.wildcard_pattern / '{metric}.benchmark.tsv'
     # shadow: 'copy-minimal'
