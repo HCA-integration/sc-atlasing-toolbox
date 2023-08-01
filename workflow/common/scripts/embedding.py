@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", message="Warning: No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 import numpy as np
 from matplotlib import pyplot as plt
 import scanpy as sc
