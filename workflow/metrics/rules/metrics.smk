@@ -3,7 +3,7 @@ import os
 
 def get_integration_output(wildcards):
     if wildcards.lineage_specific == 'global':
-        return rules.integration_run.output.h5ad
+        return rules.integration_run_method.output.h5ad
     return rules.merge_lineage.output.h5mu
 
 
@@ -11,7 +11,7 @@ rule preprocess:
     input:
         h5ad=get_integration_output
     output:
-        h5mu=out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu'
+        h5mu=out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu',
     conda:
         lambda wildcards, params: f'../envs/scib.yaml'
     resources:
