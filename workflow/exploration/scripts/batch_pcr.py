@@ -4,9 +4,12 @@ logger.setLevel(logging.INFO)
 import pandas as pd
 from scipy import sparse
 from matplotlib import pyplot as plt
+from matplotlib import rcParams
 import seaborn as sns
 import scib
 import numpy as np
+# figure size in inches
+rcParams['figure.figsize'] = 12, 9
 
 try:
     from sklearnex import patch_sklearn
@@ -28,8 +31,10 @@ perm_covariates = snakemake.params['permutation_covariates']
 n_permute = snakemake.params['n_permute']
 sample_key = snakemake.params['sample_key']
 
+logger.info('Read anndata file...')
 adata = read_anndata(input_file)
 if input_metadata is not None:
+    logger.info('Read DCP metadata file...')
     adata.obs = pd.read_table(input_metadata, low_memory=False)
 logger.info(adata.obs.head())
 
@@ -51,6 +56,7 @@ for covariate in perm_covariates:
         continue
     # permute n times
     for i in range(n_permute):
+        covariate_perm = f'{covariate}_permuted-{i}'
         cov_per_sample = adata.obs.groupby(sample_key).agg({covariate: 'first'})
         cov_map = dict(
             zip(
@@ -58,12 +64,13 @@ for covariate in perm_covariates:
                 cov_per_sample[covariate].sample(cov_per_sample.shape[0])
             )
         )
-        covariate_perm = f'{covariate}_permuted-{i}'
         adata.obs[covariate_perm] = adata.obs[sample_key].map(cov_map)
+        # adata.obs[covariate_perm] = np.random.permutation(adata.obs[covariate])
         covariates.append(covariate_perm)
 
 # PC regression for all covariates
 pcr_scores = []
+n_covariates = []
 for covariate in list(covariates):
     logger.info(f'PCR for covariate: "{covariate}"')
     if covariate_invalid(adata, covariate):
@@ -90,17 +97,36 @@ for covariate in list(covariates):
     )
     pcr_scores.append(pcr)
     logger.info(pcr)
+    
+    n_covariates.append(len(adata.obs[covariate].unique()))
 
-df = pd.DataFrame.from_dict(dict(covariate=covariates, pcr=pcr_scores))
+df = pd.DataFrame.from_dict(
+    {
+        'covariate': covariates,
+        'pcr': pcr_scores,
+        'n_covariates': [f'n={n}' for n in n_covariates],
+    }
+)
 df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')
+df = df.sort_values('covariate', ascending=False)
 
-sns.barplot(
+g = sns.barplot(
     data=df,
     x='pcr',
     y='covariate',
     dodge=False,
-    order=df.sort_values('pcr', ascending=False)['covariate'].unique(),
-).set(title=f'PCR of covariates for: {dataset}')
+    errorbar='sd',
+)
+g.set(title=f'PCR of covariates for: {dataset}')
+g.bar_label(
+    g.containers[0],
+    labels=df.groupby('covariate')['pcr'].mean().round(2),
+    padding=3
+)
+g.bar_label(
+    g.containers[0],
+    labels=df.groupby('covariate')['n_covariates'],
+    label_type='center',
+)
 plt.xticks(rotation=90)
-
-plt.savefig(output_barplot, bbox_inches='tight')
+plt.savefig(output_barplot, bbox_inches='tight',dpi=300)

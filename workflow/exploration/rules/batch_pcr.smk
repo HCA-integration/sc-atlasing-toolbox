@@ -47,10 +47,10 @@ rule batch_pcr:
             'donor',
             'batch',
             'assay',
-            # 'sex',
-            # 'disease',
+            'sex',
+            'disease',
             'self_reported_ethnicity',
-            # 'development_stage',
+            'development_stage',
             'sequencing_protocol.method.ontology',
             'library_preparation_protocol.cell_barcode.barcode_read',
             'library_preparation_protocol.cell_barcode.barcode_offset',
@@ -68,9 +68,9 @@ rule batch_pcr:
         ],
         permutation_covariates=[
             'assay',
-            'sample',
+            # 'sample',
             'batch',
-            'donor',
+            # 'donor',
             'sequencing_protocol.method.ontology',
             'library_preparation_protocol.cell_barcode.barcode_read',
             'library_preparation_protocol.cell_barcode.barcode_offset',
@@ -86,7 +86,7 @@ rule batch_pcr:
             'enrichment_protocol.method.ontology',
             'cell_suspension.biomaterial_core.biomaterial_id'
         ],
-        n_permute=5,
+        n_permute=10,
         sample_key='sample'
     conda:
         '../envs/scib_accel.yaml' if 'os' in config.keys() and config['os'] == 'intel' else '../envs/scib.yaml'
