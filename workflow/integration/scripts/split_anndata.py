@@ -24,6 +24,10 @@ if not out_dir.exists():
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
 
+# ensure count matrix is correct
+logging.info('Select norm counts...')
+adata.X = select_layer(adata, norm_layer, dtype='float32')
+
 logging.info(f'Before filtering: {adata.shape}')
 # remove splits with less than 100 cells
 val_counts = adata.obs[split_key].value_counts()
@@ -57,17 +61,13 @@ for split in splits:
     adata_sub = adata[adata.obs[split_key] == split].copy()
 
     # ensure enough cells per batch
-    val_counts = adata_sub.obs[batch_key].value_counts()
-    adata_sub = adata_sub[adata_sub.obs[batch_key].isin(val_counts[val_counts > n_top_genes].index)]
-
-    # ensure count matrix is correct
-    #logging.info('Select norm counts...')
-    #adata_sub.X = select_layer(adata_sub, norm_layer, force_dense=True, dtype='float32')
+    # val_counts = adata_sub.obs[batch_key].value_counts()
+    # adata_sub = adata_sub[adata_sub.obs[batch_key].isin(val_counts[val_counts > n_top_genes].index)]
 
     # preprocessing
     adata_sub.uns["log1p"] = {"base": None}
 
-    if n_top_genes:
+    if n_top_genes and n_top_genes < adata_sub.n_vars and n_top_genes >= adata_sub.n_obs:
         sc.pp.filter_genes(adata_sub, min_cells=1)
 
         logging.info(f'HVGs to {n_top_genes} genes...')
