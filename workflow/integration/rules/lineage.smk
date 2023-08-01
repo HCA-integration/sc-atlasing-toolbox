@@ -56,11 +56,11 @@ rule run_per_lineage:
         '../scripts/methods/{wildcards.method}.py'
 
 
-def collect_lineages(wildcards):
+def collect_lineages(wildcards, pattern=rules.run_per_lineage.output.h5ad):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
     lineages = glob_wildcards(str(checkpoint_output / "{lineage}.h5ad")).lineage
     return {
-        lineage: expand(rules.run_per_lineage.output.h5ad,lineage=lineage,**wildcards)
+        lineage: expand(pattern,lineage=lineage,**wildcards)
         for lineage in lineages
     }
 

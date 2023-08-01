@@ -5,6 +5,7 @@ defaults:
     assemble:
       - counts
       - normalize
+      - higly_variable_genes
       - pca
       - neighbors
   integration:
@@ -19,7 +20,7 @@ defaults:
       harmony:
       scanorama:
       scgen:
-        max_epochs: 50
+        max_epochs: 5
       scvi:
         n_hidden: 128
         dispersion: gene
@@ -39,7 +40,7 @@ defaults:
           embedding_dims: 10
           recon_loss: nb
         train:
-          n_epochs: 50
+          n_epochs: 20
           eta: 10
     umap_colors:
       - tech

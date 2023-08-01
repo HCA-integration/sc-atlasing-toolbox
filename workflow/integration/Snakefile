@@ -78,18 +78,21 @@ use rule * from common as common_ *
 
 include: 'rules/integration.smk'
 include: 'rules/lineage.smk'
+include: 'rules/clustering.smk'
 include: 'rules/plots.smk'
 
 
 rule per_lineage_all:
     input:
         rules.run_per_lineage_all.input,
+        rules.clustering_per_lineage_all.input,
         rules.plots_per_lineage_all.input,
 
 
 rule all:
     input:
         rules.run_all.input,
+        rules.clustering_all.input,
         rules.plots_all.input,
         rules.per_lineage_all.input,
     default_target: True

@@ -168,9 +168,9 @@ def _get_or_default_from_config(
 
     if value in config[key]:
         entry = config[key][value]
-        if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
+        #if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
             # don't update lists or nested dictionaries
-            entry.update(defaults[value])
+        #    entry.update(defaults[value])
 
         return entry
 
@@ -214,7 +214,7 @@ def get_hyperparams(config, module_name='integration', methods_key='methods'):
     return pd.DataFrame(records, columns=['dataset', 'method', 'hyperparams', 'hyperparams_dict'])
 
 
-def get_resource(config, resource_key, profile='cpu', attempt=1):
+def get_resource(config, resource_key, profile='cpu', attempt=1, factor=0.5):
     """
     Retrieve resource information from config['resources']
     
@@ -232,8 +232,8 @@ def get_resource(config, resource_key, profile='cpu', attempt=1):
             f'WARNING: Invalid profile "{profile}" or resource key "{resource_key}". '
             'Please check that your config contains the correct entries under config["resources"]'
         )
-        res = ''
-    return int(res * attempt * 1.2) if resource_key == 'mem_mb' else res
+        return ''
+    return int(res + (attempt - 1) * factor * res) if resource_key == 'mem_mb' else res
 
 
 def get_datasets_for_module(config, module):

@@ -55,7 +55,7 @@ wildcards_df = get_params_from_config(
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 hyperparams_df = get_hyperparams(config,module_name='integration')
 parameters = wildcards_df \
-    .merge(parameters,on='metric') \
+    .merge(parameters,on='metric',how='inner') \
     .merge(hyperparams_df,on=['dataset', 'method'],how='left')
 parameters['lineage_key'] = parameters['lineage_key'].astype(str)
 
@@ -69,6 +69,8 @@ parameters['lineage_specific'] = parameters.apply(
     lambda row: determine_lineage_specific(row['lineage_key']), axis=1
 )
 parameters = parameters.explode('lineage_specific')
+# only lineage specific
+# parameters = parameters.query('lineage_specific == "per_lineage"')
 
 wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams', 'lineage_key', 'lineage_specific']
 paramspace = Paramspace(

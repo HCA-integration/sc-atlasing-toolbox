@@ -38,8 +38,6 @@ defaults:
           recon_loss: nb
         train:
           n_epochs: 50
-          pretraining_epochs: 40
-          eta: 5
       scvi:
         n_hidden: 128
         dispersion:
@@ -52,7 +50,7 @@ defaults:
       unintegrated:
   datasets:
     - test
-    # - test2
+    - test2
 
 DATASETS:
   test:
@@ -72,7 +70,7 @@ DATASETS:
       batch: batch
       lineage: phase
       methods:
-        combat:
+        unintegrated:
       umap_colors:
         - bulk_labels
         - phase

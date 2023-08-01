@@ -1,4 +1,9 @@
 defaults:
+  datasets:
+    - blood_benchmark_test
+    - blood_benchmark
+    # - blood_benchmark_donor
+    # - test
   integration:
     raw_counts: counts
     norm_counts: normcounts
@@ -7,9 +12,9 @@ defaults:
       # bbknn:
       # combat:
       harmony:
-      scanorama:
-      scgen:
-        max_epochs: 50
+      # scanorama:
+      # scgen:
+      #   max_epochs: 50
       scvi:
         n_hidden: 128
         dispersion:
@@ -29,34 +34,28 @@ defaults:
           - true
           - false
         model:
-          latent_dim: 30
-          embedding_dims: 10
-          # hidden_layer_sizes: [512, 512]
+          embedding_dims: 5
           recon_loss: nb
+          # latent_dim: 30
+          # hidden_layer_sizes: [512, 512]
         train:
-          n_epochs: 50
-          eta: 10
+          n_epochs: 20
+          eta: 5
 
   metrics:
     methods:
       - nmi_leiden_y
       - ari_leiden_y
-      - asw_label_y
-      - asw_batch_y
-      - cell_cycle
-      - clisi_y
-      - ilisi_y
+      - asw_label
+      - asw_batch
+      # - cell_cycle
+      # - clisi_y
+      # - ilisi_y
       - graph_connectivity
-      - isolated_label_asw
-      - isolated_label_asw_y
-      - isolated_label_f1_y
-      - pcr
-      - kbet_y
-  datasets:
-    - blood_benchmark_test
-    - blood_benchmark
-    # - blood_benchmark_donor
-    # - test
+      # - isolated_label_asw_y
+      # - isolated_label_f1_y
+      # - pcr
+      # - kbet_y
   # subset:
   #   n_cells: 1000000
   preprocessing:
@@ -81,12 +80,11 @@ DATASETS:
     subset:
       label: harmonized_label
       sample: sample
-      n_cells: 10000
+      n_cells: 200000
     preprocessing:
       raw_counts: X
-      norm_counts: normcounts
       highly_variable_genes:
-        n_top_genes: 3000
+        n_top_genes: 500
       assemble:
         - counts
         - normalize
@@ -97,6 +95,8 @@ DATASETS:
       label: author_annotation
       batch: sample
       lineage: lineage
+      methods:
+        unintegrated:
     metrics:
       label: author_annotation
       batch: sample
@@ -105,7 +105,6 @@ DATASETS:
   blood_benchmark:
     input:
       relabel: data/out/load_data/merged/subset/blood-benchmark.zarr
-      # subset: relabel
       preprocessing: relabel
       integration: preprocessing
     relabel:
@@ -118,7 +117,6 @@ DATASETS:
           - lineage_coarse
     preprocessing:
       raw_counts: X
-      norm_counts: normcounts
       highly_variable_genes:
         n_top_genes: 3000
       assemble:
