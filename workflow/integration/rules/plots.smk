@@ -10,7 +10,7 @@ rule benchmark_per_dataset:
     input:
         benchmark=lambda wildcards: expand_per(rules.run_method.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
     output:
-        benchmark=out_dir / '{dataset}' / 'integration.benchmark.tsv'
+        benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
     params:
         wildcards=lambda wildcards: parameters.query(f'dataset == "{wildcards.dataset}"')[wildcard_names]
     group:
