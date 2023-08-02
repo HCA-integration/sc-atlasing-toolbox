@@ -3,7 +3,7 @@ from typing import Union
 import warnings
 import pandas as pd
 
-from .misc import expand_dict
+from .misc import expand_dict_and_serialize
 
 
 def set_defaults(config, modules=None, warn=False):
@@ -207,7 +207,7 @@ def get_hyperparams(config, module_name='integration', methods_key='methods'):
             if isinstance(hyperparams_dict, dict):
                 records.extend(
                     (dataset, method, *rec)
-                    for rec in expand_dict(hyperparams_dict)
+                    for rec in expand_dict_and_serialize(hyperparams_dict)
                 )
             else:
                 records.append((dataset, method, str(hyperparams_dict), hyperparams_dict))

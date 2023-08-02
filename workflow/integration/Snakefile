@@ -53,6 +53,10 @@ hyperparams_df = get_hyperparams(config,module_name=module_name)
 parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
 wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage_key']
 
+# write hyperparameter mapping
+Path(out_dir).mkdir(parents=True, exist_ok=True)
+hyperparams_df.to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
+
 paramspace = Paramspace(
     parameters[wildcard_names],
     filename_params=['batch', 'label', 'hyperparams', 'lineage_key'],
