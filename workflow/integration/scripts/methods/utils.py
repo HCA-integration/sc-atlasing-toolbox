@@ -110,5 +110,6 @@ def add_metadata(adata, wildcards, params):
         'method': wildcards.method,
         'label_key': wildcards.label,
         'batch_key': wildcards.batch,
-        'output_type': params['output_type']
+        'output_type': params['output_type'],
+        'hyperparams': params['hyperparams'],
     }

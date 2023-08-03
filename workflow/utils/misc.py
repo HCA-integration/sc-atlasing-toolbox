@@ -52,6 +52,28 @@ def expand_dict(_dict):
     return zip(wildcards, dict_list)
 
 
+def expand_dict_and_serialize(_dict):
+    """
+    Create a cross-product on a dictionary with literals and lists
+    :param _dict: dictionary with lists and literals as values
+    :return: list of dictionaries with literals as values
+    """
+    import jsonpickle
+    import hashlib
+
+    df = pd.DataFrame({k: [v] if isinstance(v, list) else [[v]] for k, v in _dict.items()})
+    for col in df.columns:
+        df = df.explode(col)
+    dict_list = df.apply(lambda row: dict(zip(df.columns, row)), axis=1)
+
+    wildcards = [
+        hashlib.blake2b(jsonpickle.encode(d).encode('utf-8'), digest_size=5).hexdigest()
+        for d in dict_list
+    ]
+
+    return zip(wildcards, dict_list)
+
+
 def unlist_dict(dictionary):
     return {
         k: v[0] if isinstance(v, list) and len(v) == 1 else v
