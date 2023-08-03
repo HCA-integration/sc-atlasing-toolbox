@@ -12,4 +12,4 @@ dependencies:
   - pip
   - pip:
     - scikit-learn-intelex
-    - scib
+    - git+https://github.com/theislab/scib.git
