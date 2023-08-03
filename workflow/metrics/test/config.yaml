@@ -80,6 +80,7 @@ DATASETS:
         - nmi
         - pcr
         - asw_batch
+        - cell_cycle
   
   test_2:
     input:

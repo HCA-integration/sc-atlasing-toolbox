@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from scipy.sparse import issparse
 
 
 def pcr(adata, output_type, meta):
@@ -52,11 +54,23 @@ def cell_cycle(adata, output_type, meta):
 
     if 'feature_name' in adata_raw.var.columns:
         adata_raw.var_names = adata_raw.var['feature_name']
+    upper_case_genes = sum(adata.var_names.str.isupper())
+    organism = 'mouse' if upper_case_genes <= 0.1 * adata.n_vars else 'human'
+
+    # compute cell cycle score per batch
+    batch_key = meta['batch']
+    for batch in adata.obs[batch_key].unique():
+        scib.pp.score_cell_cycle(
+            adata_raw[adata_raw.obs[batch_key] == batch],
+            organism=organism
+        )
 
     return scib.me.cell_cycle(
         adata_pre=adata_raw,
         adata_post=adata,
         batch_key=meta['batch'],
         embed='X_emb' if output_type == 'embed' else 'X_pca',
-        organism='human',
+        recompute_cc=False,
+        organism=organism,
+        verbose=False,
     )
