@@ -136,10 +136,11 @@ use rule umap from plots as integration_umap_lineage with:
         ],
         use_rep='X_emb',
         ncols=1,
+    retries: 2
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
 
 
@@ -156,7 +157,7 @@ rule collect_umap_lineages:
     input:
         unpack(collect_umap_lineages)
     output:
-        touch(out_dir / paramspace.wildcard_pattern / 'umap_lineages.done')
+        touch(out_dir / paramspace.wildcard_pattern / 'per_lineage_umap.done')
 
 
 rule plots_per_lineage_all:
