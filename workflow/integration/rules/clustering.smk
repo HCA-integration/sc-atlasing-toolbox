@@ -46,11 +46,32 @@ rule clustering_merge:
         cluster_df.to_csv(output.tsv, sep='\t')
 
 
+rule clustering_umap:
+    input:
+        h5ad=rules.run_method.output.h5ad,
+        coordinates=rules.integration_umap.output.coordinates,
+        clusters=rules.clustering_merge.output.tsv,
+    output:
+        png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}.png',
+    conda:
+        '../envs/scanpy.yaml'
+    wildcard_constraints:
+        lineage_key='((?![/]).)*',
+    resources:
+        partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
+        qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+    script:
+        '../scripts/clustering_umap.py'
+
+
 rule clustering_all:
-    input:clusters=expand(rules.clustering_merge.output,zip,**parameters[wildcard_names].to_dict('list'))
+    input:
+        expand(rules.clustering_merge.output,zip,**parameters[wildcard_names].to_dict('list')),
+        expand(rules.clustering_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
 
 
-# per lineage
+################# Per lineage clustering #################
 
 rule neighbors_per_lineage:
     input:
@@ -99,15 +120,27 @@ rule clustering_per_lineage_merge:
         print(cluster_df)
         cluster_df.to_csv(output.tsv, sep='\t')
 
+rule clustering_per_lineage_umap:
+    input:
+        h5ad=rules.run_per_lineage.output.h5ad,
+        coordinates=rules.integration_umap_lineage.output.coordinates,
+        clusters=rules.clustering_per_lineage_merge.output.tsv,
+    output:
+        png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
+    conda:
+        '../envs/scanpy.yaml'
+    resources:
+        partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
+        qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+    script:
+        '../scripts/clustering_umap.py'
 
-def collect_clustering_per_lineage(wildcards):
-    return collect_lineages(
-            wildcards,
-            rules.clustering_per_lineage_merge.output
-        )
 
 rule clustering_per_lineage_collect:
-    input: unpack(collect_clustering_per_lineage)
+    input:
+        unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_merge.output)),
+        unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_umap.output)),
     output: touch(out_dir / paramspace.wildcard_pattern / 'per_lineage_clustering.done')
 
 

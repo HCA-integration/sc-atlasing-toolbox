@@ -25,4 +25,5 @@ for output_type in meta['output_types']:
 logging.info('Write file...')
 del adata.X
 del adata.layers
+del adata.obsm
 adata.write(output_file, compression='lzf')
