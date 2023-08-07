@@ -104,6 +104,8 @@ use rule umap from plots as integration_umap with:
         ],
         use_rep='X_emb',
         ncols=1,
+    wildcard_constraints:
+        lineage_key='((?![/]).)*',
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -121,7 +123,7 @@ use rule umap from plots as integration_umap_lineage with:
     input:
         anndata=rules.run_per_lineage.output.h5ad
     output:
-        plot=image_dir / 'umap' / 'lineage~{lineage}' / f'{paramspace.wildcard_pattern}.png',
+        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
         coordinates=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap_coordinates.npy'
     params:
         color=lambda wildcards: [
