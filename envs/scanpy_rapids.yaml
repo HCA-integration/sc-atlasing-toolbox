@@ -12,6 +12,6 @@ dependencies:
   - scipy<1.11
   - leidenalg
   - muon
-  - cudatoolkit
-  - rapidsai::cuml
-  - rapidsai::cudf
+#  - cudatoolkit
+#  - rapidsai::cuml
+#  - rapidsai::cudf
