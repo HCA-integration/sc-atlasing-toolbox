@@ -1,4 +1,4 @@
-rule neighbors:
+rule postprocess:
     input:
         h5ad=rules.run_method.output.h5ad
     output:
@@ -15,7 +15,7 @@ rule neighbors:
 
 rule clustering:
     input:
-        h5ad=rules.neighbors.output.h5ad
+        h5ad=rules.postprocess.output.h5ad
     output:
         tsv=out_dir / paramspace.wildcard_pattern / '_clustering' / '{resolution}.tsv',
     conda:
@@ -73,7 +73,7 @@ rule clustering_all:
 
 ################# Per lineage clustering #################
 
-rule neighbors_per_lineage:
+rule postprocess_per_lineage:
     input:
         h5ad=rules.run_per_lineage.output.h5ad
     output:
@@ -90,7 +90,7 @@ rule neighbors_per_lineage:
 
 rule clustering_per_lineage:
     input:
-        h5ad=rules.neighbors_per_lineage.output.h5ad
+        h5ad=rules.postprocess_per_lineage.output.h5ad
     output:
         tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '_clustering' / '{resolution}.tsv',
     conda:
