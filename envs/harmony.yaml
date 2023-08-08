@@ -9,6 +9,3 @@ dependencies:
   - numpy<1.24
   - zarr
   - harmony-pytorch
-  - pip
-  - pip:
-    - git+https://github.com/theislab/scib.git
