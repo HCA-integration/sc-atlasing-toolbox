@@ -83,8 +83,8 @@ def process(adata, adata_raw, output_type):
         raise ValueError(f'Invalid output type {output_type}')
 
     # add unintegrated data
-    adata.X = adata_raw.X
-    adata.raw = adata_raw.copy()
+    # adata.X = adata_raw.X
+    # adata.raw = adata_raw.copy()
 
     return adata
 
