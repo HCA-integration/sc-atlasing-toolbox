@@ -33,5 +33,20 @@ rule run_method:
         '../scripts/methods/{wildcards.method}.py'
 
 
+rule postprocess:
+    input:
+        zarr=rules.run_method.output.zarr
+    output:
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
+    conda:
+        '../envs/scanpy_rapids.yaml'
+    resources:
+        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
+        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
+    script:
+        '../scripts/neighbors.py'
+
+
 rule run_all:
-    input: expand(rules.run_method.output,zip,**parameters[wildcard_names].to_dict('list'))
+    input: expand(rules.postprocess.output,zip,**parameters[wildcard_names].to_dict('list'))

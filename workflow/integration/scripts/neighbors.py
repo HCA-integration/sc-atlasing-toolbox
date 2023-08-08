@@ -17,10 +17,7 @@ meta = get_from_adata(adata)
 
 for output_type in meta['output_types']:
     logging.info(f'Computing neighbors for output type {output_type}...')
-    # compute neighbors by output type
-    adata_knn = compute_neighbors(adata, output_type)
-    adata.obsp[f'connectivities_{output_type}'] = adata_knn.obsp['connectivities']
-    adata.obsp[f'distances_{output_type}'] = adata_knn.obsp['distances']
+    compute_neighbors(adata, output_type)
 
 logging.info('Write file...')
 del adata.X

@@ -12,9 +12,15 @@ adata_raw.X = select_layer(adata_raw, params['norm_counts'])
 
 # prepare output adata
 adata = adata_raw
-adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
+if 'X_pca' not in adata.obsm:
+    sc.pp.pca(adata, use_highly_variable=True)
 adata.obsm['X_emb'] = adata.obsm['X_pca']
-sc.pp.neighbors(adata)
+if 'connectivities' not in adata.obsp \
+    or 'distances' not in adata.obsp \
+    or 'neighbors' not in adata.uns:
+    sc.pp.neighbors(adata)
+
+adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 adata.write_zarr(output_adata)
