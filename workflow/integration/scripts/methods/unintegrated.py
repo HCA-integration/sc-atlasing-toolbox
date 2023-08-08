@@ -2,8 +2,8 @@ import scanpy as sc
 
 from utils import add_metadata, read_anndata, process, select_layer
 
-input_adata = snakemake.input.h5ad
-output_adata = snakemake.output.h5ad
+input_adata = snakemake.input[0]
+output_adata = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 
@@ -17,4 +17,4 @@ adata.obsm['X_emb'] = adata.obsm['X_pca']
 sc.pp.neighbors(adata)
 add_metadata(adata, wildcards, params)
 
-adata.write(output_adata, compression='gzip')
+adata.write_zarr(output_adata)

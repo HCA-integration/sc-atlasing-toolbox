@@ -87,7 +87,7 @@ rule benchmark_all:
 
 use rule umap from plots as integration_umap with:
     input:
-        anndata=rules.run_method.output.h5ad
+        anndata=rules.run_method.output.zarr
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
         coordinates=out_dir / paramspace.wildcard_pattern / 'umap_coordinates.npy'
@@ -121,7 +121,7 @@ rule plots_all:
 
 use rule umap from plots as integration_umap_lineage with:
     input:
-        anndata=rules.run_per_lineage.output.h5ad
+        anndata=rules.run_per_lineage.output.zarr
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
         coordinates=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap_coordinates.npy'
@@ -148,7 +148,7 @@ use rule umap from plots as integration_umap_lineage with:
 
 def collect_umap_lineages(wildcards):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
-    lineages = glob_wildcards(str(checkpoint_output / "{lineage}.h5ad")).lineage
+    lineages = glob_wildcards(str(checkpoint_output / "{lineage}.zarr")).lineage
     return [
         expand(rules.integration_umap_lineage.output.plot,lineage=lineage,**wildcards)
         for lineage in lineages

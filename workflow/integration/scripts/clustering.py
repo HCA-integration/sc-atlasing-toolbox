@@ -4,11 +4,11 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from methods.utils import read_anndata
-from metrics.utils import compute_neighbors, get_from_adata
+from utils.io import read_anndata
+from metrics.utils import get_from_adata
 
 
-input_file = snakemake.input.h5ad
+input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 resolution = float(snakemake.wildcards.resolution)
 

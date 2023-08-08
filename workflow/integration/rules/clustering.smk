@@ -1,8 +1,8 @@
 rule postprocess:
     input:
-        h5ad=rules.run_method.output.h5ad
+        zarr=rules.run_method.output.zarr
     output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'neighbors.h5ad',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
     conda:
         '../envs/scanpy_rapids.yaml'
     resources:
@@ -15,7 +15,7 @@ rule postprocess:
 
 rule clustering:
     input:
-        h5ad=rules.postprocess.output.h5ad
+        zarr=rules.postprocess.output.zarr
     output:
         tsv=out_dir / paramspace.wildcard_pattern / '_clustering' / '{resolution}.tsv',
     conda:
@@ -48,7 +48,7 @@ rule clustering_merge:
 
 rule clustering_umap:
     input:
-        h5ad=rules.run_method.output.h5ad,
+        zarr=rules.run_method.output.zarr,
         coordinates=rules.integration_umap.output.coordinates,
         clusters=rules.clustering_merge.output.tsv,
     output:
@@ -75,9 +75,9 @@ rule clustering_all:
 
 rule postprocess_per_lineage:
     input:
-        h5ad=rules.run_per_lineage.output.h5ad
+        zarr=rules.run_per_lineage.output.zarr
     output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'neighbors.h5ad',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'neighbors.zarr'),
     conda:
         '../envs/scanpy_rapids.yaml'
     resources:
@@ -90,7 +90,7 @@ rule postprocess_per_lineage:
 
 rule clustering_per_lineage:
     input:
-        h5ad=rules.postprocess_per_lineage.output.h5ad
+        zarr=rules.postprocess_per_lineage.output.zarr
     output:
         tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '_clustering' / '{resolution}.tsv',
     conda:
@@ -122,7 +122,7 @@ rule clustering_per_lineage_merge:
 
 rule clustering_per_lineage_umap:
     input:
-        h5ad=rules.run_per_lineage.output.h5ad,
+        zarr=rules.run_per_lineage.output.zarr,
         coordinates=rules.integration_umap_lineage.output.coordinates,
         clusters=rules.clustering_per_lineage_merge.output.tsv,
     output:

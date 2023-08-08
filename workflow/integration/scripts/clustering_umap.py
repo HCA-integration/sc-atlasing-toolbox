@@ -7,15 +7,16 @@ import warnings
 warnings.filterwarnings("ignore", message="No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 
 from utils.misc import remove_outliers
+from utils.io import read_anndata
 
 
-input_h5ad = snakemake.input.h5ad
+input_h5ad = snakemake.input[0]
 input_coordinates = snakemake.input.coordinates
 input_clusters = snakemake.input.clusters
 input_coordinates = snakemake.input.coordinates
 output_file = snakemake.output[0]
 
-adata = sc.read(input_h5ad)
+adata = read_anndata(input_h5ad)
 cluster_df = pd.read_table(input_clusters, index_col=0, dtype=str)
 umap = np.load(input_coordinates)
 

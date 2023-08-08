@@ -10,7 +10,7 @@ rule run_method:
     input:
         h5ad=get_input
     output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'adata.h5ad',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / paramspace.wildcard_pattern / 'model'))
     benchmark:
         out_dir / paramspace.wildcard_pattern / 'benchmark.tsv'

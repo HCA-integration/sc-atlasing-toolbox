@@ -4,11 +4,11 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from methods.utils import read_anndata
+from utils.io import read_anndata
 from metrics.utils import compute_neighbors, get_from_adata
 
 
-input_file = snakemake.input.h5ad
+input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 
 logging.info(f'Read anndata file {input_file}...')
@@ -26,4 +26,4 @@ logging.info('Write file...')
 del adata.X
 del adata.layers
 del adata.obsm
-adata.write(output_file, compression='lzf')
+adata.write_zarr(output_file)

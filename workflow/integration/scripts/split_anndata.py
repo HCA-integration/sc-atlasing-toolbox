@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 from methods.utils import read_anndata, select_layer
 
-input_file = snakemake.input.h5ad
+input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 
 split_key = snakemake.wildcards.lineage_key
@@ -97,9 +97,9 @@ for split in splits:
 
     # write to file
     split_file = split.replace(' ', '_').replace('/', '_')
-    out_file = out_dir / f"{split_file}.h5ad"
+    out_file = out_dir / f"lineage~{split_file}.zarr"
 
     logging.info(f'write to {out_file}...')
     adata_sub.X = sparse.csr_matrix(adata_sub.X)
-    adata_sub.write(out_file, compression='lzf')
+    adata_sub.write_zarr(out_file)
     del adata_sub
