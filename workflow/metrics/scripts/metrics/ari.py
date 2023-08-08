@@ -3,7 +3,7 @@ import scanpy as sc
 from .utils import cluster_optimal, select_neighbors, rename_categories
 
 
-def ari(adata, output_type, meta):
+def ari(adata, output_type, meta, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
@@ -19,7 +19,7 @@ def ari(adata, output_type, meta):
     return scib.me.ari(adata, meta['label'], 'cluster')
 
 
-def ari_leiden_y(adata, output_type, meta):
+def ari_leiden_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)
@@ -33,7 +33,7 @@ def ari_leiden_y(adata, output_type, meta):
     return scores['ari']
 
 
-def ari_kmeans_y(adata, output_type, meta):
+def ari_kmeans_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     labels = rename_categories(adata, meta['label'])

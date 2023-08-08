@@ -1,3 +1,5 @@
+import numpy as np
+from scipy import sparse
 import scanpy as sc
 import pandas as pd
 
@@ -40,29 +42,80 @@ def compute_neighbors(adata, output_type):
     :param output_type: string of output type
     :return: anndata with kNN graph based on output type
     """
+    neighbor_key = f'neighbors_{output_type}'
+    conn_key = f'connectivities_{output_type}'
+    dist_key = f'distances_{output_type}'
 
-    if 'knn' == output_type:
+    if neighbor_key in adata.uns and conn_key in adata.obsp and dist_key in adata.obsp:
+        return
+
+    if output_type == 'knn':
+        adata_knn = adata
         assert 'connectivities' in adata.obsp
         assert 'distances' in adata.obsp
 
-    elif 'embed' == output_type:
+    elif output_type == 'embed':
         assert 'X_emb' in adata.obsm
-        sc.pp.neighbors(adata, use_rep='X_emb')
+        adata_knn = adata.copy()
+        sc.pp.neighbors(adata_knn, use_rep='X_emb')
 
-    elif 'full' == output_type:
-        assert 'X_pca' in adata.obsm
-        sc.pp.neighbors(adata, use_rep='X_pca')
+    elif output_type == 'full':
+        assert isinstance(adata.X, (np.ndarray, sparse.csr_matrix, sparse.csc_matrix))
+        adata_knn = adata.copy()
+        sc.pp.pca(adata_knn, use_highly_variable=True)
+        sc.pp.neighbors(adata_knn, use_rep='X_pca')
+
+        # save PCA
+        adata.obsm['X_pca'] = adata_knn.obsm['X_pca']
+        adata.varm['PCs'] = adata_knn.varm['PCs']
+        adata.uns['pca'] = {
+            'variance_ratio':  adata_knn.uns['pca']['variance_ratio'],
+            'variance':  adata_knn.uns['pca']['variance'],
+        }
 
     else:
         raise ValueError(f'Invalid output type {output_type}')
 
-    return adata
+    # save kNN graph in dedicated slots
+    adata.uns[neighbor_key] = {
+        'connectivities_key': conn_key,
+        'distances_key': dist_key,
+    }
+
+    adata.obsp[conn_key] = adata_knn.obsp['connectivities']
+    adata.obsp[dist_key] = adata_knn.obsp['distances']
+
+    del adata_knn
 
 
 def select_neighbors(adata, output_type):
-    adata.obsp['connectivities'] = adata.obsp['connectivities_' + output_type]
-    adata.obsp['distances'] = adata.obsp['distances_' + output_type]
+    neighbor_key = f'neighbors_{output_type}'
+    adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbor_key]['connectivities_key']]
+    adata.obsp['distances'] = adata.obsp[adata.uns[neighbor_key]['distances_key']]
     return adata
+
+
+def anndata_to_mudata(adata, group_key, prefix=''):
+    import mudata as mu
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
+    if isinstance(adata, mu.MuData):
+        logging.info('Data is already a MuData object')
+        mudata = adata
+    elif group_key not in adata.obs.columns:
+        logging.info('Data is global AnnData object, use generic group name.')
+        mudata = mu.MuData({group_key: adata})
+    else:
+        logging.info('Data is AnnData object, split by group.')
+        mudata = mu.MuData(
+            {
+                f'{prefix}{group}': adata[adata.obs[group_key] == group]
+                for group in adata.obs[group_key].unique()
+            }
+        )
+    mudata.uns = adata.uns
+    return mudata
 
 
 # TODO: include in scib package

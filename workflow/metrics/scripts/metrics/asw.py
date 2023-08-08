@@ -2,7 +2,7 @@ import numpy as np
 from .utils import rename_categories
 
 
-def asw_batch(adata, output_type, meta):
+def asw_batch(adata, output_type, meta, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -16,7 +16,7 @@ def asw_batch(adata, output_type, meta):
     )
 
 
-def asw_batch_y(adata, output_type, meta):
+def asw_batch_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     if output_type == 'knn':
@@ -38,7 +38,7 @@ def asw_batch_y(adata, output_type, meta):
     )
 
 
-def asw_label(adata, output_type, meta):
+def asw_label(adata, output_type, meta, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -51,7 +51,7 @@ def asw_label(adata, output_type, meta):
     )
 
 
-def asw_label_y(adata, output_type, meta):
+def asw_label_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     if output_type == 'knn':

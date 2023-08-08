@@ -2,7 +2,7 @@ import numpy as np
 from .utils import select_neighbors
 
 
-def isolated_label_f1(adata, output_type, meta):
+def isolated_label_f1(adata, output_type, meta, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -18,7 +18,7 @@ def isolated_label_f1(adata, output_type, meta):
     )
 
 
-def isolated_label_asw(adata, output_type, meta):
+def isolated_label_asw(adata, output_type, meta, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -34,7 +34,7 @@ def isolated_label_asw(adata, output_type, meta):
     )
 
 
-def isolated_label_asw_y(adata, output_type, meta):
+def isolated_label_asw_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     if output_type == 'knn':

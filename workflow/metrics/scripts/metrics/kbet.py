@@ -1,7 +1,7 @@
 from .utils import rename_categories, select_neighbors
 
 
-def kbet_y(adata, output_type, meta):
+def kbet_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)

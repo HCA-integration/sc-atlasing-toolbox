@@ -1,7 +1,7 @@
 from .utils import select_neighbors, rename_categories
 
 
-def clisi(adata, output_type, meta):
+def clisi(adata, output_type, meta, **kwargs):
     import scib
 
     return scib.me.clisi_graph(
@@ -14,7 +14,7 @@ def clisi(adata, output_type, meta):
     )
 
 
-def clisi_y(adata, output_type, meta):
+def clisi_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)
@@ -26,7 +26,7 @@ def clisi_y(adata, output_type, meta):
     ).mean()
 
 
-def ilisi(adata, output_type, meta):
+def ilisi(adata, output_type, meta, **kwargs):
     import scib
 
     return scib.me.ilisi_graph(
@@ -38,7 +38,7 @@ def ilisi(adata, output_type, meta):
     )
 
 
-def ilisi_y(adata, output_type, meta):
+def ilisi_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)
