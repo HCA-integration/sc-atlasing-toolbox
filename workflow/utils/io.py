@@ -16,5 +16,5 @@ def read_anndata_or_mudata(file):
         adata = mu.read(file)
     else:
         print('Read as anndata...')
-        adata = ad.read(file)
+        adata = read_anndata(file)
     return adata

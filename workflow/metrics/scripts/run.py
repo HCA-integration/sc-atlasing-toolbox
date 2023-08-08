@@ -1,10 +1,16 @@
 import numpy as np
 import pandas as pd
 import mudata as mu
-from metrics.utils import write_metrics, get_from_adata
+import logging
+logging.basicConfig(level=logging.INFO)
+
+from metrics.utils import anndata_to_mudata, write_metrics, get_from_adata
 from metrics import metric_map
+from utils.io import read_anndata_or_mudata
+
 
 input_adata = snakemake.input.h5mu
+input_unintegrated = snakemake.input.unintegrated
 output_file = snakemake.output.metric
 metric = snakemake.wildcards.metric
 method = snakemake.wildcards.method
@@ -17,9 +23,21 @@ metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = metrics_meta.loc[metric]['metric_type']
 metric_function = metric_map[metric]
 
-print(f'read {input_adata} ...')
-mudata = mu.read(input_adata)
+logging.info(f'Read {input_adata} ...')
+mudata = read_anndata_or_mudata(input_adata)
 meta = get_from_adata(mudata)
+
+if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
+    logging.info(f'Read unintegrated data {input_unintegrated}...')
+    unintegrated = read_anndata_or_mudata(input_unintegrated)
+    unintegrated = anndata_to_mudata(
+        unintegrated,
+        group_key=lineage_key,
+        prefix='lineage~'
+    )
+else:
+    logging.info('Skip unintegrated data...')
+    unintegrated = mudata
 
 output_types = []
 scores = []
@@ -29,7 +47,8 @@ for output_type in meta['output_types']:
         score = metric_function(
             mudata[lineage_key],
             output_type,
-            meta
+            meta,
+            adata_raw=unintegrated[lineage_key],
         )
         scores.append(score)
         lineages.append('global')
@@ -42,7 +61,8 @@ for output_type in meta['output_types']:
             score = metric_function(
                 mudata[lineage],
                 output_type,
-                meta
+                meta,
+                adata_raw=unintegrated[lineage],
             )
             scores.append(score)
             lineages.append(lineage)

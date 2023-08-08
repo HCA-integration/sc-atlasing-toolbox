@@ -294,7 +294,7 @@ def get_for_dataset(
     for q in query:
         if q not in value:
             if warn:
-                warnings.warn(f'key {q} not found in config')
+                warnings.warn(f'key {q} not found in config for query {query}, returning default')
             return default
         value = value[q]
     return value
