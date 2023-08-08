@@ -5,6 +5,7 @@ from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy import sparse
+
 from utils.io import read_anndata
 
 output_file = snakemake.output[0]
@@ -77,4 +78,4 @@ logging.info('Preprocessing metadata in adata.uns:')
 logging.info(pformat(adata.uns['preprocessing']))
 
 logging.info(f'Write to {output_file}...')
-adata.write(output_file)
+adata.write_zarr(output_file)

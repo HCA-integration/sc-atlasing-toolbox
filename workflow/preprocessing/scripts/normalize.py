@@ -45,4 +45,5 @@ adata.uns['preprocessing']['log-transformed'] = True
 
 logging.info(f'Write to {output_file}...')
 del adata.raw
-adata.write(output_file, compression='lzf')
+del adata.layers
+adata.write_zarr(output_file)

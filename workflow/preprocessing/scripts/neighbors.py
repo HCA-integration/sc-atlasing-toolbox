@@ -39,4 +39,4 @@ del adata.obsm['X_pca']
 logging.info(f'Write to {output_file}...')
 # if not adata.uns['preprocessing']['scaled']:
 #     adata.X = sparse.csr_matrix(adata.X)
-adata.write(output_file, compression='lzf')
+adata.write_zarr(output_file)

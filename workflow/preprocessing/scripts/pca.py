@@ -45,4 +45,4 @@ del adata.X
 del adata.layers
 
 logging.info(f'Write to "{output_file}"...')
-adata.write(output_file, compression='lzf')
+adata.write_zarr(output_file)
