@@ -4,8 +4,8 @@ channels:
   - conda-forge
   - nvidia
 dependencies:
-  - python
-  - scanpy
+  - python=3.9
+  - scanpy=1.9
   - numpy<1.24
   - matplotlib<3.7
   - pandas<2.0.0
