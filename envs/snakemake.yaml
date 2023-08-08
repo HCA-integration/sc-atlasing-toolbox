@@ -4,7 +4,7 @@ channels:
   - bioconda
 dependencies:
   - python
-  - snakemake>=7.21
+  - snakemake=7.31.0
   - pandas<2.0.0
   - graphviz
   - singularity
