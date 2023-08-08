@@ -35,9 +35,9 @@ rule run_method:
 
 rule postprocess:
     input:
-        zarr=rules.run_method.output.zarr
+        zarr=rules.run_method.output.zarr,
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
     conda:
         '../envs/scanpy_rapids.yaml'
     resources:
@@ -45,7 +45,7 @@ rule postprocess:
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
         mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
     script:
-        '../scripts/neighbors.py'
+        '../scripts/postprocess.py'
 
 
 rule run_all:

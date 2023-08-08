@@ -1,10 +1,10 @@
-import scanpy as sc
+from pathlib import Path
 import warnings
 warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils.io import read_anndata
+from utils.io import read_anndata, link_zarr
 from metrics.utils import compute_neighbors, get_from_adata
 
 
@@ -22,5 +22,13 @@ for output_type in meta['output_types']:
 logging.info('Write file...')
 del adata.X
 del adata.layers
-del adata.obsm
 adata.write_zarr(output_file)
+
+input_files = [f.name for f in Path(input_file).iterdir()]
+files_to_link = [f for f in input_files if f not in ['obsm', 'obsp', 'uns', 'varm']]
+link_zarr(
+    in_dir=input_file,
+    out_dir=output_file,
+    file_names=files_to_link,
+    overwrite=True,
+)

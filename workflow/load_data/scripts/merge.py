@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 import gc
 
 import pandas as pd
@@ -7,6 +6,7 @@ import scanpy as sc
 import anndata
 
 from utils import SCHEMAS
+from utils_pipeline.io import link_zarr
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,15 +28,7 @@ out_file = snakemake.output.zarr
 merge_strategy = snakemake.params.merge_strategy
 
 if len(files) == 1:
-    in_file = Path(files[0])
-    out_dir = Path(out_file)
-    if not out_dir.exists():
-        out_dir.mkdir()
-    for f in in_file.iterdir():
-        if f.name == '.snakemake_timestamp':
-            continue  # skip snakemake timestamp
-        new_file = out_dir / f.name
-        new_file.symlink_to(f.resolve())
+    link_zarr(in_dir=files[0], out_dir=out_file)
 else:
     logging.info(f'Read first file {files[0]}...')
     adata = read_adata(files[0])
