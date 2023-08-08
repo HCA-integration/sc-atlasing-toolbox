@@ -6,6 +6,7 @@ dependencies:
   - python=3.9
   - scanpy=1.9
   - numpy<1.24
+  - scikit-learn<1.3
   - zarr
   - bbknn
   - pip
