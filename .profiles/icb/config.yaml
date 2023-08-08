@@ -6,12 +6,12 @@ cluster:
     --gres=gpu:{resources.gpu}
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
-    --job-name=smk-{rule}-{wildcards}
-    --output=logs/{rule}/{rule}-{wildcards}-%j.out
+    --job-name={rule}
+    --output=logs/%j-{rule}-{wildcards}.out
     --parsable
 default-resources:
   - partition=cpu_p
-  - qos=icb
+  - qos=cpu_normal
   - gpu=0
   - mem_mb=90000
   - disk_mb=20000
@@ -27,10 +27,11 @@ printshellcmds: True
 scheduler: greedy
 use-conda: True
 cluster-cancel: scancel
+cluster_status: .profiles/slurm-status.py
 rerun-triggers:
   - mtime
   - params
   - input
   - software-env
   - code
-show-failed-logs: True
+show-failed-logs: cTrue

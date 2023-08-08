@@ -1,23 +1,17 @@
-name: scanpy_rapids
+name: scanpy
 channels:
+  - rapidsai
   - conda-forge
-  # - nvidia
-  # - rapidsai
+  - nvidia
 dependencies:
-  - python=3.10
-  - scanpy
+  - python=3.9
+  - scanpy=1.9
   - numpy<1.24
   - matplotlib<3.7
   - pandas<2.0.0
   - scipy<1.11
   - leidenalg
   - muon
-  - zarr
-  - cudatoolkit=11
-  # - rapidsai::cuml
-  # - rapidsai::cudf
-  - pip
-  - pip:
-    - --extra-index-url=https://pypi.nvidia.com
-    - cudf-cu11==23.6
-    - cuml-cu11==23.6
+#  - cudatoolkit
+#  - rapidsai::cuml
+#  - rapidsai::cudf
