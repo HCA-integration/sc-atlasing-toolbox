@@ -27,11 +27,11 @@ printshellcmds: True
 scheduler: greedy
 use-conda: True
 cluster-cancel: scancel
-cluster_status: .profiles/slurm-status.py
+cluster-status: .profiles/slurm-status.py
 rerun-triggers:
   - mtime
   - params
   - input
   - software-env
   - code
-show-failed-logs: cTrue
+show-failed-logs: True
