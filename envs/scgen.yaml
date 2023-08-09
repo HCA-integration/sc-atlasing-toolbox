@@ -12,6 +12,8 @@ dependencies:
   - pip
   - pip:
     - torch
+    - jax<0.4.14
+    - jaxlib<0.4.14
     - torchvision
     - torchaudio
     - git+https://github.com/theislab/scgen.git@fix_concatenation

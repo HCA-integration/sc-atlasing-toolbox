@@ -3,16 +3,16 @@ resources:
     partition: cpu_p
     qos: icb
     gpu: 0
-    mem_mb: 400000
+    mem_mb: 100000
     disk_mb: 50000
   cpu:
     partition: cpu_p
-    qos: icb
+    qos: cpu_normal
     gpu: 0
-    mem_mb: 150000
+    mem_mb: 50000
   gpu:
     partition: gpu_p
-    qos: gpu
+    qos: gpu_normal
     gpu: 1
     mem_mb: 90000
 
