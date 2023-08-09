@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import mudata as mu
 import logging
 logging.basicConfig(level=logging.INFO)
 

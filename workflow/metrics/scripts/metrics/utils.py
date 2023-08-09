@@ -2,6 +2,8 @@ import numpy as np
 from scipy import sparse
 import scanpy as sc
 import pandas as pd
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 def get_from_adata(adata):
@@ -47,6 +49,7 @@ def compute_neighbors(adata, output_type):
     dist_key = f'distances_{output_type}'
 
     if neighbor_key in adata.uns and conn_key in adata.obsp and dist_key in adata.obsp:
+        logging.info(f'Using pre-computed {output_type} kNN graph')
         return
 
     if output_type == 'knn':
