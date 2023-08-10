@@ -3,13 +3,11 @@ import pandas as pd
 from scipy.sparse import issparse
 
 
-def pcr(adata, output_type, meta):
+def pcr(adata, output_type, meta, adata_raw, **kwargs):
     import scib
 
     if output_type == 'knn':
         return np.nan
-
-    adata_raw = adata.raw.to_adata()
 
     return scib.me.pcr_comparison(
         adata_pre=adata_raw,
@@ -19,13 +17,12 @@ def pcr(adata, output_type, meta):
     )
 
 
-def pcr_y(adata, output_type, meta):
+def pcr_y(adata, output_type, meta, adata_raw, **kwargs):
     import scib_metrics
 
     if output_type == 'knn':
         return np.nan
 
-    adata_raw = adata.raw.to_adata()
     X_pre = adata_raw.X
 
     if output_type == 'embed':
@@ -43,14 +40,11 @@ def pcr_y(adata, output_type, meta):
     )
 
 
-def cell_cycle(adata, output_type, meta):
+def cell_cycle(adata, output_type, meta, adata_raw, **kwargs):
     import scib
 
     if output_type == 'knn':
         return np.nan
-
-    adata_raw = adata.raw.to_adata()
-    print(adata_raw)
 
     if 'feature_name' in adata_raw.var.columns:
         adata_raw.var_names = adata_raw.var['feature_name']

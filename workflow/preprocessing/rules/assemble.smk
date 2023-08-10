@@ -1,15 +1,15 @@
 """
-Assemble h5ad with different Preprocessing outputs
+Assemble anndata with different Preprocessing outputs
 """
 
 def collect_files(wildcards):
     file_dict = {
         'counts': get_for_dataset(config, wildcards.dataset, ['input', module_name]),
-        'normalize': rules.normalize.output.h5ad,
-        'highly_variable_genes': rules.highly_variable_genes.output.h5ad,
-        'pca': rules.pca.output.h5ad,
-        'neighbors': rules.neighbors.output.h5ad,
-        # 'umap': rules.umap.output.h5ad,
+        'normalize': rules.normalize.output.zarr,
+        'highly_variable_genes': rules.highly_variable_genes.output.zarr,
+        'pca': rules.pca.output.zarr,
+        'neighbors': rules.neighbors.output.zarr,
+        # 'umap': rules.umap.output.zarr,
     }
     assembly_config = get_for_dataset(config, wildcards.dataset, [module_name, 'assemble'])
     if assembly_config is None:
@@ -21,7 +21,7 @@ rule assemble:
     input:
         unpack(collect_files)
     output:
-        h5ad=out_dir / '{dataset}' / 'preprocessed.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'preprocessed.zarr')
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),

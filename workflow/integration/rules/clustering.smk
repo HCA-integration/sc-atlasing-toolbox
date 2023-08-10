@@ -1,21 +1,6 @@
-rule postprocess:
-    input:
-        h5ad=rules.run_method.output.h5ad
-    output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'neighbors.h5ad',
-    conda:
-        '../envs/scanpy_rapids.yaml'
-    resources:
-        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
-        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
-    script:
-        '../scripts/neighbors.py'
-
-
 rule clustering:
     input:
-        h5ad=rules.postprocess.output.h5ad
+        zarr=rules.postprocess.output.zarr
     output:
         tsv=out_dir / paramspace.wildcard_pattern / '_clustering' / '{resolution}.tsv',
     conda:
@@ -48,7 +33,7 @@ rule clustering_merge:
 
 rule clustering_umap:
     input:
-        h5ad=rules.run_method.output.h5ad,
+        zarr=rules.run_method.output.zarr,
         coordinates=rules.integration_umap.output.coordinates,
         clusters=rules.clustering_merge.output.tsv,
     output:
@@ -73,24 +58,9 @@ rule clustering_all:
 
 ################# Per lineage clustering #################
 
-rule postprocess_per_lineage:
-    input:
-        h5ad=rules.run_per_lineage.output.h5ad
-    output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'neighbors.h5ad',
-    conda:
-        '../envs/scanpy_rapids.yaml'
-    resources:
-        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
-        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
-    script:
-        '../scripts/neighbors.py'
-
-
 rule clustering_per_lineage:
     input:
-        h5ad=rules.postprocess_per_lineage.output.h5ad
+        zarr=rules.postprocess_per_lineage.output.zarr
     output:
         tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '_clustering' / '{resolution}.tsv',
     conda:
@@ -122,7 +92,7 @@ rule clustering_per_lineage_merge:
 
 rule clustering_per_lineage_umap:
     input:
-        h5ad=rules.run_per_lineage.output.h5ad,
+        zarr=rules.run_per_lineage.output.zarr,
         coordinates=rules.integration_umap_lineage.output.coordinates,
         clusters=rules.clustering_per_lineage_merge.output.tsv,
     output:

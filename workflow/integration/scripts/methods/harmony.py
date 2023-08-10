@@ -4,8 +4,8 @@ from harmony import harmonize
 from utils import add_metadata, read_anndata, process, select_layer
 
 
-input_adata = snakemake.input.h5ad
-output_adata = snakemake.output.h5ad
+input_adata = snakemake.input[0]
+output_adata = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 
@@ -26,4 +26,4 @@ adata.obsm["X_emb"] = harmonize(adata.obsm["X_pca"], adata.obs, batch_key=wildca
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write(output_adata, compression='lzf')
+adata.write_zarr(output_adata)

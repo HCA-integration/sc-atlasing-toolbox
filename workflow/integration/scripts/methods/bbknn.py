@@ -3,8 +3,8 @@ import scanpy as sc
 from utils import add_metadata, read_anndata, process, select_layer
 
 
-input_adata = snakemake.input.h5ad
-output_adata = snakemake.output.h5ad
+input_adata = snakemake.input[0]
+output_adata = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
@@ -25,4 +25,4 @@ adata = sc.external.pp.bbknn(adata_raw, batch_key=batch_key, use_rep='X_pca', co
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write(output_adata, compression='gzip')
+adata.write_zarr(output_adata)

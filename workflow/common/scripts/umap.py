@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import scanpy as sc
 
+from utils.io import read_anndata
 from utils.misc import remove_outliers
 
 
@@ -13,7 +14,7 @@ output_plot = snakemake.output.plot
 output_coordinates = snakemake.output.coordinates
 params = {k: v for k, v in snakemake.params.items()}
 
-adata = sc.read(input_file)
+adata = read_anndata(input_file)
 print(adata)
 
 use_rep = 'X'

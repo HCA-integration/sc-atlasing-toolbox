@@ -27,4 +27,5 @@ dependencies:
     - jaxlib==0.3.25+cuda11.cudnn82
     - ml-collections==0.1.0
     - optax==0.1.4
+    - orbax<0.1.6
     - scib-metrics

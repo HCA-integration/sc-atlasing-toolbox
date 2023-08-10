@@ -3,13 +3,12 @@ import os
 
 def get_integration_output(wildcards):
     if wildcards.lineage_specific == 'global':
-        return rules.integration_run_method.output.h5ad
+        return rules.integration_run_method.output[0]
     return rules.merge_lineage.output.h5mu
 
 
 rule preprocess:
-    input:
-        h5ad=get_integration_output
+    input: get_integration_output
     output:
         h5mu=out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu',
     conda:
@@ -36,6 +35,12 @@ rule run:
        """
     input:
         h5mu=rules.preprocess.output.h5mu,
+        unintegrated=lambda w: get_for_dataset(
+            config,
+            w.dataset,
+            query=['input', 'integration'],
+            default=rules.preprocess.output.h5mu,
+        ),
         metrics_meta=workflow.source_path('../params.tsv')
     output:
         metric=out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
@@ -59,3 +64,11 @@ rule run:
 
 rule run_all:
     input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
+
+rule run_per_lineage_all:
+    input:
+        expand(
+            rules.run.output,
+            zip,
+            **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
+        )

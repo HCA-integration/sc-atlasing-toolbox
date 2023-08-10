@@ -1,13 +1,13 @@
 """
 Preprocessing steps
-Only the unique outputs per step are saved for storage efficiency. For assembled h5ad files, see `assemble.smk`.
+Only the unique outputs per step are saved for storage efficiency. For assembled zarr files, see `assemble.smk`.
 """
 
 rule normalize:
     input:
         lambda w: get_for_dataset(config, w.dataset, ['input', module_name])
     output:
-        h5ad=out_dir / '{dataset}' / 'normalized.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'normalized.zarr'),
     params:
         raw_counts=lambda w: get_for_dataset(config, w.dataset, [module_name, 'raw_counts']),
     resources:
@@ -22,9 +22,9 @@ rule normalize:
 
 rule highly_variable_genes:
     input:
-        h5ad=rules.normalize.output.h5ad
+        zarr=rules.normalize.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'highly_variable_genes.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'highly_variable_genes.zarr')
     params:
         args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'highly_variable_genes']),
         batch=lambda w: get_for_dataset(config, w.dataset, [module_name, 'batch']),
@@ -41,10 +41,10 @@ rule highly_variable_genes:
 
 rule pca:
     input:
-        h5ad=rules.highly_variable_genes.output.h5ad,
-        counts=rules.normalize.output.h5ad,
+        zarr=rules.highly_variable_genes.output.zarr,
+        counts=rules.normalize.output.zarr,
     output:
-        h5ad=out_dir / '{dataset}' / 'pca.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'pca.zarr')
     params:
         scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale'])
     resources:
@@ -58,9 +58,9 @@ rule pca:
 
 rule neighbors:
     input:
-        h5ad=rules.pca.output.h5ad
+        zarr=rules.pca.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'neighbors.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'neighbors.zarr')
     params:
         args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'neighbors']),
     resources:
@@ -80,9 +80,9 @@ rule neighbors:
 
 rule umap:
     input:
-        h5ad=rules.neighbors.output.h5ad
+        zarr=rules.neighbors.output.zarr
     output:
-        h5ad=out_dir / '{dataset}' / 'umap.h5ad'
+        zarr=directory(out_dir / '{dataset}' / 'umap.zarr')
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),

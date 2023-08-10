@@ -55,7 +55,9 @@ wildcard_names = ['dataset', 'method', 'batch', 'label', 'hyperparams', 'lineage
 
 # write hyperparameter mapping
 Path(out_dir).mkdir(parents=True, exist_ok=True)
-hyperparams_df.to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
+unique_dataframe(
+    hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
+).to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
 
 paramspace = Paramspace(
     parameters[wildcard_names],

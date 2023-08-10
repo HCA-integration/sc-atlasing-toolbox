@@ -8,8 +8,8 @@ from snakemake.utils import Paramspace
 
 from utils.misc import all_but
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module
-
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
+    get_datasets_for_module, get_for_dataset
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
@@ -30,6 +30,7 @@ use rule * from integration as integration_ *
 module_name = 'metrics'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 wildcards_df = get_params_from_config(
     config=config['DATASETS'],
@@ -112,6 +113,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=image_dir / module_name,
             target='all'
         )

@@ -3,7 +3,7 @@ import scanpy as sc
 from .utils import cluster_optimal, select_neighbors, rename_categories
 
 
-def nmi(adata, output_type, meta):
+def nmi(adata, output_type, meta, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
@@ -19,7 +19,7 @@ def nmi(adata, output_type, meta):
     return scib.me.nmi(adata, meta['label'], 'cluster')
 
 
-def nmi_leiden_y(adata, output_type, meta):
+def nmi_leiden_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)
@@ -33,7 +33,7 @@ def nmi_leiden_y(adata, output_type, meta):
     return scores['nmi']
 
 
-def nmi_kmeans_y(adata, output_type, meta):
+def nmi_kmeans_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     labels = rename_categories(adata, meta['label'])

@@ -4,6 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import scanpy as sc
 
+from utils.io import read_anndata
+
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
@@ -18,7 +20,7 @@ print('params:', params)
 assert 'basis' in params, '"basis" is positional and must be defined'
 basis = params['basis']
 
-adata = sc.read(input_file)
+adata = read_anndata(input_file)
 print(adata)
 
 

@@ -1,7 +1,7 @@
 from .utils import select_neighbors, rename_categories
 
 
-def graph_connectivity(adata, output_type, meta):
+def graph_connectivity(adata, output_type, meta, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
@@ -11,7 +11,7 @@ def graph_connectivity(adata, output_type, meta):
     )
 
 
-def graph_connectivity_y(adata, output_type, meta):
+def graph_connectivity_y(adata, output_type, meta, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)

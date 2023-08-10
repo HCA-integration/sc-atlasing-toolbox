@@ -4,8 +4,8 @@ from scarches.dataset.trvae.data_handling import remove_sparsity
 
 from utils import add_metadata, read_anndata, process, select_layer
 
-input_file = snakemake.input.h5ad
-output_file = snakemake.output.h5ad
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
@@ -66,4 +66,4 @@ adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_typ
 add_metadata(adata, wildcards, params)
 
 # Save output
-adata.write(output_file)
+adata.write_zarr(output_file)

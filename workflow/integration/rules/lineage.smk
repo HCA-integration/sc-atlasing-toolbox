@@ -10,10 +10,9 @@ checkpoint split_lineage:
         output: {output}
         wildcards: {wildcards}
         """
-    input:
-        h5ad=get_input
+    input: get_input
     output:
-        directory(out_dir / 'dataset~{dataset}' / 'batch~{batch},lineage_key~{lineage_key}')
+        directory(out_dir / 'dataset~{dataset}' / 'split_lineage,batch~{batch},lineage_key~{lineage_key}')
     params:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
         norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
@@ -32,9 +31,9 @@ checkpoint split_lineage:
 
 rule run_per_lineage:
     input:
-        h5ad=lambda w: get_checkpoint_output(checkpoints.split_lineage,**w) / f'{w.lineage}.h5ad',
+        zarr=lambda w: get_checkpoint_output(checkpoints.split_lineage,**w) / f'{w.lineage}.zarr',
     output:
-        h5ad=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.h5ad',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
         model=touch(directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'model'))
     benchmark:
         out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/benchmark.tsv'
@@ -56,9 +55,24 @@ rule run_per_lineage:
         '../scripts/methods/{wildcards.method}.py'
 
 
-def collect_lineages(wildcards, pattern=rules.run_per_lineage.output.h5ad):
+rule postprocess_per_lineage:
+    input:
+        zarr=rules.run_per_lineage.output.zarr
+    output:
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
+    conda:
+        '../envs/scanpy_rapids.yaml'
+    resources:
+        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
+        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
+    script:
+        '../scripts/postprocess.py'
+
+
+def collect_lineages(wildcards, pattern=rules.postprocess_per_lineage.output.zarr):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
-    lineages = glob_wildcards(str(checkpoint_output / "{lineage}.h5ad")).lineage
+    lineages = glob_wildcards(str(checkpoint_output / "{lineage}.zarr")).lineage
     return {
         lineage: expand(pattern,lineage=lineage,**wildcards)
         for lineage in lineages

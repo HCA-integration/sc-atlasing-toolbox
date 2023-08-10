@@ -21,4 +21,4 @@ adata = scib.ig.scanorama(adata_raw, batch=wildcards.batch)
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write(output_adata, compression='gzip')
+adata.write_zarr(output_adata)

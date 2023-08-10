@@ -4,8 +4,8 @@ from scarches.models.scpoli import scPoli
 
 from utils import add_metadata, read_anndata, process, select_layer
 
-input_file = snakemake.input.h5ad
-output_file = snakemake.output.h5ad
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 params = snakemake.params
@@ -65,4 +65,4 @@ adata.obsm["X_emb"] = model.get_latent(adata, mean=True)
 adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write(output_file, compression='lzf')
+adata.write_zarr(output_file)
