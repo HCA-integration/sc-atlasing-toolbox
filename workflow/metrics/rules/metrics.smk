@@ -64,3 +64,11 @@ rule run:
 
 rule run_all:
     input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
+
+rule run_per_lineage_all:
+    input:
+        expand(
+            rules.run.output,
+            zip,
+            **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
+        )
