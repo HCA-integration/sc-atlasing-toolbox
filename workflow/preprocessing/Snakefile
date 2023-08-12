@@ -11,6 +11,7 @@ from utils.misc import ifelse
 module_name = 'preprocessing'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 
 wildcard_constraints:
@@ -26,13 +27,19 @@ use rule * from common as common_ *
 
 include: 'rules/preprocessing.smk'
 include: 'rules/assemble.smk'
+include: 'rules/plots.smk'
+
+
+rule plots_all:
+    input:
+        expand(rules.plot_embedding.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.plot_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
 
 
 rule all:
     input:
-        # expand(rules.neighbors.output,dataset=get_datasets_for_module(config,module=module_name)),
-        # expand(rules.umap.output,dataset=get_datasets_for_module(config,module=module_name)),
-        expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name))
+        expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name)),
+        rules.plots_all.output,
     default_target: True
 
 
