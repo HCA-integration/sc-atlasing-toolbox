@@ -62,7 +62,7 @@ rule neighbors:
     output:
         zarr=directory(out_dir / '{dataset}' / 'neighbors.zarr')
     params:
-        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'neighbors']),
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'neighbors'], default={}),
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -70,7 +70,7 @@ rule neighbors:
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
     conda:
         ifelse(
-            'os' not in config.keys() or config['os'] == 'm1',
+            'use_gpu' not in config.keys() or not config['use_gpu'],
             _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
         )
     # shadow: 'minimal'
@@ -80,9 +80,12 @@ rule neighbors:
 
 rule umap:
     input:
-        zarr=rules.neighbors.output.zarr
+        zarr=rules.neighbors.output.zarr,
+        rep=rules.pca.output.zarr,
     output:
         zarr=directory(out_dir / '{dataset}' / 'umap.zarr')
+    params:
+        neighbors_key='neighbors',
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -90,7 +93,7 @@ rule umap:
         mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
     conda:
         ifelse(
-            'os' not in config.keys() or config['os'] == 'm1',
+            'use_gpu' not in config.keys() or not config['use_gpu'],
             _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
         )
     # shadow: 'minimal'
