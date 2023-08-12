@@ -52,8 +52,9 @@ if 'neighbors' not in adata.uns.keys() or adata.uns['neighbors']['params'].get('
 # compute UMAP
 try:
     sc.tl.umap(adata, method='rapids')
-except:
+except Exception as e:
     print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
+    print(e)
     sc.tl.umap(adata)
 
 # save coordinates
