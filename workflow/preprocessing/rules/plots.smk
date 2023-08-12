@@ -1,8 +1,4 @@
-from utils.wildcards import wildcards_to_str
-from utils.misc import ifelse
-
-
-rule plot_embedding:
+use rule plot_embedding from preprocessing as preprocessing_plot_embedding with:
     input:
         anndata=rules.pca.output.zarr,
     output:
@@ -11,13 +7,9 @@ rule plot_embedding:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'colors']),
         basis='X_pca',
         ncols=1,
-    conda:
-        '../envs/scanpy.yaml'
-    script:
-        '../scripts/plot_embedding.py'
 
 
-rule plot_umap:
+use rule plot_umap from preprocessing as preprocessing_plot_umap with:
     input:
         anndata=rules.umap.output.zarr
     output:
@@ -26,10 +18,3 @@ rule plot_umap:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'colors']),
         ncols=1,
         outlier_factor=3
-    conda:
-        ifelse(
-            'use_gpu' not in config.keys() or not config['use_gpu'],
-            _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
-        )
-    script:
-        '../scripts/plot_umap.py'

@@ -24,8 +24,11 @@ module common:
 
 use rule * from common as common_ *
 
+module preprocessing:
+    snakefile: "rules.smk"
+    config: config
 
-include: 'rules/preprocessing.smk'
+# include: 'rules/preprocessing.smk'
 include: 'rules/assemble.smk'
 include: 'rules/plots.smk'
 
