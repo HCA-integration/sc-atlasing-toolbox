@@ -12,12 +12,17 @@ from utils.misc import remove_outliers
 input_file = snakemake.input[0]
 output_plot = snakemake.output.plot
 params = {k: v for k, v in snakemake.params.items()}
+if 'outlier_factor' in params:
+    outlier_factor = params['outlier_factor']
+    del params['outlier_factor']
+else:
+    outlier_factor = 3
 
 adata = read_anndata(input_file)
 
 # remove outliers
-adata = remove_outliers(adata, 'max')
-adata = remove_outliers(adata, 'min')
+adata = remove_outliers(adata, 'max', factor=outlier_factor)
+adata = remove_outliers(adata, 'min', factor=outlier_factor)
 
 # parse colors
 if 'color' in params and params['color'] is not None:

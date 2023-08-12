@@ -25,6 +25,7 @@ rule plot_umap:
     params:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'colors']),
         ncols=1,
+        outlier_factor=3
     conda:
         ifelse(
             'use_gpu' not in config.keys() or not config['use_gpu'],
