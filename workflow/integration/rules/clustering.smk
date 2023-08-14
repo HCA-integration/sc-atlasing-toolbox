@@ -2,7 +2,7 @@ rule clustering:
     input:
         zarr=rules.postprocess.output.zarr
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / '_clustering' / '{resolution}.tsv',
+        tsv=out_dir / paramspace.wildcard_pattern / 'clustering' / '{resolution}.tsv',
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -33,8 +33,7 @@ rule clustering_merge:
 
 rule clustering_umap:
     input:
-        zarr=rules.run_method.output.zarr,
-        coordinates=rules.integration_umap.output.coordinates,
+        zarr=rules.integration_compute_umap.output.zarr,
         clusters=rules.clustering_merge.output.tsv,
     output:
         png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}.png',
@@ -62,7 +61,7 @@ rule clustering_per_lineage:
     input:
         zarr=rules.postprocess_per_lineage.output.zarr
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '_clustering' / '{resolution}.tsv',
+        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clustering' / '{resolution}.tsv',
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -81,7 +80,7 @@ rule clustering_per_lineage_merge:
             allow_missing=True
         ),
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
+        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
     run:
         from functools import reduce
 
@@ -92,11 +91,10 @@ rule clustering_per_lineage_merge:
 
 rule clustering_per_lineage_umap:
     input:
-        zarr=rules.run_per_lineage.output.zarr,
-        coordinates=rules.integration_umap_lineage.output.coordinates,
+        zarr=rules.integration_compute_umap_lineage.output.zarr,
         clusters=rules.clustering_per_lineage_merge.output.tsv,
     output:
-        png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
+        png=image_dir / 'umap_clusters' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}.png',
     conda:
         '../envs/scanpy.yaml'
     resources:

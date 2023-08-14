@@ -73,11 +73,11 @@ parameters = parameters.explode('lineage_specific')
 # only lineage specific
 # parameters = parameters.query('lineage_specific == "per_lineage"')
 
-wildcard_names = ['dataset', 'method', 'metric', 'batch', 'label', 'hyperparams', 'lineage_key', 'lineage_specific']
+wildcard_names = ['dataset', 'method', 'hyperparams', 'metric', 'batch', 'label', 'lineage_key', 'lineage_specific']
 paramspace = Paramspace(
     parameters[[w for w in wildcard_names if w != 'metric']],
-    filename_params=['batch', 'label', 'hyperparams', 'lineage_key'],
-    filename_sep=',',
+    filename_params=['method', 'hyperparams', 'batch', 'label', 'lineage_key'],
+    filename_sep='--',
 )
 
 wildcard_constraints:

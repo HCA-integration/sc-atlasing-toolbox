@@ -28,6 +28,7 @@ rule run_method:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=lambda w, attempt: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb', attempt=attempt),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
+        time="2-00:00:00",
     # shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'

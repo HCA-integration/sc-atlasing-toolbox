@@ -12,6 +12,8 @@ output_file = snakemake.output[0]
 
 adata = None
 
+# TODO: link to other zarr directories
+
 for file_type, file in snakemake.input.items():
     logging.info(f'Read {file}...')
     adata_pp = read_anndata(file)

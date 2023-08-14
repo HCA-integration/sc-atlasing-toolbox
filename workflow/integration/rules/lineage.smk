@@ -12,7 +12,7 @@ checkpoint split_lineage:
         """
     input: get_input
     output:
-        directory(out_dir / 'dataset~{dataset}' / 'split_lineage,batch~{batch},lineage_key~{lineage_key}')
+        directory(out_dir / 'per_lineage' / 'dataset~{dataset}' / 'lineage_key~{lineage_key}' / 'split_lineage,batch~{batch}')
     params:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
         norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
@@ -31,12 +31,12 @@ checkpoint split_lineage:
 
 rule run_per_lineage:
     input:
-        zarr=lambda w: get_checkpoint_output(checkpoints.split_lineage,**w) / f'{w.lineage}.zarr',
+        zarr=lambda w: get_checkpoint_output(checkpoints.split_lineage,**w) / f'lineage~{w.lineage}.zarr',
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
-        model=touch(directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'model'))
+        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
+        model=touch(directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'model'))
     benchmark:
-        out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}/benchmark.tsv'
+        out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'benchmark.tsv'
     params:
         norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
         raw_counts=lambda wildcards: get_params(wildcards,parameters,'raw_counts'),
@@ -50,6 +50,7 @@ rule run_per_lineage:
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
+        time="2-00:00:00",
     # shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
@@ -59,7 +60,7 @@ rule postprocess_per_lineage:
     input:
         zarr=rules.run_per_lineage.output.zarr
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
+        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
     conda:
         '../envs/scanpy_rapids.yaml'
     resources:
@@ -72,7 +73,7 @@ rule postprocess_per_lineage:
 
 def collect_lineages(wildcards, pattern=rules.postprocess_per_lineage.output.zarr):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
-    lineages = glob_wildcards(str(checkpoint_output / "{lineage}.zarr")).lineage
+    lineages = glob_wildcards(str(checkpoint_output / "lineage~{lineage}.zarr")).lineage
     return {
         lineage: expand(pattern,lineage=lineage,**wildcards)
         for lineage in lineages

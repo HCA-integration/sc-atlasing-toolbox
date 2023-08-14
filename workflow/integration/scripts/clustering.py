@@ -16,9 +16,11 @@ logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
 meta = get_from_adata(adata)
 
+cluster_keys = []
 for output_type in meta['output_types']:
     logging.info(f'Leiden clustering with resolution {resolution} and output type {output_type}...')
-    cluster_key = f'leiden_{resolution}_{output_type}'
+    cluster_key = f'leiden_{output_type}_{resolution}'
+    cluster_keys.append(cluster_key)
     sc.tl.leiden(
         adata,
         resolution=resolution,
@@ -27,4 +29,4 @@ for output_type in meta['output_types']:
     )
 
 logging.info('Write file...')
-adata.obs[cluster_key].to_csv(output_file, sep='\t', index=True)
+adata.obs[cluster_keys].to_csv(output_file, sep='\t', index=True)

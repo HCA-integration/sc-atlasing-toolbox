@@ -14,7 +14,7 @@ logging.info('Read file...')
 adata = read_anndata_or_mudata(input_adata)
 meta = get_from_adata(adata)
 
-mudata = anndata_to_mudata(adata, group_key=lineage_key, prefix='lineage~')
+mudata = anndata_to_mudata(adata, group_key=lineage_key)
 
 for lineage in mudata.mod:
     logging.info(f'Processing lineage {lineage}...')
