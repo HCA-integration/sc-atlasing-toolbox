@@ -1,15 +1,8 @@
 dataset_meta: configs/datasets.tsv
 schema_file: configs/schema_mapping.tsv
-dcp_metadata: configs/dcp_metadata.tsv
 
 filter_per_organ:
-  blood:
+  gut:
     cells_per_sample:
-      min: None
+      min: 20
       max: None
-    mito_pct: 30
-    remove_by_colum:
-      disease:
-        - respiratory system disorder
-        - influenza
-        - systemic lupus erythematosus
