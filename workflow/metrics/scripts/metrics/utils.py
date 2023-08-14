@@ -38,35 +38,56 @@ def write_metrics(filename, scores, output_types, lineages, **kwargs):
 
 
 def compute_neighbors(adata, output_type):
+    # TODO: move outside of metrics
     """ Compute kNN graph based on output type.
 
     :param adata: integrated anndata object
     :param output_type: string of output type
     :return: anndata with kNN graph based on output type
     """
-    neighbor_key = f'neighbors_{output_type}'
+    neighbors_key = f'neighbors_{output_type}'
     conn_key = f'connectivities_{output_type}'
     dist_key = f'distances_{output_type}'
 
-    if neighbor_key in adata.uns and conn_key in adata.obsp and dist_key in adata.obsp:
-        logging.info(f'Using pre-computed {output_type} kNN graph')
+    def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities', dist_key='distances', check_params=True):
+        assert neighbors_key in adata.uns
+        assert adata.uns[neighbors_key]['connectivities_key'] == conn_key
+        assert adata.uns[neighbors_key]['distances_key'] == dist_key
+        assert conn_key in adata.obsp
+        assert dist_key in adata.obsp
+        if check_params:
+            assert 'params' in adata.uns[neighbors_key]
+            assert 'use_rep' in adata.uns[neighbors_key]['params']
+
+    try:
+        assert_neighbors(adata, neighbors_key=neighbors_key, conn_key=conn_key, dist_key=dist_key)
+        logging.info(f'kNN graph already computed for {output_type}. Using pre-computed {output_type} kNN graph')
+        logging.info(adata.__str__())
         return
+    except AssertionError:
+        logging.info(f'Compute kNN graph for {output_type}...')
+        logging.info(adata.__str__())
 
     if output_type == 'knn':
+        assert_neighbors(adata, check_params=False)
         adata_knn = adata
-        assert 'connectivities' in adata.obsp
-        assert 'distances' in adata.obsp
+        if 'params' not in adata_knn.uns['neighbors']:
+            adata_knn.uns['neighbors']['params'] = {}
+        adata_knn.uns['neighbors']['params'] |= dict(use_rep='X_pca')
+        assert_neighbors(adata_knn)
 
     elif output_type == 'embed':
         assert 'X_emb' in adata.obsm
         adata_knn = adata.copy()
-        sc.pp.neighbors(adata_knn, use_rep='X_emb')
+        sc.pp.neighbors(adata_knn, use_rep='X_emb')  # TODO: use rapids
+        assert_neighbors(adata_knn)
 
     elif output_type == 'full':
         assert isinstance(adata.X, (np.ndarray, sparse.csr_matrix, sparse.csc_matrix))
         adata_knn = adata.copy()
         sc.pp.pca(adata_knn, use_highly_variable=True)
         sc.pp.neighbors(adata_knn, use_rep='X_pca')
+        assert_neighbors(adata_knn)
 
         # save PCA
         adata.obsm['X_pca'] = adata_knn.obsm['X_pca']
@@ -80,21 +101,21 @@ def compute_neighbors(adata, output_type):
         raise ValueError(f'Invalid output type {output_type}')
 
     # save kNN graph in dedicated slots
-    adata.uns[neighbor_key] = {
-        'connectivities_key': conn_key,
-        'distances_key': dist_key,
-    }
-
     adata.obsp[conn_key] = adata_knn.obsp['connectivities']
     adata.obsp[dist_key] = adata_knn.obsp['distances']
-
+    adata.uns[neighbors_key] = {
+        'connectivities_key': conn_key,
+        'distances_key': dist_key,
+        'params': adata_knn.uns['neighbors']['params'],
+    }
     del adata_knn
+    assert_neighbors(adata, neighbors_key, conn_key, dist_key)
 
 
 def select_neighbors(adata, output_type):
-    neighbor_key = f'neighbors_{output_type}'
-    adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbor_key]['connectivities_key']]
-    adata.obsp['distances'] = adata.obsp[adata.uns[neighbor_key]['distances_key']]
+    neighbors_key = f'neighbors_{output_type}'
+    adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
+    adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
     return adata
 
 

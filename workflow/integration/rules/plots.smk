@@ -1,10 +1,4 @@
-module plots:
-   snakefile: "../../common/rules/plots.smk"
-   config: config
-
-
-# dataset = parameters['dataset'][0]
-# print(expand(rules.run_method.benchmark,zip,**parameters.query(f'dataset == "{dataset}"')[wildcard_names].to_dict('list')))
+######### Benchmark plots #########
 
 rule benchmark_per_dataset:
     input:
@@ -36,6 +30,10 @@ rule benchmark:
         benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
         print(benchmark_df)
         benchmark_df.to_csv(output.benchmark,sep='\t',index=False)
+
+module plots:
+   snakefile: "../../common/rules/plots.smk"
+   config: config
 
 
 use rule barplot from plots as integration_barplot with:
@@ -85,27 +83,21 @@ rule benchmark_all:
         )
 
 
-use rule umap from plots as integration_umap with:
+######### UMAP and embedding plots #########
+
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
+
+
+use rule umap from preprocessing as integration_compute_umap with:
     input:
-        anndata=rules.run_method.output.zarr
+        anndata=rules.postprocess.output.zarr,
+        rep=lambda w: get_for_dataset(config, w.dataset, ['input', module_name]),
     output:
-        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
-        coordinates=out_dir / paramspace.wildcard_pattern / 'umap_coordinates.npy'
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
     params:
-        color=lambda wildcards: [
-            get_params(wildcards,parameters,'label'),
-            get_params(wildcards,parameters,'batch'),
-            *get_for_dataset(
-                config=config,
-                dataset=wildcards.dataset,
-                query = [module_name, 'umap_colors'],
-                default=[]
-            ),
-        ],
-        use_rep='X_emb',
-        ncols=1,
-    wildcard_constraints:
-        lineage_key='((?![/]).)*',
+        neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
@@ -113,10 +105,38 @@ use rule umap from plots as integration_umap with:
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
 
 
+use rule plot_umap from preprocessing as integration_plot_umap with:
+    input:
+        anndata=rules.integration_compute_umap.output.zarr,
+    output:
+        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
+        additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern),
+    params:
+        color=lambda w: [
+            get_params(w,parameters,'label'),
+            get_params(w,parameters,'batch'),
+            *get_for_dataset(
+                config=config,
+                dataset=w.dataset,
+                query=[module_name, 'umap_colors'],
+                default=[]
+            ),
+        ],
+        ncols=1,
+        neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+    wildcard_constraints:
+        lineage_key='((?![/]).)*',
+    resources:
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        gpu=get_resource(config,profile='cpu',resource_key='gpu'),
+
+
 rule plots_all:
     input:
         rules.benchmark_all.input,
-        expand(rules.integration_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
+        expand(rules.integration_plot_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
 
 
 use rule umap from plots as integration_umap_lineage with:

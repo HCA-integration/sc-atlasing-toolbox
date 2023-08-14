@@ -33,8 +33,7 @@ rule clustering_merge:
 
 rule clustering_umap:
     input:
-        zarr=rules.run_method.output.zarr,
-        coordinates=rules.integration_umap.output.coordinates,
+        zarr=rules.integration_compute_umap.output.zarr,
         clusters=rules.clustering_merge.output.tsv,
     output:
         png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}.png',
