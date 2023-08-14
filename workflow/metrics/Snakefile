@@ -77,7 +77,7 @@ wildcard_names = ['dataset', 'method', 'hyperparams', 'metric', 'batch', 'label'
 paramspace = Paramspace(
     parameters[[w for w in wildcard_names if w != 'metric']],
     filename_params=['method', 'hyperparams', 'batch', 'label', 'lineage_key'],
-    filename_sep=',',
+    filename_sep='--',
 )
 
 wildcard_constraints:
