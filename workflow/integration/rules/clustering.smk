@@ -61,7 +61,7 @@ rule clustering_per_lineage:
     input:
         zarr=rules.postprocess_per_lineage.output.zarr
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / '_clustering' / '{resolution}.tsv',
+        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clustering' / '{resolution}.tsv',
     conda:
         '../envs/scanpy.yaml'
     resources:
@@ -80,7 +80,7 @@ rule clustering_per_lineage_merge:
             allow_missing=True
         ),
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
+        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
     run:
         from functools import reduce
 
@@ -94,7 +94,7 @@ rule clustering_per_lineage_umap:
         zarr=rules.integration_compute_umap_lineage.output.zarr,
         clusters=rules.clustering_per_lineage_merge.output.tsv,
     output:
-        png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
+        png=image_dir / 'umap_clusters' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}.png',
     conda:
         '../envs/scanpy.yaml'
     resources:

@@ -61,7 +61,7 @@ unique_dataframe(
 
 paramspace = Paramspace(
     parameters[wildcard_names],
-    filename_params=['batch', 'label', 'hyperparams', 'lineage_key'],
+    filename_params=['method', 'hyperparams', 'batch', 'label'],
     filename_sep=',',
 )
 
