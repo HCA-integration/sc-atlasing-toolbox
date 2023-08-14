@@ -32,7 +32,7 @@ if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
     unintegrated = anndata_to_mudata(
         unintegrated,
         group_key=lineage_key,
-        prefix='lineage~'
+        # prefix='lineage~'
     )
 else:
     logging.info('Skip unintegrated data...')
