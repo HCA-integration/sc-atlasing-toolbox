@@ -1,12 +1,12 @@
 """
 Compute UMAP
 """
-
+from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 
-from utils.io import read_anndata
+from utils.io import read_anndata, link_zarr
 
 
 def check_and_update_neighbors_info(adata, neighbors_key, params):
@@ -69,4 +69,14 @@ else:
     compute_umap(adata, params)
 
 logging.info(f'Write to {output_file}...')
+del adata.obsp
 adata.write_zarr(output_file)
+
+input_files = [f.name for f in Path(input_file).iterdir()]
+files_to_keep = [f for f in input_files if f not in ['obsm', 'uns']]
+link_zarr(
+    in_dir=input_file,
+    out_dir=output_file,
+    file_names=files_to_keep,
+    overwrite=True,
+)

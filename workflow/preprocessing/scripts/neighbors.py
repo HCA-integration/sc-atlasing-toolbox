@@ -1,15 +1,18 @@
 """
 Build kNN graph on embedding
 """
+
+from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 import scanpy as sc
-from utils.io import read_anndata
+
+from utils.io import read_anndata, link_zarr
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-params = {k: v for k, v in snakemake.params.args.items()}
+params = dict(snakemake.params.args.items())
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file)
@@ -41,6 +44,16 @@ except Exception as e:
 del adata.obsm['X_pca']
 
 logging.info(f'Write to {output_file}...')
-# if not adata.uns['preprocessing']['scaled']:
-#     adata.X = sparse.csr_matrix(adata.X)
+del adata.X
+del adata.layers
+del adata.obsm
 adata.write_zarr(output_file)
+
+input_files = [f.name for f in Path(input_file).iterdir()]
+files_to_keep = [f for f in input_files if f not in ['obsm', 'obsp', 'uns', 'varm']]
+link_zarr(
+    in_dir=input_file,
+    out_dir=output_file,
+    file_names=files_to_keep,
+    overwrite=True,
+)
