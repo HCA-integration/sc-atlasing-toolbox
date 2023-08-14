@@ -1,14 +1,14 @@
-	subset	organ	dataset	study	collection_name	doi	cxg_url	collection_id	dataset_id	project_uuid	modalities	pipeline_version	reference	donor_column	sample_column	author_annotation	institution	url	annotation_file	barcode_column	schema
-0	benchmark	gut	Dominguez2022	Dominguez2022							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Dominguez2022_qc.h5ad			custom
-1	benchmark	gut	Elmentaite2021	Elmentaite2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Elmentaite2021_qc.h5ad			custom
-2	benchmark	gut	He2020GenomeBio	He2020GenomeBio							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/He2020GenomeBio_qc.h5ad			custom
-3	benchmark	gut	Huang2019	Huang2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Huang2019_qc.h5ad			custom
-4	benchmark	gut	Jaeger2021	Jaeger2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Jaeger2021_qc.h5ad			custom
-5	benchmark	gut	James2020	James2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/James2020_qc.h5ad			custom
-6	benchmark	gut	Kinchen2018	Kinchen2018							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Kinchen2018_qc.h5ad			custom
-7	benchmark	gut	Lee2020	Lee2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Lee2020_qc.h5ad			custom
-8	benchmark	gut	Martin2019	Martin2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Martin2019_qc.h5ad			custom
-9	benchmark	gut	Parikh2019	Parikh2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Parikh2019_qc.h5ad			custom
-10	benchmark	gut	Uzzan2022	Uzzan2022							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Uzzan2022_qc.h5ad			custom
-11	benchmark	gut	Wang2020	Wang2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Wang2020_qc.h5ad			custom
-12	benchmark	gut	Yu2021	Yu2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../../data/Yu2021_qc.h5ad			custom
+	Unnamed: 0	subset	organ	dataset	study	collection_name	doi	cxg_url	collection_id	dataset_id	project_uuid	modalities	pipeline_version	reference	donor_column	sample_column	author_annotation	institution	url	annotation_file	barcode_column	schema
+0		benchmark	gut	Dominguez2022	Dominguez2022							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Dominguez2022_qc.h5ad			custom
+1		benchmark	gut	Elmentaite2021	Elmentaite2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Elmentaite2021_qc.h5ad			custom
+2		benchmark	gut	He2020GenomeBio	He2020GenomeBio							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/He2020GenomeBio_qc.h5ad			custom
+3		benchmark	gut	Huang2019	Huang2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Huang2019_qc.h5ad			custom
+4		benchmark	gut	Jaeger2021	Jaeger2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Jaeger2021_qc.h5ad			custom
+5		benchmark	gut	James2020	James2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/James2020_qc.h5ad			custom
+6		benchmark	gut	Kinchen2018	Kinchen2018							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Kinchen2018_qc.h5ad			custom
+7		benchmark	gut	Lee2020	Lee2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Lee2020_qc.h5ad			custom
+8		benchmark	gut	Martin2019	Martin2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Martin2019_qc.h5ad			custom
+9		benchmark	gut	Parikh2019	Parikh2019							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Parikh2019_qc.h5ad			custom
+10		benchmark	gut	Uzzan2022	Uzzan2022							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Uzzan2022_qc.h5ad			custom
+11		benchmark	gut	Wang2020	Wang2020							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Wang2020_qc.h5ad			custom
+12		benchmark	gut	Yu2021	Yu2021							RNA	Cell Ranger v3.1.0	GRCh38	donorID_unified	sampleID		sanger	../data/Yu2021_qc.h5ad			custom
