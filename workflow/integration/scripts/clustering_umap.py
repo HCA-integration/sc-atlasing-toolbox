@@ -29,7 +29,7 @@ adata.obs[cluster_cols] = cluster_df.loc[adata.obs_names, cluster_cols]
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.umap(
     adata,
-    color=cluster_cols,
+    color=sorted(cluster_cols),
     legend_loc='on data',
     ncols=2,
 )

@@ -2,7 +2,7 @@ rule clustering:
     input:
         zarr=rules.postprocess.output.zarr
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / '_clustering' / '{resolution}.tsv',
+        tsv=out_dir / paramspace.wildcard_pattern / 'clustering' / '{resolution}.tsv',
     conda:
         '../envs/scanpy.yaml'
     resources:
