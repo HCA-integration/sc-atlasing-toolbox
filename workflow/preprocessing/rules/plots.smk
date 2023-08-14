@@ -11,9 +11,10 @@ use rule plot_embedding from preprocessing as preprocessing_plot_embedding with:
 
 use rule plot_umap from preprocessing as preprocessing_plot_umap with:
     input:
-        anndata=rules.umap.output.zarr
+        anndata=rules.umap.output.zarr,
     output:
         plot=image_dir / 'umap' / '{dataset}.png',
+        additional_plots=directory(image_dir / 'umap' / '{dataset}'),
     params:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'colors']),
         ncols=1,
