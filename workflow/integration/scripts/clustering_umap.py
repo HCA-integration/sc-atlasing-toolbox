@@ -11,17 +11,12 @@ from utils.io import read_anndata
 
 
 input_h5ad = snakemake.input[0]
-input_coordinates = snakemake.input.coordinates
 input_clusters = snakemake.input.clusters
-input_coordinates = snakemake.input.coordinates
 output_file = snakemake.output[0]
 
 adata = read_anndata(input_h5ad)
 cluster_df = pd.read_table(input_clusters, index_col=0, dtype=str)
-umap = np.load(input_coordinates)
 
-# add UMAP coordinates to adata
-adata.obsm['X_umap'] = umap
 # remove outliers
 adata = remove_outliers(adata, 'max')
 adata = remove_outliers(adata, 'min')

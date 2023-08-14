@@ -139,12 +139,29 @@ rule plots_all:
         expand(rules.integration_plot_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
 
 
-use rule umap from plots as integration_umap_lineage with:
+#### Per lineage ####
+
+use rule umap from preprocessing as integration_compute_umap_lineage with:
     input:
-        anndata=rules.run_per_lineage.output.zarr
+        anndata=rules.postprocess_per_lineage.output.zarr,
+        rep=rules.run_per_lineage.input.zarr,
+    output:
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
+    params:
+        neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+    resources:
+        partition=get_resource(config,profile='gpu',resource_key='partition'),
+        qos=get_resource(config,profile='gpu',resource_key='qos'),
+        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        gpu=get_resource(config,profile='gpu',resource_key='gpu'),
+
+
+use rule plot_umap from preprocessing as integration_plot_umap_lineage with:
+    input:
+        anndata=rules.integration_compute_umap_lineage.output.zarr
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
-        coordinates=out_dir / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap_coordinates.npy'
+        additional_plots=directory(image_dir / 'umap' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}'),
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
@@ -156,8 +173,8 @@ use rule umap from plots as integration_umap_lineage with:
                 default=[]
             ),
         ],
-        use_rep='X_emb',
         ncols=1,
+        neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
     retries: 2
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
@@ -170,7 +187,7 @@ def collect_umap_lineages(wildcards):
     checkpoint_output = get_checkpoint_output(checkpoints.split_lineage,**wildcards)
     lineages = glob_wildcards(str(checkpoint_output / "{lineage}.zarr")).lineage
     return [
-        expand(rules.integration_umap_lineage.output.plot,lineage=lineage,**wildcards)
+        expand(rules.integration_plot_umap_lineage.output.plot,lineage=lineage,**wildcards)
         for lineage in lineages
     ]
 

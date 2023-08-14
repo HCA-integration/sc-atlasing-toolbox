@@ -91,8 +91,7 @@ rule clustering_per_lineage_merge:
 
 rule clustering_per_lineage_umap:
     input:
-        zarr=rules.run_per_lineage.output.zarr,
-        coordinates=rules.integration_umap_lineage.output.coordinates,
+        zarr=rules.integration_compute_umap_lineage.output.zarr,
         clusters=rules.clustering_per_lineage_merge.output.tsv,
     output:
         png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}' / 'lineage~{lineage}.png',
