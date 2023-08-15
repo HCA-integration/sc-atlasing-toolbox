@@ -12,7 +12,7 @@ rule preprocess:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu.zarr'),
     conda:
-        '../envs/scib.yaml'
+        '../envs/scanpy.yaml'
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
