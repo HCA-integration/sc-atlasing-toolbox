@@ -25,8 +25,8 @@ mdata.uns = adatas[0].uns
 mdata.write_zarr(output_file)
 for lineage, input_file in zip(lineages, input_files):
     if input_file.endswith('.zarr'):
-        input_files = [f.name for f in Path(input_file).iterdir()]
-        files_to_link = [f for f in input_files if f not in ['.zattrs', '.zgroup', 'var']]
+        input_zarr_files = [f.name for f in Path(input_file).iterdir()]
+        files_to_link = [f for f in input_zarr_files if f not in ['.zattrs', '.zgroup', 'var']]
         link_zarr(
             in_dir=input_file,
             out_dir=Path(output_file) / 'mod' / lineage,

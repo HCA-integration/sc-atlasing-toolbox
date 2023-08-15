@@ -4,7 +4,7 @@ import os
 def get_integration_output(wildcards):
     if wildcards.lineage_specific == 'global':
         return rules.integration_run_method.output[0]
-    return rules.merge_lineage.output.zarr
+    return rules.merge_lineage.output[0]
 
 
 rule preprocess:
