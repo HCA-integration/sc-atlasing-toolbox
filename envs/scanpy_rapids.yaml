@@ -11,7 +11,7 @@ dependencies:
   - pandas<2.0.0
   - scipy<1.11
   - leidenalg
-  - muon
+  - mudata
   - zarr
   - cudatoolkit=11
   # - rapidsai::cuml
@@ -21,3 +21,4 @@ dependencies:
     - --extra-index-url=https://pypi.nvidia.com
     - cudf-cu11==23.6
     - cuml-cu11==23.6
+    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1

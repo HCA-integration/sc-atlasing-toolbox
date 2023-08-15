@@ -12,7 +12,7 @@ checkpoint split_lineage:
         """
     input: get_input
     output:
-        directory(out_dir / 'per_lineage' / 'dataset~{dataset}' / 'lineage_key~{lineage_key}' / 'split_lineage,batch~{batch}')
+        directory(out_dir / 'per_lineage' / 'dataset~{dataset}' / 'split_lineage--batch~{batch}--lineage_key~{lineage_key}')
     params:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
         norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
@@ -84,7 +84,7 @@ rule merge_lineage:
     input:
         unpack(collect_lineages)
     output:
-        h5mu=out_dir / paramspace.wildcard_pattern / 'lineages.h5mu',
+        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
     conda:
         '../envs/scanpy.yaml'
     resources:

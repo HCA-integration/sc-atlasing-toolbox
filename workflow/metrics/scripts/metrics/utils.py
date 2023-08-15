@@ -134,7 +134,8 @@ def anndata_to_mudata(adata, group_key, prefix=''):
         logging.info('Data is AnnData object, split by group.')
         mudata = mu.MuData(
             {
-                f'{prefix}{group}': adata[adata.obs[group_key] == group]
+                f"{prefix}{group.replace(' ', '_').replace('/', '_')}":
+                    adata[adata.obs[group_key] == group]
                 for group in adata.obs[group_key].unique()
             }
         )

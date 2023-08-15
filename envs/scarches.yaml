@@ -5,6 +5,7 @@ dependencies:
   - python=3.9
   - scanpy=1.9
   - numpy<1.24
+  - pandas<2.0.0
   - scvi-tools
   - cudatoolkit
 #  - jax<0.4.14

@@ -185,7 +185,7 @@ rule collect_umap_lineages:
     input:
         unpack(lambda w: collect_lineages(w, rules.integration_plot_umap_lineage.output))
     output:
-        touch(out_dir / paramspace.wildcard_pattern / 'per_lineage_umap.done')
+        touch(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'umap.done')
 
 
 rule plots_per_lineage_all:

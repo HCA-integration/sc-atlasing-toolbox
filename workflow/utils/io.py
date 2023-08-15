@@ -15,11 +15,14 @@ def read_anndata_or_mudata(file):
     if file.endswith('.h5mu'):
         import mudata as mu
         print('Read as mudata...')
-        adata = mu.read(file)
+        return mu.read(file)
+    elif file.endswith('.h5mu.zarr'):
+        import mudata as mu
+        print('Read as mudata from zarr...')
+        return mu.read_zarr(file)
     else:
         print('Read as anndata...')
-        adata = read_anndata(file)
-    return adata
+        return read_anndata(file)
 
 
 def link_zarr(in_dir, out_dir, file_names=None, overwrite=False):
