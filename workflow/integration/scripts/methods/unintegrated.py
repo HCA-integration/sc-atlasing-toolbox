@@ -13,7 +13,7 @@ adata = read_anndata(input_file)
 adata.X = select_layer(adata, params['norm_counts'])
 
 # prepare output adata
-files_to_keep = ['obsm', 'uns']
+files_to_keep = ['obsm', 'uns', 'layers']
 
 if 'X_pca' not in adata.obsm:
     sc.pp.pca(adata, use_highly_variable=True)

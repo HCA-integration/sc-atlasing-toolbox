@@ -4,15 +4,15 @@ import os
 def get_integration_output(wildcards):
     if wildcards.lineage_specific == 'global':
         return rules.integration_run_method.output[0]
-    return rules.merge_lineage.output.h5mu
+    return rules.merge_lineage.output.zarr
 
 
 rule preprocess:
     input: get_integration_output
     output:
-        h5mu=out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu.zarr'),
     conda:
-        lambda wildcards, params: f'../envs/scib.yaml'
+        '../envs/scib.yaml'
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -34,12 +34,12 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        h5mu=rules.preprocess.output.h5mu,
+        h5mu=rules.preprocess.output.zarr,
         unintegrated=lambda w: get_for_dataset(
             config,
             w.dataset,
             query=['input', 'integration'],
-            default=rules.preprocess.output.h5mu,
+            default=rules.preprocess.output.zarr,
         ),
         metrics_meta=workflow.source_path('../params.tsv')
     output:
@@ -64,6 +64,7 @@ rule run:
 
 rule run_all:
     input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
+
 
 rule run_per_lineage_all:
     input:

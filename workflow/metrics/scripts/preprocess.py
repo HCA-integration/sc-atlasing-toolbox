@@ -7,7 +7,7 @@ from utils.io import read_anndata_or_mudata
 
 
 input_adata = snakemake.input[0]
-output_file = snakemake.output.h5mu
+output_file = snakemake.output[0]
 lineage_key = snakemake.wildcards.lineage_key
 
 logging.info('Read file...')
@@ -24,4 +24,4 @@ for lineage in mudata.mod:
         compute_neighbors(ad, output_type)
 
 logging.info(mudata.__str__())
-mudata.write(output_file)
+mudata.write_zarr(output_file)

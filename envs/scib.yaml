@@ -7,8 +7,9 @@ dependencies:
   - scanpy=1.9
   - numpy<1.24
   - matplotlib<3.7
+  - pandas<2.0.0
   - zarr
-  - muon
   - pip
   - pip:
     - git+https://github.com/theislab/scib.git
+    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1

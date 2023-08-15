@@ -10,6 +10,9 @@ dependencies:
   - pandas<2.0.0
   - scipy<1.11
   - leidenalg
-  - muon
   - dask
   - zarr
+  - mudata
+  - pip
+  - pip:
+    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1
