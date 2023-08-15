@@ -109,7 +109,7 @@ rule clustering_per_lineage_collect:
     input:
         unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_merge.output)),
         unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_umap.output)),
-    output: touch(out_dir / paramspace.wildcard_pattern / 'per_lineage_clustering.done')
+    output: touch(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'clustering.done')
 
 
 rule clustering_per_lineage_all:
