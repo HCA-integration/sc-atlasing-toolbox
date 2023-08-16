@@ -24,7 +24,8 @@ print('After removing unannotated cells:', adata.shape)
 samples = []
 n_cells = 0
 
-for sample, count in adata.obs[sample_key].value_counts().sample(frac=1).items():
+shuffled_samples = adata.obs[sample_key].value_counts().sample(frac=1, random_state=42)
+for sample, count in shuffled_samples.items():
     n_cells += count
     print('sample:', sample)
     print('count:', count)
