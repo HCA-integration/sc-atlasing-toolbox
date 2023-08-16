@@ -1,5 +1,7 @@
 from pathlib import Path
-from pprint import pprint
+from pprint import pformat
+import logging
+logging.basicConfig(level=logging.INFO)
 
 import pandas as pd
 from scipy.sparse import csr_matrix
@@ -16,22 +18,22 @@ wildcards = snakemake.wildcards
 meta = snakemake.params.meta
 schema_file = snakemake.input.schema
 
-print('meta:')
-pprint(meta)
+logging.info('meta:')
+logging.info(pformat(meta))
 
 # optional annotations file
 annotation_file = meta['annotation_file']
 if not pd.isna(annotation_file):
-    print(f'check if annotation file {annotation_file} exists')
+    logging.info(f'check if annotation file {annotation_file} exists')
     assert Path(annotation_file).exists()
 
 # h5ad
-print(f'\033[0;36mread\033[0m {in_file}...')
+logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
     adata = sc.read(in_file, as_sparse=['X'])
 except:
     adata = sc.read_loom(in_file, sparse=True)
-print(adata)
+logging.info(adata)
 
 # Adding general dataset info to uns and obs
 adata.uns['meta'] = meta
@@ -42,14 +44,14 @@ for meta_i in ["organ", "study", "dataset"]:
 # add annotation if available
 author_annotation = meta['author_annotation']
 if not pd.isna(annotation_file):
-    print(f'Add annotations from {annotation_file}...')
+    logging.info(f'Add annotations from {annotation_file}...')
     annotation = pd.read_csv(annotation_file)
     annotation.index = annotation[meta['barcode_column']]
     # remove column if existing to avoid conflict
     if author_annotation in adata.obs.columns:
         del adata.obs[author_annotation]
     adata.obs = adata.obs.join(annotation[author_annotation], how='left')
-    print(adata.obs)
+    logging.info(adata.obs)
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
@@ -66,7 +68,7 @@ else:
     adata.obs['batch'] = meta['study']
 
 # Checking schema version
-if not 'schema_version' in adata.uns.keys():
+if 'schema_version' not in adata.uns.keys():
     adata.uns['schema_version'] = '0.0.0'
 if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity'] = adata.obs['ethnicity']
@@ -80,17 +82,17 @@ for key, value in meta.items():
     adata.obs[key] = value
 
 # ensure raw counts are kept in .X
-adata.layers['final'] = adata.X.copy()
+adata.layers['final'] = adata.X
 if isinstance(adata.raw, anndata._core.raw.Raw):
-    adata.X = adata.raw.X.copy()
+    adata.X = adata.raw.X
 else:
-    adata.X = adata.X.copy()
+    adata.X = adata.X
 adata.X = csr_matrix(adata.X)
 
 # add author annotations column
 adata.obs['author_annotation'] = adata.obs[author_annotation]
 # use author annotations if no cell ontology available
-if not 'cell_type' in adata.obs.columns:
+if 'cell_type' not in adata.obs.columns:
     adata.obs['cell_type'] = 'nan'
 if adata.obs['cell_type'].nunique() == 1:
     adata.obs['cell_type'] = adata.obs['author_annotation']
@@ -101,7 +103,7 @@ adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index(drop=True).
 
 # schemas translation
 schemas_df = pd.read_table(schema_file).dropna()
-print(schemas_df)
+logging.info(schemas_df)
 from_schema = meta['schema']
 assert from_schema in schemas_df.columns
 to_schema = 'cellxgene'
@@ -111,16 +113,16 @@ adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
 # making sure all columns are in the object
 all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
 for column in all_columns:
-    if not column in adata.obs.columns:
+    if column not in adata.obs.columns:
         adata.obs[column] = np.nan
 # keep only relevant columns
 adata.obs = adata.obs[all_columns].copy()
 
 # make sure all vars are present
-if not "feature_name" in adata.var.columns:
+if "feature_name" not in adata.var.columns:
     adata.var["feature_name"] = adata.var_names.tolist()
 for column in SCHEMAS["CELLxGENE_VARS"]:
-    if not column in adata.var.columns:
+    if column not in adata.var.columns:
         adata.var[column] = np.nan
 adata.var = adata.var[SCHEMAS["CELLxGENE_VARS"]]
 
