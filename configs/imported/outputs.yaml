@@ -2,9 +2,10 @@
 
 output_dir: data/out
 images: images
+use_gpu: true
 
 output_map:
-  relabel: data/out/relabel/{dataset}.h5ad
+  relabel: data/out/relabel/{dataset}.zarr
   subset: data/out/subset/{dataset}/by_sample.h5ad
   pca: data/out/preprocessing/{dataset}/pca.h5ad
   neighbors: data/out/preprocessing/{dataset}/neighbors.h5ad
