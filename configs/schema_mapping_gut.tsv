@@ -1,0 +1,17 @@
+	custom	cellxgene
+1	study	study
+2	sampleID	sample
+3	donorID_unified	donor_id
+8	age_unified	development_stage
+11	sex	sex
+14	sample_retrieval	self_reported_ethnicity
+37	sample_type	suspension_type
+38	technology	assay
+48	disease	disease
+55	cell_sorting	organism
+68	sample_category	title
+69	level_3_annot	cell_type
+70	tissue_fraction	tissue
+71	sourceID	batch_condition
+72	organ_groups	is_primary_data
+73	scrublet_score_z	schema_version
