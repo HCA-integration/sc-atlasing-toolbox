@@ -124,6 +124,7 @@ use rule plot_umap from preprocessing as integration_plot_umap with:
         ],
         ncols=1,
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+        outlier_factor=10,
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -173,6 +174,7 @@ use rule plot_umap from preprocessing as integration_plot_umap_lineage with:
         ],
         ncols=1,
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+        outlier_factor=10,
     retries: 2
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
