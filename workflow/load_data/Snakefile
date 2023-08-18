@@ -59,7 +59,7 @@ rule download:
     output:
         h5ad=out_dir / 'download' / '{dataset}.h5ad'
     params:
-        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"')
+        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"').reset_index(drop=True)
     conda:
         '../../envs/scanpy.yaml'
     script:
