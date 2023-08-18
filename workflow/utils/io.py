@@ -44,7 +44,7 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False):
             continue
         new_file = out_dir / f.name
         if overwrite and new_file.exists():
-            print(f'Directory {new_file} exists, overwrite...')
+            print(f'Replace {new_file} with link')
             if new_file.is_dir():
                 shutil.rmtree(new_file)
             else:
