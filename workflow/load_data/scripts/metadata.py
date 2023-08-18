@@ -46,12 +46,14 @@ author_annotation = meta['author_annotation']
 if not pd.isna(annotation_file):
     logging.info(f'Add annotations from {annotation_file}...')
     annotation = pd.read_csv(annotation_file)
-    annotation.index = annotation[meta['barcode_column']]
+    annotation.index = annotation[meta['barcode_column']].astype(str)
+    adata.obs.index = adata.obs.index.astype(str)
     # remove column if existing to avoid conflict
     if author_annotation in adata.obs.columns:
+        logging.info(f'column {author_annotation} already exists, removing it')
         del adata.obs[author_annotation]
     adata.obs = adata.obs.join(annotation[author_annotation], how='left')
-    logging.info(adata.obs)
+    logging.info(adata.obs[author_annotation])
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
