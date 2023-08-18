@@ -18,7 +18,7 @@ args = snakemake.params['args']
 batch_key = snakemake.params['batch']
 lineage_key = snakemake.params['lineage']
 
-if not args:
+if args is None:
     args = {}
 logging.info(str(args))
 
@@ -52,7 +52,6 @@ if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['highly_variable_genes'] = args
-print(args)
 
 # remove counts
 del adata.X
@@ -63,7 +62,7 @@ adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
     files_to_keep = ['uns', 'var']
-    if 'subset' in args and args['subset']:
+    if isinstance(args, dict) and 'subset' in args and args['subset']:
         files_to_keep.extend(['layers', 'X', 'varm', 'varp'])
 
     input_files = [f.name for f in Path(input_file).iterdir()]
