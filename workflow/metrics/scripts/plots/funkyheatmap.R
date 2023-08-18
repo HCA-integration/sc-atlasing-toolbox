@@ -11,7 +11,7 @@ n_top <- snakemake@params$n_top
 tryCatch({
  library(funkyheatmap)
   }, error = function(e) {
-    install.packages('funkyheatmap', repos = 'http://cran.us.r-project.org')
+    install.packages('funkyheatmap', repos = 'https://ftp.fau.de/cran/')
   }
 )
 suppressPackageStartupMessages({
