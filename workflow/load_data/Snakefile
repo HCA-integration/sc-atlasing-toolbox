@@ -52,14 +52,14 @@ use rule * from common as common_ *
 
 
 rule download:
-    """
-    Download files
-    TODO: better warning message
-    """
+    message:
+        """
+        Downloading file {wildcards}
+        """
     output:
         h5ad=out_dir / 'download' / '{dataset}.h5ad'
     params:
-        dataset_df=dataset_df
+        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"')
     conda:
         '../../envs/scanpy.yaml'
     script:
