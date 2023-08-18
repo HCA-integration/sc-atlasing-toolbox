@@ -2,13 +2,14 @@
 Highly variable gene selection
 - lineage specific HVGs
 """
+from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
 from scipy import sparse
 import scanpy as sc
-from utils.io import read_anndata
+from utils.io import read_anndata, link_zarr
 
 
 input_file = snakemake.input[0]
@@ -17,7 +18,7 @@ args = snakemake.params['args']
 batch_key = snakemake.params['batch']
 lineage_key = snakemake.params['lineage']
 
-if args is None:
+if not args:
     args = {}
 logging.info(str(args))
 
@@ -51,6 +52,7 @@ if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['highly_variable_genes'] = args
+print(args)
 
 # remove counts
 del adata.X
@@ -58,3 +60,16 @@ del adata.layers
 
 logging.info(f'Write to {output_file}...')
 adata.write_zarr(output_file)
+
+if input_file.endswith('.zarr'):
+    files_to_keep = ['uns', 'var']
+    if 'subset' in args and args['subset']:
+        files_to_keep.extend(['layers', 'X', 'varm', 'varp'])
+
+    input_files = [f.name for f in Path(input_file).iterdir()]
+    link_zarr(
+        in_dir=input_file,
+        out_dir=output_file,
+        file_names=[f for f in input_files if f not in files_to_keep],
+        overwrite=True,
+)

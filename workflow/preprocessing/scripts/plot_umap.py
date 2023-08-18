@@ -22,7 +22,7 @@ if 'outlier_factor' in params:
     outlier_factor = params['outlier_factor']
     del params['outlier_factor']
 else:
-    outlier_factor = 3
+    outlier_factor = 10
 
 adata = read_anndata(input_file)
 

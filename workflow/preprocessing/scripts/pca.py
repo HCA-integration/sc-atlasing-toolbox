@@ -1,13 +1,13 @@
 """
 PCA on highly variable genes
 """
-
+from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy import sparse
 import scanpy as sc
 
-from utils.io import read_anndata
+from utils.io import read_anndata, link_zarr
 
 
 input_file = snakemake.input[0]
@@ -40,9 +40,15 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['scaled'] = scale
 
-# remove counts
-del adata.X
-del adata.layers
-
 logging.info(f'Write to "{output_file}"...')
 adata.write_zarr(output_file)
+
+if input_file.endswith('.zarr'):
+    input_files = [f.name for f in Path(input_file).iterdir()]
+    files_to_keep = [f for f in input_files if f not in ['obsm', 'uns', 'varm']]
+    link_zarr(
+        in_dir=input_file,
+        out_dir=output_file,
+        file_names=files_to_keep,
+        overwrite=True,
+    )
