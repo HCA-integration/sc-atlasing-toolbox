@@ -30,7 +30,6 @@ if adata.n_obs == 0:
     exit(0)
 
 adata.uns["log1p"] = {"base": None}
-sc.pp.filter_genes(adata, min_cells=1)
 
 if args is False:
     logging.info('No highly variable gene parameters provided, including all genes...')
@@ -45,7 +44,26 @@ else:
         batch_key = 'hvg_batch'
 
     logging.info('Select features...')
-    sc.pp.highly_variable_genes(adata, batch_key=batch_key, **args)
+    adata_hvg = adata.copy()
+    sc.pp.filter_genes(adata_hvg, min_cells=1)
+    sc.pp.highly_variable_genes(adata_hvg, batch_key=batch_key, **args)
+
+    # add HVG info back to adata
+    hvg_column_map = {
+        'highly_variable': False,
+        'means': 0,
+        'dispersions': 0,
+        'dispersions_norm': 0,
+        'highly_variable_nbatches': 0,
+        'highly_variable_intersection': False,
+    }
+    hvg_columns = [
+        column
+        for column in hvg_column_map
+        if column in adata_hvg.var.columns
+    ]
+    adata.var[hvg_columns] = adata_hvg.var[hvg_columns]
+    adata.var = adata.var.fillna(hvg_column_map)
 
 # add metadata
 if 'preprocessing' not in adata.uns:
@@ -63,6 +81,7 @@ adata.write_zarr(output_file)
 if input_file.endswith('.zarr'):
     files_to_keep = ['uns', 'var']
     if isinstance(args, dict) and 'subset' in args and args['subset']:
+        logging.info('Data subsetted to highly variable genes, keep matrices, varm and varp...')
         files_to_keep.extend(['layers', 'X', 'varm', 'varp'])
 
     input_files = [f.name for f in Path(input_file).iterdir()]

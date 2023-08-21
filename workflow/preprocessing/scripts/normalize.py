@@ -49,12 +49,12 @@ del adata.raw
 del adata.layers
 adata.write_zarr(output_file)
 
-if input_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['X', 'uns']]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=files_to_keep,
-        overwrite=True,
-    )
+# if input_file.endswith('.zarr'):
+#     input_files = [f.name for f in Path(input_file).iterdir()]
+#     files_to_keep = [f for f in input_files if f not in ['X', 'uns']]
+#     link_zarr(
+#         in_dir=input_file,
+#         out_dir=output_file,
+#         file_names=files_to_keep,
+#         overwrite=True,
+#     )
