@@ -53,7 +53,7 @@ for mapping_label in mapping_order:
     obs[mapping_label] = pd.Series(mapped, dtype="category")
 
     # set current mapping label as new label key
-    label_key = mapping_label
+    # label_key = mapping_label
 
 logging.info('Write...')
 adata.obs = obs
