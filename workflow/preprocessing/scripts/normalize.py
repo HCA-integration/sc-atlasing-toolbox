@@ -24,8 +24,7 @@ if adata.n_obs == 0:
 # adata.layers['counts'] = adata.X.copy()
 # select counts layer
 logging.info('Select layer...')
-layer = snakemake.params['raw_counts']
-layer = 'X' if layer is None else layer
+layer = snakemake.params.get('raw_counts', 'X')
 adata.X = adata.X if layer == 'X' or layer is None else adata.layers[layer]
 
 logging.info('normalize_total...')
@@ -42,6 +41,7 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
+adata.uns["log1p"] = {"base": None} # HVG needs this
 
 logging.info(f'Write to {output_file}...')
 del adata.raw

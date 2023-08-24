@@ -28,7 +28,6 @@ if adata.n_obs == 0:
     adata.write(output_file)
     exit(0)
 
-adata.uns["log1p"] = {"base": None}
 sc.pp.filter_genes(adata, min_cells=1)
 
 if args is False:
@@ -37,9 +36,9 @@ if args is False:
 else:
     if lineage_key is not None:
         logging.info(f'lineage-specific highly variable gene selection using "{lineage_key}"')
-        if batch_key in adata.obs.columns:
+        if batch_key in adata.obs.columns: # combining lineage and batch
             adata.obs['hvg_batch'] = adata.obs[batch_key].astype(str) + '_' + adata.obs[lineage_key].astype(str)
-        else:
+        else: # only taking lineage if no batch key is specified
             adata.obs['hvg_batch'] = adata.obs[lineage_key]
         batch_key = 'hvg_batch'
 
