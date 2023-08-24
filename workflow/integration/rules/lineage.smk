@@ -10,7 +10,7 @@ checkpoint split_lineage:
         output: {output}
         wildcards: {wildcards}
         """
-    input: get_input
+    input: lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name])
     output:
         directory(out_dir / 'per_lineage' / 'dataset~{dataset}' / 'split_lineage--batch~{batch}--lineage_key~{lineage_key}')
     params:
