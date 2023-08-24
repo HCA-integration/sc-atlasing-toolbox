@@ -40,4 +40,4 @@ logging.info(adata.__str__())
 
 # save
 logging.info('Write...')
-adata.write(output_file)
+adata.write_zarr(output_file)
