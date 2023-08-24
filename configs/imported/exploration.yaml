@@ -255,3 +255,99 @@ ORGANS:
         - HBB
       Baso/Eos:
         - EPX
+  gut:
+    marker_genes:
+     T:
+       - CD3D
+    Tnaive/cm_CD4:
+      - CCR7
+      - SELL
+    Trm_CD4:
+      - ITGAE
+      - ITGA1
+      - SPRY1
+    Trm_Th17:
+      - ITGAE
+      - ITGA1
+      - SPRY1
+      - IL17A
+      - CCR6
+      - CCL20
+    Tfh_naive:
+      - SELL
+      - CXCR5
+      - BCL6
+      - CD40LG
+    Tfh:
+      - CXCR5
+      - BCL6
+      - PDCD1
+      - CD40LG
+    Treg:
+      - FOXP3
+      - CTLA4
+      - IL2RA
+    Treg_IL10:
+      - FOXP3
+      - CTLA4
+      - IL2RA
+      - IL10
+    Tnaive/cm_CD8:
+      - SELL
+      - CCR7
+    Trm/em_CD8:
+      - GZMK
+      - CRTAM
+      - EOMES
+    gdT_naive:
+      - SELL
+      - KLRC2
+      - TRDC
+      - TRGC1
+      - KIR2DL4
+      - CCR7
+    gdT:
+      - KLRC2
+      - TRDC
+      - TRGC1
+      - KIR2DL4
+    MAIT:
+      - SLC4A10
+      - TRAV1-2
+    NK_CD16:
+      - FCGR3A
+      - GNLY
+      - GZMB
+      - NKG7
+    NK_CD56bright:
+      - XCL1
+      - IL2RB
+      - NCR1
+      - FCER1G
+      - NCAM1
+    ILC3:
+      - RORC
+      - KIT
+      - LST1
+      - PCDH9
+      - IL1R1
+      - IL23R
+    T/NK_cycling:
+      - CD3D
+      - MKI67
+      - TOP2A
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+  
