@@ -85,11 +85,6 @@ rule benchmark_all:
 
 ######### UMAP and embedding plots #########
 
-module preprocessing:
-    snakefile: "../../preprocessing/rules/rules.smk"
-    config: config
-
-
 use rule umap from preprocessing as integration_compute_umap with:
     input:
         anndata=rules.postprocess.output.zarr,

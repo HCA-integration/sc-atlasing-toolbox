@@ -45,6 +45,7 @@ DATASETS:
         - highly_variable_genes
         - pca
         - neighbors
+        - umap
 
   no_hvg:
     input:

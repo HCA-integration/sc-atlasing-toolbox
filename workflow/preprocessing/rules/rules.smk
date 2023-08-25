@@ -71,6 +71,28 @@ rule umap:
         '../scripts/umap.py'
 
 
+### Assemble ###
+
+rule assemble:
+    input:
+        unpack(
+            dict(
+                counts='{dataset}.h5ad',
+                normalize='{dataset}_normalized.zarr',
+                highly_variable_genes='{dataset}_highly_variable_genes.zarr',
+                pca='{dataset}_pca.zarr',
+                neighbors='{dataset}_neighbors.zarr',
+                umap='{dataset}_umap.zarr',
+            )
+        )
+    output:
+        zarr=directory('{dataset}_preprocessed.zarr')
+    conda:
+        '../envs/scanpy.yaml'
+    script:
+        '../scripts/assemble.py'
+
+
 ### Plots ###
 
 rule plot_embedding:

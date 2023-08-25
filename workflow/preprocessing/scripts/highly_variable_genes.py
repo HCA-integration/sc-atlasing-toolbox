@@ -14,9 +14,9 @@ from utils.io import read_anndata, link_zarr
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-args = snakemake.params['args']
-batch_key = snakemake.params['batch']
-lineage_key = snakemake.params['lineage']
+args = snakemake.params.get('args', {})
+batch_key = snakemake.params.get('batch')
+lineage_key = snakemake.params.get('lineage')
 
 if args is None:
     args = {}
