@@ -1,24 +1,24 @@
-if 'DATASETS' not in config.keys():
-    config["DATASETS"] = {}
+config_exploration = config.copy()
+
+if 'DATASETS' not in config_exploration.keys():
+    config_exploration["DATASETS"] = {}
 
 for study in dataset_df['study']:
-    config["DATASETS"][study] = {
-        'input': {
-            'preprocessing': expand(rules.load_data_filter.output.zarr,study=study)[0],
-        },
-        'preprocessing': {
-            'raw_counts': 'X',
-            'sample': 'sample',
-            # 'label': 'cell_type',
-            'batch': 'dataset',
-            'lineage' : None,
-        },
-    }
+    config_exploration["DATASETS"][study] = dict(
+        input=dict(
+            preprocessing=expand(rules.load_data_filter.output.zarr,study=study)[0]
+        ),
+        preprocessing=dict(
+            raw_counts='X',
+            batch='dataset',
+            lineage=None,
+        )
+    )
 
 
 module preprocessing:
     snakefile: "../../preprocessing/Snakefile"
-    config: config
+    config: config_exploration
 
 use rule * from preprocessing as preprocessing_*
 
