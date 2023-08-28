@@ -29,6 +29,8 @@ if adata.n_obs == 0:
     exit(0)
 
 sc.pp.filter_genes(adata, min_cells=1)
+# scanpy.pp.log1p was supposed to add it but it's not saved
+adata.uns["log1p"] = {"base": None}
 
 if args is False:
     logging.info('No highly variable gene parameters provided, including all genes...')

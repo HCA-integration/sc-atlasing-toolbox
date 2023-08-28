@@ -33,15 +33,12 @@ logging.info('log-transform...')
 sc.pp.log1p(adata)
 adata.X = sparse.csr_matrix(adata.X)
 
-# adata.layers['normcounts'] = adata.X
-
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
-adata.uns["log1p"] = {"base": None} # HVG needs this
 
 logging.info(f'Write to {output_file}...')
 del adata.raw
