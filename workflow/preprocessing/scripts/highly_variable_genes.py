@@ -20,6 +20,7 @@ lineage_key = snakemake.params.get('lineage')
 
 if args is None:
     args = {}
+subset_to_hvg = isinstance(args, dict) and 'subset' in args and args['subset']
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
@@ -46,7 +47,11 @@ else:
     logging.info('Select features...')
     adata_hvg = adata.copy()
     sc.pp.filter_genes(adata_hvg, min_cells=1)
-    sc.pp.highly_variable_genes(adata_hvg, batch_key=batch_key, **args)
+    sc.pp.highly_variable_genes(
+        adata_hvg,
+        batch_key=batch_key,
+        **args
+    )
 
     # add HVG info back to adata
     hvg_column_map = {
@@ -65,24 +70,26 @@ else:
     adata.var[hvg_columns] = adata_hvg.var[hvg_columns]
     adata.var = adata.var.fillna(hvg_column_map)
 
+    # subset to HVGs
+    if subset_to_hvg:
+        adata = adata[:, adata.var['highly_variable']]
+
 # add metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['highly_variable_genes'] = args
 
-# remove counts
-del adata.X
-del adata.layers
-
 logging.info(f'Write to {output_file}...')
+del adata.raw
+del adata.layers
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
     files_to_keep = ['uns', 'var']
-    if isinstance(args, dict) and 'subset' in args and args['subset']:
+    if subset_to_hvg:
         logging.info('Data subsetted to highly variable genes, keep matrices, varm and varp...')
-        files_to_keep.extend(['layers', 'X', 'varm', 'varp'])
+        files_to_keep.extend(['X', 'varm', 'varp'])
 
     input_files = [f.name for f in Path(input_file).iterdir()]
     link_zarr(

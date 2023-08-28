@@ -41,14 +41,17 @@ if 'preprocessing' not in adata.uns:
 adata.uns['preprocessing']['scaled'] = scale
 
 logging.info(f'Write to "{output_file}"...')
+del adata.raw
+del adata.X
+del adata.layers
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
     input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['obsm', 'uns', 'varm']]
+    files_to_link = [f for f in input_files if f not in ['obsm', 'uns', 'varm']]
     link_zarr(
         in_dir=input_file,
         out_dir=output_file,
-        file_names=files_to_keep,
+        file_names=files_to_link,
         overwrite=True,
     )

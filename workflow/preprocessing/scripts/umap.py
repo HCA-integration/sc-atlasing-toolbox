@@ -69,6 +69,9 @@ else:
     compute_umap(adata, params)
 
 logging.info(f'Write to {output_file}...')
+del adata.raw
+del adata.X
+del adata.layers
 del adata.obsp
 adata.write_zarr(output_file)
 

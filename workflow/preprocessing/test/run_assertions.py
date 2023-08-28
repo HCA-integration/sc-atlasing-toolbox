@@ -1,15 +1,15 @@
-import scanpy as sc
+import anndata
 import glob
 import yaml
 from pprint import pprint
 
 config = yaml.safe_load(open('test/config.yaml', 'r'))
 
-single_outputs = glob.glob('test/out/preprocessing/*/preprocessed.h5ad')
+single_outputs = glob.glob('test/out/preprocessing/*/preprocessed.zarr')
 print(single_outputs)
 
 for file in single_outputs:
-    adata = sc.read(file)
+    adata = anndata.read_zarr(file)
     dataset = [x for x in config['DATASETS'] if x in file][0]
     preprocessing_config = config['DATASETS'][dataset]['preprocessing']
 
@@ -18,7 +18,10 @@ for file in single_outputs:
     pprint(preprocessing_config)
 
     if 'counts' in preprocessing_config['assemble']:
-        assert 'counts' in adata.layers
+        # assert 'counts' in adata.layers
+        assert not isinstance(adata.raw, type(None))
+        if adata.n_vars == adata.raw.n_vars:
+            assert not all(adata.raw.X.data == adata.X.data)
 
     if 'normcounts' in preprocessing_config['assemble']:
         assert 'normcounts' in adata.layers

@@ -40,6 +40,7 @@ except Exception as e:
     sc.pp.neighbors(adata, **params)
 
 logging.info(f'Write to {output_file}...')
+del adata.raw
 del adata.X
 del adata.layers
 del adata.obsm
