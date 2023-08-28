@@ -32,8 +32,8 @@ rerun-triggers:
   - mtime
   - params
   - input
-  - software-env
   - code
+#  - software-env
 show-failed-logs: True
 #shadow-prefix: /hpc/projects/data_lg/michaela.mueller/scratch
 shadow-prefix: /tmp/michaela.mueller
