@@ -101,6 +101,8 @@ use rule assemble from preprocessing as preprocessing_per_lineage_assemble with:
         )
     output:
         zarr=directory(pp_per_lineage_dir / 'assembled.zarr'),
+    resources:
+        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
 
 
 ### Methods ###
