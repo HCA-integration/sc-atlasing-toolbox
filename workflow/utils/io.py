@@ -53,5 +53,10 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=T
         
         path_to_link_to = f.resolve()
         if relative_path:
-            path_to_link_to = Path(os.path.relpath(path_to_link_to, new_file.parent))
+            path_to_link_to = Path(
+                os.path.relpath(
+                    path_to_link_to,
+                    new_file.parent.resolve()
+                )
+            )
         new_file.symlink_to(path_to_link_to)
