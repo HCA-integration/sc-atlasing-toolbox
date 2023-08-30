@@ -27,7 +27,7 @@ def assemble_h5ad(file, file_type, adata):
 
     if file_type == 'counts':
         logging.debug('add raw counts')
-        adata.layers['counts'] = sparse.csr_matrix(adata_pp[:, adata.var_names].X)
+        # adata.layers['counts'] = sparse.csr_matrix(adata_pp[:, adata.var_names].X)
         adata.raw = adata_pp
     elif file_type == 'normalize':
         logging.debug('add normalised counts')
@@ -116,12 +116,20 @@ for file_type, file in snakemake.input.items():
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
         adata = read_anndata(file)
+        del adata.layers
+        del adata.obsm
+        del adata.obsp
+        del adata.uns
+        del adata.varm
+        del adata.varp
+        del adata.raw
 
     if file.endswith('.h5ad'):
         adata = assemble_h5ad(file, file_type, adata)
     elif file.endswith('.zarr'):
         if file_type == 'counts':
             adata.raw = adata
+            # adata.layers['counts'] = read_anndata(file).X[:, adata.var_names]
         files_to_link = assemble_zarr(file, file_type, files_to_link)
     else:
         ValueError(f'Unknown file type {file}')

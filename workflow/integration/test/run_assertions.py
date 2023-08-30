@@ -3,6 +3,8 @@ from pprint import pprint
 import numpy as np
 from anndata.experimental import read_elem
 import zarr
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 # direct integration outputs
@@ -10,6 +12,7 @@ outputs = glob.glob('test/out/integration/**/**/adata.zarr')
 # pprint(outputs)
 
 for file in outputs:
+    logging.info(f'Checking {file}...')
     z = zarr.open(file)
     uns = read_elem(z["uns"])
 
