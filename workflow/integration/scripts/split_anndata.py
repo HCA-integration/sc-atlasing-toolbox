@@ -58,14 +58,15 @@ for split in splits:
     logging.info(f'Split by {split_key}={split}')
     # split anndata
     adata_sub = adata[adata.obs[split_key] == split].copy()
-    n_cells_before = adata_sub.n_obs
-    logging.info(f'number of cells before filtering: {n_cells_before}')
 
-    # ensure enough cells per batch
-    val_counts = adata_sub.obs[batch_key].value_counts()
-    batches_to_keep = val_counts[val_counts > n_top_genes].index
-    adata_sub = adata_sub[adata_sub.obs[batch_key].isin(batches_to_keep)]
-    logging.info(f'number of cells after filtering: {adata_sub.n_obs}, removed {adata_sub.n_obs-n_cells_before} cells')
+    # # ensure enough cells per batch
+    # n_cells_before = adata_sub.n_obs
+    # logging.info(f'number of cells before filtering: {n_cells_before}')
+
+    # val_counts = adata_sub.obs[batch_key].value_counts()
+    # batches_to_keep = val_counts[val_counts > n_top_genes].index
+    # adata_sub = adata_sub[adata_sub.obs[batch_key].isin(batches_to_keep)]
+    # logging.info(f'number of cells after filtering: {adata_sub.n_obs}, removed {adata_sub.n_obs-n_cells_before} cells')
 
     if adata_sub.n_obs == 0:
         logging.info('No cells left after filtering batches by HVG, skipping...')
