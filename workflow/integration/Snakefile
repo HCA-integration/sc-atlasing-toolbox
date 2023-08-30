@@ -44,7 +44,7 @@ parameters = parameters[~parameters['method'].isnull()]
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
 parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'method', 'hyperparams', 'batch', 'label', 'lineage_key']
+wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams', 'lineage_key']
 
 # write hyperparameter mapping
 Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -54,7 +54,7 @@ unique_dataframe(
 
 paramspace = Paramspace(
     parameters[wildcard_names],
-    filename_params=['method', 'hyperparams', 'batch', 'label', 'lineage_key'],
+    filename_params=['method', 'hyperparams', 'lineage_key'],
     filename_sep='--',
 )
 

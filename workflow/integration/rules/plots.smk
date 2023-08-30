@@ -140,7 +140,7 @@ use rule umap from preprocessing as integration_compute_umap_lineage with:
         anndata=rules.postprocess_per_lineage.output.zarr,
         rep=rules.run_per_lineage.input.zarr,
     output:
-        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
+        zarr=directory(out_dir / 'per_lineage' / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
     params:
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
     resources:
@@ -182,7 +182,7 @@ rule collect_umap_lineages:
     input:
         unpack(lambda w: collect_lineages(w, rules.integration_plot_umap_lineage.output))
     output:
-        touch(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'umap.done')
+        touch(out_dir / 'per_lineage' / 'umap' / paramspace.wildcard_pattern / 'umap.done')
 
 
 rule plots_per_lineage_all:

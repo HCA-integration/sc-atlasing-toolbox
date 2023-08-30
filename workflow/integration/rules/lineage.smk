@@ -17,7 +17,7 @@ checkpoint split_lineage:
         """
     input: lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name])
     output:
-        directory(out_dir / 'per_lineage' / 'dataset~{dataset}' / 'split_lineage' / 'batch~{batch}--lineage_key~{lineage_key}')
+        directory(out_dir / 'per_lineage' / 'split_lineage' / 'dataset~{dataset}--batch~{batch}--lineage_key~{lineage_key}')
     params:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
         # norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
@@ -36,7 +36,7 @@ checkpoint split_lineage:
 
 
 ### Preprocessing ###
-pp_per_lineage_dir = out_dir / 'per_lineage' / 'dataset~{dataset}' / 'preprocessing' / 'batch~{batch}--lineage_key~{lineage_key}={lineage}'
+pp_per_lineage_dir = out_dir / 'per_lineage' / 'preprocessing' / 'dataset~{dataset}--batch~{batch}--lineage_key~{lineage_key}={lineage}'
 
 
 use rule normalize from preprocessing as preprocessing_per_normalize with:
@@ -111,10 +111,10 @@ rule run_per_lineage:
     input:
         zarr=rules.preprocessing_per_lineage_assemble.output.zarr,
     output:
-        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
-        model=touch(directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'model'))
+        zarr=directory(out_dir / 'per_lineage' / 'integration' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
+        model=touch(directory(out_dir / 'per_lineage' / 'integration' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'model'))
     benchmark:
-        out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'benchmark.tsv'
+        out_dir / 'per_lineage' / 'integration' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'benchmark.tsv'
     params:
         norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
         raw_counts=lambda wildcards: get_params(wildcards,parameters,'raw_counts'),
@@ -138,7 +138,7 @@ rule postprocess_per_lineage:
     input:
         zarr=rules.run_per_lineage.output.zarr
     output:
-        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
+        zarr=directory(out_dir / 'per_lineage' / 'postprocess' /paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
     conda:
         '../envs/scanpy_rapids.yaml'
     resources:
@@ -160,7 +160,7 @@ rule merge_lineage:
     input:
         unpack(collect_lineages)
     output:
-        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
+        zarr=directory(out_dir / 'per_lineage' / 'merge' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
     conda:
         '../envs/scanpy.yaml'
     resources:
