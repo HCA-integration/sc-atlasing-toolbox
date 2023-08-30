@@ -14,7 +14,7 @@ def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='flo
     # matrix = adata.X  if layer == 'X' or layer is None else adata.layers[layer]
     if layer == 'X' or layer is None:
         matrix = adata.X
-    elif layer not in adata.layers:
+    elif layer in adata.layers:
         matrix = adata.layers[layer]
     elif layer in ['raw', 'counts']:
         try:
