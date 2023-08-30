@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import shutil
 import anndata as ad
@@ -25,7 +26,7 @@ def read_anndata_or_mudata(file):
         return read_anndata(file)
 
 
-def link_zarr(in_dir, out_dir, file_names=None, overwrite=False):
+def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=True):
     """
     Link to existing zarr file
     """
@@ -49,4 +50,8 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False):
                 shutil.rmtree(new_file)
             else:
                 new_file.unlink()
-        new_file.symlink_to(f.resolve())
+        
+        path_to_link_to = f.resolve()
+        if relative_path:
+            path_to_link_to = Path(os.path.relpath(path_to_link_to, new_file.parent))
+        new_file.symlink_to(path_to_link_to)
