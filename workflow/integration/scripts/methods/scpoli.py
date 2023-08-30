@@ -54,7 +54,7 @@ model.train(
     pretraining_epochs=pretrain_epochs,
     # alpha_epoch_anneal=100,
     early_stopping_kwargs=early_stopping_kwargs,
-    batch_size=256,
+    batch_size=32,
 )
 
 model.save(output_model, overwrite=True)

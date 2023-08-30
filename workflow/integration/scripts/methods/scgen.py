@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
@@ -21,6 +23,7 @@ early_stopping_kwargs = {
     "lr_patience": 13,
     "lr_factor": 0.1,
 }
+logging.info(hyperparams)
 
 # check GPU
 print('GPU available:', torch.cuda.is_available())
