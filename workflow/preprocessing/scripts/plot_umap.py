@@ -37,6 +37,10 @@ if 'color' in params and params['color'] is not None:
     params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:
         params['color'] = None
+    else:
+        for color in params['color']:
+            if adata.obs[color].dtype.name == 'category':
+                adata.obs[color] = adata.obs[color].astype('str')
 
 # parse neighbors key
 neighbors_key = params.get('neighbors_key', 'neighbors')
