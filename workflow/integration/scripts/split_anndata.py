@@ -24,6 +24,12 @@ if not out_dir.exists():
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
 
+# remove unnecessary slots
+del adata.obsm
+del adata.obsp
+del adata.varm
+del adata.varp
+
 # # ensure count matrix is correct
 # logging.info('Select norm counts...')
 # adata.X = select_layer(adata, norm_layer, dtype='float32')
@@ -57,7 +63,7 @@ for split in splits:
 
     logging.info(f'Split by {split_key}={split}')
     # split anndata
-    adata_sub = adata[adata.obs[split_key] == split].copy()
+    adata_sub = adata[adata.obs[split_key] == split]
 
     # # ensure enough cells per batch
     # n_cells_before = adata_sub.n_obs
@@ -71,12 +77,6 @@ for split in splits:
     if adata_sub.n_obs == 0:
         logging.info('No cells left after filtering batches by HVG, skipping...')
         continue
-
-    # remove unnecessary slots
-    del adata.obsm
-    del adata.obsp
-    del adata.varm
-    del adata.varp
 
     # write to file
     split_file = split.replace(' ', '_').replace('/', '_')

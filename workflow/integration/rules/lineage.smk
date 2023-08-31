@@ -14,6 +14,7 @@ checkpoint split_lineage:
         input: {input}
         output: {output}
         wildcards: {wildcards}
+        resources: {resources.mem_mb}MB
         """
     input: lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name])
     output:
@@ -22,10 +23,8 @@ checkpoint split_lineage:
         label=lambda wildcards: get_params(wildcards,parameters,'label'),
         # norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
         hvg_args=lambda w: get_for_dataset(config, w.dataset, ['preprocessing', 'highly_variable_genes']),
-
     conda:
         '../envs/scanpy_rapids.yaml'
-    retries: 3
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
