@@ -85,11 +85,6 @@ rule benchmark_all:
 
 ######### UMAP and embedding plots #########
 
-module preprocessing:
-    snakefile: "../../preprocessing/rules/rules.smk"
-    config: config
-
-
 use rule umap from preprocessing as integration_compute_umap with:
     input:
         anndata=rules.postprocess.output.zarr,
@@ -124,6 +119,7 @@ use rule plot_umap from preprocessing as integration_plot_umap with:
         ],
         ncols=1,
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+        outlier_factor=10,
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -144,7 +140,7 @@ use rule umap from preprocessing as integration_compute_umap_lineage with:
         anndata=rules.postprocess_per_lineage.output.zarr,
         rep=rules.run_per_lineage.input.zarr,
     output:
-        zarr=directory(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
+        zarr=directory(out_dir / 'per_lineage' / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
     params:
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
     resources:
@@ -173,6 +169,7 @@ use rule plot_umap from preprocessing as integration_plot_umap_lineage with:
         ],
         ncols=1,
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
+        outlier_factor=10,
     retries: 2
     resources:
         partition=get_resource(config,profile='gpu',resource_key='partition'),
@@ -185,7 +182,7 @@ rule collect_umap_lineages:
     input:
         unpack(lambda w: collect_lineages(w, rules.integration_plot_umap_lineage.output))
     output:
-        touch(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'umap.done')
+        touch(out_dir / 'per_lineage' / 'umap' / paramspace.wildcard_pattern / 'umap.done')
 
 
 rule plots_per_lineage_all:

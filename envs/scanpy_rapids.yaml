@@ -19,6 +19,8 @@ dependencies:
   - pip
   - pip:
     - --extra-index-url=https://pypi.nvidia.com
-    - cudf-cu11==23.6
-    - cuml-cu11==23.6
+    - cudf-cu11==23.04
+    - cuml-cu11==23.04
+    - cugraph-cu11==23.04
+    - rapids-singlecell
     - git+https://github.com/mumichae/mudata.git@mumichae-patch-1

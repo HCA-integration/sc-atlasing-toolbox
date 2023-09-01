@@ -1,4 +1,8 @@
+import logging
+logging.basicConfig(level=logging.INFO)
+
 from utils import read_anndata
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -7,37 +11,39 @@ n_cell_max = snakemake.params.n_cells
 sample_key = snakemake.params.sample_key
 label_key = snakemake.params.label_key
 
-print('read...')
+
+logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file)
-print(f'Shape before filtering: {adata.shape}')
+logging.info(f'Shape before filtering: {adata.shape}')
 
 try:
     adata.obs[sample_key]
 except KeyError:
-    print(adata)
+    logging.info(adata.__str__())
     raise AssertionError(f'sample key "{sample_key}" not in adata')
 
 # remove unannoted cells
 adata = adata[adata.obs[label_key].notna()]
-print('After removing unannotated cells:', adata.shape)
+logging.info('After removing unannotated cells:', adata.shape)
 
 samples = []
 n_cells = 0
 
-for sample, count in adata.obs[sample_key].value_counts().sample(frac=1).items():
+shuffled_samples = adata.obs[sample_key].value_counts().sample(frac=1, random_state=42)
+for sample, count in shuffled_samples.items():
     n_cells += count
-    print('sample:', sample)
-    print('count:', count)
+    logging.info('sample:', sample)
+    logging.info('count:', count)
     if n_cells > n_cell_max:
         break
     samples.append(sample)
 
-print(f'Subset to {n_cells} cells, {len(samples)} samples...')
+logging.info(f'Subset to {n_cells} cells, {len(samples)} samples...')
 
 adata = adata[adata.obs[sample_key].isin(samples)]
 adata.uns['subset'] = strategy
-print(adata)
+logging.info(adata)
 
 # save
-print('write...')
-adata.write(output_file)
+logging.info('Write...')
+adata.write_zarr(output_file)

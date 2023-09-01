@@ -1,7 +1,6 @@
 """
 Build kNN graph on embedding
 """
-
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -40,20 +39,19 @@ except Exception as e:
     logging.info('Rapids failed, defaulting to UMAP implementation')
     sc.pp.neighbors(adata, **params)
 
-# remove redundant data
-del adata.obsm['X_pca']
-
 logging.info(f'Write to {output_file}...')
+del adata.raw
 del adata.X
 del adata.layers
 del adata.obsm
 adata.write_zarr(output_file)
 
-input_files = [f.name for f in Path(input_file).iterdir()]
-files_to_keep = [f for f in input_files if f not in ['obsm', 'obsp', 'uns', 'varm']]
-link_zarr(
-    in_dir=input_file,
-    out_dir=output_file,
-    file_names=files_to_keep,
-    overwrite=True,
+if input_file.endswith('.zarr'):
+    input_files = [f.name for f in Path(input_file).iterdir()]
+    files_to_keep = [f for f in input_files if f not in ['obsp', 'uns']]
+    link_zarr(
+        in_dir=input_file,
+        out_dir=output_file,
+        file_names=files_to_keep,
+        overwrite=True,
 )

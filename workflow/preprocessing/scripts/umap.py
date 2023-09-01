@@ -5,6 +5,8 @@ from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 import scanpy as sc
+from anndata.experimental import read_elem
+import zarr
 
 from utils.io import read_anndata, link_zarr
 
@@ -24,11 +26,13 @@ def check_and_update_neighbors_info(adata, neighbors_key, params):
     use_rep = adata.uns[neighbors_key]['params'].get('use_rep', None)
     if use_rep not in adata.obsm:
         logging.info(f'Read {input_rep}...')
-        adata_rep = read_anndata(input_rep)
-        if use_rep == 'X' or use_rep is None:
-            adata.obsm[use_rep] = adata_rep.X
+        use_counts = use_rep == 'X' or use_rep is None
+        if input_rep.endswith('.zarr'):
+            slot = 'X' if use_counts else use_rep
+            adata.obsm[use_rep] = read_elem(zarr.open(input_rep)[slot])
         else:
-            adata.obsm[use_rep] = adata_rep.obsm[use_rep]
+            adata_rep = read_anndata(input_rep)
+            adata.obsm[use_rep] = adata_rep.X if use_counts else adata_rep.obsm[use_rep]
 
 
 def compute_umap(adata, params):
@@ -69,14 +73,18 @@ else:
     compute_umap(adata, params)
 
 logging.info(f'Write to {output_file}...')
+del adata.raw
+del adata.X
+del adata.layers
 del adata.obsp
 adata.write_zarr(output_file)
 
-input_files = [f.name for f in Path(input_file).iterdir()]
-files_to_keep = [f for f in input_files if f not in ['obsm', 'uns']]
-link_zarr(
-    in_dir=input_file,
-    out_dir=output_file,
-    file_names=files_to_keep,
-    overwrite=True,
+if input_file.endswith('.zarr'):
+    input_files = [f.name for f in Path(input_file).iterdir()]
+    files_to_keep = [f for f in input_files if f not in ['obsm', 'uns']]
+    link_zarr(
+        in_dir=input_file,
+        out_dir=output_file,
+        file_names=files_to_keep,
+        overwrite=True,
 )

@@ -1,0 +1,11 @@
+bulk_labels	lineage
+CD14+ Monocyte	myeloid
+Dendritic	lymphoid
+CD56+ NK	lymphoid
+CD4+/CD25 T Reg	lymphoid
+CD19+ B	lymphoid
+CD8+ Cytotoxic T	lymphoid
+CD4+/CD45RO+ Memory	lymphoid
+CD8+/CD45RA+ Naive Cytotoxic	lymphoid
+CD4+/CD45RA+/CD25- Naive T	lymphoid
+CD34+	HSCs

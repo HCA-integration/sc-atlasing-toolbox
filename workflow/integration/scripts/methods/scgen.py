@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
@@ -21,9 +23,10 @@ early_stopping_kwargs = {
     "lr_patience": 13,
     "lr_factor": 0.1,
 }
+logging.info(hyperparams)
 
 # check GPU
-print('GPU available:', torch.cuda.is_available())
+logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 adata_raw = read_anndata(input_file)
 adata_raw.X = select_layer(adata_raw, params['norm_counts'])

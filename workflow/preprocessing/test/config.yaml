@@ -22,6 +22,8 @@ DATASETS:
         n_top_genes: 2000
         subset: true
       assemble:
+        - counts
+        - normalize
         - highly_variable_genes
         - pca
         - neighbors
@@ -38,13 +40,14 @@ DATASETS:
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: true
+        subset: false
       assemble:
         - counts
         - normalize
         - highly_variable_genes
         - pca
         - neighbors
+        - umap
 
   no_hvg:
     input:

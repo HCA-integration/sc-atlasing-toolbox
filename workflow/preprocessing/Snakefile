@@ -42,7 +42,7 @@ rule plots_all:
 rule all:
     input:
         expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name)),
-        rules.plots_all.output,
+        rules.plots_all.input,
     default_target: True
 
 

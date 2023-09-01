@@ -8,7 +8,7 @@ rule run_method:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb} partition={resources.partition} qos={resources.qos}
        """
     input:
-        h5ad=get_input
+        h5ad=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / paramspace.wildcard_pattern / 'model'))

@@ -15,7 +15,7 @@ output_dir = snakemake.output[0]
 split_key = snakemake.wildcards.lineage_key
 batch_key = snakemake.wildcards.batch
 label_key = snakemake.params.label
-norm_layer = snakemake.params.norm_counts
+# norm_layer = snakemake.params.norm_counts
 
 out_dir = Path(output_dir)
 if not out_dir.exists():
@@ -24,9 +24,20 @@ if not out_dir.exists():
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
 
-# ensure count matrix is correct
-logging.info('Select norm counts...')
-adata.X = select_layer(adata, norm_layer, dtype='float32')
+# remove unnecessary slots
+del adata.obsm
+del adata.obsp
+del adata.varm
+del adata.varp
+
+# # ensure count matrix is correct
+# logging.info('Select norm counts...')
+# adata.X = select_layer(adata, norm_layer, dtype='float32')
+
+# ensure count matrix is sparse
+if not sparse.issparse(adata.X):
+    adata.X = sparse.csr_matrix(adata.X, dtype='float32')
+
 
 logging.info(f'Before filtering: {adata.shape}')
 # remove splits with less than 100 cells
@@ -44,62 +55,33 @@ if adata.shape[0] == 0:
 splits = adata.obs[split_key].astype(str).unique()
 logging.info(f'splits: {splits}')
 
-# get preprocessing parameters
-try:
-    highly_variable_genes_args = adata.uns['preprocessing']['highly_variable_genes']
-except KeyError:
-    highly_variable_genes_args = {}
-n_top_genes = adata.var['highly_variable'].sum() if 'highly_variable' in adata.var.columns else None
-highly_variable_genes_args.update(
-    dict(n_top_genes=n_top_genes, batch_key=batch_key)
-)
+highly_variable_genes_args = snakemake.params.get('hvg_args')
+highly_variable_genes_args = {} if highly_variable_genes_args is None else highly_variable_genes_args
+n_top_genes = highly_variable_genes_args.get('n_top_genes', 0)
 
 for split in splits:
 
     logging.info(f'Split by {split_key}={split}')
     # split anndata
-    adata_sub = adata[adata.obs[split_key] == split].copy()
+    adata_sub = adata[adata.obs[split_key] == split]
 
-    # ensure enough cells per batch
+    # # ensure enough cells per batch
+    # n_cells_before = adata_sub.n_obs
+    # logging.info(f'number of cells before filtering: {n_cells_before}')
+
     # val_counts = adata_sub.obs[batch_key].value_counts()
-    # adata_sub = adata_sub[adata_sub.obs[batch_key].isin(val_counts[val_counts > n_top_genes].index)]
+    # batches_to_keep = val_counts[val_counts > n_top_genes].index
+    # adata_sub = adata_sub[adata_sub.obs[batch_key].isin(batches_to_keep)]
+    # logging.info(f'number of cells after filtering: {adata_sub.n_obs}, removed {adata_sub.n_obs-n_cells_before} cells')
 
-    # preprocessing
-    adata_sub.uns["log1p"] = {"base": None}
-
-    if n_top_genes and n_top_genes < adata_sub.n_vars and n_top_genes >= adata_sub.n_obs:
-        sc.pp.filter_genes(adata_sub, min_cells=1)
-
-        logging.info(f'HVGs to {n_top_genes} genes...')
-        sc.pp.highly_variable_genes(adata_sub, **highly_variable_genes_args)
-
-        logging.info('PCA...')
-        sc.pp.pca(
-            adata_sub,
-            use_highly_variable=True,
-            svd_solver='arpack'
-        )
-    else:
-        logging.info('PCA...')
-        sc.pp.pca(
-            adata_sub,
-            use_highly_variable=False,
-            svd_solver='arpack'
-        )
-
-    logging.info('Compute neighbors...')
-    try:
-        sc.pp.neighbors(adata_sub, method='rapids', use_rep='X_pca')
-    except Exception as e:
-        logging.info(e)
-        logging.info('Rapids failed, defaulting to UMAP implementation')
-        sc.pp.neighbors(adata_sub, use_rep='X_pca')
+    if adata_sub.n_obs == 0:
+        logging.info('No cells left after filtering batches by HVG, skipping...')
+        continue
 
     # write to file
     split_file = split.replace(' ', '_').replace('/', '_')
     out_file = out_dir / f"lineage~{split_file}.zarr"
 
     logging.info(f'write to {out_file}...')
-    adata_sub.X = sparse.csr_matrix(adata_sub.X)
     adata_sub.write_zarr(out_file)
     del adata_sub

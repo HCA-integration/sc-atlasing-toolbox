@@ -2,13 +2,14 @@ rule clustering:
     input:
         zarr=rules.postprocess.output.zarr
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'clustering' / '{resolution}.tsv',
+        tsv=out_dir / 'clustering' / paramspace.wildcard_pattern / 'resolutions' / '{resolution}.tsv',
     conda:
-        '../envs/scanpy.yaml'
+        'rapids_singlecell'
     resources:
-        partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
-        qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
+        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
+        gpu=lambda w: get_resource(config,profile='gpu',resource_key='gpu'),
     script:
         '../scripts/clustering.py'
 
@@ -21,7 +22,7 @@ rule clustering_merge:
             allow_missing=True
         ),
     output:
-        tsv=out_dir / paramspace.wildcard_pattern / 'clusters_all_resolutions.tsv',
+        tsv=out_dir / 'clustering' / paramspace.wildcard_pattern / 'clusters_all_resolutions.tsv',
     run:
         from functools import reduce
 
@@ -61,13 +62,14 @@ rule clustering_per_lineage:
     input:
         zarr=rules.postprocess_per_lineage.output.zarr
     output:
-        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clustering' / '{resolution}.tsv',
+        tsv=out_dir / 'clustering' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'resolutions' / '{resolution}.tsv',
     conda:
-        '../envs/scanpy.yaml'
+        'rapids_singlecell'
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
         mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
+        gpu=lambda w: get_resource(config,profile='gpu',resource_key='gpu'),
     script:
         '../scripts/clustering.py'
 
@@ -76,11 +78,11 @@ rule clustering_per_lineage_merge:
     input:
         tsv=expand(
             rules.clustering_per_lineage.output.tsv,
-            resolution=[0.8, 1.0, 1.4, 2.0],
+            resolution=[0.4, 0.8, 1.0],
             allow_missing=True
         ),
     output:
-        tsv=out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
+        tsv=out_dir / 'clustering' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'clusters_all_resolutions.tsv',
     run:
         from functools import reduce
 
@@ -109,7 +111,7 @@ rule clustering_per_lineage_collect:
     input:
         unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_merge.output)),
         unpack(lambda w: collect_lineages(w, rules.clustering_per_lineage_umap.output)),
-    output: touch(out_dir / 'per_lineage' / paramspace.wildcard_pattern / 'clustering.done')
+    output: touch(out_dir / 'clustering' / 'per_lineage' / paramspace.wildcard_pattern / 'clustering.done')
 
 
 rule clustering_per_lineage_all:

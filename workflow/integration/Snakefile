@@ -11,13 +11,6 @@ from utils.config import get_hyperparams, get_resource, get_params_from_config, 
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 
 
-def get_input(wildcards):
-    assert wildcards.dataset in config['DATASETS'].keys()
-    assert 'input' in config['DATASETS'][wildcards.dataset].keys()
-    assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
-    return config['DATASETS'][wildcards.dataset]['input']['integration']
-
-
 module_name = 'integration'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
@@ -51,7 +44,7 @@ parameters = parameters[~parameters['method'].isnull()]
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
 parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'method', 'hyperparams', 'batch', 'label', 'lineage_key']
+wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams', 'lineage_key']
 
 # write hyperparameter mapping
 Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -61,7 +54,7 @@ unique_dataframe(
 
 paramspace = Paramspace(
     parameters[wildcard_names],
-    filename_params=['method', 'hyperparams', 'batch', 'label', 'lineage_key'],
+    filename_params=['method', 'hyperparams', 'lineage_key'],
     filename_sep='--',
 )
 
@@ -72,6 +65,11 @@ wildcard_constraints:
     label='((?![/]).)*',
     hyperparams='((?![/]).)*',
     lineage_key='((?![/]).)*',
+
+
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
 
 
 module common:

@@ -1,4 +1,5 @@
 import logging
+logging.basicConfig(level=logging.INFO)
 import gc
 
 import pandas as pd
@@ -32,15 +33,15 @@ if len(files) == 1:
 else:
     logging.info(f'Read first file {files[0]}...')
     adata = read_adata(files[0])
-    print(adata)
+    logging.info(adata.__str__())
 
     for file in files[1:]:
         logging.info(f'Read {file}...')
         _adata = read_adata(file)
-        print(_adata)
+        logging.info(_adata.__str__())
 
         if _adata.n_obs == 0:
-            logging.info('skip concatenation...')
+            logging.info('Empty adata, skip concatenation...')
             continue
 
         logging.info('Concatenate...')
@@ -62,7 +63,7 @@ else:
         gc.collect()
 
     organ = adata.obs['organ'].unique()
-    assert not len(organ) > 1
+    assert len(organ) == 1
     adata.uns['dataset'] = dataset
     adata.uns['organ'] = organ
     adata.uns['meta'] = {'dataset': dataset, 'organ': organ}

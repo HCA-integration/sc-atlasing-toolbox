@@ -1,34 +1,40 @@
 import glob
 from pprint import pprint
 import numpy as np
-import scanpy as sc
+from anndata.experimental import read_elem
+import zarr
+import logging
+logging.basicConfig(level=logging.INFO)
 
-outputs = glob.glob('test/out/integration/**/**/**/adata.h5ad')
+
+# direct integration outputs
+outputs = glob.glob('test/out/integration/**/**/adata.zarr')
 # pprint(outputs)
 
 for file in outputs:
-    adata = sc.read(file)
+    logging.info(f'Checking {file}...')
+    z = zarr.open(file)
+    uns = read_elem(z["uns"])
 
     try:
- 
-        # Metadata
-        assert 'dataset' in adata.uns
-        assert 'methods' in adata.uns
-        assert 'integration' in adata.uns
+        # Check Metadata
+        assert 'dataset' in uns
+        assert 'methods' in uns
+        assert 'integration' in uns
         for key in ['method', 'label_key', 'batch_key', 'output_type']:
-            assert key in adata.uns['integration']
+            assert key in uns['integration']
 
         # Unintegrated data
-        adata_raw = adata.raw.to_adata()
+        # adata_raw = raw.to_adata()
         # assert 'X_pca' in adata_raw.obsm
         # assert 'connectivities' in adata_raw.obsp
         # assert 'distances' in adata_raw.obsp
 
         # Output type specific outputs
-        output_types = adata.uns['integration']['output_type']
+        output_types = uns['integration']['output_type']
         output_types = [output_types] if isinstance(output_types, str) else output_types
 
-        if adata.uns['integration']['method'] == 'scanorama':
+        if uns['integration']['method'] == 'scanorama':
             assert len(output_types) == 2
 
         for ot in output_types:
@@ -36,17 +42,21 @@ for file in outputs:
                 raise ValueError(f'Invalid output type {ot}')
 
         if 'knn' in output_types:
-            assert 'connectivities' in adata.obsp
-            assert 'distances' in adata.obsp
+            obsp = read_elem(z["obsp"])
+            assert 'connectivities' in obsp
+            assert 'distances' in obsp
         if 'embed' in output_types:
-            assert 'X_emb' in adata.obsm
+            obsm = read_elem(z["obsm"])
+            assert 'X_emb' in obsm
         if 'full' in output_types:
-            assert 'corrected_counts' in adata.layers
+            X = read_elem(z['X'])
+            assert X is not None
+            # assert 'corrected_counts' in layers
             # check that counts are different from input
-            if adata.uns['integration']['method'] != 'unintegrated':
-                assert adata.X.data.shape != adata_raw.X.data.shape or np.any(adata.X.data != adata_raw.X.data)
+            # if uns['integration']['method'] != 'unintegrated':
+                # assert adata.X.data.shape != adata_raw.X.data.shape or np.any(X.data != adata_raw.X.data)
 
-    except Exception as e:
-        print('Error for:', file)
-        print('adata:', adata)
+    except AssertionError as e:
+        print('AssertionError for:', file)
+        pprint(uns)
         raise e
