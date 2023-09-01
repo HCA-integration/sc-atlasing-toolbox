@@ -29,7 +29,7 @@ rule save_obs:
     output:
         obs=out_dir / 'dcp_metadata' / '{study}' / 'obs.tsv'
     conda:
-        '../../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../../envs/')
     script:
         '../scripts/save_obs.py'
 
@@ -82,7 +82,7 @@ rule obs_merge_dcp:
             'cell_suspension.biomaterial_core.biomaterial_id'
         ]
     conda:
-        '../../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../../envs/')
     script:
         '../scripts/obs_merge_dcp.py'
 
@@ -106,7 +106,7 @@ rule plot_stats:
     output:
         intersection=out_dir / 'dcp_metadata' / 'plots' / 'intersection.png'
     conda:
-        '../../../envs/plots.yaml'
+        get_env(config, 'plots', env_dir='../../../envs/')
     script:
         '../scripts/plot_stats.py'
 

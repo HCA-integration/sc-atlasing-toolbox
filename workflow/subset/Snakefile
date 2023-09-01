@@ -4,7 +4,7 @@ Data Subsetting for benchmark
 from pathlib import Path
 
 from utils.config import get_datasets_for_module, get_for_dataset, get_resource, set_defaults
-
+from utils.environments import get_env
 
 module_name = 'subset'
 config = set_defaults(config,module_name)
@@ -30,7 +30,7 @@ rule subset:
         sample_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'sample']),
         label_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'label']),
     conda:
-        'envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='envs')
     script:
         'scripts/{wildcards.strategy}.py'
 

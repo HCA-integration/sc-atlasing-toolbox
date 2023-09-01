@@ -16,7 +16,7 @@ rule celltypist:
         subsample=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'subsample']),
         force_scale=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'force_scale']),
     conda:
-        '../envs/celltypist.yaml'
+        get_env(config, 'celltypist')
     resources:
         partition=lambda w: get_resource(config,resource_key='partition'),
         qos=lambda w: get_resource(config,resource_key='qos'),
@@ -34,7 +34,7 @@ rule celltypist_index_reannotations:
     output:
         reannotation=out_dir / 'celltypist' / '{dataset}' / 'reannotation_index.tsv',
     conda:
-        '../envs/celltypist.yaml'
+        get_env(config, 'celltypist')
     resources:
         partition=lambda w: get_resource(config,resource_key='partition'),
         qos=lambda w: get_resource(config,resource_key='qos'),
@@ -57,7 +57,7 @@ rule celltypist_plots:
     params:
         coarse_cell_type=lambda w: get_for_dataset(config, w.dataset, query=[module_name,'author_label_key']),
     conda:
-        '../envs/celltypist.yaml'
+        get_env(config, 'celltypist')
     script:
         '../scripts/celltypist_plots.py'
 

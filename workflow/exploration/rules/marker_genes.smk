@@ -12,7 +12,7 @@ rule marker_genes:
         dataset=lambda wildcards: wildcards.study,
         markers=get_markers
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:

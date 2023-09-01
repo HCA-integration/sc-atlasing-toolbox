@@ -6,6 +6,7 @@ import pandas as pd
 
 from utils.data import load_dataset_df
 from utils.config import get_resource
+from utils.environments import get_env
 
 
 module_name = 'exploration'

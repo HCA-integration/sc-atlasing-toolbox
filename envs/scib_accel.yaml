@@ -1,4 +1,4 @@
-name: scib
+name: scib_accel
 channels:
   - conda-forge
   - bioconda

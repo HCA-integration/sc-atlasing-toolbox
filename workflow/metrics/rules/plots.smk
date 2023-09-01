@@ -115,7 +115,7 @@ rule compare_metrics:
         time=image_dir / 'comparison_time.png',
         score=image_dir / 'comparison_score.png',
     conda:
-        '../envs/plots.yaml'
+        get_env(config, 'plots')
     group:
         'metrics_plots'
     script:
@@ -137,7 +137,7 @@ rule funkyheatmap:
         weight_batch=0.4,
         n_top=50,
     conda:
-        '../envs/funkyheatmap.yaml'
+        get_env(config, 'funkyheatmap')
     singularity:
         'docker://ghcr.io/dynverse/funky_heatmap:latest'
     group:

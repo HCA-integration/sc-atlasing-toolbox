@@ -41,7 +41,7 @@ rule summary_stats_all:
         aggregate=images_dir / 'summary' / 'all_datasets_aggregated.tsv',
         png=images_dir / 'summary' / 'all_datasets.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     script:
         '../scripts/plot_summary.py'
 

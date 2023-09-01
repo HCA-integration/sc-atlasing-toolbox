@@ -5,6 +5,7 @@ from utils.config import get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
 from utils.config import get_for_dataset
+from utils.environments import get_env
 
 
 module_name = 'label_harmonization'
