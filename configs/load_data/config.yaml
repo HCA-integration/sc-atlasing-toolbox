@@ -1,6 +1,6 @@
-dataset_meta: configs/datasets.tsv
-schema_file: configs/schema_mapping.tsv
-dcp_metadata: configs/dcp_metadata.tsv
+dataset_meta: configs/load_data/datasets.tsv
+schema_file: configs/load_data/schema_mapping.tsv
+dcp_metadata: configs/load_data/dcp_metadata.tsv
 
 filter_per_organ:
   blood:
