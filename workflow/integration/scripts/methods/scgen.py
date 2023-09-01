@@ -26,7 +26,7 @@ early_stopping_kwargs = {
 logging.info(hyperparams)
 
 # check GPU
-print('GPU available:', torch.cuda.is_available())
+logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 adata_raw = read_anndata(input_file)
 adata_raw.X = select_layer(adata_raw, params['norm_counts'])

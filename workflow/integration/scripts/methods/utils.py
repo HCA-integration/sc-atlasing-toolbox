@@ -43,7 +43,7 @@ def ensure_sparse(adata):
         adata.X = csr_matrix(adata.X)
 
 
-def process(adata, adata_raw, output_type):
+def process(adata, output_type, adata_raw=None):
     """
     Process data based on output type.
     If more than one output type is given, use the most processed output type: knn > embed > full
