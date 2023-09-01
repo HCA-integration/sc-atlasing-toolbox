@@ -8,3 +8,4 @@ scanvi	embed	true	true	scvi-tools	gpu
 scvi	embed	false	true	scvi-tools	gpu
 scpoli	embed	true	false	scarches	gpu
 scgen	embed,full	false	false	scarches	gpu
+harmony_gpu	embed	false	false	harmony_gpu	gpu
