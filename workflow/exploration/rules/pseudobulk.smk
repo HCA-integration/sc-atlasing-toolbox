@@ -10,7 +10,7 @@ rule pseudobulk:
         bulk_by='sample',
         color=['donor', 'assay', 'sex', 'disease', 'self_reported_ethnicity', 'development_stage', 'batch'],
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:

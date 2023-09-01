@@ -4,6 +4,7 @@ import pandas as pd
 from utils.config import get_datasets_for_module, get_for_dataset, get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
+from utils.environments import get_env
 
 
 module_name = 'relabel'
@@ -20,7 +21,7 @@ rule relabel:
     params:
         mapping_order=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'mapping', 'order']),
     conda:
-        'envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='envs')
     resources:
         partition=lambda w: get_resource(config,resource_key='partition'),
         qos=lambda w: get_resource(config,resource_key='qos'),

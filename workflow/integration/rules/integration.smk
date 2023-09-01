@@ -21,7 +21,7 @@ rule run_method:
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
         env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
-        lambda wildcards, params: f'../envs/{params.env}.yaml'
+        lambda wildcards, params: get_env(config, params.env)
     retries: 2
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
@@ -40,7 +40,7 @@ rule postprocess:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
     conda:
-        '../envs/scanpy_rapids.yaml'
+        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),

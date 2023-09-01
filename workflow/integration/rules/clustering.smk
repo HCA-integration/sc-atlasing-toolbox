@@ -4,7 +4,7 @@ rule clustering:
     output:
         tsv=out_dir / 'clustering' / paramspace.wildcard_pattern / 'resolutions' / '{resolution}.tsv',
     conda:
-        'rapids_singlecell'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
@@ -39,7 +39,7 @@ rule clustering_umap:
     output:
         png=image_dir / 'umap_clusters' / f'{paramspace.wildcard_pattern}.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     wildcard_constraints:
         lineage_key='((?![/]).)*',
     resources:
@@ -64,7 +64,7 @@ rule clustering_per_lineage:
     output:
         tsv=out_dir / 'clustering' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'resolutions' / '{resolution}.tsv',
     conda:
-        'rapids_singlecell'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
@@ -98,7 +98,7 @@ rule clustering_per_lineage_umap:
     output:
         png=image_dir / 'umap_clusters' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),

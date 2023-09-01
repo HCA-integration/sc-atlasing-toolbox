@@ -94,4 +94,4 @@ use rule assemble from preprocessing as preprocessing_assemble with:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
