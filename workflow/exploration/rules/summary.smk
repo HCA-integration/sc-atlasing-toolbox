@@ -13,7 +13,7 @@ rule summary_stats:
         sample=images_dir / 'summary' / 'datasets' / '{study}_sample.png',
         donor=images_dir / 'summary' / 'datasets' / '{study}_donor.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
