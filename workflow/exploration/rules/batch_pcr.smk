@@ -89,7 +89,7 @@ rule batch_pcr:
         n_permute=10,
         sample_key='sample'
     conda:
-        '../envs/scib_accel.yaml' if 'os' in config.keys() and config['os'] == 'intel' else '../envs/scib.yaml'
+        get_env(config, 'scib_accel')
     resources:
         partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),

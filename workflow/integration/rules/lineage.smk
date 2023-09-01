@@ -24,7 +24,7 @@ checkpoint split_lineage:
         # norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
         hvg_args=lambda w: get_for_dataset(config, w.dataset, ['preprocessing', 'highly_variable_genes']),
     conda:
-        '../envs/scanpy_rapids.yaml'
+        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -121,7 +121,7 @@ rule run_per_lineage:
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
         env=lambda wildcards: get_params(wildcards,parameters,'env'),
     conda:
-        lambda wildcards, params: f'../envs/{params.env}.yaml'
+        lambda wildcards, params: get_env(config, params.env)
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
@@ -139,7 +139,7 @@ rule postprocess_per_lineage:
     output:
         zarr=directory(out_dir / 'per_lineage' / 'postprocess' /paramspace.wildcard_pattern / 'lineage~{lineage}' / 'postprocessed.zarr'),
     conda:
-        '../envs/scanpy_rapids.yaml'
+        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
@@ -161,7 +161,7 @@ rule merge_lineage:
     output:
         zarr=directory(out_dir / 'per_lineage' / 'merge' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),

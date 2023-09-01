@@ -1,5 +1,5 @@
 from utils.wildcards import wildcards_to_str
-from utils.misc import ifelse
+from utils.environments import get_env
 
 
 rule dotplot:
@@ -17,9 +17,10 @@ rule dotplot:
         dendrogram=False,
         swap_axes=False,
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     script:
         '../scripts/dotplot.py'
+
 
 rule embedding:
     input:
@@ -30,7 +31,7 @@ rule embedding:
         color='bulk_labels',
         basis='X_pca',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     script:
         '../scripts/embedding.py'
 
@@ -45,10 +46,7 @@ rule umap:
         color='bulk_labels',
         use_rep='X_pca',
     conda:
-        ifelse(
-            'os' not in config.keys() or config['os'] == 'm1',
-            _if='../envs/scanpy.yaml', _else='../envs/scanpy_rapids.yaml'
-        )
+        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     script:
         '../scripts/umap.py'
 
@@ -69,7 +67,7 @@ rule barplot:
         dodge=True,
         xlim=(-.01, None),
     conda:
-        '../envs/plots.yaml'
+        get_env(config, 'plots')
     script:
         '../scripts/barplot.py'
 
@@ -87,6 +85,6 @@ rule swarmplot:
         description=wildcards_to_str,
         ylim=(-.05, 1.05),
     conda:
-        '../envs/plots.yaml'
+        get_env(config, 'plots')
     script:
         '../scripts/swarmplot.py'

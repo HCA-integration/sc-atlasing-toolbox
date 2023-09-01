@@ -9,6 +9,7 @@ from utils.data import load_dataset_df
 from utils.misc import all_but, unlist_dict
 from utils.config import get_resource
 from utils.wildcards import get_wildcards
+from utils.environments import get_env
 
 
 module_name = 'load_data'
@@ -61,7 +62,7 @@ rule download:
     params:
         dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"').reset_index(drop=True)
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     script:
         'scripts/download.py'
 
@@ -92,7 +93,7 @@ rule metadata:
         zarr=directory(out_dir / 'processed/' / '{dataset}.zarr'),
         plot=out_dir / 'processed/counts/{dataset}.png',
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
@@ -124,7 +125,7 @@ rule merge_study:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     # shadow: 'minimal'
     script:
         'scripts/merge.py'
@@ -150,7 +151,7 @@ rule filter:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     # shadow: 'minimal'
     script:
         'scripts/filter.py'
@@ -177,7 +178,7 @@ rule merge_organ:
     threads:
         dataset_df['dataset'].nunique()
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     # shadow: 'minimal'
     script:
         'scripts/merge.py'
@@ -200,7 +201,7 @@ rule merge_organ_filter:
     threads:
         dataset_df['dataset'].nunique()
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     # shadow: 'minimal'
     script:
         'scripts/merge.py'
@@ -223,7 +224,7 @@ rule merge_subset:
     threads:
         dataset_df['dataset'].nunique()
     conda:
-        '../../envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='../../envs/')
     # shadow: 'minimal'
     script:
         'scripts/merge.py'

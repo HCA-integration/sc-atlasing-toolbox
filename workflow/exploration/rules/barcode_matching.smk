@@ -1,3 +1,5 @@
+from utils.environments import get_env
+
 # rule get_barcodes:
 #     input:
 #         zarr=rules.load_data_metadata.output.zarr
@@ -30,7 +32,7 @@ rule barcode_matching:
     output:
         png=images_dir / 'barcode_matching' / '{study}.png',
     conda:
-        '../envs/plots.yaml'
+        get_env(config, 'plots')
     script:
         '../scripts/barcode_matching.py'
 

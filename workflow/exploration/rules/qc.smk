@@ -10,7 +10,7 @@ rule qc:
         dataset=lambda wildcards: wildcards.study,
         hue='donor'
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
