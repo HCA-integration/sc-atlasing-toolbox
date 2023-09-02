@@ -23,20 +23,9 @@ studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
 #         expand(rules.download_dcp_tsv.output,study=dataset_df['study'])
 
 
-rule save_obs:
-    input:
-        zarr=rules.filter.output.zarr
-    output:
-        obs=out_dir / 'dcp_metadata' / '{study}' / 'obs.tsv'
-    conda:
-        get_env(config, 'scanpy', env_dir='../../../envs/')
-    script:
-        '../scripts/save_obs.py'
-
-
 rule obs_merge_dcp:
     input:
-        obs=rules.save_obs.output.obs,
+        zarr=rules.filter.output.zarr,
         dcp=lambda wildcards: metadata_df.query('study == @wildcards.study')['filename'].values[0],
         # dcp=rules.download_dcp_tsv.output.tsv,
     output:
