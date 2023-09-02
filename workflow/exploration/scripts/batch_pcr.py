@@ -15,7 +15,7 @@ try:
     from sklearnex import patch_sklearn
     patch_sklearn()
 except ImportError:
-    logger.info(f'no hardware acceleration for sklearn')
+    logger.info('no hardware acceleration for sklearn')
 
 from utils.io import read_anndata
 

@@ -2,7 +2,7 @@ from utils.environments import get_env
 
 # rule get_barcodes:
 #     input:
-#         zarr=rules.load_data_metadata.output.zarr
+#         zarr=rules.metadata.output.zarr
 #     output:
 #         tsv=out_dir / 'barcode_matching' / 'barcodes' / '{dataset}.tsv',
 #     conda:

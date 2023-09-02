@@ -5,7 +5,7 @@ def get_markers(wildcards):
 
 rule marker_genes:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         png=images_dir / 'marker_genes' / '{study}.png',
     params:

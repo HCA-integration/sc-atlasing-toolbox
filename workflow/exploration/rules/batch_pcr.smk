@@ -6,7 +6,7 @@ if 'DATASETS' not in config_exploration.keys():
 for study in dataset_df['study']:
     config_exploration["DATASETS"][study] = dict(
         input=dict(
-            preprocessing=expand(rules.load_data_filter.output.zarr,study=study)[0]
+            preprocessing=expand(rules.load_data_filter_study.output.zarr,study=study)[0]
         ),
         preprocessing=dict(
             raw_counts='X',
@@ -21,6 +21,7 @@ module preprocessing:
     config: config_exploration
 
 use rule * from preprocessing as preprocessing_*
+
 
 def get_batch_pcr_input(wildcards):
     adata_file = expand(rules.preprocessing_pca.output,dataset=wildcards.study)[0]

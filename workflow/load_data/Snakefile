@@ -51,14 +51,17 @@ module common:
 
 use rule * from common as common_ *
 
+module load_data:
+    snakefile: "rules.smk"
+    config: config
+
 include: 'rules/load_data.smk'
-include: 'rules/merge.smk'
 include: 'rules/metadata.smk'
 
 rule all:
     input:
-        expand(rules.merge_organ.output,**get_wildcards(dataset_df,['organ'])),
-        expand(rules.merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
+        expand(rules.load_data_merge_organ.output,**get_wildcards(dataset_df,['organ'])),
+        expand(rules.load_data_merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
     default_target: True
 
 

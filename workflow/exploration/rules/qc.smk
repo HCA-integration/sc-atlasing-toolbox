@@ -1,6 +1,6 @@
 rule qc:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         joint=images_dir / 'qc' / '{study}' / 'joint.png',
         joint_log=images_dir / 'qc' / '{study}' / 'joint_log.png',
@@ -34,7 +34,7 @@ use rule qc as qc_organ with:
 
 use rule qc as qc_filtered with:
     input:
-        zarr=rules.merge_organ_filter.output.zarr
+        zarr=rules.load_data_merge_organ_filter.output.zarr
     output:
         joint=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
         joint_log=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',
