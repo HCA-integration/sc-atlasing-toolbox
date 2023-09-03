@@ -20,16 +20,15 @@ wildcard_constraints:
     dataset='((?![/]).)*',
 
 
-module clustering:
-    snakefile: "rules.smk"
-    config: config
-
-
 module common:
     snakefile: "../common/Snakefile"
     config: config
 
 use rule * from common as common_ *
+
+module clustering:
+    snakefile: "rules.smk"
+    config: config
 
 include: 'rules/clustering.smk'
 
