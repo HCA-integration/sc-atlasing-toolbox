@@ -2,8 +2,6 @@
 Clustering
 """
 from pathlib import Path
-import numpy as np
-import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import all_but, unique_dataframe
@@ -19,7 +17,7 @@ image_dir = Path(config['images']) / module_name
 
 
 wildcard_constraints:
-    dataset='\w+',
+    dataset='((?![/]).)*',
 
 
 module clustering:
@@ -39,7 +37,7 @@ include: 'rules/clustering.smk'
 rule all:
     input:
         expand(rules.clustering_merge.output,dataset=get_datasets_for_module(config,module=module_name)),
-        expand(rules.clustering_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.clustering_plot_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
     default_target: True
 
 
