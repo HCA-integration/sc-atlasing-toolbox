@@ -1,7 +1,10 @@
 import scib
 import scanpy as sc
 
-from utils import add_metadata, read_anndata, process, select_layer
+from utils import add_metadata
+from utils_pipeline.io import read_anndata
+from utils_pipeline.accessors import select_layer
+from utils_pipeline.processing import process
 
 
 input_adata = snakemake.input[0]

@@ -37,4 +37,3 @@ def select_neighbors(adata, output_type):
     adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
     adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
     return adata
-

@@ -98,3 +98,10 @@ def ifelse(statement, _if, _else):
         return _if
     else:
         return _else
+
+
+def ensure_sparse(adata):
+    from scipy.sparse import csr_matrix, issparse
+
+    if not issparse(adata.X):
+        adata.X = csr_matrix(adata.X)
