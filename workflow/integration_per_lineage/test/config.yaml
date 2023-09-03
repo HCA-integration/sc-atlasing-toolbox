@@ -85,5 +85,3 @@ DATASETS:
         unintegrated:
         scgen:
           n_epochs: 10
-      integration_per_lineage:
-        lineage: phase

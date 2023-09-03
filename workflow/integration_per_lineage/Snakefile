@@ -127,11 +127,7 @@ rule merge_lineage:
 
 rule run_all:
     input:
-        expand(
-            rules.merge_lineage.output,
-            zip,
-            **parameters.query('lineage_key != "None"')[wildcard_names].to_dict('list')
-        )
+        expand(rules.merge_lineage.output, zip, **parameters[wildcard_names].to_dict('list'))
 
 
 rule all:
