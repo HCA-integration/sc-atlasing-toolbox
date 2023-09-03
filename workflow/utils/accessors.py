@@ -1,4 +1,5 @@
-
+import numpy as np
+from scipy.sparse import csr_matrix, issparse
 
 
 def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float64'):
