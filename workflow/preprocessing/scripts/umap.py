@@ -11,10 +11,18 @@ import zarr
 from utils.io import read_anndata, link_zarr
 
 
-def check_and_update_neighbors_info(adata, neighbors_key, params):
+def check_and_update_neighbors_info(adata, neighbors_key):
     # check if representation is available
     try:
-        assert neighbors_key in adata.uns
+        if neighbors_key not in adata.uns:
+            adata.uns[neighbors_key] = {
+                'connectivities_key': 'connectivities',
+                'distances_key': 'distances',
+                'params': {
+                    'use_rep': 'X_pca',
+                    'method': None,
+                },
+            }
         assert adata.uns[neighbors_key]['connectivities_key'] in adata.obsp
         assert adata.uns[neighbors_key]['distances_key'] in adata.obsp
     except AssertionError as e:
@@ -63,12 +71,12 @@ neighbors_key = params.get('neighbors_key', 'neighbors')
 # compute UMAP
 if isinstance(neighbors_key, list):
     for key in neighbors_key:
-        check_and_update_neighbors_info(adata, key, params)
+        check_and_update_neighbors_info(adata, key)
         params |= dict(neighbors_key=key)
         compute_umap(adata, params)
         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 else:
-    check_and_update_neighbors_info(adata, neighbors_key, params)
+    check_and_update_neighbors_info(adata, neighbors_key)
     params |= dict(neighbors_key=neighbors_key)
     compute_umap(adata, params)
 

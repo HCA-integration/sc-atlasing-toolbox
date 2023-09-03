@@ -1,8 +1,11 @@
 from pathlib import Path
 import scanpy as sc
 
-from utils import add_metadata, read_anndata, process, select_layer
-from utils_pipeline.io import link_zarr
+from utils import add_metadata
+from utils_pipeline.io import read_anndata, link_zarr
+from utils_pipeline.accessors import select_layer
+from utils_pipeline.processing import process
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]

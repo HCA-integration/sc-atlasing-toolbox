@@ -7,13 +7,14 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from methods.utils import read_anndata, select_layer
+from utils.io import read_anndata
+from utils.accessors import select_layer
 
 input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 
-split_key = snakemake.wildcards.lineage_key
-batch_key = snakemake.wildcards.batch
+split_key = snakemake.params.lineage_key
+batch_key = snakemake.params.batch
 label_key = snakemake.params.label
 # norm_layer = snakemake.params.norm_counts
 

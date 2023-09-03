@@ -1,0 +1,23 @@
+output_dir: test/out
+images: test/images
+
+use_gpu: true
+
+defaults:
+  datasets:
+    - test
+
+DATASETS:
+  test:
+    input:
+      clustering: test/data/pbmc68k.h5ad
+    clustering:
+      neighbors_key: neighbors
+      resolutions:
+        - 0.2
+        - 0.3
+        - 0.4
+        - 0.5
+        - 0.6
+        - 0.7
+        - 0.8

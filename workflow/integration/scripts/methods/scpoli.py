@@ -2,7 +2,11 @@ from scipy.sparse import issparse
 import torch
 from scarches.models.scpoli import scPoli
 
-from utils import add_metadata, read_anndata, process, select_layer
+from utils import add_metadata
+from utils_pipeline.io import read_anndata
+from utils_pipeline.accessors import select_layer
+from utils_pipeline.processing import process
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]

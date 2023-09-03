@@ -286,9 +286,12 @@ def get_for_dataset(
     Returns:
         Union[str,bool,float,int,dict,list, None]: value of query in config
     """
-    assert 'DATASETS' in config
-    assert dataset in config['DATASETS']
-    
+    try:
+        assert 'DATASETS' in config
+        assert dataset in config['DATASETS']
+    except AssertionError as e:
+        raise ValueError(f'Assertion failed for dataset="{dataset}"') from e
+
     # start at top level
     value = config['DATASETS'][dataset]
     
