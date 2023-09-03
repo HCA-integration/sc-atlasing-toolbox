@@ -88,3 +88,18 @@ DATASETS:
       label: bulk_labels
       batch: phase
 
+    test2:
+    input:
+      preprocessing: data/pbmc68k.h5ad
+      integration: preprocessing
+    preprocessing:
+      label: bulk_labels
+      batch: phase
+    integration:
+      label: bulk_labels
+      batch: batch
+      lineage: phase
+      umap_colors:
+        - bulk_labels
+        - phase
+
