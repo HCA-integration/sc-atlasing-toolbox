@@ -1,4 +1,4 @@
-rule run_method:
+use rule run_method from integration as integration_run_method with:
     message:
        """
        Integration: Run {wildcards.method} on {wildcards.dataset}
@@ -20,34 +20,25 @@ rule run_method:
         output_type=lambda wildcards: get_params(wildcards,parameters,'output_type'),
         hyperparams=lambda wildcards: get_params(wildcards,parameters,'hyperparams_dict'),
         env=lambda wildcards: get_params(wildcards,parameters,'env'),
-    conda:
-        lambda wildcards, params: get_env(config, params.env)
-    retries: 2
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
         mem_mb=lambda w, attempt: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb', attempt=attempt),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
         time="2-00:00:00",
-    # shadow: 'minimal'
-    script:
-        '../scripts/methods/{wildcards.method}.py'
 
 
-rule postprocess:
+use rule postprocess from integration as integration_postprocess with:
     input:
-        zarr=rules.run_method.output.zarr,
+        zarr=rules.integration_run_method.output.zarr,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
-    conda:
-        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
         mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
-    script:
-        '../scripts/postprocess.py'
+
 
 
 rule run_all:
-    input: expand(rules.postprocess.output,zip,**parameters[wildcard_names].to_dict('list'))
+    input: expand(rules.integration_postprocess.output,zip,**parameters[wildcard_names].to_dict('list'))
