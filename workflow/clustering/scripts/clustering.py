@@ -15,7 +15,7 @@ from utils.io import read_anndata
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 resolution = float(snakemake.wildcards.resolution)
-wildcards = '_'.join(snakemake.wildcards)
+cluster_key_suffix = snakemake.params.get('cluster_key_suffix', '')
 neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
 
 logging.info(f'Read anndata file {input_file}...')
@@ -35,7 +35,7 @@ adata.obsp['connectivities'] = adata.obsp[neighbors['connectivities_key']]
 adata.obsp['distances'] = adata.obsp[neighbors['distances_key']]
 
 logging.info(f'Leiden clustering with resolution {resolution}...')
-cluster_key = f'leiden_{wildcards}'
+cluster_key = f'leiden_{resolution}{cluster_key_suffix}'
 sc.tl.leiden(
     adata,
     resolution=resolution,

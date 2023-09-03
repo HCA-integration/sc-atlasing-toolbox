@@ -5,6 +5,7 @@ use rule cluster from clustering as integration_cluster with:
         tsv=out_dir / 'clustering' / paramspace.wildcard_pattern / 'resolutions' / '{output_type}--{resolution}.tsv',
     params:
         neighbors_key='neighbors_{output_type}',
+        cluster_key_suffix='_{output_type}',
     resources:
         partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
