@@ -18,7 +18,7 @@ def get_env(
         _else=gpu_env
     )
 
-    if mode == 'from_file':
+    if mode == 'from_yaml':
         return f'{env_dir}/{env_name}.yaml'
     elif mode == 'local':
         return env_name

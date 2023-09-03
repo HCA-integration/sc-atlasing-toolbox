@@ -1,6 +1,6 @@
 rule pseudobulk:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         pca_1_2=images_dir / 'pseudobulk' / '{study}_1_2.png',
         pca_2_3=images_dir / 'pseudobulk' / '{study}_2_3.png',
