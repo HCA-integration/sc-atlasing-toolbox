@@ -13,7 +13,7 @@ resources:
     partition: gpu
     qos: normal
     gpu: 1
-    mem_mb: 1000
+    mem_mb: 4000
 
 defaults:
   integration:
