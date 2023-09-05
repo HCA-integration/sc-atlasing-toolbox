@@ -23,6 +23,8 @@ defaults:
       bbknn:
       combat:
       harmony:
+      harmony_gpu:
+      harmonypy:
       scanorama:
       scanvi:
         n_hidden: 128
@@ -51,8 +53,9 @@ defaults:
         use_observed_lib_size: true
       unintegrated:
   datasets:
-    - test
-    - test2
+    # - test
+    # - test2
+    - harmony_comparison
 
 DATASETS:
   test:
@@ -73,6 +76,20 @@ DATASETS:
       lineage: phase
       methods:
         unintegrated:
+      umap_colors:
+        - bulk_labels
+        - phase
+
+  harmony_comparison:
+    input:
+      integration: test/data/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        harmony_gpu:
+        harmonypy:
+        harmony:
       umap_colors:
         - bulk_labels
         - phase
