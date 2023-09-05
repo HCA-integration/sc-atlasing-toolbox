@@ -17,15 +17,11 @@ out_plot = snakemake.output.plot
 wildcards = snakemake.wildcards
 meta = snakemake.params.meta
 schema_file = snakemake.input.schema
+annotation_file = snakemake.input.get('annotation_file')
 
 logging.info('meta:')
 logging.info(pformat(meta))
 
-# optional annotations file
-annotation_file = meta['annotation_file']
-if not pd.isna(annotation_file):
-    logging.info(f'check if annotation file {annotation_file} exists')
-    assert Path(annotation_file).exists()
 
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
@@ -43,7 +39,7 @@ for meta_i in ["organ", "study", "dataset"]:
 
 # add annotation if available
 author_annotation = meta['author_annotation']
-if not pd.isna(annotation_file):
+if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     annotation = pd.read_csv(annotation_file)
     annotation.index = annotation[meta['barcode_column']].astype(str)
