@@ -23,7 +23,7 @@ defaults:
       bbknn:
       combat:
       harmony:
-      harmony_gpu:
+      harmony_rapids:
       harmonypy:
       scanorama:
       scanvi:
@@ -87,7 +87,7 @@ DATASETS:
       label: bulk_labels
       batch: batch
       methods:
-        harmony_gpu:
+        harmony_rapids:
         harmonypy:
         harmony:
       umap_colors:

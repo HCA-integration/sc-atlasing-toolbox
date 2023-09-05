@@ -1,4 +1,4 @@
-name: harmony_gpu
+name: harmony_rapids
 channels:
  - rapidsai
  - nvidia

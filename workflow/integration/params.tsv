@@ -4,7 +4,7 @@ bbknn	knn	false	false	bbknn	cpu
 combat	full	false	false	scib	cpu
 harmony	embed	false	false	harmony	gpu
 harmonypy	embed	false	false	harmony	cpu
-harmony_gpu	embed	false	false	harmony_gpu	gpu
+harmony_rapids	embed	false	false	harmony_rapids	gpu
 scanorama	embed,full	false	false	scanorama	cpu
 scanvi	embed	true	true	scvi-tools	gpu
 scvi	embed	false	true	scvi-tools	gpu
