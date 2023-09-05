@@ -1,48 +1,27 @@
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_resource, get_wildcards_from_config, set_defaults
+from utils.config import get_datasets_for_module, get_for_dataset, get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
+from utils.environments import get_env
 
 
 module_name = 'relabel'
 config = set_defaults(config,module_name,warn=False)
 out_dir = Path(config['output_dir']) / module_name
 
-parameters = get_wildcards_from_config(
-    config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
-    config_params=[module_name],
-    wildcard_names=['dataset', 'module'],
-)
-# subset to datasets that have module defined
-parameters = parameters[~parameters['module'].isnull()]
-parameters = unpack_dict_in_df(parameters, 'module')
-
-try:
-    relabel_datasets = parameters[['dataset', 'mapping']].dropna()['dataset'].unique()
-except KeyError:
-    relabel_datasets = []
-
-
-def get_input(wildcards, query=['input', module_name]):
-    value = config['DATASETS'][wildcards.dataset]
-    for q in query:
-        value = value[q]
-    return value
-
 
 rule relabel:
     input:
-        anndata=get_input,
-        mapping=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'file'])
+        anndata=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
+        mapping=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'mapping', 'file'])
     output:
-        h5ad=out_dir / '{dataset}.h5ad',
+        zarr=directory(out_dir / '{dataset}.zarr'),
     params:
-        mapping_order=lambda wildcards: get_input(wildcards, query=[module_name, 'mapping', 'order']),
+        mapping_order=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'mapping', 'order']),
     conda:
-        'envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='envs')
     resources:
         partition=lambda w: get_resource(config,resource_key='partition'),
         qos=lambda w: get_resource(config,resource_key='qos'),
@@ -53,7 +32,10 @@ rule relabel:
 
 rule relabel_all:
     input:
-        expand(rules.relabel.output, dataset=relabel_datasets)
+        expand(
+            rules.relabel.output,
+            dataset=get_datasets_for_module(config, module_name).keys()
+        )
 
 
 rule all:

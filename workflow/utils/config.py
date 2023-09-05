@@ -247,22 +247,24 @@ def get_datasets_for_module(config, module):
     :param module: name of module to collect valid datasets for
     :return: subset of config["DATASETS"] that is valid for module
     """
-    try:
-        dataset_config = {
-            k: v for k, v in config['DATASETS'].items()
-            if k in config['defaults']['datasets']
-        }
-    except KeyError:
-        dataset_config = config['DATASETS']
-
     if 'DATASETS' not in config:
         warnings.warn('No datasets specified in config, cannot collect any datasets')
         return {}
+
+    if 'defaults' in config:
+        dataset_config = {
+            k: v for k, v in config['DATASETS'].items()
+            if k in config['defaults'].get('datasets', config['DATASETS'].keys())
+        }
+    else:
+        dataset_config = config['DATASETS']
+
     return {
-        dataset: entry for dataset, entry in dataset_config.items()
-        if 'input' in config['DATASETS'][dataset]
-           and dataset_config[dataset]['input'] is not None
-           and module in dataset_config[dataset]['input']
+        dataset: entry
+        for dataset, entry in dataset_config.items()
+        if 'input' in dataset_config[dataset]
+        and dataset_config[dataset]['input'] is not None
+        and module in dataset_config[dataset]['input'].keys()
     }
 
 
@@ -284,9 +286,12 @@ def get_for_dataset(
     Returns:
         Union[str,bool,float,int,dict,list, None]: value of query in config
     """
-    assert 'DATASETS' in config
-    assert dataset in config['DATASETS']
-    
+    try:
+        assert 'DATASETS' in config
+        assert dataset in config['DATASETS']
+    except AssertionError as e:
+        raise ValueError(f'Assertion failed for dataset="{dataset}"') from e
+
     # start at top level
     value = config['DATASETS'][dataset]
     

@@ -9,13 +9,7 @@ from snakemake.utils import Paramspace
 from utils.misc import all_but, unique_dataframe
 from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
-
-
-def get_input(wildcards):
-    assert wildcards.dataset in config['DATASETS'].keys()
-    assert 'input' in config['DATASETS'][wildcards.dataset].keys()
-    assert 'integration' in config['DATASETS'][wildcards.dataset]['input'].keys()
-    return config['DATASETS'][wildcards.dataset]['input']['integration']
+from utils.environments import get_env
 
 
 module_name = 'integration'
@@ -35,12 +29,11 @@ parameters['output_type'] = parameters['output_type'].str.split(',')
 parameters = get_params_from_config(
     config=get_datasets_for_module(config, module_name),
     module_name=module_name,
-    config_params=['methods', 'label', 'batch', 'lineage', 'norm_counts', 'raw_counts'],
-    wildcard_names=['dataset', 'method', 'label', 'batch', 'lineage_key', 'norm_counts', 'raw_counts'],
+    config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
+    wildcard_names=['dataset', 'method', 'label', 'batch', 'norm_counts', 'raw_counts'],
     defaults=config['defaults'],
-    explode_by=['method', 'lineage_key', 'batch'],
+    explode_by=['method', 'batch'],
 ).merge(parameters,on='method')
-parameters['lineage_key'] = parameters['lineage_key'].astype(str)
 
 # subset to datasets that have module defined
 parameters = parameters[~parameters['method'].isnull()]
@@ -51,7 +44,7 @@ parameters = parameters[~parameters['method'].isnull()]
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
 parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'method', 'hyperparams', 'batch', 'label', 'lineage_key']
+wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams']
 
 # write hyperparameter mapping
 Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -61,7 +54,7 @@ unique_dataframe(
 
 paramspace = Paramspace(
     parameters[wildcard_names],
-    filename_params=['method', 'hyperparams', 'batch', 'label', 'lineage_key'],
+    filename_params=['method', 'hyperparams'],
     filename_sep='--',
 )
 
@@ -71,28 +64,35 @@ wildcard_constraints:
     batch='((?![/]).)*',
     label='((?![/]).)*',
     hyperparams='((?![/]).)*',
-    lineage_key='((?![/]).)*',
 
+
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
+
+module integration:
+    snakefile: "rules.smk"
+    config: config
+
+module clustering:
+    snakefile: "../../clustering/rules/rules.smk"
+    config: config
+
+module plots:
+    snakefile: "../../common/rules/plots.smk"
+    config: config
 
 module common:
     snakefile: "../common/Snakefile"
     config: config
 
-
 use rule * from common as common_ *
 
 
 include: 'rules/integration.smk'
-include: 'rules/lineage.smk'
-include: 'rules/plots.smk'
+include: 'rules/benchmark.smk'
+include: 'rules/umap.smk'
 include: 'rules/clustering.smk'
-
-
-rule per_lineage_all:
-    input:
-        rules.run_per_lineage_all.input,
-        rules.clustering_per_lineage_all.input,
-        rules.plots_per_lineage_all.input,
 
 
 rule all:
@@ -100,7 +100,6 @@ rule all:
         rules.run_all.input,
         rules.clustering_all.input,
         rules.plots_all.input,
-        rules.per_lineage_all.input,
     default_target: True
 
 

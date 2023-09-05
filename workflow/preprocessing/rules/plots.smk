@@ -18,4 +18,4 @@ use rule plot_umap from preprocessing as preprocessing_plot_umap with:
     params:
         color=lambda w: get_for_dataset(config, w.dataset, [module_name, 'colors']),
         ncols=1,
-        outlier_factor=3
+        outlier_factor=10

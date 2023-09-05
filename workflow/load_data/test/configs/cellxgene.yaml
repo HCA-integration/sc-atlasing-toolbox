@@ -4,6 +4,8 @@ dcp_metadata: test/configs/dataset_info/dcp_metadata.tsv
 schema_file: test/data/schema_mapping.tsv
 images: test/images
 
+env_mode: local # from_yaml
+
 filter_per_organ:
   blood:
     cells_per_sample:

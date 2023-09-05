@@ -12,7 +12,7 @@ rule preprocess:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu.zarr'),
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         partition=get_resource(config,profile='cpu',resource_key='partition'),
         qos=get_resource(config,profile='cpu',resource_key='qos'),
@@ -47,7 +47,7 @@ rule run:
     params:
         env=lambda wildcards: get_params(wildcards,parameters,'env')
     conda:
-        lambda wildcards, params: f'../envs/{params.env}.yaml'
+        lambda wildcards, params: get_env(config, params.env)
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),

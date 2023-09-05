@@ -5,14 +5,14 @@ def get_markers(wildcards):
 
 rule marker_genes:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         png=images_dir / 'marker_genes' / '{study}.png',
     params:
         dataset=lambda wildcards: wildcards.study,
         markers=get_markers
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:

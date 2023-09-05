@@ -7,9 +7,10 @@ from utils.pipeline import update_module_configs, config_for_module
 
 min_version("6.0")
 container: "docker://condaforge/mambaforge:latest"
-configfile: "configs/imported/outputs.yaml"
-configfile: "configs/imported/load_data.yaml"
-configfile: "configs/imported/exploration.yaml"
+
+configfile: "configs/outputs.yaml"
+configfile: "configs/load_data/config.yaml"
+configfile: "configs/exploration/config.yaml"
 
 # params = pd.read_table('configs/modules.tsv',comment='#')
 # params['submodules'] = params['submodules'].str.split(',')
@@ -44,6 +45,12 @@ module preprocessing:
     snakefile: "preprocessing/Snakefile"
     config: config_for_module(config, module='preprocessing')
 
+
+module clustering:
+    snakefile: "clustering/Snakefile"
+    config: config_for_module(config, module='clustering')
+
+
 module label_transfer:
     snakefile: "label_transfer/Snakefile"
     config: config
@@ -60,41 +67,30 @@ module integration:
     snakefile: "integration/Snakefile"
     config: config_for_module(config, module='integration')
 
+module integration_per_lineage:
+    snakefile: "integration_per_lineage/Snakefile"
+    config: config_for_module(config, module='integration')
+
 module metrics:
     snakefile: "metrics/Snakefile"
     config: config
 
 use rule * from common as common_ *
-
 use rule * from load_data as load_data_ *
-
 use rule * from preprocessing as preprocessing_ *
-
+use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
-
 use rule * from subset as subset_ *
-
 use rule * from label_transfer as label_transfer_ *
-
 use rule * from label_harmonization as label_harmonization_ *
-
 use rule * from relabel as relabel_ *
-
 use rule * from integration as integration_ *
-
+use rule * from integration_per_lineage as integration_per_lineage_ *
 use rule * from metrics as metrics_ *
 
 
 rule all:
-    input:
-        # rules.load_data_all.input,
-        # rules.exploration_all.input,
-        # rules.preprocessing_all.input,
-        # rules.subset_all.input,
-        # rules.label_transfer_all.input,
-        # rules.integration_all.input,
-        # rules.metrics_all.input
-        rules.dependency_graph.input
+    input: rules.dependency_graph.input
     default_target: True
 
 

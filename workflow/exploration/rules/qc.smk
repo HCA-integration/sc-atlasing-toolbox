@@ -1,6 +1,6 @@
 rule qc:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         joint=images_dir / 'qc' / '{study}' / 'joint.png',
         joint_log=images_dir / 'qc' / '{study}' / 'joint_log.png',
@@ -10,7 +10,7 @@ rule qc:
         dataset=lambda wildcards: wildcards.study,
         hue='donor'
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
@@ -34,7 +34,7 @@ use rule qc as qc_organ with:
 
 use rule qc as qc_filtered with:
     input:
-        zarr=rules.merge_organ_filter.output.zarr
+        zarr=rules.load_data_merge_organ_filter.output.zarr
     output:
         joint=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint.png',
         joint_log=images_dir / 'qc' / 'organ' / '{organ}' / 'filtered_joint_log.png',

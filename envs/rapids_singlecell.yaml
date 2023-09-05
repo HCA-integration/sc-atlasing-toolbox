@@ -1,0 +1,17 @@
+name: rapids_singlecell
+channels:
+  - rapidsai
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - leidenalg
+  - zarr
+  - cuda-version=11.8
+  - cudf=23.04
+  - cugraph=23.04
+  - cuml=23.04
+  - pip
+  - pip:
+    - rapids-singlecell
+    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1

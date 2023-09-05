@@ -53,9 +53,11 @@ defaults:
         use_observed_lib_size: true
       unintegrated:
   datasets:
-    # - test
-    # - test2
+    - test
+    - test2
+    - test3
     - harmony_comparison
+
 
 DATASETS:
   test:
@@ -79,6 +81,19 @@ DATASETS:
       umap_colors:
         - bulk_labels
         - phase
+
+  test3:
+    input:
+      integration: test/input/preprocessing/pbmc/preprocessed.zarr
+    integration:
+      raw_counts: raw
+      norm_counts: X
+      label: bulk_labels
+      batch: batch
+      methods:
+        unintegrated:
+        scgen:
+          n_epochs: 10
 
   harmony_comparison:
     input:

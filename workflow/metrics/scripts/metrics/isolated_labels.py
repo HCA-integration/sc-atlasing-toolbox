@@ -5,11 +5,7 @@ from .utils import select_neighbors
 def isolated_label_f1(adata, output_type, meta, **kwargs):
     import scib
 
-    if output_type == 'knn':
-        return np.nan
-
     adata = select_neighbors(adata, output_type)
-
     return scib.me.isolated_labels_f1(
         adata,
         label_key=meta['label'],

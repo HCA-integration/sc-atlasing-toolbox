@@ -7,6 +7,7 @@ from pathlib import Path
 from utils.config import get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unpack_dict_in_df
+from utils.environments import get_env
 
 
 def get_h5ad(wildcards):
@@ -49,7 +50,7 @@ rule get_model:
     output:
         model=out_dir / 'models' / '{method}' / '{model}.pkl'
     conda:
-        'envs/{method}.yaml'
+        lambda wildcards: get_env(config, wildcards.method)
     params:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"]
     script:
@@ -64,7 +65,7 @@ rule run:
         tsv=out_dir / '{method}' / '{dataset}' / '{model}.tsv',
         png=out_dir / 'figures' / '{method}-{dataset}-{model}.png',
     conda:
-        'envs/{method}.yaml'
+        lambda wildcards: get_env(config, wildcards.method)
     params:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
         label_key=lambda wildcards: get_params(wildcards,parameters,'label')

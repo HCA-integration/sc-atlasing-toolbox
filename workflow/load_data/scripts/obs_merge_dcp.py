@@ -1,5 +1,7 @@
 from pprint import pprint
 import pandas as pd
+from anndata.experimental import read_elem
+import zarr
 
 in_file = snakemake.input[0]
 in_dcp = snakemake.input[1]
@@ -14,7 +16,7 @@ def explode_table(df, col, sep=' \|\| '):
 
 id_cols = snakemake.params.id_cols
 
-obs_df = pd.read_table(in_file)
+obs_df = read_elem(zarr.open(in_file)['obs'])
 dcp_tsv = pd.read_table(in_dcp)
 
 obs_ids = set(obs_df['donor_id'].unique())

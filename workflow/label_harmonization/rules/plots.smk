@@ -46,9 +46,9 @@ rule celltypist_umap:
         plot=image_dir / '{dataset}' / 'celltypist--umap.png',
         per_group=directory(image_dir / '{dataset}' / 'umap_per_group'),
     resources:
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     script:
         '../scripts/celltypist_umap.py'
 
@@ -71,7 +71,7 @@ rule dotplot:
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'celltypist')
     script:
         '../scripts/dotplot.py'
 
