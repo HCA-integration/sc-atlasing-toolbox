@@ -7,10 +7,10 @@ dependencies:
   - python=3.10
   - leidenalg
   - zarr
-  - cuda-version=11.8
-  - cudf=23.04
-  - cugraph=23.04
-  - cuml=23.04
+  - cuda-version=11.4
+  - cuda-cudart=11.4
+  - cuda-nvrtc=11.4
+  - rapids=23.08
   - pip
   - pip:
     - rapids-singlecell
