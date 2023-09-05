@@ -2,6 +2,19 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
+env_mode: from_yaml
+
+resources:
+  cpu:
+    partition: cpu
+    qos: normal
+    gpu: 0
+    mem_mb: 1000
+  gpu:
+    partition: gpu
+    qos: normal
+    gpu: 1
+    mem_mb: 4000
 
 defaults:
   datasets:
@@ -10,7 +23,7 @@ defaults:
 DATASETS:
   test:
     input:
-      clustering: test/data/pbmc68k.h5ad
+      clustering: test/input/pbmc68k.h5ad
     clustering:
       neighbors_key: neighbors
       resolutions:

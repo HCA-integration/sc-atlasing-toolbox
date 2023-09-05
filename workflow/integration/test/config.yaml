@@ -2,6 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
+env_mode: from_yaml
 
 resources:
   cpu:
@@ -62,7 +63,7 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch:
@@ -71,7 +72,7 @@ DATASETS:
 
   test2:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
@@ -97,7 +98,7 @@ DATASETS:
 
   harmony_comparison:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
