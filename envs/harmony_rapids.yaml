@@ -1,0 +1,21 @@
+name: harmony_rapids
+channels:
+ - rapidsai
+ - nvidia
+ - conda-forge
+ - bioconda
+dependencies:
+ - python=3.10
+ - rapids=23.08
+ - cuda-version=11.4
+ - cuda-cudart=11.4
+ - cuda-nvrtc=11.4
+ - cudnn
+ - cutensor
+ - cusparselt
+ - zarr
+ - scipy<1.11
+ - pip
+ - pip:
+    - harmonypy
+    - rapids-singlecell

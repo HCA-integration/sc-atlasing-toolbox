@@ -13,7 +13,7 @@ resources:
     partition: gpu
     qos: normal
     gpu: 1
-    mem_mb: 1000
+    mem_mb: 4000
 
 defaults:
   integration:
@@ -23,6 +23,8 @@ defaults:
       bbknn:
       combat:
       harmony:
+      harmony_rapids:
+      harmonypy:
       scanorama:
       scanvi:
         n_hidden: 128
@@ -54,6 +56,8 @@ defaults:
     - test
     - test2
     - test3
+    - harmony_comparison
+
 
 DATASETS:
   test:
@@ -90,3 +94,17 @@ DATASETS:
         unintegrated:
         scgen:
           n_epochs: 10
+
+  harmony_comparison:
+    input:
+      integration: test/data/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        harmony_rapids:
+        harmonypy:
+        harmony:
+      umap_colors:
+        - bulk_labels
+        - phase
