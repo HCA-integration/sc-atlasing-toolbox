@@ -6,12 +6,13 @@ the additional dimentionality reduction (UMAP).
 
 ## Input
 
-It will take the output from the anndata.Anndata file the `load_data` workflow
-outputs. It must include:
+It must include:
 
-* `.X` with raw counts
-* `.obs` containing all the columns that are defined by `load_data` workflow
-* `.var` containing all the columns that are defined by `load_data` workflow
+* `.X` with raw counts or specify in config file as `raw_counts`.
+* `.obs` batch and lineage columns if user wishes to run
+`highly_variable_genes` with them.
+
+Also, it can take the anndata.Anndata file the `load_data` workflow outputs.
 
 ## Output
 
