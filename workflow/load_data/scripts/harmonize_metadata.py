@@ -41,15 +41,25 @@ for meta_i in ["organ", "study", "dataset"]:
 author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
+    barcode_column = meta['barcode_column']
     annotation = pd.read_csv(annotation_file)
-    annotation.index = annotation[meta['barcode_column']].astype(str)
+
+    # remove duplicates
+    annotation = annotation.drop_duplicates(subset=barcode_column)
+
+    # set index
+    annotation.index = annotation[barcode_column].astype(str)
     adata.obs.index = adata.obs.index.astype(str)
+
     # remove column if existing to avoid conflict
     if author_annotation in adata.obs.columns:
         logging.info(f'column {author_annotation} already exists, removing it')
         del adata.obs[author_annotation]
-    adata.obs = adata.obs.join(annotation[author_annotation], how='left')
+
+    # merge annotations
+    adata.obs[author_annotation] = annotation[author_annotation]
     logging.info(adata.obs[author_annotation])
+
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
