@@ -21,25 +21,42 @@ rule download_all:
         )
 
 
-def get_h5ad(wildcards):
-    df = dataset_df.query(f'dataset == "{wildcards.dataset}"').reset_index()
-    file_path = df.astype(str)['url'][0]
-    if Path(str(file_path)).exists():
-        return file_path
-    return rules.download.output.h5ad
+def get_files_for_metadata_harm(wildcards):
+    meta = unlist_dict(
+            get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
+        )
+    file_path = meta['url']
+    anno_file = meta['annotation_file']
+
+    # download file if not present
+    if not Path(str(file_path)).exists():
+        file_path = rules.download.output.h5ad
+
+    # include annotation file if specified
+    if pd.notna(anno_file) and pd.notnull(anno_file):
+        return {
+            'h5ad': file_path,
+            'schema': config["schema_file"],
+            'annotation_file': anno_file,
+        }
+
+    # default files
+    return {
+        'h5ad': file_path,
+        'schema': config["schema_file"],
+    }
 
 
-rule metadata:
+rule harmonize_metadata:
     input:
-        h5ad=get_h5ad,
-        schema=config["schema_file"]
+        unpack(get_files_for_metadata_harm)
     params:
         meta=lambda wildcards: unlist_dict(
-            get_wildcards(dataset_df,columns=all_but(dataset_df.columns,'subset'),wildcards=wildcards)
+            get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
         )
     output:
-        zarr=directory(out_dir / 'processed/' / '{dataset}.zarr'),
-        plot=out_dir / 'processed/counts/{dataset}.png',
+        zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
+        plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
     resources:
@@ -47,18 +64,18 @@ rule metadata:
         disk_mb=20000,
     # shadow: 'shallow'
     script:
-        '../scripts/metadata.py'
+        '../scripts/harmonize_metadata.py'
 
 
-rule metadata_all:
+rule harmonize_metadata_all:
     input:
-        expand(rules.metadata.output,dataset=dataset_df['dataset'])
+        expand(rules.harmonize_metadata.output,dataset=dataset_df['dataset'])
 
 
 use rule merge from load_data as load_data_merge_study with:
     input:
         lambda wildcards: expand(
-            rules.metadata.output.zarr,
+            rules.harmonize_metadata.output.zarr,
             dataset=get_wildcards(dataset_df,'dataset',wildcards)['dataset']
         )
     output:

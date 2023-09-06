@@ -17,15 +17,11 @@ out_plot = snakemake.output.plot
 wildcards = snakemake.wildcards
 meta = snakemake.params.meta
 schema_file = snakemake.input.schema
+annotation_file = snakemake.input.get('annotation_file')
 
 logging.info('meta:')
 logging.info(pformat(meta))
 
-# optional annotations file
-annotation_file = meta['annotation_file']
-if not pd.isna(annotation_file):
-    logging.info(f'check if annotation file {annotation_file} exists')
-    assert Path(annotation_file).exists()
 
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
@@ -43,17 +39,27 @@ for meta_i in ["organ", "study", "dataset"]:
 
 # add annotation if available
 author_annotation = meta['author_annotation']
-if not pd.isna(annotation_file):
+if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
+    barcode_column = meta['barcode_column']
     annotation = pd.read_csv(annotation_file)
-    annotation.index = annotation[meta['barcode_column']].astype(str)
+
+    # remove duplicates
+    annotation = annotation.drop_duplicates(subset=barcode_column)
+
+    # set index
+    annotation.index = annotation[barcode_column].astype(str)
     adata.obs.index = adata.obs.index.astype(str)
+
     # remove column if existing to avoid conflict
     if author_annotation in adata.obs.columns:
         logging.info(f'column {author_annotation} already exists, removing it')
         del adata.obs[author_annotation]
-    adata.obs = adata.obs.join(annotation[author_annotation], how='left')
+
+    # merge annotations
+    adata.obs[author_annotation] = annotation[author_annotation]
     logging.info(adata.obs[author_annotation])
+
 
 # assign sample and donor variables
 donor_column = meta['donor_column']
@@ -132,6 +138,7 @@ if 'feature_id' not in adata.var.columns:
     adata.var['feature_id'] = adata.var_names
 adata.var.index.set_names('feature_id', inplace=True)
 
+logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
 adata.write_zarr(out_file)
 
 # plot count distribution -> save to file
