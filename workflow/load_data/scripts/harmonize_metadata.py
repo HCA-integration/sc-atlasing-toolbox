@@ -138,6 +138,7 @@ if 'feature_id' not in adata.var.columns:
     adata.var['feature_id'] = adata.var_names
 adata.var.index.set_names('feature_id', inplace=True)
 
+logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
 adata.write_zarr(out_file)
 
 # plot count distribution -> save to file

@@ -16,7 +16,6 @@ def read_adata(file):
     ad = anndata.read_zarr(file)
     ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
-    del ad.uns
     del ad.layers
     del ad.raw
     del ad.obsm
@@ -35,6 +34,10 @@ else:
     adata = read_adata(files[0])
     logging.info(adata.__str__())
 
+    uns_per_dataset = {
+        adata.uns['meta']['dataset']: adata.uns['meta']
+    }
+
     for file in files[1:]:
         logging.info(f'Read {file}...')
         _adata = read_adata(file)
@@ -43,6 +46,9 @@ else:
         if _adata.n_obs == 0:
             logging.info('Empty adata, skip concatenation...')
             continue
+
+        # collect metadata
+        uns_per_dataset[_adata.uns['meta']['dataset']] = _adata.uns['meta']
 
         logging.info('Concatenate...')
         # merge genes
@@ -66,7 +72,11 @@ else:
     assert len(organ) == 1
     adata.uns['dataset'] = dataset
     adata.uns['organ'] = organ
-    adata.uns['meta'] = {'dataset': dataset, 'organ': organ}
+    adata.uns['meta'] = {
+        'dataset': dataset,
+        'organ': organ,
+        'per_dataset': uns_per_dataset,
+    }
     print(adata)
     print(adata.var)
 
