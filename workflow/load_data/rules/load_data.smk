@@ -55,8 +55,8 @@ rule harmonize_metadata:
             get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
         )
     output:
-        zarr=directory(out_dir / 'processed/' / '{dataset}.zarr'),
-        plot=out_dir / 'processed/counts/{dataset}.png',
+        zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
+        plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
     resources:

@@ -19,6 +19,7 @@ if 'dataset_df' in config.keys():
 else:
     dataset_df = load_dataset_df(config['dataset_meta'])
 out_dir = Path(config['output_dir']) / module_name
+image_dir = Path(config['images']) / module_name
 
 # set default filter settings per values per study filters
 if 'filter_per_organ' not in config.keys():
