@@ -59,8 +59,7 @@ the PCA embedding.
 
 ### Neighbors
 
-It will attempt to use the RAPIDS[^1] implementation but will default,
-if it fails, to the UMAP implementation
+It will attempt to use the RAPIDS[^1] implementation but will default, if it fails, to the UMAP implementation
 [arXiv:1802.03426v3](https://arxiv.org/abs/1802.03426v3).
 
 **Output**
@@ -74,7 +73,7 @@ if it fails, to the UMAP implementation
 
 ### UMAP
 
-It can also use the RAPIDS[^1] implementation.
+UMAP dimensionality reduction is calculated from the PCA output. It can also use the RAPIDS[^1] implementation.
 
 **Output**
 
@@ -87,7 +86,7 @@ anndata.Anndata with:
 - `.uns["preprocessing"]` adds 'highly_variable_genes', 'normalization',
 'scaled' and 'log-transformed' info.
 
-Also the components generated in each step as described above can be
+Also, the components generated in each step as described above can be
 combined  by instructing in the config file like so:
 
 ```yaml
@@ -99,7 +98,6 @@ DATASETS:
       - pca
       - neighbors
 ```
-
 
 ---
 
