@@ -1,0 +1,44 @@
+"""
+Batch variable analysis
+"""
+from pathlib import Path
+import pandas as pd
+
+from utils.config import get_resource, get_datasets_for_module, get_for_dataset
+from utils.environments import get_env
+
+
+module_name = 'batch_analysis'
+out_dir = Path(config['output_dir']) / module_name
+images_dir = Path(config['images']) / module_name
+datasets = get_datasets_for_module(config,module=module_name)
+
+wildcard_constraints:
+    dataset='\w+',
+    study='\w+',
+    organ='\w+',
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+
+include: 'rules/batch_pcr.smk'
+
+
+rule all:
+    input:
+        expand(rules.plot.output,dataset=datasets)
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=config['images'] + f'/{module_name}',
+            target='all'
+        )
