@@ -19,10 +19,14 @@ rule merge:
     output:
         tsv='all_resolutions.tsv'
     run:
-        from functools import reduce
+        from utils.misc import merge
 
         dfs = [pd.read_table(file, index_col=0) for file in input.tsv]
-        cluster_df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True), dfs)
+        cluster_df = merge(
+            dfs,
+            left_index=True,
+            right_index=True,
+        )
         print(cluster_df)
         cluster_df.to_csv(output.tsv, sep='\t')
 
