@@ -4,7 +4,7 @@ This module will further process datasets following the standard preprocessing
 steps: normalize counts, calculate highly variable genes, PCA, neighbors, and
 the additional dimentionality reduction (UMAP).
 
-## Input
+## General input
 
 It must include:
 
@@ -14,52 +14,94 @@ It must include:
 
 Also, it can take the anndata.Anndata file the `load_data` workflow outputs.
 
-## Output
+## Steps' explanation
 
-anndata.Anndata with:
+### Normalize
 
-* `.X` normalised and log1 transformed counts from rule `normalize`.
-* `.var["highly_variable"]` highly variable gene status from rule
-`highly_variable_genes`.
-* `.obsm["X_pca"]` PCA embedding from rule `pca`.
-* `.obsp["neighbors"]["distances"]` neighborhood graph from rule `neighbors`.
-* `.obsp["neighbors"]["connectivities"]` neighborhood graph from rule `neighbors`.
-* `.obsp["preprocessing"]` adds 'normalization' and 'log-transformed' info.
+Transforms the data using normalize_total and then log1p. It also makes sure it is a sparse matrix.
 
-## Parameters
+**Output**
 
-You can add these to the config file.
+- `.X` normalised and log1 transformed counts.
 
-You can add extra arguments to `highly_variable_genes` and `neighbors` as
-as `args` the config file.
+**Parameters**
 
-* normalize.params.raw_counts: H5AD file to raw counts.
-* highly_variable_genes.params:
-  - batch: batch column to account when getting the HVGs.
-  - lineage: if you want to calculate lineage specific genes alone
-    or combined with batch.
-  - args: more arguments to pass to `scanpy.pp.highly_variable_genes`.
-* neighbors.params.args: argumetns for `scanpy.pp.neighbors`.
-* pca.params.scale: wether or not to scale counts before calculating
-the PCA embedding.
+- raw_counts: H5AD file to raw counts.
 
-## What happens in each step
+### Highly variable genes selection
 
-**Normalize:** transforms the data using normalize_total and then log1p. It also
-makes sure it is a sparse matrix.
+Highly variable genes are calculated after using `sc.pp.filter_genes(min_cells=1)` and the `.var` in the unfiltered object is updated.
 
-**Highly variable genes selection:** highly variable genes are calculated after
-using `sc.pp.filter_genes(min_cells=1)` and the `.var` in the unfiltered
-object is updated.
+**Output**
 
-**PCA:** if `scale=True` scaling of `.X` will be performed. Then the PCA is
+- `.var["highly_variable"]` boolean column with highly variable gene status.
+
+**Parameters**
+
+- batch: batch column to account when getting the HVGs.
+- lineage: if you want to calculate lineage specific genes alone
+  or combined with batch.
+- args: more to pass to the `scanpy.pp.highly_variable_genes` function.
+
+### PCA
+
+If `scale=True` scaling of `.X` will be performed. Then the PCA is
 calculated using the highly varaible genes.
 
-**Neighbors:** It will attempt to use the RAPIDS implementation but will default,
+**Output**
+
+- `.obsm["X_pca"]` PCA embedding
+
+**Parameters**
+
+- scale: wether or not to scale counts before calculating
+the PCA embedding.
+
+### Neighbors
+
+It will attempt to use the RAPIDS[^1] implementation but will default,
 if it fails, to the UMAP implementation
 [arXiv:1802.03426v3](https://arxiv.org/abs/1802.03426v3).
 
-**UMAP:** It can also use the RAPIDS implementation.
+**Output**
 
-On RAPIDS implementation: whether it is used or not depends on 'os'
+- `.obsp["neighbors"]["distances"]` neighborhood graph
+- `.obsp["neighbors"]["connectivities"]` neighborhood graph
+
+**Parameters**
+
+- args: extra arguments for the `scanpy.pp.neighbors` function.
+
+### UMAP
+
+It can also use the RAPIDS[^1] implementation.
+
+**Output**
+
+- `.obsm["X_umap"]` UMAP embedding; it becoms .obsm["X_umap_{key}"] if multiple `neighbors_key` are given in the config file.
+
+## General output
+
+anndata.Anndata with:
+
+- `.uns["preprocessing"]` adds 'highly_variable_genes', 'normalization',
+'scaled' and 'log-transformed' info.
+
+Also the components generated in each step as described above can be
+combined  by instructing in the config file like so:
+
+```yaml
+DATASETS:
+  dataset_name:
+    preprocessing:
+    assemble:
+      - highly_variable_genes
+      - pca
+      - neighbors
+```
+
+
+---
+
+[^1] On RAPIDS implementation: whether it is used or not depends on 'os'
 in the config file.
