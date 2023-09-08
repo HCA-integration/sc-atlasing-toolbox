@@ -1,5 +1,5 @@
 """
-Batch variable analysis
+Batch variable analysis with PC regression
 """
 from pathlib import Path
 import pandas as pd
@@ -27,6 +27,7 @@ use rule * from common as common_ *
 
 
 include: 'rules/batch_pcr.smk'
+# TODO: add batch ingestion workflow
 
 
 rule all:
