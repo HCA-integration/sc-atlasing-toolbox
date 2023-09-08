@@ -5,8 +5,7 @@ from pathlib import Path
 from snakemake.utils import Paramspace
 
 from utils.misc import all_but, unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
-from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
+from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset
 from utils.environments import get_env
 
 

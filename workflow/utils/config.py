@@ -301,5 +301,5 @@ def get_for_dataset(
             if warn:
                 warnings.warn(f'key {q} not found in config for query {query}, returning default')
             return default
-        value = value[q]
+        value = value.get(q, default)
     return value
