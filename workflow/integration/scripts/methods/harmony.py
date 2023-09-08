@@ -28,6 +28,7 @@ adata_raw = adata[:, adata.var['highly_variable']]
 adata.X = select_layer(adata, params['norm_counts'], force_dense=True)
 
 # run method
+logging.info('Run harmony...')
 adata.obsm["X_emb"] = harmonize(adata.obsm["X_pca"], adata.obs, batch_key=wildcards.batch)
 
 # prepare output adata

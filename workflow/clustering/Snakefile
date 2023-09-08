@@ -19,6 +19,7 @@ input_files = get_input_file_wildcards(config, module_name)
 out_dir.mkdir(parents=True, exist_ok=True)
 pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
 
+
 wildcard_constraints:
     dataset='((?![/]).)*',
 

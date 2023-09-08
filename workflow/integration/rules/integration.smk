@@ -8,7 +8,7 @@ use rule run_method from integration as integration_run_method with:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb} partition={resources.partition} qos={resources.qos}
        """
     input:
-        h5ad=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
+        h5ad=lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / paramspace.wildcard_pattern / 'model'))

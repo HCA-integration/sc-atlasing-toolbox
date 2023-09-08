@@ -7,7 +7,8 @@ import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import all_but, unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
+    get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 from utils.environments import get_env
 
@@ -16,6 +17,12 @@ module_name = 'integration'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
 image_dir = Path(config['images']) / module_name
+wildcard_pattern = '{dataset}/{file_id}'
+
+input_files = get_input_file_wildcards(config, module_name)
+out_dir.mkdir(parents=True, exist_ok=True)
+pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
+
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
@@ -44,7 +51,8 @@ parameters = parameters[~parameters['method'].isnull()]
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
 parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams']
+parameters = pd.DataFrame(input_files).merge(parameters, on='dataset', how='right')
+wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
 
 # write hyperparameter mapping
 Path(out_dir).mkdir(parents=True, exist_ok=True)

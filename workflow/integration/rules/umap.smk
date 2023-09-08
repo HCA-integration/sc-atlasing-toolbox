@@ -3,7 +3,7 @@
 use rule umap from preprocessing as integration_compute_umap with:
     input:
         anndata=rules.integration_postprocess.output.zarr,
-        rep=lambda w: get_for_dataset(config, w.dataset, ['input', module_name]),
+        rep=lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
     params:
