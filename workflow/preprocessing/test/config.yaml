@@ -2,7 +2,7 @@ output_dir: test/out
 dataset_meta: test/datasets.tsv
 images: test/images
 
-env_mode: from_file
+env_mode: from_yaml
 use_gpu: true
 
 defaults:

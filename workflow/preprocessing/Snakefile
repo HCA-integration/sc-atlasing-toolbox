@@ -4,7 +4,8 @@ Preprocessing
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults
+from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults, \
+    ç
 from utils.misc import ifelse
 from utils.environments import get_env
 
@@ -13,6 +14,11 @@ module_name = 'preprocessing'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
 image_dir = Path(config['images']) / module_name
+wildcard_pattern = '{dataset}/{file_id}'
+
+input_files = get_input_file_wildcards(config, module_name)
+out_dir.mkdir(parents=True, exist_ok=True)
+pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
 
 
 wildcard_constraints:
@@ -36,13 +42,13 @@ include: 'rules/plots.smk'
 
 rule plots_all:
     input:
-        expand(rules.plot_embedding.output,dataset=get_datasets_for_module(config,module=module_name)),
-        expand(rules.plot_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.plot_embedding.output, zip, **input_files),
+        expand(rules.plot_umap.output, zip, **input_files),
 
 
 rule all:
     input:
-        expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.assemble.output, zip, **input_files),
         rules.plots_all.input,
     default_target: True
 

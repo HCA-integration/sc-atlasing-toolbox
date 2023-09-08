@@ -4,9 +4,9 @@ Assemble anndata with different Preprocessing outputs
 
 use rule normalize from preprocessing as preprocessing_normalize with:
     input:
-        lambda w: get_for_dataset(config, w.dataset, ['input', module_name])
+        lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
-        zarr=directory(out_dir / '{dataset}' / 'normalized.zarr'),
+        zarr=directory(out_dir / wildcard_pattern / 'normalized.zarr'),
     params:
         raw_counts=lambda w: get_for_dataset(config, w.dataset, [module_name, 'raw_counts']),
     resources:
@@ -18,7 +18,7 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
     input:
         zarr=rules.preprocessing_normalize.output.zarr
     output:
-        zarr=directory(out_dir / '{dataset}' / 'highly_variable_genes.zarr')
+        zarr=directory(out_dir / wildcard_pattern / 'highly_variable_genes.zarr')
     params:
         args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'highly_variable_genes']),
         batch=lambda w: get_for_dataset(config, w.dataset, [module_name, 'batch']),
@@ -33,7 +33,7 @@ use rule pca from preprocessing as preprocessing_pca with:
         zarr=rules.preprocessing_highly_variable_genes.output.zarr,
         counts=rules.preprocessing_normalize.output.zarr,
     output:
-        zarr=directory(out_dir / '{dataset}' / 'pca.zarr')
+        zarr=directory(out_dir / wildcard_pattern / 'pca.zarr')
     params:
         scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale'])
     resources:
@@ -45,7 +45,7 @@ use rule neighbors from preprocessing as preprocessing_neighbors with:
     input:
         zarr=rules.preprocessing_pca.output.zarr
     output:
-        zarr=directory(out_dir / '{dataset}' / 'neighbors.zarr')
+        zarr=directory(out_dir / wildcard_pattern / 'neighbors.zarr')
     params:
         args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'neighbors'], default={}),
     resources:
@@ -60,7 +60,7 @@ use rule umap from preprocessing as preprocessing_umap with:
         zarr=rules.preprocessing_neighbors.output.zarr,
         rep=rules.preprocessing_pca.output.zarr,
     output:
-        zarr=directory(out_dir / '{dataset}' / 'umap.zarr')
+        zarr=directory(out_dir / wildcard_pattern / 'umap.zarr')
     params:
         neighbors_key='neighbors',
     resources:
@@ -72,7 +72,7 @@ use rule umap from preprocessing as preprocessing_umap with:
 
 def collect_files(wildcards):
     file_dict = {
-        'counts': get_for_dataset(config, wildcards.dataset, ['input', module_name]),
+        'counts': get_input_file(config, wildcards, module_name),
         'normalize': rules.preprocessing_normalize.output.zarr,
         'highly_variable_genes': rules.preprocessing_highly_variable_genes.output.zarr,
         'pca': rules.preprocessing_pca.output.zarr,
@@ -89,7 +89,7 @@ use rule assemble from preprocessing as preprocessing_assemble with:
     input:
         unpack(collect_files)
     output:
-        zarr=directory(out_dir / '{dataset}' / 'preprocessed.zarr')
+        zarr=directory(out_dir / wildcard_pattern / 'preprocessed.zarr')
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
