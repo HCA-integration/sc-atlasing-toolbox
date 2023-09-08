@@ -306,7 +306,7 @@ def get_for_dataset(
     return value
 
 
-def get_input_files(config, dataset, module_name, digest_size=5):
+def get_input_file_per_dataset(config, dataset, module_name, digest_size=5):
     """Get input files for a given module and dataset
     This function maps an input file with its unique identifier
     
@@ -333,13 +333,16 @@ def get_input_files(config, dataset, module_name, digest_size=5):
 
 
 def get_input_file(config, wildcards, module_name):
-    return get_input_files(config, wildcards.dataset, module_name)[wildcards.file_id]
+    return get_input_file_per_dataset(config, wildcards.dataset, module_name)[wildcards.file_id]
 
 
 def get_input_file_wildcards(config, module_name):
+    """
+    Reshape the file ID to dataset mapping to a lists of wildcards
+    """
     all_wildcards = dict(dataset=[], file_id=[], file_name=[])
     for dataset in get_datasets_for_module(config,module=module_name):
-        for file_id, file in get_input_files(config, dataset, module_name).items():
+        for file_id, file in get_input_file_per_dataset(config, dataset, module_name).items():
             all_wildcards['dataset'].append(dataset)
             all_wildcards['file_id'].append(file_id)
             all_wildcards['file_name'].append(file)

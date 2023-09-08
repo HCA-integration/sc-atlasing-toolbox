@@ -1,8 +1,8 @@
-for dataset in datasets:
+for dataset in get_datasets_for_module(config, module_name):
     if dataset in config['DATASETS']:
         config["DATASETS"][dataset]['input'].update(
             {
-                'preprocessing': get_for_dataset(config, dataset, query=['input', module_name])
+                'preprocessing': get_input_file_per_dataset(config, dataset, module_name)
             }
         )
         if 'preprocessing' not in config["DATASETS"][dataset]:
@@ -18,9 +18,9 @@ use rule * from preprocessing as preprocessing_*
 
 checkpoint determine_covariates:
     input:
-        anndata=lambda w: get_for_dataset(config, w.dataset, ['input', module_name])
+        anndata=lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
-        directory(out_dir / 'batch_pcr' / '{dataset}' / 'covariate_setup')
+        directory(out_dir / wildcard_pattern / 'batch_pcr' / 'covariate_setup')
     params:
         covariates=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'covariates'], default=[]),
         permute_covariates=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'permute_covariates'], default=[]),
@@ -51,7 +51,7 @@ rule batch_pcr:
         anndata=rules.preprocessing_pca.output.zarr,
         setup=get_checkpoint_output,
     output:
-        tsv=out_dir / 'batch_pcr' / '{dataset}' / '{covariate}.tsv',
+        tsv=out_dir / wildcard_pattern / 'batch_pcr' / '{covariate}.tsv',
     params:
         n_permute=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'n_permutations'], default=0),
         sample_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'sample_key']),
@@ -69,7 +69,7 @@ rule collect:
     input:
         tsv=lambda w: get_from_checkpoint(w, rules.batch_pcr.output.tsv),
     output:
-        tsv=out_dir / 'batch_pcr' / '{dataset}.tsv',
+        tsv=out_dir / wildcard_pattern / 'batch_pcr.tsv',
     run:
         dfs = [pd.read_table(file) for file in input.tsv]
         df = pd.concat(dfs, ignore_index=True)
@@ -80,8 +80,8 @@ rule plot:
     input:
         tsv=rules.collect.output.tsv,
     output:
-        barplot=images_dir / 'batch_pcr' / '{dataset}_bar.png',
-        violinplot=images_dir / 'batch_pcr' / '{dataset}_violin.png',
+        barplot=images_dir / wildcard_pattern / 'batch_pcr_bar.png',
+        violinplot=images_dir / wildcard_pattern / 'batch_pcr_violin.png',
     conda:
         get_env(config, 'plots')
     script:

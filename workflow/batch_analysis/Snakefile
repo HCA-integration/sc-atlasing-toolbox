@@ -4,14 +4,20 @@ Batch variable analysis with PC regression
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_resource, get_datasets_for_module, get_for_dataset
+from utils.config import get_resource, get_datasets_for_module, get_for_dataset, get_input_file, \
+    get_input_file_per_dataset, get_input_file_wildcards
 from utils.environments import get_env
 
 
 module_name = 'batch_analysis'
 out_dir = Path(config['output_dir']) / module_name
 images_dir = Path(config['images']) / module_name
-datasets = get_datasets_for_module(config,module=module_name)
+wildcard_pattern = '{dataset}/{file_id}'
+
+input_files = get_input_file_wildcards(config, module_name)
+out_dir.mkdir(parents=True, exist_ok=True)
+pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
+
 
 wildcard_constraints:
     dataset='\w+',
@@ -32,7 +38,7 @@ include: 'rules/batch_pcr.smk'
 
 rule all:
     input:
-        expand(rules.plot.output,dataset=datasets)
+        expand(rules.plot.output, zip, **input_files)
     default_target: True
 
 
