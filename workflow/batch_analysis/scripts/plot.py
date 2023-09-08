@@ -48,6 +48,7 @@ plt.savefig(output_bar, bbox_inches='tight',dpi=300)
 
 logging.info('Violin plot...')
 plt.clf()
+plt.grid()
 g = sns.violinplot(
     data=df,
     x='pcr',
@@ -55,7 +56,7 @@ g = sns.violinplot(
     hue='permuted',
     dodge=False,
 )
-plt.grid()
+sns.despine()
 
-logger.info('Save barplot...')
+logger.info('Save violin plot...')
 plt.savefig(output_violin, bbox_inches='tight',dpi=300)
