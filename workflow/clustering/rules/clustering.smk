@@ -5,10 +5,10 @@ module preprocessing:
 
 use rule umap from preprocessing as clustering_compute_umap with:
     input:
-        anndata=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
-        rep=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
+        anndata=lambda wildcards: get_input_file(config, wildcards, module_name),
+        rep=lambda wildcards: get_input_file(config, wildcards, module_name),
     output:
-        zarr=directory(out_dir / 'umap' / '{dataset}.zarr'),
+        zarr=directory(out_dir / wildcard_pattern / 'umap.zarr'),
     params:
         neighbors_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'neighbors_key']),
     resources:
@@ -20,9 +20,9 @@ use rule umap from preprocessing as clustering_compute_umap with:
 
 use rule cluster from clustering as clustering_cluster with:
     input:
-        zarr=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
+        zarr=lambda wildcards: get_input_file(config, wildcards, module_name),
     output:
-        tsv=out_dir / 'clustering' / 'resolutions' / '{dataset}--{resolution}.tsv',
+        tsv=out_dir / wildcard_pattern / 'resolutions' / '{resolution}.tsv',
     params:
         neighbors_key=lambda w: get_for_dataset(config, w.dataset, query=[module_name, 'neighbors_key']),
     resources:
@@ -42,7 +42,7 @@ use rule merge from clustering as clustering_merge with:
     wildcard_constraints:
         dataset='\w+',
     output:
-        tsv=out_dir / 'clustering' / '{dataset}.tsv'
+        tsv=out_dir / wildcard_pattern / 'clustering.tsv'
 
 
 use rule plot_umap from clustering as clustering_plot_umap with:
@@ -50,7 +50,7 @@ use rule plot_umap from clustering as clustering_plot_umap with:
         zarr=rules.clustering_compute_umap.output.zarr,
         clusters=rules.clustering_merge.output.tsv,
     output:
-        png=image_dir / 'umap' / '{dataset}.png',
+        png=image_dir / f'{wildcard_pattern}.png',
     resources:
         partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
         qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),

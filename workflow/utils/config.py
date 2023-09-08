@@ -2,6 +2,7 @@ from pprint import pprint
 from typing import Union
 import warnings
 import pandas as pd
+import hashlib
 
 from .misc import expand_dict_and_serialize
 
@@ -303,3 +304,43 @@ def get_for_dataset(
             return default
         value = value.get(q, default)
     return value
+
+
+def get_input_files(config, dataset, module_name, digest_size=5):
+    """Get input files for a given module and dataset
+    This function maps an input file with its unique identifier
+    
+    :param config: config passed from Snakemake
+    :param dataset: dataset key in config['DATASETS']
+    :param module_name: name of module to collect valid datasets for
+    :return: dictionary of input file ID to file
+    """
+    input_files = get_for_dataset(config, dataset, query=['input', module_name])
+    
+    if isinstance(input_files, str):
+        input_files = [input_files]
+    
+    if isinstance(input_files, list):
+        input_files = {
+            hashlib.blake2b(file.encode('utf-8'), digest_size=digest_size).hexdigest(): file
+            for file in input_files
+        }
+    
+    if not isinstance(input_files, dict):
+        raise ValueError(f'input_files must be a list or dict, but is {type(input_files)}')
+    
+    return input_files
+
+
+def get_input_file(config, wildcards, module_name):
+    return get_input_files(config, wildcards.dataset, module_name)[wildcards.file_id]
+
+
+def get_input_file_wildcards(config, module_name):
+    all_wildcards = dict(dataset=[], file_id=[], file_name=[])
+    for dataset in get_datasets_for_module(config,module=module_name):
+        for file_id, file in get_input_files(config, dataset, module_name).items():
+            all_wildcards['dataset'].append(dataset)
+            all_wildcards['file_id'].append(file_id)
+            all_wildcards['file_name'].append(file)
+    return all_wildcards
