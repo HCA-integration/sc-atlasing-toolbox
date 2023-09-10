@@ -17,11 +17,16 @@ module_name = 'integration'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
 image_dir = Path(config['images']) / module_name
-wildcard_pattern = '{dataset}/{file_id}'
 
 input_files = get_input_file_wildcards(config, module_name)
 out_dir.mkdir(parents=True, exist_ok=True)
 pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
+
+hyperparams_df = get_hyperparams(config,module_name=module_name)
+Path(out_dir).mkdir(parents=True, exist_ok=True)
+unique_dataframe(
+    hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
+).to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
 
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
@@ -49,17 +54,21 @@ parameters = parameters[~parameters['method'].isnull()]
 # parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], 'None')
 # parameters = unique_dataframe(parameters)
 
-hyperparams_df = get_hyperparams(config,module_name=module_name)
-parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-parameters = pd.DataFrame(input_files).merge(parameters, on='dataset', how='right')
+# add hyperaparams
+parameters = parameters.merge(
+    hyperparams_df,
+    on=['dataset', 'method'],
+    how='left'
+)
+
+# add input files
+parameters = pd.DataFrame(input_files).merge(
+    parameters,
+    on='dataset',
+    how='right'
+)
+
 wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
-
-# write hyperparameter mapping
-Path(out_dir).mkdir(parents=True, exist_ok=True)
-unique_dataframe(
-    hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
-).to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
-
 paramspace = Paramspace(
     parameters[wildcard_names],
     filename_params=['method', 'hyperparams'],

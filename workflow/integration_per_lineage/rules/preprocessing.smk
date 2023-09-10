@@ -1,4 +1,4 @@
-pp_per_lineage_dir = out_dir / 'preprocessing' / 'dataset~{dataset}--{lineage}'
+pp_per_lineage_dir = out_dir / 'preprocessing' / 'dataset~{dataset}' / 'file_id~{file_id}' / 'lineage~{lineage}'
 
 
 use rule normalize from preprocessing as preprocessing_per_lineage_normalize with:
