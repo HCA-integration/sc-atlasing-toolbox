@@ -5,7 +5,8 @@ from pathlib import Path
 import pandas as pd
 
 from utils.misc import all_but, unique_dataframe
-from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
+from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset, \
+    get_input_file, get_input_file_wildcards
 from utils.environments import get_env
 
 
