@@ -82,6 +82,6 @@ DATASETS:
     input:
       preprocessing: data/out/load_data/merged/organ/gut.zarr
       integration: preprocessing
-      label: level_3_annot
-      batch: sourceID
-      sample: sampleID
+        label: level_3_annot
+        batch: sourceID
+        sample: sampleID
