@@ -29,80 +29,33 @@ defaults:
       - isolated_label_asw
       - isolated_label_f1
       - pcr
-  integration:
-    raw_counts: counts
-    norm_counts: X
-    methods:
-      bbknn:
-      harmony:
-      scanorama:
-      scvi:
-        n_hidden: 128
-        dispersion:
-          - gene
-          - gene-batch
-          - gene-label
-          - gene-cell
-        max_epochs: 10
-        use_observed_lib_size: true
-      unintegrated:
   datasets:
     - test
-    - scib_metrics
+    # - scib_metrics
 
 
 DATASETS:
   test:
     input:
-      integration: test/data/pbmc68k.h5ad
       metrics:
-        - sddgj/wildcard_name=wildcard_value.h5ad
-        - ...
-    integration:
-      raw_counts: counts
-      norm_counts: X
-      label: bulk_labels
-      batch:
-        - louvain
-        - phase
-      lineage:
-        - batch
-        -
-      methods:
-        unintegrated:
+        unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~unintegrated--hyperparams~None/adata.zarr
+        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~bbknn--hyperparams~None/adata.zarr
+        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~harmony--hyperparams~None/adata.zarr
+        scanorama: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~scanorama--hyperparams~None/adata.zarr
     metrics:
       label: bulk_labels
       batch:
         - louvain
         - phase
-      lineage:
-        - batch
-        -
       methods:
         - nmi
         - pcr
         - asw_batch
         - cell_cycle
   
-  test_2:
-    input:
-      integration: test/data/pbmc68k.h5ad
-    integration:
-      raw_counts: counts
-      norm_counts: X
-      label: bulk_labels
-      batch: phase
-  
   scib_metrics:
     input:
-      integration: test/data/pbmc68k.h5ad
-    integration:
-      raw_counts: counts
-      norm_counts: X
-      label: bulk_labels
-      batch: batch
-      methods:
-        unintegrated:
+      metrics: test/data/pbmc68k.h5ad
     metrics:
       label: bulk_labels
       batch: batch

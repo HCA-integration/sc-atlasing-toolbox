@@ -63,7 +63,8 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: test/input/pbmc68k.h5ad
+      integration:
+        pbmc: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch:

@@ -28,4 +28,4 @@ benchmark_df = pd.concat([expanded_wildcards, benchmark_df], axis=1)
 metrics_df = metrics_df.merge(benchmark_df).drop_duplicates()
 metrics_df.to_csv(out_tsv, sep='\t', index=False)
 
-print(metrics_df[['metric', 'method', 'output_type', 'metric_type', 'score', 's', 'h:m:s']])
+print(metrics_df[['metric', 'output_type', 'metric_type', 'score', 's', 'h:m:s']])

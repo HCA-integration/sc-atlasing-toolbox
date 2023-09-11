@@ -3,7 +3,6 @@ rule merge:
         """
         Merge all metrics for all datasets and methods
         datasets: {params.wildcards[dataset]}
-        methods: {params.wildcards[method]}
         """
     input:
         metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,wildcard_names),
@@ -36,21 +35,21 @@ use rule merge as merge_per_dataset with:
         wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'dataset'),wildcards)
 
 
-use rule merge as merge_per_method with:
+use rule merge as merge_per_file with:
     message:
         """
         Merge all metrics for {wildcards}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'method')),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'method')),
+        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'file_id')),
+        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'file_id')),
     output:
-        tsv=out_dir / 'results' / 'per_method' / '{method}.tsv',
+        tsv=out_dir / 'results' / 'per_file' / '{file_id}.tsv',
     params:
-        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'method'),wildcards)
+        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'file_id'),wildcards)
 
 
 rule merge_all:
     input:
         expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
-        expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
+        expand(rules.merge_per_file.output,zip,**get_wildcards(parameters,['file_id'])),

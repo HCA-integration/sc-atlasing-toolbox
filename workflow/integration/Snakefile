@@ -33,8 +33,8 @@ os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'li
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 envvars:
-   'LD_LIBRARY_PATH',
-   'TF_CPP_MIN_LOG_LEVEL',
+    'LD_LIBRARY_PATH',
+    'TF_CPP_MIN_LOG_LEVEL',
 
 parameters = pd.read_table(workflow.source_path('params.tsv'))
 parameters['output_type'] = parameters['output_type'].str.split(',')
@@ -62,7 +62,7 @@ parameters = parameters.merge(
 )
 
 # add input files
-parameters = pd.DataFrame(input_files).merge(
+parameters = pd.DataFrame(input_files, dtype='object').merge(
     parameters,
     on='dataset',
     how='right'

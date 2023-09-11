@@ -13,7 +13,7 @@ use rule barplot from plots as metrics_barplot with:
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
-        hue='method',
+        hue='file_id',
         facet_row='dataset',
         #facet_col='output_type',
         title='Metrics computation',
@@ -31,7 +31,7 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
-        hue='method',
+        hue='file_id',
         #facet_col='output_type',
         title='Metrics computation',
         description=wildcards_to_str,
@@ -40,11 +40,11 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
         'metrics_plots'
 
 
-use rule barplot from plots as metrics_barplot_per_method with:
+use rule barplot from plots as metrics_barplot_per_file with:
     input:
-        tsv=rules.merge_per_method.output.tsv
+        tsv=rules.merge_per_file.output.tsv
     output:
-        png=image_dir / 'per_method' / '{method}' / '{metric}-barplot.png'
+        png=image_dir / 'per_file' / '{file_id}' / '{metric}-barplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -67,7 +67,7 @@ use rule swarmplot from plots as metrics_swarmplot with:
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
-        hue='method',
+        hue='file_id',
         facet_col='dataset',
         facet_row='output_type',
         title='Metrics',
@@ -84,7 +84,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
-        hue='method',
+        hue='file_id',
         facet_row='output_type',
         title='Metrics',
         description=wildcards_to_str,
@@ -92,11 +92,12 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
     group:
         'metrics_plots'
 
-use rule swarmplot from plots as metrics_swarmplot_per_method with:
+
+use rule swarmplot from plots as metrics_swarmplot_per_file with:
     input:
-        tsv=rules.merge_per_method.output.tsv
+        tsv=rules.merge_per_file.output.tsv
     output:
-        png=image_dir / 'per_method' / '{method}' / '{metric}-swarmplot.png'
+        png=image_dir / 'per_file' / '{file_id}' / '{metric}-swarmplot.png'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='metric',
@@ -107,6 +108,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_method with:
         dodge=True,
     group:
         'metrics_plots'
+
 
 rule compare_metrics:
     input:
@@ -131,13 +133,14 @@ rule funkyheatmap:
         pdf=image_dir / 'all' / 'funky_heatmap.pdf',
         tsv=image_dir / 'all' / 'funky_heatmap.tsv'
     params:
-        id_vars=['dataset', 'method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'], # TODO: 'hyperparams'
+        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
         n_top=50,
+        cran_url='http://cran.us.r-project.org' #'https://ftp.fau.de/cran/'
     conda:
-        get_env(config, 'funkyheatmap')
+        get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
         'docker://ghcr.io/dynverse/funky_heatmap:latest'
     group:
@@ -153,21 +156,21 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         pdf=image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.pdf',
         tsv=image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.tsv',
     params:
-        id_vars=['method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'],
+        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
         n_top=50,
 
 
-use rule funkyheatmap as funkyheatmap_per_method with:
+use rule funkyheatmap as funkyheatmap_per_file with:
     input:
-        tsv=rules.merge_per_method.output.tsv
+        tsv=rules.merge_per_file.output.tsv
     output:
-        pdf=image_dir / 'per_method' / '{method}' / 'funky_heatmap.pdf',
-        tsv=image_dir / 'per_method' / '{method}' / 'funky_heatmap.tsv',
+        pdf=image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.pdf',
+        tsv=image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.tsv',
     params:
-        id_vars=['method', 'output_type', 'batch', 'label', 'lineage_specific', 'lineage_key', 'lineage'],
+        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
@@ -194,14 +197,14 @@ rule plots_all:
         # funky heatmap
         rules.funkyheatmap.output,
         expand(rules.funkyheatmap_per_dataset.output,**get_wildcards(parameters,'dataset')),
-        expand(rules.funkyheatmap_per_method.output,**get_wildcards(parameters,'method')),
+        expand(rules.funkyheatmap_per_file.output,**get_wildcards(parameters,'file_id')),
         # barplot
         expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
         expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'dataset')),
-        expand(rules.metrics_barplot_per_method.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'method')),
+        expand(rules.metrics_barplot_per_file.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'file_id')),
         # swarmplot
         expand(rules.metrics_swarmplot.output,metric='score'),
         expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**get_wildcards(parameters,'dataset')),
-        expand(rules.metrics_swarmplot_per_method.output,metric='score',**get_wildcards(parameters,'method')),
+        expand(rules.metrics_swarmplot_per_file.output,metric='score',**get_wildcards(parameters,'file_id')),
         # implementation comparison
         # rules.compare_metrics.output,

@@ -11,7 +11,7 @@ n_top <- snakemake@params$n_top
 tryCatch({
  library(funkyheatmap)
   }, error = function(e) {
-    install.packages('funkyheatmap', repos = 'https://ftp.fau.de/cran/')
+    install.packages('funkyheatmap', repos = snakemake@params$cran_url)
   }
 )
 suppressPackageStartupMessages({
@@ -44,7 +44,7 @@ metrics <- c(bio_metrics, batch_metrics)
 # subset data.table to columns of interest & transform
 all_columns <- c(id_vars, variable_var, value_var, 'metric_type')
 id_formula <- paste(paste(id_vars, collapse='+'), variable_var, sep = '~')
-print(id_formula)
+cat(paste(id_formula, '\n'))
 metrics_tab <- dcast(
   subset(dt, select = all_columns),
   as.formula(id_formula),
@@ -60,10 +60,12 @@ if (nrow(scaled_metrics_tab) > 1) {
 } else {
   scaled_metrics_tab <- as.data.table(scaled_metrics_tab)
 }
+cat('Scaled metrics table: \n')
+print(scaled_metrics_tab)
 
 # calculate average score by group and 
-score_group_batch <- rowMeans(scaled_metrics_tab[, batch_metrics, with=FALSE], na.rm = T)
-score_group_bio <- rowMeans(scaled_metrics_tab[, bio_metrics, with=FALSE], na.rm = T)
+score_group_batch <- rowMeans(scaled_metrics_tab[, batch_metrics, with=FALSE], na.rm = TRUE)
+score_group_bio <- rowMeans(scaled_metrics_tab[, bio_metrics, with=FALSE], na.rm = TRUE)
 
 # weighted overall score
 score_all <- (weight_batch * score_group_batch + (1 - weight_batch) * score_group_bio)

@@ -8,7 +8,8 @@ def get_integration_output(wildcards):
 
 
 rule preprocess:
-    input: get_integration_output
+    input:
+        lambda wildcards: get_input_file(config, wildcards, module_name),
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu.zarr'),
     conda:
@@ -66,10 +67,10 @@ rule run_all:
     input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
 
 
-rule run_per_lineage_all:
-    input:
-        expand(
-            rules.run.output,
-            zip,
-            **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
-        )
+# rule run_per_lineage_all:
+#     input:
+#         expand(
+#             rules.run.output,
+#             zip,
+#             **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
+#         )
