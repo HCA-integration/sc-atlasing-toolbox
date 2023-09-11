@@ -41,7 +41,13 @@ defaults:
         train:
           n_epochs: 20
           eta: 5
-
+    umap_colors:
+      - level_3_annot
+      - sourceID
+      - sampleID
+      - sex
+      - study
+      
   metrics:
     methods:
       - nmi_leiden_y
