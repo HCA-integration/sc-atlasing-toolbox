@@ -5,9 +5,9 @@ defaults:
     # - blood_benchmark_donor
     # - test
   integration:
-    label: level_3_annot
-    batch: sourceID
-    raw_counts: counts
+    label: cell_type
+    batch: batch
+    raw_counts: X
     norm_counts: normcounts
     methods:
       unintegrated:
@@ -44,15 +44,16 @@ defaults:
           n_epochs: 20
           eta: 5
     umap_colors:
-      - level_3_annot
-      - sourceID
-      - sampleID
+      - cell_type
+      - batch
       - sex
+      - assay
       - study
+      - disease
       
   metrics:
-    label: level_3_annot
-    batch: sourceID
+    label: cell_type
+    batch: batch
     methods:
       - nmi_leiden_y
       - ari_leiden_y
@@ -69,9 +70,9 @@ defaults:
   # subset:
   #   n_cells: 1000000
   preprocessing:
-    raw_counts: counts
+    raw_counts: X
     norm_counts: normcounts
-    batch: sourceID
+    batch: batch
     #lineage: lineage
     assemble:
       - counts
@@ -84,5 +85,28 @@ DATASETS:
 
   gut:
     input:
-      preprocessing: data/out/load_data/merged/organ/gut.zarr
+      subset: data/out/load_data/merged/organ/gut.zarr
+      preprocessing: subset
       integration: preprocessing
+    subset:
+      label: cell_type
+      sample: sample
+      n_cells: 200000
+    preprocessing:
+      raw_counts: X
+      highly_variable_genes:
+        n_top_genes: 4000
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
+    integration:
+      label: cell_type
+      batch: batch
+      #lineage: lineage
+    metrics:
+      label: cell_type
+      batch: batch
+      #lineage: lineage
