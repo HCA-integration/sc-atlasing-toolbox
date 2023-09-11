@@ -5,6 +5,8 @@ defaults:
     # - blood_benchmark_donor
     # - test
   integration:
+    label: level_3_annot
+    batch: sourceID
     raw_counts: counts
     norm_counts: normcounts
     methods:
@@ -49,6 +51,8 @@ defaults:
       - study
       
   metrics:
+    label: level_3_annot
+    batch: sourceID
     methods:
       - nmi_leiden_y
       - ari_leiden_y
@@ -82,6 +86,3 @@ DATASETS:
     input:
       preprocessing: data/out/load_data/merged/organ/gut.zarr
       integration: preprocessing
-        label: level_3_annot
-        batch: sourceID
-        sample: sampleID
