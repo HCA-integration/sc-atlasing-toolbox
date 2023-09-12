@@ -11,22 +11,23 @@ from utils.config import get_hyperparams, get_resource, get_params_from_config, 
     get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 from utils.environments import get_env
+from IntegrationConfig import IntegrationConfig
 
 
 module_name = 'integration'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
+parameters = pd.read_table(workflow.source_path('params.tsv'))
+parameters['output_type'] = parameters['output_type'].str.split(',')
+module_config = IntegrationConfig(module_name, config, parameters)
 
-input_files = get_input_file_wildcards(config, module_name)
-out_dir.mkdir(parents=True, exist_ok=True)
-pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
+out_dir = module_config.out_dir
+image_dir = module_config.image_dir
+input_files =  module_config.get_input_file_wildcards() # get_input_file_wildcards(config, module_name)
+parameters = module_config.wildcards_df
+wildcard_names = module_config.wildcard_names # = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
+paramspace = module_config.get_paramspace()
 
-hyperparams_df = get_hyperparams(config,module_name=module_name)
-Path(out_dir).mkdir(parents=True, exist_ok=True)
-unique_dataframe(
-    hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
-).to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
+# subset to datasets that have module defined
+# parameters = parameters[~parameters['method'].isnull()]
 
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
@@ -35,45 +36,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 envvars:
     'LD_LIBRARY_PATH',
     'TF_CPP_MIN_LOG_LEVEL',
-
-parameters = pd.read_table(workflow.source_path('params.tsv'))
-parameters['output_type'] = parameters['output_type'].str.split(',')
-parameters = get_params_from_config(
-    config=get_datasets_for_module(config, module_name),
-    module_name=module_name,
-    config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
-    wildcard_names=['dataset', 'method', 'label', 'batch', 'norm_counts', 'raw_counts'],
-    defaults=config['defaults'],
-    explode_by=['method', 'batch'],
-).merge(parameters,on='method')
-
-# subset to datasets that have module defined
-parameters = parameters[~parameters['method'].isnull()]
-
-# TODO: remove redundant wildcards
-# parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], 'None')
-# parameters = unique_dataframe(parameters)
-
-# add hyperaparams
-parameters = parameters.merge(
-    hyperparams_df,
-    on=['dataset', 'method'],
-    how='left'
-)
-
-# add input files
-parameters = pd.DataFrame(input_files, dtype='object').merge(
-    parameters,
-    on='dataset',
-    how='right'
-)
-
-wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
-paramspace = Paramspace(
-    parameters[wildcard_names],
-    filename_params=['method', 'hyperparams'],
-    filename_sep='--',
-)
 
 wildcard_constraints:
     dataset='\w+',
