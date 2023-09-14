@@ -1,7 +1,7 @@
 defaults:
   datasets:
-    - gut_test
-    - gut
+    - gut_ref
+#    - gut
   preprocessing:
     raw_counts: X
     norm_counts: normcounts
@@ -14,7 +14,7 @@ defaults:
       - pca
       - neighbors
   integration:
-    label: cell_type
+    label: level_3_annot
     batch: batch
     raw_counts: X
     norm_counts: normcounts
@@ -23,9 +23,9 @@ defaults:
       bbknn:
       combat:
       harmony:
-      scanorama:
-      scgen:
-        max_epochs: 50
+      #scanorama:
+      #scgen:
+      #  max_epochs: 50
       scvi:
         n_hidden: 128
         dispersion:
@@ -33,12 +33,12 @@ defaults:
           - gene-batch
           - gene-label
           - gene-cell
-        max_epochs: 25
+        max_epochs: 35
         use_observed_lib_size: true
       scanvi:
         n_hidden: 128
         dispersion: gene
-        max_epochs: 25
+        max_epochs: 30
         use_observed_lib_size: true
       scpoli:
         supervised:
@@ -50,18 +50,18 @@ defaults:
           # latent_dim: 30
           # hidden_layer_sizes: [512, 512]
         train:
-          n_epochs: 25
+          n_epochs: 30
           eta: 5
     umap_colors:
-      - cell_type
+      - level_3_annot
       - batch
       - sex
-      - assay
+      - technology
       - study
       - disease
       
   metrics:
-    label: cell_type
+    label: level_3_annot
     batch: batch
     methods:
       - nmi_leiden_y
@@ -69,48 +69,20 @@ defaults:
       - asw_label
       - asw_batch
       # - cell_cycle
-      - clisi_y
-      - ilisi_y
+      #- clisi_y
+      #- ilisi_y
       - graph_connectivity
       # - isolated_label_asw_y
       # - isolated_label_f1_y
       - pcr
-      - kbet_y
+      #- kbet_y
 
 
 DATASETS: 
 
-  gut_test:
+  gut_ref:
     input:
-      subset: data/out/load_data/merged/organ/gut.zarr
-      preprocessing: subset
-      integration: preprocessing
-    subset:
-      label: cell_type
-      sample: sample
-      n_cells: 20000
-    preprocessing:
-      raw_counts: X
-      highly_variable_genes:
-        n_top_genes: 2000
-      assemble:
-        - counts
-        - normalize
-        - highly_variable_genes
-        - pca
-        - neighbors
-    integration:
-      label: cell_type
-      batch: batch
-      #lineage: lineage
-    metrics:
-      label: cell_type
-      batch: batch
-      #lineage: lineage
-
-  gut:
-    input:
-      preprocessing: data/out/load_data/merged/organ/gut.zarr
+      preprocessing: data/gut_ref.zarr
       integration: preprocessing
     preprocessing:
       raw_counts: X
@@ -123,10 +95,38 @@ DATASETS:
         - pca
         - neighbors
     integration:
-      label: cell_type
+      label: level_3_annot
       batch: batch
       #lineage: lineage
     metrics:
-      label: cell_type
+      label: level_3_annot
       batch: batch
       #lineage: lineage
+
+#  gut_test:
+#    input:
+#      subset: data/out/load_data/merged/organ/gut.zarr
+#      preprocessing: subset
+#      integration: preprocessing
+#    subset:
+#      label: cell_type
+#      sample: sample
+#      n_cells: 20000
+#    preprocessing:
+#      raw_counts: X
+#      highly_variable_genes:
+#        n_top_genes: 2000
+#      assemble:
+#        - counts
+#        - normalize
+#        - highly_variable_genes
+#        - pca
+#        - neighbors
+#    integration:
+#      label: cell_type
+#      batch: batch
+#      #lineage: lineage
+#    metrics:
+#      label: cell_type
+#      batch: batch
+#      #lineage: lineage
