@@ -9,14 +9,10 @@ def get_env(
     gpu_env=None,
 ):
     if mode is None:
-        mode = config['env_mode'] if 'env_mode' in config else 'local'
+        mode = config.get('env_mod', 'local')
     if gpu_env is None:
         gpu_env = env_name
-    gpu_env = ifelse(
-        'use_gpu' not in config or config['use_gpu'],
-        _if=env_name,
-        _else=gpu_env
-    )
+    env_name = ifelse(config.get('use_gpu', False), _if=gpu_env, _else=env_name)
 
     if mode == 'from_yaml':
         return f'{env_dir}/{env_name}.yaml'

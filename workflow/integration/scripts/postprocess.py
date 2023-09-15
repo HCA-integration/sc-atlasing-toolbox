@@ -12,6 +12,8 @@ output_file = snakemake.output[0]
 
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
+logging.info(adata.__str__())
+logging.info(adata.uns)
 
 output_type = adata.uns['integration']['output_type']
 output_types = [output_type] if isinstance(output_type, str) else output_type
