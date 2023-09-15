@@ -1,5 +1,7 @@
 from pathlib import Path
 import mudata as mu
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, link_zarr
 
@@ -8,6 +10,7 @@ input_files = snakemake.input
 output_file = snakemake.output[0]
 lineages = snakemake.input.keys()
 
+logging.info('Reading data...')
 adatas = [read_anndata(file) for file in input_files]
 for ad in adatas:
     if 'full' in ad.uns['integration']['output_type']:

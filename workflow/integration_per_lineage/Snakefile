@@ -108,6 +108,7 @@ include: 'rules/integration.smk'
 # include: 'rules/benchmark.smk'
 include: 'rules/umap.smk'
 include: 'rules/clustering.smk'
+include: 'rules/marker_genes.smk'
 
 
 rule merge_lineage:
