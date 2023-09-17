@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
+from snakemake.rules import Rule
 
 from utils.ModuleConfig import ModuleConfig
 from utils.config import _get_or_default_from_config
@@ -9,8 +10,8 @@ from utils.misc import expand_dict_and_serialize, unique_dataframe
 
 class IntegrationConfig(ModuleConfig):
     
-    def __init__(self, module_name: str, config: dict, parameters: pd.DataFrame = None):
-        super().__init__(module_name, config, parameters)
+    def __init__(self, module_name: str, config: dict, parameters: pd.DataFrame = None, default_output: [str, Rule] = None):
+        super().__init__(module_name, config, parameters, default_output)
         self.wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
         
         # remove redundant label wildcards

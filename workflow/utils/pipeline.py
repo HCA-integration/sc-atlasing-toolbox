@@ -5,9 +5,13 @@ Utils that are specific to the overall pipeline but not the modules
 from pathlib import Path
 
 from .config import _get_or_default_from_config, set_defaults
+from .ModuleConfig import ModuleConfig
 
 
 def update_module_configs(config, params):
+    """
+    Update config with parameters from modules TSV
+    """
     # Process params per module
     for dataset in config['DATASETS'].keys():
 
@@ -47,3 +51,18 @@ def config_for_module(config, module):
             file_name = config['output_map'][input_file].format(dataset=dataset)
             config['DATASETS'][dataset]['input'][module] = file_name
     return config
+
+
+def update_input_files(module: str, parsed_configs: dict[ModuleConfig]):
+    datasets = parsed_configs[module].get_config().get('DATASETS')
+    output_map = parsed_configs[module].get_config().get('output_map')
+    for dataset in datasets.keys():
+        input_specification = datasets[dataset]['input'].get(module)
+        if isinstance(input_specification, str) and input_specification in output_map:
+            input_pattern = output_map[input_specification]
+            if input_specification in parsed_configs:
+                input_config = parsed_configs[input_specification]
+                input_files = input_config.get_output_files(input_pattern)
+            else:
+                input_files = input_pattern.format(dataset=dataset)
+            parsed_configs[module].update_inputs(dataset, input_files)

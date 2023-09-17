@@ -88,7 +88,7 @@ DATASETS:
       label: bulk_labels
       batch: phase
 
-    test2:
+  test2:
     input:
       preprocessing: data/pbmc68k.h5ad
       integration: preprocessing

@@ -2,7 +2,9 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils.pipeline import update_module_configs, config_for_module
+from utils.pipeline import update_module_configs, config_for_module, update_input_files
+from utils.ModuleConfig import ModuleConfig
+from integration.IntegrationConfig import IntegrationConfig
 
 
 min_version("6.0")
@@ -16,8 +18,20 @@ configfile: "configs/exploration/config.yaml"
 # params['submodules'] = params['submodules'].str.split(',')
 # config = update_module_configs(config, params)
 
+parsed_configs = {
+    'subset': ModuleConfig('subset', config),
+    'relabel': ModuleConfig('relabel', config),
+    'preprocessing': ModuleConfig('preprocessing', config),
+    'clustering': ModuleConfig('clustering', config),
+    'integration': IntegrationConfig('integration', config),
+    'metrics': ModuleConfig('metrics', config),
+}
+for module in parsed_configs.keys():
+    update_input_files(module, parsed_configs)
+
+
+# TODO move to data loader and exploration
 config['dataset_meta'] = Path(config['dataset_meta']).resolve()
-out_dir = Path(config['output_dir'])
 
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -39,16 +53,16 @@ module exploration:
 
 module subset:
     snakefile: "subset/Snakefile"
-    config: config_for_module(config, module='subset')
+    config: parsed_configs['subset'].get_config()
 
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
-    config: config_for_module(config, module='preprocessing')
+    config: parsed_configs['preprocessing'].get_config()
 
 
 module clustering:
     snakefile: "clustering/Snakefile"
-    config: config_for_module(config, module='clustering')
+    config: parsed_configs['clustering'].get_config()
 
 
 module label_transfer:
@@ -61,15 +75,15 @@ module label_harmonization:
 
 module relabel:
     snakefile: "relabel/Snakefile"
-    config: config_for_module(config, module='relabel')
+    config: parsed_configs['relabel'].get_config()
 
 module integration:
     snakefile: "integration/Snakefile"
-    config: config_for_module(config, module='integration')
+    config: parsed_configs['integration'].get_config()
 
 module integration_per_lineage:
     snakefile: "integration_per_lineage/Snakefile"
-    config: config_for_module(config, module='integration')
+    config: parsed_configs['integration'].get_config()
 
 module metrics:
     snakefile: "metrics/Snakefile"
