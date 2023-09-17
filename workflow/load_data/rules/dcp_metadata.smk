@@ -93,7 +93,7 @@ rule plot_stats:
     input:
         unpack(collect_stats)
     output:
-        intersection=out_dir / 'dcp_metadata' / 'plots' / 'intersection.png'
+        intersection=image_dir / 'dcp_metadata' / 'id_intersection.png'
     conda:
         get_env(config, 'plots', env_dir='../../../envs/')
     script:
