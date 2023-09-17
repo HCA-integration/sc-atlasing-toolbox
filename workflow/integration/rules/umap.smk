@@ -15,6 +15,16 @@ use rule umap from preprocessing as integration_compute_umap with:
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
 
 
+def get_colors(wildcards):
+    dataset = wildcards.dataset
+    labels = module_config.get_for_dataset(dataset, query=[module_name, 'label'])
+    labels = labels if isinstance(labels, list) else [labels]
+    batch = module_config.get_for_dataset(dataset, query=[module_name, 'batch'])
+    batch = batch if isinstance(batch, list) else [batch]
+    umap_colors = module_config.get_for_dataset(dataset, query=[module_name, 'umap_colors'], default=[])
+    return [*labels, *batch, *umap_colors]
+
+
 use rule plot_umap from preprocessing as integration_plot_umap with:
     input:
         anndata=rules.integration_compute_umap.output.zarr,
@@ -22,16 +32,7 @@ use rule plot_umap from preprocessing as integration_plot_umap with:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
         additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern),
     params:
-        color=lambda w: [
-            get_params(w,parameters,'label'),
-            get_params(w,parameters,'batch'),
-            *get_for_dataset(
-                config=config,
-                dataset=w.dataset,
-                query=[module_name, 'umap_colors'],
-                default=[]
-            ),
-        ],
+        color=get_colors,
         ncols=1,
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
         outlier_factor=10,
