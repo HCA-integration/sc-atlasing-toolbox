@@ -1,5 +1,7 @@
 from pathlib import Path
 import scanpy as sc
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata
 from utils_pipeline.io import read_anndata, link_zarr
@@ -23,11 +25,16 @@ if 'X_pca' not in adata.obsm:
     files_to_keep.extend(['varm'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 
+logging.info(adata.__str__())
+logging.info(adata.uns)
 if 'connectivities' not in adata.obsp \
     or 'distances' not in adata.obsp \
     or 'neighbors' not in adata.uns:
     sc.pp.neighbors(adata)
-    files_to_keep.extend(['obsp'])
+else:
+    logging.info(adata.uns['neighbors'])
+    logging.info(adata.obsp.keys())
+    files_to_keep.extend(['obsp', 'uns'])
 
 adata = process(adata=adata, adata_raw=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)

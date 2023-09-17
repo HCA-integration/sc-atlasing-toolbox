@@ -11,6 +11,7 @@ dependencies:
   - cuda-cudart=11.4
   - cuda-nvrtc=11.4
   - rapids=23.08
+  - scanpy
   - pip
   - pip:
     - rapids-singlecell
