@@ -20,7 +20,7 @@ class ModuleConfig:
     # input_file_wildcards = dict(dataset=[], file_id=[], file_name=[])
     # wildcards_df = pd.DataFrame()
     # parameters_df = pd.DataFrame()
-    # paramspace = pd.DataFrame()
+    # paramspace = Paramspace()
     # default_output = None
     # out_dir = Path()
     # image_dir = Path()
@@ -54,7 +54,7 @@ class ModuleConfig:
 
         # determine wildcards
         self.set_wildcards()
-        self.wildcard_names = ['dataset']
+        self.wildcard_names = ['dataset', 'file_id']
         
         # get parameters
         if parameters is not None:

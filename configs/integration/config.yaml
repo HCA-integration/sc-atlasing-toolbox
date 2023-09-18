@@ -74,12 +74,15 @@ defaults:
 DATASETS:
   test:
     input:
-      subset: data/pbmc68k.h5ad
+      subset:
+        test_data: data/pbmc68k.h5ad
+        test_data2: data/pbmc68k.h5ad
       preprocessing: subset
       integration: preprocessing
     subset:
       label: bulk_labels
       sample: phase
+      n_cells: 1000
     preprocessing:
       label: bulk_labels
       batch: phase

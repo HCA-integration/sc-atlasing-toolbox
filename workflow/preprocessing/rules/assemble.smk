@@ -4,7 +4,7 @@ Assemble anndata with different Preprocessing outputs
 
 use rule normalize from preprocessing as preprocessing_normalize with:
     input:
-        lambda wildcards: get_input_file(config, wildcards, module_name)
+        lambda wildcards: module_config.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
         zarr=directory(out_dir / wildcard_pattern / 'normalized.zarr'),
     params:
