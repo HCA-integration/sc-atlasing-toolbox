@@ -103,7 +103,7 @@ DATASETS:
    #   batch: donor_id
    #   #lineage: lineage
 
-  gut_incl_smillie:
+  gut_all:
     input:
       preprocessing: data/gut_atlas_workshop_helmsley_all.h5ad
       integration: preprocessing
