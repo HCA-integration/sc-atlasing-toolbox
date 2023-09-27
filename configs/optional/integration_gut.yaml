@@ -1,11 +1,11 @@
 defaults:
   datasets:
-    - gut_ref
+    - gut_rebuild
 #    - gut
   preprocessing:
     raw_counts: X
     norm_counts: normcounts
-    batch: batch
+    batch: donor_id
     #lineage: lineage
     assemble:
       - counts
@@ -14,15 +14,15 @@ defaults:
       - pca
       - neighbors
   integration:
-    label: level_3_annot
-    batch: batch
+    label: author_cell_type
+    batch: donor_id
     raw_counts: X
     norm_counts: normcounts
     methods:
       unintegrated:
-      bbknn:
-      combat:
-      harmony:
+      #bbknn:
+      #combat:
+      #harmony:
       #scanorama:
       #scgen:
       #  max_epochs: 50
@@ -33,61 +33,61 @@ defaults:
           - gene-batch
           - gene-label
           - gene-cell
-        max_epochs: 35
+        max_epochs: 15
         use_observed_lib_size: true
-      scanvi:
-        n_hidden: 128
-        dispersion: gene
-        max_epochs: 30
-        use_observed_lib_size: true
-      scpoli:
-        supervised:
-          - true
-          - false
-        model:
-          embedding_dims: 5
-          recon_loss: nb
-          # latent_dim: 30
-          # hidden_layer_sizes: [512, 512]
-        train:
-          n_epochs: 30
-          eta: 5
+      #scanvi:
+      #  n_hidden: 128
+      #  dispersion: gene
+      #  max_epochs: 30
+      #  use_observed_lib_size: true
+      #scpoli:
+      #  supervised:
+      #    - true
+      #    - false
+      #  model:
+      #    embedding_dims: 5
+      #    recon_loss: nb
+      #    # latent_dim: 30
+      #    # hidden_layer_sizes: [512, 512]
+      #  train:
+      #    n_epochs: 30
+      #    eta: 5
     umap_colors:
-      - level_3_annot
-      - batch
-      - sex
-      - technology
+      - n_counts
+      - percent_mito
       - study
-      - disease
+      - assay_ontology_term_id
+      - sex_ontology_term_id
+      - suspension_type
       
-  metrics:
-    label: level_3_annot
-    batch: batch
-    methods:
-      - nmi_leiden_y
-      - ari_leiden_y
-      - asw_label
-      - asw_batch
-      # - cell_cycle
-      #- clisi_y
-      #- ilisi_y
-      - graph_connectivity
-      # - isolated_label_asw_y
-      # - isolated_label_f1_y
-      - pcr
-      #- kbet_y
+ # metrics:
+ #   label: level_3_annot
+ #   batch: batch
+ #   methods:
+ #     - nmi_leiden_y
+ #     - ari_leiden_y
+ #     - asw_label
+ #     - asw_batch
+ #     # - cell_cycle
+ #     #- clisi_y
+ #     #- ilisi_y
+ #     - graph_connectivity
+ #     # - isolated_label_asw_y
+ #     # - isolated_label_f1_y
+ #     - pcr
+ #     #- kbet_y
 
 
 DATASETS: 
 
-  gut_ref:
+  gut_rebuild:
     input:
-      preprocessing: data/gut_ref.zarr
+      preprocessing: data/gut_atlas_workshop_helmsley_nosmillie.h5ad
       integration: preprocessing
     preprocessing:
       raw_counts: X
       highly_variable_genes:
-        n_top_genes: 4000
+        n_top_genes: 3000
       assemble:
         - counts
         - normalize
@@ -95,13 +95,13 @@ DATASETS:
         - pca
         - neighbors
     integration:
-      label: level_3_annot
-      batch: batch
+      label: author_cell_type
+      batch: donor_id
       #lineage: lineage
-    metrics:
-      label: level_3_annot
-      batch: batch
-      #lineage: lineage
+   # metrics:
+   #   label: author_cell_type
+   #   batch: donor_id
+   #   #lineage: lineage
 
 #  gut_test:
 #    input:
