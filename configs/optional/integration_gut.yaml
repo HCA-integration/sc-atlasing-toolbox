@@ -1,7 +1,7 @@
 defaults:
   datasets:
-    - gut_rebuild
-#    - gut
+#    - gut_rebuild
+    - gut_all
   preprocessing:
     raw_counts: X
     norm_counts: normcounts
@@ -31,8 +31,8 @@ defaults:
         dispersion:
           - gene
           - gene-batch
-          - gene-label
-          - gene-cell
+          #- gene-label
+          #- gene-cell
         max_epochs: 15
         use_observed_lib_size: true
       #scanvi:
@@ -80,9 +80,32 @@ defaults:
 
 DATASETS: 
 
-  gut_rebuild:
+  # gut_rebuild:
+  #   input:
+  #     preprocessing: data/gut_atlas_workshop_helmsley_nosmillie.h5ad
+  #     integration: preprocessing
+  #   preprocessing:
+  #     raw_counts: X
+  #     highly_variable_genes:
+  #       n_top_genes: 3000
+  #     assemble:
+  #       - counts
+  #       - normalize
+  #       - highly_variable_genes
+  #       - pca
+  #       - neighbors
+  #   integration:
+  #     label: author_cell_type
+  #     batch: donor_id
+  #     #lineage: lineage
+   # metrics:
+   #   label: author_cell_type
+   #   batch: donor_id
+   #   #lineage: lineage
+
+  gut_incl_smillie:
     input:
-      preprocessing: data/gut_atlas_workshop_helmsley_nosmillie.h5ad
+      preprocessing: data/gut_atlas_workshop_helmsley_all.h5ad
       integration: preprocessing
     preprocessing:
       raw_counts: X
@@ -102,6 +125,9 @@ DATASETS:
    #   label: author_cell_type
    #   batch: donor_id
    #   #lineage: lineage
+
+
+
 
 #  gut_test:
 #    input:
