@@ -57,10 +57,12 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
-      batch: batch
+      batch:
+        - batch
+        - batch2
       lineage: phase
       methods:
         unintegrated:
