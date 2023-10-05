@@ -3,7 +3,7 @@ use rule umap from preprocessing as integration_per_lineage_compute_umap with:
         anndata=rules.integration_per_lineage_postprocess.output.zarr,
         rep=rules.integration_per_lineage_run.input.zarr,
     output:
-        zarr=directory(out_dir / 'per_lineage' / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
+        zarr=directory(out_dir / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'umap.zarr'),
     params:
         neighbors_key=lambda w: [f'neighbors_{output_type}' for output_type in get_params(w,parameters,'output_type')],
     resources:
@@ -17,8 +17,8 @@ use rule plot_umap from preprocessing as integration_per_lineage_plot_umap with:
     input:
         anndata=rules.integration_per_lineage_compute_umap.output.zarr
     output:
-        plot=image_dir / 'umap' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}.png',
-        additional_plots=directory(image_dir / 'umap' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}'),
+        plot=image_dir / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}.png',
+        additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern / 'lineage~{lineage}'),
     params:
         color=lambda wildcards: [
             get_params(wildcards,parameters,'label'),
@@ -45,7 +45,7 @@ rule umaps_collect:
     input:
         unpack(lambda w: collect_lineages(w, rules.integration_per_lineage_plot_umap.output))
     output:
-        touch(image_dir / 'umap' / 'per_lineage' / paramspace.wildcard_pattern / 'umap.done')
+        touch(image_dir / 'umap' / paramspace.wildcard_pattern / 'umap.done')
 
 
 rule umaps_all:

@@ -9,7 +9,9 @@ use rule normalize from preprocessing as preprocessing_per_lineage_normalize wit
     params:
         raw_counts=lambda w: get_for_dataset(config, w.dataset, [module_name, 'raw_counts']),
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
 
 
 use rule highly_variable_genes from preprocessing as preprocessing_per_lineage_highly_variable_genes with:
@@ -21,7 +23,9 @@ use rule highly_variable_genes from preprocessing as preprocessing_per_lineage_h
         args=lambda w: get_for_dataset(config, w.dataset, ['preprocessing', 'highly_variable_genes']),
         batch=lambda w: get_for_dataset(config, w.dataset, ['preprocessing', 'batch']),
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
 
 
 use rule pca from preprocessing as preprocessing_per_lineage_pca with:
@@ -33,7 +37,9 @@ use rule pca from preprocessing as preprocessing_per_lineage_pca with:
     params:
         scale=lambda w: get_for_dataset(config, w.dataset, ['preprocessing', 'scale'])
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
 
 
 use rule neighbors from preprocessing as preprocessing_per_lineage_neighbors with:
@@ -47,7 +53,7 @@ use rule neighbors from preprocessing as preprocessing_per_lineage_neighbors wit
         partition=get_resource(config,profile='gpu',resource_key='partition'),
         qos=get_resource(config,profile='gpu',resource_key='qos'),
         gpu=get_resource(config,profile='gpu',resource_key='gpu'),
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
 
 
 use rule assemble from preprocessing as preprocessing_per_lineage_assemble with:
@@ -64,4 +70,7 @@ use rule assemble from preprocessing as preprocessing_per_lineage_assemble with:
     output:
         zarr=directory(pp_per_lineage_dir / 'assembled.zarr'),
     resources:
-        mem_mb=get_resource(config,profile='gpu',resource_key='mem_mb'),
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+
