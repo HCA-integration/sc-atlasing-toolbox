@@ -127,7 +127,7 @@ rule merge_lineage:
     input:
         unpack(lambda w: collect_lineages(w, rules.integration_per_lineage_postprocess.output.zarr))
     output:
-        zarr=directory(out_dir / 'per_lineage' / 'merge' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
+        zarr=directory(out_dir / 'merge' / paramspace.wildcard_pattern / 'lineages.h5mu.zarr'),
     conda:
         get_env(config, 'scanpy')
     resources:
@@ -136,6 +136,34 @@ rule merge_lineage:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
     script:
         'scripts/merge_anndata.py'
+
+
+rule export_files:
+    input:
+        zarr=rules.integration_per_lineage_compute_umap.output.zarr,
+        clusters=rules.integration_per_lineage_cluster_merge.output.tsv,
+    output:
+        zarr=directory(out_dir / 'export' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'adata.zarr'),
+    conda:
+        get_env(config, 'scanpy')
+    resources:
+        partition=get_resource(config,profile='cpu',resource_key='partition'),
+        qos=get_resource(config,profile='cpu',resource_key='qos'),
+        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+    script:
+        'scripts/export_files.py'
+
+
+rule export_files_collect:
+    input:
+        unpack(lambda w: collect_lineages(w, rules.export_files.output))
+    output:
+        touch(out_dir / 'export' / paramspace.wildcard_pattern / 'export.done')
+
+
+rule export_files_all:
+    input:
+        expand(rules.export_files_collect.output, zip, **parameters[wildcard_names].to_dict('list'))
 
 
 rule run_all:

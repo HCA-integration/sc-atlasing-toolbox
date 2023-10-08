@@ -14,7 +14,7 @@ input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 
 split_key = snakemake.params.lineage_key
-batch_key = snakemake.params.batch
+# batch_key = snakemake.params.batch
 label_key = snakemake.params.label
 # norm_layer = snakemake.params.norm_counts
 
@@ -75,9 +75,9 @@ for split in splits:
     # adata_sub = adata_sub[adata_sub.obs[batch_key].isin(batches_to_keep)]
     # logging.info(f'number of cells after filtering: {adata_sub.n_obs}, removed {adata_sub.n_obs-n_cells_before} cells')
 
-    if adata_sub.n_obs == 0:
-        logging.info('No cells left after filtering batches by HVG, skipping...')
-        continue
+    #if adata_sub.n_obs == 0:
+    #    logging.info('No cells left after filtering batches by HVG, skipping...')
+    #    continue
 
     # write to file
     split_file = split.replace(' ', '_').replace('/', '_')

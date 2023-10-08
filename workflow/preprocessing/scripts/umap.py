@@ -70,16 +70,15 @@ if adata.n_obs == 0:
 neighbors_key = params.get('neighbors_key', 'neighbors')
 
 # compute UMAP
-if isinstance(neighbors_key, list):
-    for key in neighbors_key:
-        check_and_update_neighbors_info(adata, key)
-        params |= dict(neighbors_key=key)
-        compute_umap(adata, params)
-        adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
-else:
-    check_and_update_neighbors_info(adata, neighbors_key)
-    params |= dict(neighbors_key=neighbors_key)
+if not isinstance(neighbors_key, list):
+    neighbors_key = [neighbors_key]
+
+for key in neighbors_key:
+    check_and_update_neighbors_info(adata, key)
+    params |= dict(neighbors_key=key)
     compute_umap(adata, params)
+    if len(neighbors_key) > 1:
+        adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 
 logging.info(f'Write to {output_file}...')
 del adata.raw

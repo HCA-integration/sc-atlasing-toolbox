@@ -2,7 +2,7 @@ use rule cluster from clustering as integration_per_lineage_cluster with:
     input:
         zarr=rules.integration_per_lineage_postprocess.output.zarr
     output:
-        tsv=out_dir / 'clustering' / 'per_lineage' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'resolutions' / '{output_type}--{resolution}.tsv',
+        tsv=out_dir / 'clustering' / paramspace.wildcard_pattern / 'lineage~{lineage}' / 'resolutions' / '{output_type}--{resolution}.tsv',
     params:
         neighbors_key='neighbors_{output_type}',
         cluster_key_suffix='_{output_type}',

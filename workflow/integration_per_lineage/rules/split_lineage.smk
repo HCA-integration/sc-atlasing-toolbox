@@ -10,9 +10,9 @@ checkpoint split_lineage:
     input:
         lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
-        directory(out_dir / 'per_lineage' / 'split_lineage' / 'file_id~{file_id}' / 'dataset~{dataset}')
+        directory(out_dir / 'split_lineage' / 'file_id~{file_id}' / 'dataset~{dataset}')
     params:
-        batch=lambda wildcards: get_for_dataset(config, wildcards.dataset, [module_name, 'batch']),
+        # batch=lambda wildcards: get_for_dataset(config, wildcards.dabtaset, [module_name, 'batch']),
         label=lambda wildcards: get_for_dataset(config, wildcards.dataset, [module_name, 'label']),
         lineage_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, [module_name, 'lineage']),
         # norm_counts=lambda wildcards: get_params(wildcards,parameters,'norm_counts'),
@@ -20,9 +20,8 @@ checkpoint split_lineage:
     conda:
         get_env(config, 'scanpy', gpu_env='scanpy_rapids')
     resources:
-        partition=get_resource(config,profile='cpu',resource_key='partition'),
-        qos=get_resource(config,profile='cpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
-        gpu=get_resource(config,profile='cpu',resource_key='gpu'),
+        partition=get_resource(config,profile='cpu_merged',resource_key='partition'),
+        qos=get_resource(config,profile='cpu_merged',resource_key='qos'),
+        mem_mb=lambda w, attempt: get_resource(config,profile='cpu_merged',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/split_anndata.py'

@@ -61,7 +61,9 @@ DATASETS:
         pbmc: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
-      batch: batch
+      batch:
+        - batch
+        - batch2
       lineage: phase
       methods:
         unintegrated:

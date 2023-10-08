@@ -20,7 +20,7 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
     output:
         zarr=directory(out_dir / wildcard_pattern / 'highly_variable_genes.zarr')
     params:
-        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'highly_variable_genes']),
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'highly_variable_genes'], default={}),
         batch=lambda w: get_for_dataset(config, w.dataset, [module_name, 'batch']),
         lineage=lambda w: get_for_dataset(config, w.dataset, [module_name, 'lineage']),
     resources:
@@ -35,7 +35,8 @@ use rule pca from preprocessing as preprocessing_pca with:
     output:
         zarr=directory(out_dir / wildcard_pattern / 'pca.zarr')
     params:
-        scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale'])
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'pca'], default={}),
+        scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale']),
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
