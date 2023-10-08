@@ -10,6 +10,7 @@ from utils.misc import all_but
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
     get_datasets_for_module, get_for_dataset
+from utils.environments import get_env
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'

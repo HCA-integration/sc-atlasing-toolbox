@@ -17,12 +17,12 @@ output_plot = Path(snakemake.output.plot)
 output_additional = Path(snakemake.output.additional_plots)
 output_additional.mkdir(exist_ok=True)
 
-params = {k: v for k, v in snakemake.params.items()}
+params = dict(snakemake.params.items())
 if 'outlier_factor' in params:
     outlier_factor = params['outlier_factor']
     del params['outlier_factor']
 else:
-    outlier_factor = 3
+    outlier_factor = 10
 
 adata = read_anndata(input_file)
 
@@ -37,6 +37,10 @@ if 'color' in params and params['color'] is not None:
     params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:
         params['color'] = None
+    else:
+        for color in params['color']:
+            if adata.obs[color].dtype.name == 'category':
+                adata.obs[color] = adata.obs[color].astype('str')
 
 # parse neighbors key
 neighbors_key = params.get('neighbors_key', 'neighbors')
@@ -44,13 +48,24 @@ if isinstance(neighbors_key, list):
     neighbors_keys = params['neighbors_key']
     del params['neighbors_key']
     for neighbors_key in neighbors_keys:
-        sc.pl.embedding(adata, f'X_umap_{neighbors_key}', show=False, neighbors_key=neighbors_key, **params)
-        plt.suptitle(f'neighbors_key: {neighbors_key}')
+        sc.pl.embedding(
+            adata[adata.obs.sample(adata.n_obs).index],
+            f'X_umap_{neighbors_key}',
+            show=False,
+            neighbors_key=neighbors_key,
+            **params
+        )
+        plt.suptitle(f'neighbors_key: {neighbors_key}, n={adata.n_obs}')
         fig_file = output_additional / f'{neighbors_key}.png'
         plt.savefig(fig_file, bbox_inches='tight', dpi=200)
     logging.info(f'link {output_plot} to {fig_file}')
     output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
 else:
     # plot UMAP
-    sc.pl.umap(adata, show=False, **params)
+    sc.pl.umap(
+        adata[adata.obs.sample(adata.n_obs).index],
+        show=False,
+        **params
+    )
+    plt.suptitle(f'n={adata.n_obs}')
     plt.savefig(output_plot, bbox_inches='tight', dpi=200)

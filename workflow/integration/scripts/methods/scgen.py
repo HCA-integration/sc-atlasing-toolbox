@@ -1,8 +1,14 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
 
-from utils import add_metadata, read_anndata, process, select_layer
+from utils import add_metadata
+from utils_pipeline.io import read_anndata
+from utils_pipeline.accessors import select_layer
+from utils_pipeline.processing import process
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -21,9 +27,10 @@ early_stopping_kwargs = {
     "lr_patience": 13,
     "lr_factor": 0.1,
 }
+logging.info(hyperparams)
 
 # check GPU
-print('GPU available:', torch.cuda.is_available())
+logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 adata_raw = read_anndata(input_file)
 adata_raw.X = select_layer(adata_raw, params['norm_counts'])

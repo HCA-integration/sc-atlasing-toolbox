@@ -1,0 +1,67 @@
+defaults:
+  datasets:
+    - blood_harm_pp
+    - blood_harm_pca
+    - blood_harm_pca_pct
+
+DATASETS:
+
+  blood_harm_pp:
+    input:
+      relabel: data/out/load_data/merged/subset/blood-benchmark.zarr/
+      preprocessing: relabel
+    relabel:
+      mapping:
+        file: data/input/label_harmonization/mapping_coarse.tsv
+        order:
+          - cell_type
+          - harmonized_label
+          - lineage
+    preprocessing:
+      scale: true
+      batch: study
+      lineage: lineage
+      highly_variable_genes:
+        n_top_genes: 4000
+        subset: false
+      assemble:
+        - counts
+        - normcounts
+        - highly_variable_genes
+        - pca
+
+  blood_harm_pca:
+    input:
+      label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.zarr
+    label_harmonization:
+      organ: blood
+      plot_colors:
+        - study
+        - lineage
+        - harmonized_label
+        - disease
+        - sex
+        - institution
+        - self_reported_ethnicity
+      dataset_key: study
+      author_label_key: author_annotation
+      celltypist:
+        use_rep: X_pca
+        use_pct: false
+        # minimum_unique_percents: [0.5, 0.6, 0.7]
+        # minimum_divide_percents: [0.1, 0.15]
+
+  blood_harm_pca_pct:
+    input:
+      label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.zarr
+    label_harmonization:
+      organ: blood
+      plot_colors: study
+      dataset_key: study
+      author_label_key: author_annotation
+      subsample: 0.3
+      celltypist:
+        use_rep: X_pca
+        use_pct: true
+        minimum_unique_percents: [0.5, 0.6, 0.7]
+        minimum_divide_percents: [0.1, 0.15]

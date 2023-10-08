@@ -98,3 +98,27 @@ def ifelse(statement, _if, _else):
         return _if
     else:
         return _else
+
+
+def ensure_sparse(adata):
+    from scipy.sparse import csr_matrix, issparse
+
+    if not issparse(adata.X):
+        adata.X = csr_matrix(adata.X)
+
+
+def merge(dfs, **kwargs):
+    """
+    Merge list of dataframes
+    :param dfs: list of dataframes
+    :param kwargs: arguments passed to pd.merge
+    :return: merged dataframe
+    """
+    from functools import reduce
+
+    merged_df = reduce(
+        lambda x, y: pd.merge(x, y, **kwargs),
+        dfs
+    )
+    print(merged_df)
+    return merged_df

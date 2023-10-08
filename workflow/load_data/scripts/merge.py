@@ -1,4 +1,5 @@
 import logging
+logging.basicConfig(level=logging.INFO)
 import gc
 
 import pandas as pd
@@ -15,7 +16,6 @@ def read_adata(file):
     ad = anndata.read_zarr(file)
     ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
-    del ad.uns
     del ad.layers
     del ad.raw
     del ad.obsm
@@ -32,16 +32,23 @@ if len(files) == 1:
 else:
     logging.info(f'Read first file {files[0]}...')
     adata = read_adata(files[0])
-    print(adata)
+    logging.info(adata.__str__())
+
+    uns_per_dataset = {
+        adata.uns['meta']['dataset']: adata.uns['meta']
+    }
 
     for file in files[1:]:
         logging.info(f'Read {file}...')
         _adata = read_adata(file)
-        print(_adata)
+        logging.info(_adata.__str__())
 
         if _adata.n_obs == 0:
-            logging.info('skip concatenation...')
+            logging.info('Empty adata, skip concatenation...')
             continue
+
+        # collect metadata
+        uns_per_dataset[_adata.uns['meta']['dataset']] = _adata.uns['meta']
 
         logging.info('Concatenate...')
         # merge genes
@@ -62,10 +69,14 @@ else:
         gc.collect()
 
     organ = adata.obs['organ'].unique()
-    assert not len(organ) > 1
+    assert len(organ) == 1
     adata.uns['dataset'] = dataset
     adata.uns['organ'] = organ
-    adata.uns['meta'] = {'dataset': dataset, 'organ': organ}
+    adata.uns['meta'] = {
+        'dataset': dataset,
+        'organ': organ,
+        'per_dataset': uns_per_dataset,
+    }
     print(adata)
     print(adata.var)
 

@@ -3,34 +3,12 @@ Data Subsetting for benchmark
 """
 from pathlib import Path
 
-from utils.config import set_defaults, get_datasets_for_module, get_resource, get_params_from_config
-from utils.wildcards import get_params
-
+from utils.config import get_datasets_for_module, get_for_dataset, get_resource, set_defaults
+from utils.environments import get_env
 
 module_name = 'subset'
 config = set_defaults(config,module_name)
 out_dir = Path(config['output_dir']) / module_name
-
-parameters = get_params_from_config(
-    config=config['DATASETS'],
-    module_name=module_name,
-    config_params=['sample', 'label'],  # TODO: add strategy
-    wildcard_names=['dataset', 'sample', 'label'],
-    defaults=config['defaults']
-)
-
-
-def get_input(wildcards):
-    return config['DATASETS'][wildcards.dataset]['input']['subset']
-
-
-def get_param(wildcards, param):
-    dataset = wildcards.dataset
-    try:
-        param = config['DATASETS'][dataset]['subset'][param]
-    except:
-        raise KeyError(f'invalid parameter for dataset="{dataset}", param="{param}"')
-    return param
 
 
 module common:
@@ -41,18 +19,18 @@ use rule * from common as common_ *
 
 rule subset:
     input:
-        get_input
+        lambda wildcards: get_for_dataset(config, wildcards.dataset, ['input', module_name]),
     output:
-        out_dir / '{dataset}' / '{strategy}.h5ad'
+        zarr=directory(out_dir / '{dataset}' / '{strategy}.zarr')
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
     params:
-        n_cells=lambda wildcards: get_param(wildcards,'n_cells'),
-        sample_key=lambda wildcards: get_params(wildcards,parameters,'sample'),
-        label_key=lambda wildcards: get_params(wildcards,parameters,'label')
+        n_cells=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'n_cells']),
+        sample_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'sample']),
+        label_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'label']),
     conda:
-        'envs/scanpy.yaml'
+        get_env(config, 'scanpy', env_dir='envs')
     script:
         'scripts/{wildcards.strategy}.py'
 
@@ -61,7 +39,7 @@ rule all:
     input:
         expand(
             rules.subset.output,
-            dataset=get_datasets_for_module(config,module='subset'),
+            dataset=get_datasets_for_module(config,module=module_name),
             strategy=['by_sample', 'within_sample']
         )
     default_target: True

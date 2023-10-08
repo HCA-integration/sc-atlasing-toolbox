@@ -114,6 +114,7 @@ def compute_neighbors(adata, output_type):
 
 def select_neighbors(adata, output_type):
     neighbors_key = f'neighbors_{output_type}'
+    adata.uns['neighbors'] = adata.uns[neighbors_key]
     adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
     adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
     return adata

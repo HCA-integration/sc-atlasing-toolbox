@@ -1,26 +1,27 @@
-if 'DATASETS' not in config.keys():
-    config["DATASETS"] = {}
+config_exploration = config.copy()
+
+if 'DATASETS' not in config_exploration.keys():
+    config_exploration["DATASETS"] = {}
 
 for study in dataset_df['study']:
-    config["DATASETS"][study] = {
-        'input': {
-            'preprocessing': expand(rules.load_data_filter.output.zarr,study=study)[0],
-        },
-        'preprocessing': {
-            'raw_counts': 'X',
-            'sample': 'sample',
-            # 'label': 'cell_type',
-            'batch': 'dataset',
-            'lineage' : None,
-        },
-    }
+    config_exploration["DATASETS"][study] = dict(
+        input=dict(
+            preprocessing=expand(rules.load_data_filter_study.output.zarr,study=study)[0]
+        ),
+        preprocessing=dict(
+            raw_counts='X',
+            batch='dataset',
+            lineage=None,
+        )
+    )
 
 
 module preprocessing:
     snakefile: "../../preprocessing/Snakefile"
-    config: config
+    config: config_exploration
 
 use rule * from preprocessing as preprocessing_*
+
 
 def get_batch_pcr_input(wildcards):
     adata_file = expand(rules.preprocessing_pca.output,dataset=wildcards.study)[0]
@@ -89,7 +90,7 @@ rule batch_pcr:
         n_permute=10,
         sample_key='sample'
     conda:
-        '../envs/scib_accel.yaml' if 'os' in config.keys() and config['os'] == 'intel' else '../envs/scib.yaml'
+        get_env(config, 'scib_accel')
     resources:
         partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),

@@ -1,0 +1,20 @@
+resources:
+  cpu_merged:
+    partition: cpu
+    qos: normal
+    gpu: 0
+    mem_mb: 16000
+    disk_mb: 150000
+  cpu:
+    partition: cpu
+    qos: normal
+    gpu: 0
+    mem_mb: 16000
+  gpu:
+    partition: gpu
+    qos: normal
+    gpu: 1
+    mem_mb: 16000
+
+os: intel
+use_gpu: true

@@ -1,0 +1,107 @@
+defaults:
+  datasets:
+    - test
+  integration:
+    raw_counts: raw
+    norm_counts: normcounts
+    methods:
+      unintegrated:
+      bbknn:
+      combat:
+      harmony:
+      scanorama:
+      scgen:
+        max_epochs: 10
+      scvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 10
+        use_observed_lib_size: true
+      scanvi:
+        n_hidden: 128
+        dispersion: gene
+        max_epochs: 10
+        use_observed_lib_size: true
+      scpoli:
+        supervised:
+          - true
+          - false
+        model:
+          embedding_dims: 5
+          recon_loss: nb
+          # latent_dim: 30
+          # hidden_layer_sizes: [512, 512]
+        train:
+          n_epochs: 20
+          eta: 5
+
+  metrics:
+    methods:
+      - nmi_leiden_y
+      - ari_leiden_y
+      - asw_label
+      - asw_batch
+      - cell_cycle
+      - clisi_y
+      - ilisi_y
+      - graph_connectivity
+      - isolated_label_asw_y
+      - isolated_label_f1_y
+      - pcr
+      - kbet_y
+      - nmi
+        - ari
+        - asw_label
+        - asw_batch
+        - clisi
+        - ilisi
+        - graph_connectivity
+        - isolated_label_asw
+        - isolated_label_f1
+        - pcr
+  preprocessing:
+    raw_counts: X
+    batch: study
+    lineage: lineage
+    assemble:
+      - counts
+      - normalize
+      - highly_variable_genes
+      - pca
+      - neighbors
+
+DATASETS:
+  test:
+    input:
+      subset: data/pbmc68k.h5ad
+      preprocessing: subset
+      integration: preprocessing
+    subset:
+      label: bulk_labels
+      sample: phase
+    preprocessing:
+      label: bulk_labels
+      batch: phase
+      sample: phase
+    integration:
+      label: bulk_labels
+      batch: phase
+    metrics:
+      label: bulk_labels
+      batch: phase
+
+  # test2:
+  #   input:
+  #     preprocessing: data/pbmc68k.h5ad
+  #     integration: preprocessing
+  #   preprocessing:
+  #     label: bulk_labels
+  #     batch: phase
+  #   integration:
+  #     label: bulk_labels
+  #     batch: batch
+  #     lineage: phase
+  #     umap_colors:
+  #       - bulk_labels
+  #       - phase
+

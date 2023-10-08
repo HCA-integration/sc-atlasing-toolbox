@@ -7,13 +7,13 @@ rule summary_stats:
     + disease states
     """
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         tsv=images_dir / 'summary' / 'datasets' / '{study}.tsv',
         sample=images_dir / 'summary' / 'datasets' / '{study}_sample.png',
         donor=images_dir / 'summary' / 'datasets' / '{study}_donor.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
@@ -22,13 +22,13 @@ rule summary_stats:
 
 use rule summary_stats as summary_stats_filtered with:
     input:
-        zarr=rules.load_data_filter.output.removed
+        zarr=rules.load_data_filter_study.output.removed
     output:
         tsv=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}.tsv',
         sample=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}_sample.png',
         donor=images_dir / 'summary' / 'datasets' / 'filtered' / '{study}_donor.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
 
@@ -41,7 +41,7 @@ rule summary_stats_all:
         aggregate=images_dir / 'summary' / 'all_datasets_aggregated.tsv',
         png=images_dir / 'summary' / 'all_datasets.png',
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     script:
         '../scripts/plot_summary.py'
 

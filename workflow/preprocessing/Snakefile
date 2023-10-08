@@ -6,6 +6,7 @@ import pandas as pd
 
 from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults
 from utils.misc import ifelse
+from utils.environments import get_env
 
 
 module_name = 'preprocessing'
@@ -42,7 +43,7 @@ rule plots_all:
 rule all:
     input:
         expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name)),
-        rules.plots_all.output,
+        rules.plots_all.input,
     default_target: True
 
 

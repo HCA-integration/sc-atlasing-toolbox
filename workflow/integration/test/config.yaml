@@ -2,6 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
+env_mode: from_yaml
 
 resources:
   cpu:
@@ -13,7 +14,7 @@ resources:
     partition: gpu
     qos: normal
     gpu: 1
-    mem_mb: 1000
+    mem_mb: 4000
 
 defaults:
   integration:
@@ -23,6 +24,8 @@ defaults:
       bbknn:
       combat:
       harmony:
+      harmony_rapids:
+      harmonypy:
       scanorama:
       scanvi:
         n_hidden: 128
@@ -53,11 +56,14 @@ defaults:
   datasets:
     - test
     - test2
+    - test3
+    - harmony_comparison
+
 
 DATASETS:
   test:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch:
@@ -66,13 +72,40 @@ DATASETS:
 
   test2:
     input:
-      integration: test/data/pbmc68k.h5ad
+      integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
       lineage: phase
       methods:
         unintegrated:
+      umap_colors:
+        - bulk_labels
+        - phase
+
+  test3:
+    input:
+      integration: test/input/preprocessing/pbmc/preprocessed.zarr
+    integration:
+      raw_counts: raw
+      norm_counts: X
+      label: bulk_labels
+      batch: batch
+      methods:
+        unintegrated:
+        scgen:
+          n_epochs: 10
+
+  harmony_comparison:
+    input:
+      integration: test/input/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        harmony_rapids:
+        harmonypy:
+        harmony:
       umap_colors:
         - bulk_labels
         - phase

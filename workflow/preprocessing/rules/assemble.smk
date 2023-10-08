@@ -78,7 +78,7 @@ def collect_files(wildcards):
         'highly_variable_genes': rules.preprocessing_highly_variable_genes.output.zarr,
         'pca': rules.preprocessing_pca.output.zarr,
         'neighbors': rules.preprocessing_neighbors.output.zarr,
-        # 'umap': rules.preprocessing_umap.output.zarr,
+        'umap': rules.preprocessing_umap.output.zarr,
     }
     assembly_config = get_for_dataset(config, wildcards.dataset, [module_name, 'assemble'])
     if assembly_config is None:
@@ -86,7 +86,7 @@ def collect_files(wildcards):
     return {k: v for k, v in file_dict.items() if k in assembly_config}
 
 
-rule assemble:
+use rule assemble from preprocessing as preprocessing_assemble with:
     input:
         unpack(collect_files)
     output:
@@ -95,7 +95,4 @@ rule assemble:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
     conda:
-        '../envs/scanpy.yaml'
-    # shadow: 'minimal'
-    script:
-        '../scripts/assemble.py'
+        get_env(config, 'scanpy')

@@ -5,17 +5,20 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, link_zarr
-from metrics.utils import compute_neighbors, get_from_adata
-
+from utils.processing import compute_neighbors
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
-meta = get_from_adata(adata)
+logging.info(adata.__str__())
+logging.info(adata.uns)
 
-for output_type in meta['output_types']:
+output_type = adata.uns['integration']['output_type']
+output_types = [output_type] if isinstance(output_type, str) else output_type
+
+for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
     compute_neighbors(adata, output_type)
 

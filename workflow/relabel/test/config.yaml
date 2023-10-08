@@ -8,8 +8,18 @@ DATASETS:
       relabel: test/input/load_data/filtered/SchulteSchrepping2020.zarr
     relabel:
       mapping:
-        file:  test/input/mapping.tsv
+        file:  test/input/mapping_blood.tsv
         order:
           - cell_type
           - harmonized_label
           - lineage
+  test_relabel:
+    input:
+      relabel: test/input/pbmc68k.h5ad
+    relabel:
+      mapping:
+        file:  test/input/mapping_test.tsv
+        order:
+          - bulk_labels
+          - lineage
+

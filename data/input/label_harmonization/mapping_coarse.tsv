@@ -1,4 +1,4 @@
-cell_type	reference	lineage	lineage_coarse	harmonized_label
+cell_type	reference	lineage	lineage_coarse	harmonized_CL
 CD4-positive helper T cell	T cell	T cell + NK cell + ILC	lymphoid	T cell
 CD4-positive, alpha-beta T cell	T cell	T cell + NK cell + ILC	lymphoid	T cell
 CD4-positive, alpha-beta cytotoxic T cell	T cell	T cell + NK cell + ILC	lymphoid	T cell

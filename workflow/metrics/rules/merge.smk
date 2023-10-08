@@ -12,7 +12,8 @@ rule merge:
         tsv=out_dir / 'results' / 'metrics.tsv',
     params:
         wildcards=get_wildcards(parameters,wildcard_names)
-    conda: '../envs/scanpy.yaml'
+    conda:
+        get_env(config, 'scanpy')
     group:
         'metrics_merge'
     resources:

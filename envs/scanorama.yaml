@@ -11,5 +11,6 @@ dependencies:
   - scipy<1.11
   - scanorama=1.7
   - zarr
+  - pip
   - pip:
     - scib

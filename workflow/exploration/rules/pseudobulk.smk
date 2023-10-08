@@ -1,6 +1,6 @@
 rule pseudobulk:
     input:
-        zarr=rules.load_data_filter.output.zarr
+        zarr=rules.load_data_filter_study.output.zarr
     output:
         pca_1_2=images_dir / 'pseudobulk' / '{study}_1_2.png',
         pca_2_3=images_dir / 'pseudobulk' / '{study}_2_3.png',
@@ -10,7 +10,7 @@ rule pseudobulk:
         bulk_by='sample',
         color=['donor', 'assay', 'sex', 'disease', 'self_reported_ethnicity', 'development_stage', 'batch'],
     conda:
-        '../envs/scanpy.yaml'
+        get_env(config, 'scanpy')
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
     script:
