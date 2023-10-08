@@ -35,7 +35,8 @@ use rule pca from preprocessing as preprocessing_pca with:
     output:
         zarr=directory(out_dir / '{dataset}' / 'pca.zarr')
     params:
-        scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale'])
+        args=lambda w: get_for_dataset(config, w.dataset, [module_name, 'pca']),
+        scale=lambda w: get_for_dataset(config, w.dataset, [module_name, 'scale']),
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
