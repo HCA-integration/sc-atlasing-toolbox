@@ -73,7 +73,7 @@ if not isinstance(neighbors_key, list):
     neighbors_key = [neighbors_key]
 
 for key in neighbors_key:
-    check_and_update_neighbors_info(adata, key, params)
+    check_and_update_neighbors_info(adata, key)
     params |= dict(neighbors_key=key)
     compute_umap(adata, params)
     if len(neighbors_key) > 1:
