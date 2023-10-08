@@ -13,7 +13,8 @@ from utils.io import read_anndata, link_zarr
 input_file = snakemake.input[0]
 input_counts = snakemake.input.counts
 output_file = snakemake.output[0]
-scale = snakemake.params['scale']
+scale = snakemake.params.get('scale', False)
+args = snakemake.params.get('args', {})
 
 logging.info(f'Read "{input_file}"...')
 adata = read_anndata(input_file)
@@ -32,13 +33,14 @@ else:
     adata.X = sparse.csr_matrix(adata.X)
 
 logging.info('PCA...')
-sc.pp.pca(adata, use_highly_variable=True)
+sc.pp.pca(adata, use_highly_variable=True, **args)
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
 
 adata.uns['preprocessing']['scaled'] = scale
+adata.uns['preprocessing']['pca'] = args
 
 logging.info(f'Write to "{output_file}"...')
 del adata.raw

@@ -203,17 +203,17 @@ Before running the test pipeline for the first time, you must download a test da
 The following script downloads the "SchulteSchrepping" dataset and then copies it to the location that is defined in `dataset.tsv`.
 
 ```
-bash download_test_data.sh -c1
+bash test/download_test_data.sh -c1
 ```
 
 This needs to be done only once.
 
 ## Run pipeline on test configuration
 
-Activate the snakemake environment and call `test/run_test.sh` with run specific Snakemake parameters.
+Activate the snakemake environment and call `test/run_test_*.sh` with run specific Snakemake parameters.
 
 ```
 conda activate snakemake
-bash test/run_test.sh -n
-bash test/run_test.sh -c
+bash test/run_test_cellxgene.sh -n
+bash test/run_test_cellxgene.sh -c
 ```
