@@ -1,7 +1,7 @@
 from typing import Union
 from pathlib import Path
 import pandas as pd
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 from snakemake.rules import Rule
 
 from .WildcardParameters import WildcardParameters
@@ -102,6 +102,7 @@ class ModuleConfig:
         dataset: str,
         query: list,
         default: Union[str,bool,float,int,dict,list, None] = None,
+        # module_name: str = None,
         warn: bool = False,
     ) -> Union[str,bool,float,int,dict,list, None]:
         """Get any key from the config via query
@@ -115,7 +116,7 @@ class ModuleConfig:
             Union[str,bool,float,int,dict,list, None]: value of query in config
         """
         return get_from_config(
-            self.config['DATASETS'][dataset],
+            config=self.config['DATASETS'][dataset],
             query=query,
             default=default,
             warn=warn
@@ -183,6 +184,10 @@ class ModuleConfig:
         return self.parameters.get_paramspace()
 
 
+    def get_from_parameters(self, query_dict, parameter_key, **kwargs):
+        return self.parameters.get_from_parameters(query_dict, parameter_key, **kwargs)
+
+
     def update_inputs(self, dataset: str, input_files: [str, dict]):
         self.config['DATASETS'][dataset]['input'][self.module_name] = input_files
         self.__init__(
@@ -191,3 +196,36 @@ class ModuleConfig:
             parameters=self.parameters_df,
             default_output=self.default_output
         )
+
+
+    def get_profile(self, wildcards: [dict, Wildcards]):
+        return self.get_from_parameters(wildcards, 'resources')
+
+
+    def get_resource(
+        self,
+        resource_key: str,
+        profile: str = 'cpu',
+        attempt: int = 1,
+        factor: float = 0.5
+    ) -> [str, int, float]:
+        """
+        Retrieve resource information from config['resources']
+        
+        :param profile: resource profile, key under config['resources']
+        :param resource_key: resource key, key under config['resources'][profile]
+        """
+        if 'resources' not in self.config or not profile:
+            return ''
+        resources = self.config['resources']
+        try:
+            res = resources[profile][resource_key]
+        except KeyError:
+            print(
+                f'WARNING: Invalid profile "{profile}" or resource key "{resource_key}". '
+                'Please check that your config contains the correct entries under config["resources"]'
+            )
+            return ''
+        if resource_key == 'mem_mb':
+            return int(res + (attempt - 1) * factor * res)
+        return res

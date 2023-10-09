@@ -323,15 +323,14 @@ def get_from_config(
     Returns:
         Union[str,bool,float,int,dict,list, None]: value of query in config
     """
-    # start at top level
-    value = config
-
-    # walk down query
-    for q in query:
-        if warn and q not in value:
-            warnings.warn(f'key {q} not found in config for query {query}, returning default')
-        # print(q, value)
-        value = value.get(q, default)
+    value = config # start at top level
+    for q in query: # walk down query
+        try:
+            value = value[q]
+        except (AttributeError, KeyError):
+            if warn:
+                warnings.warn(f'key {q} not found in config for query {query}, returning default')
+            return default
     return value
 
 

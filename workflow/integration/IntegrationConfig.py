@@ -17,6 +17,7 @@ class IntegrationConfig(ModuleConfig):
         config: dict,
         parameters: pd.DataFrame = None,
         default_output: [str, Rule] = None,
+        wildcard_names: list = None,
     ):
         super().__init__(
             module_name=module_name,
@@ -31,7 +32,7 @@ class IntegrationConfig(ModuleConfig):
             dataset_config=self.datasets,
             default_config=self.config.get('defaults'),
             output_directory=self.out_dir,
-            wildcard_names=['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams'],
+            wildcard_names=wildcard_names,
         )
         
         # remove redundant label wildcards
@@ -63,10 +64,12 @@ class IntegrationWildcardParameters(WildcardParameters):
         input_file_wildcards: pd.DataFrame,
         dataset_config: dict,
         default_config: dict,
-        wildcard_names: list,
         output_directory: [str, Path],
+        wildcard_names: list = None,
     ):
         self.out_dir = output_directory
+        if wildcard_names is None:
+            wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
         super().__init__(
             module_name=module_name,
             parameters=parameters,

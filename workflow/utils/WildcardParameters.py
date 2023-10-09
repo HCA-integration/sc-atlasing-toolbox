@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
 from snakemake.io import Wildcards
@@ -84,7 +85,7 @@ class WildcardParameters:
         :param explode_by: column to explode by, expecting list entry for that column
         :param config_keys: list of entries to subset the config by, otherwise use all keys
         """
-        if len(self.dataset_config) == 0 or not config_params:
+        if not config_params:  # len(self.dataset_config) == 0 or 
             config_params = []
         
         if not wildcard_names:
@@ -138,6 +139,7 @@ class WildcardParameters:
 
     def get_wildcards(
         self,
+        subset_dict: [dict, Wildcards] = None,
         exclude: list = None,
         all_params: bool = False,
         as_df: bool = False,
@@ -150,9 +152,14 @@ class WildcardParameters:
         """
         if exclude is None:
             exclude = []
+        if subset_dict is None:
+            subset_dict = {}
         wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
         wildcard_names = [wildcard for wildcard in wildcard_names if wildcard not in exclude]
-        df = unique_dataframe(self.wildcards_df[wildcard_names])
+        df = self.wildcards_df[wildcard_names]
+        for key, value in subset_dict.items():
+            df = df[df[key] == value]
+        df = unique_dataframe(df)
         return df if as_df else df.to_dict('list')
 
 
@@ -166,9 +173,9 @@ class WildcardParameters:
 
     def get_from_parameters(
         self,
-        query_dict: dict,
+        query_dict: [dict, Wildcards],
         parameter_key: str,
-        wildcards_sub: [list, None] = None
+        wildcards_sub: [list, None] = None,
     ):
         """
         Get entries from parameters dataframe
@@ -179,24 +186,24 @@ class WildcardParameters:
         :return: single parameter value or list of parameters as specified by column
         """
         try:
-            assert column in self.parameters_df.columns
+            assert parameter_key in self.wildcards_df.columns, 'parameter_key not in wildcards_df.columns'
 
             if wildcards_sub is None:
-                wildcards_sub = self.parameters_df.columns
-            assert np.all([key in query_dict.keys() for key in query_dict.keys()])
+                wildcards_sub = self.wildcards_df.columns.tolist()
+            assert np.all([key in wildcards_sub for key in query_dict.keys()]), 'Not all query keys in wildcards_sub'
 
             # quickfix: ignore hyperparameters
             # if 'hyperparams' in wildcards_sub:
             #     wildcards_sub.remove('hyperparams')
 
             query_dict = {k: v for k, v in query_dict.items() if k in wildcards_sub}
-            params_sub = self.subset_by_wildcards(self.parameters_df, query_dict)
-            columns = list(set(wildcards_sub + [column]))
+            params_sub = self.subset_by_wildcards(self.wildcards_df, query_dict)
+            columns = list(set(wildcards_sub + [parameter_key]))
             params_sub = unique_dataframe(params_sub[columns])
         except Exception as e:
             raise ValueError(
-                f'Error for wildcards={wildcards}, column={column}, wildcards_keys={wildcards_keys}'
-                f'\n{parameters_df}\nError message: {e}'
+                f'Error for query_dict={query_dict}, parameter_key={parameter_key}, wildcards_sub={wildcards_sub}'
+                f'\n{self.wildcards_df}\nError message: {e}'
             ) from e
         
         try:
@@ -204,5 +211,5 @@ class WildcardParameters:
         except AssertionError as e:
             raise ValueError(f'More than 1 row after subsetting\n{params_sub}') from e
         
-        param = params_sub[column].tolist()
+        param = params_sub[parameter_key].tolist()
         return param[0] if len(param) == 1 else param[wildcards_keys]
