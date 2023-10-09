@@ -276,7 +276,8 @@ def get_for_dataset(
     default: Union[str,bool,float,int,dict,list, None] = None,
     warn: bool = False,
 ) -> Union[str,bool,float,int,dict,list, None]:
-    """Get any key from the config via query
+    """ TODO: deprecate
+    Get any key from the config via query
 
     Args:
         config (dict): config passed to Snakemake
@@ -302,6 +303,34 @@ def get_for_dataset(
             if warn:
                 warnings.warn(f'key {q} not found in config for query {query}, returning default')
             return default
+        value = value.get(q, default)
+    return value
+
+
+def get_from_config(
+    config: dict,
+    query: list,
+    default: Union[str,bool,float,int,dict,list, None] = None,
+    warn: bool = False,
+) -> Union[str,bool,float,int,dict,list, None]:
+    """Get any key from the config via query
+
+    Args:
+        config (str): config dictionary
+        query (list): list of keys to walk down the config
+        default (Union[str,bool,float,int,dict,list, None], optional): default value if key not found. Defaults to None.
+
+    Returns:
+        Union[str,bool,float,int,dict,list, None]: value of query in config
+    """
+    # start at top level
+    value = config
+
+    # walk down query
+    for q in query:
+        if warn and q not in value:
+            warnings.warn(f'key {q} not found in config for query {query}, returning default')
+        # print(q, value)
         value = value.get(q, default)
     return value
 

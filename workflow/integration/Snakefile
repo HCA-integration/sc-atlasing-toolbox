@@ -4,12 +4,11 @@ Integration
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from snakemake.utils import Paramspace
 
 from utils.misc import all_but, unique_dataframe
 from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
-    get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
-from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
+    get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards  # TODO: remove
+from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str  # TODO: remove
 from utils.environments import get_env
 from IntegrationConfig import IntegrationConfig
 
@@ -22,8 +21,8 @@ module_config = IntegrationConfig(module_name, config, parameters)
 out_dir = module_config.out_dir
 image_dir = module_config.image_dir
 input_files =  module_config.get_input_file_wildcards() # get_input_file_wildcards(config, module_name)
-parameters = module_config.wildcards_df
-wildcard_names = module_config.wildcard_names # = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
+parameters = module_config.get_wildcards(all_params=True, as_df=True)
+wildcard_names = module_config.get_wildcard_names()
 paramspace = module_config.get_paramspace()
 
 # subset to datasets that have module defined

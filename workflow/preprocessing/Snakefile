@@ -18,7 +18,7 @@ paramspace = module_config.get_paramspace()
 out_dir = module_config.out_dir
 image_dir = module_config.image_dir
 input_files = module_config.get_input_file_wildcards()
-wildcard_pattern = module_config.paramspace.wildcard_pattern
+wildcard_pattern = paramspace.wildcard_pattern
 
 
 wildcard_constraints:

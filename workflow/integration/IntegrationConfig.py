@@ -1,35 +1,82 @@
+from pathlib import Path
 import numpy as np
 import pandas as pd
-from snakemake.utils import Paramspace
 from snakemake.rules import Rule
 
 from utils.ModuleConfig import ModuleConfig
+from utils.WildcardParameters import WildcardParameters
 from utils.config import _get_or_default_from_config
 from utils.misc import expand_dict_and_serialize, unique_dataframe
 
 
 class IntegrationConfig(ModuleConfig):
-    
-    def __init__(self, module_name: str, config: dict, parameters: pd.DataFrame = None, default_output: [str, Rule] = None):
-        super().__init__(module_name, config, parameters, default_output)
-        self.wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams']
+
+    def __init__(
+        self,
+        module_name: str,
+        config: dict,
+        parameters: pd.DataFrame = None,
+        default_output: [str, Rule] = None,
+    ):
+        super().__init__(
+            module_name=module_name,
+            config=config,
+            default_output=default_output,
+        )
+        
+        self.parameters = IntegrationWildcardParameters(
+            module_name=module_name,
+            parameters=parameters,
+            input_file_wildcards=self.input_files.get_wildcards(),
+            dataset_config=self.datasets,
+            default_config=self.config.get('defaults'),
+            output_directory=self.out_dir,
+            wildcard_names=['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams'],
+        )
         
         # remove redundant label wildcards
-        if 'use_cell_type' in self.wildcards_df.columns:
-            self.wildcards_df['label'] = np.where(
-                self.wildcards_df['use_cell_type'],
-                self.wildcards_df['label'],
+        wildcards_df = self.parameters.wildcards_df
+        if 'use_cell_type' in wildcards_df.columns:
+            wildcards_df['label'] = np.where(
+                wildcards_df['use_cell_type'],
+                wildcards_df['label'],
                 'None'
             )
-            self.wildcards_df = unique_dataframe(self.wildcards_df)
-
-        self.paramspace = Paramspace(
-            self.wildcards_df[self.wildcard_names],
+        self.parameters.update(
+            wildcards_df=unique_dataframe(wildcards_df),
             filename_params=['method', 'hyperparams'],
             filename_sep='--',
         )
+
+
+    def get_hyperparams(self):
+        return self.paramters.get_hyperparams()
+
+
+
+class IntegrationWildcardParameters(WildcardParameters):
     
-    
+    def __init__(
+        self,
+        module_name: str,
+        parameters: pd.DataFrame,
+        input_file_wildcards: pd.DataFrame,
+        dataset_config: dict,
+        default_config: dict,
+        wildcard_names: list,
+        output_directory: [str, Path],
+    ):
+        self.out_dir = output_directory
+        super().__init__(
+            module_name=module_name,
+            parameters=parameters,
+            input_file_wildcards=input_file_wildcards,
+            dataset_config=dataset_config,
+            default_config=default_config,
+            wildcard_names=wildcard_names,
+        )
+
+
     def set_wildcards(
         self,
         config_params: list = None,
@@ -55,16 +102,17 @@ class IntegrationConfig(ModuleConfig):
 
     def set_hyperparams(self):
         """
-        Get hyperparameters specific to each method of a module for all datasets
+        Set hyperparameters specific to each method of a module for all datasets
 
         :param config: config containing dataset specific information
         :param module: name of module, key must be present for each dataset entry
         """
+        defaults = self.default_config.get(self.module_name)
         records = []
-        for dataset, dataset_dict in self.datasets.items():
+        for dataset, dataset_dict in self.dataset_config.items():
             methods_config = _get_or_default_from_config(
                 config=dataset_dict,
-                defaults=self.config['defaults'][self.module_name],
+                defaults=defaults,
                 key=self.module_name,
                 value='methods',
                 update=False,
@@ -88,7 +136,6 @@ class IntegrationConfig(ModuleConfig):
         unique_dataframe(
             self.hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
         ).to_csv(self.out_dir / 'hyperparams.tsv', sep='\t', index=False)
-
 
 
     def get_hyperparams(self):

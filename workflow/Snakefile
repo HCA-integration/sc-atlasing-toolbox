@@ -59,11 +59,9 @@ module preprocessing:
     snakefile: "preprocessing/Snakefile"
     config: parsed_configs['preprocessing'].get_config()
 
-
 module clustering:
     snakefile: "clustering/Snakefile"
     config: parsed_configs['clustering'].get_config()
-
 
 module label_transfer:
     snakefile: "label_transfer/Snakefile"

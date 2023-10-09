@@ -87,7 +87,7 @@ def get_params(wildcards, parameters_df, column, wildcards_keys=None):
         print(e)
         print(traceback.format_exc())
         raise Exception(
-            f'Error for wildcards={wildcards}, column={column}, wildcards_keys={wildcards_keys}'
+            f'Error for column={column}, wildcards={wildcards}, column={column}, wildcards_keys={wildcards_keys}'
             f'\n{parameters_df}\nError message: {e}'
         )
     if len(param) == 1:
