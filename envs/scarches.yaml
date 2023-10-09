@@ -15,7 +15,7 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - scarches
+    - git+https://github.com/theislab/scarches.git@master
     - jax<0.4.14
     - jaxlib<0.4.14
     #- scvi-tools==0.12.1
