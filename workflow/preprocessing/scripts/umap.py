@@ -77,7 +77,7 @@ for key in neighbors_key:
     check_and_update_neighbors_info(adata, key)
     params |= dict(neighbors_key=key)
     compute_umap(adata, params)
-    if len(neighbors_key) > 1:
+    if key != 'neighbors' or len(neighbors_key) > 1:
         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 
 logging.info(f'Write to {output_file}...')
