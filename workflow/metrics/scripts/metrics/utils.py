@@ -26,7 +26,7 @@ def write_metrics(filename, scores, output_types, **kwargs):
     :param kwargs: additional information to add to output
     """
 
-    meta_names = [key for key in kwargs.keys()]
+    meta_names = list(kwargs.keys())
     meta_values = [kwargs[col] for col in meta_names]
 
     records = [

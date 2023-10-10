@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from metrics.utils import anndata_to_mudata, compute_neighbors, get_from_adata
+from metrics.utils import anndata_to_mudata, compute_neighbors
 from utils.io import read_anndata, link_zarr
 
 
@@ -15,9 +15,14 @@ files_to_overwrite = ['.zattrs', '.zgroup', 'obsp', 'var', 'uns']
 
 logging.info('Read file...')
 adata = read_anndata(input_adata)
-meta = get_from_adata(adata)
 
-for output_type in meta['output_types']:
+# determine output types
+# default output type is 'full'
+output_type = adata.uns.get('integration', {'output_type': 'full'}).get('output_type')
+output_types = [output_type] if isinstance(output_type, str) else output_type
+adata.uns['output_types'] = output_types
+
+for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
     compute_neighbors(adata, output_type)
     if output_type == 'full':

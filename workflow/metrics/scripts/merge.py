@@ -7,7 +7,7 @@ input_metrics = snakemake.input.metrics
 input_benchmark = snakemake.input.benchmark
 out_tsv = snakemake.output.tsv
 expanded_wildcards = snakemake.params['wildcards']
-expanded_wildcards = pd.DataFrame(expanded_wildcards)
+# expanded_wildcards = pd.DataFrame(expanded_wildcards)
 
 metrics_df = pd.concat(
     [pd.read_table(file) for file in input_metrics],

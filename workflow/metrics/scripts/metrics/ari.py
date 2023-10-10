@@ -3,27 +3,27 @@ import scanpy as sc
 from .utils import cluster_optimal, select_neighbors, rename_categories
 
 
-def ari(adata, output_type, meta, **kwargs):
+def ari(adata, output_type, batch_key, label_key, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
     cluster_optimal(
         adata=adata,
-        label_key=meta['label'],
+        label_key=label_key,
         cluster_key='cluster',
         cluster_function=sc.tl.leiden,
         metric=scib.me.nmi,
         use_rep=None,
         n_iterations=5
     )
-    return scib.me.ari(adata, meta['label'], 'cluster')
+    return scib.me.ari(adata, label_key, 'cluster')
 
 
-def ari_leiden_y(adata, output_type, meta, **kwargs):
+def ari_leiden_y(adata, output_type, batch_key, label_key, **kwargs):
     import scib_metrics
 
     adata = select_neighbors(adata, output_type)
-    labels = rename_categories(adata, meta['label'])
+    labels = rename_categories(adata, label_key)
 
     scores = scib_metrics.nmi_ari_cluster_labels_leiden(
         X=adata.obsp['connectivities'],
@@ -33,10 +33,10 @@ def ari_leiden_y(adata, output_type, meta, **kwargs):
     return scores['ari']
 
 
-def ari_kmeans_y(adata, output_type, meta, **kwargs):
+def ari_kmeans_y(adata, output_type, batch_key, label_key, **kwargs):
     import scib_metrics
 
-    labels = rename_categories(adata, meta['label'])
+    labels = rename_categories(adata, label_key)
     adata = select_neighbors(adata, output_type)
 
     X = adata.obsp['connectivities']

@@ -9,7 +9,7 @@ try:
 except ImportError:
     logger.info('no hardware acceleration for sklearn')
 
-from metrics.utils import anndata_to_mudata, write_metrics, get_from_adata
+from metrics.utils import anndata_to_mudata, write_metrics
 from metrics import metric_map
 from utils.io import read_anndata
 
@@ -20,6 +20,8 @@ output_file = snakemake.output.metric
 dataset = snakemake.wildcards.dataset
 file_id = snakemake.wildcards.file_id
 metric = snakemake.wildcards.metric
+batch_key = snakemake.params.batch_key
+label_key = snakemake.params.label_key
 # method = snakemake.wildcards.method
 # hyperparams = snakemake.wildcards.hyperparams
 # lineage_specific = snakemake.wildcards.lineage_specific
@@ -31,7 +33,6 @@ metric_function = metric_map[metric]
 
 logging.info(f'Read {input_adata} ...')
 adata = read_anndata(input_adata)
-meta = get_from_adata(adata)
 
 if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
     logging.info(f'Read unintegrated data {input_unintegrated}...')
@@ -48,6 +49,7 @@ else:
 output_types = []
 scores = []
 # lineages = []
+# meta = get_from_adata(adata)
 # for output_type in meta['output_types']:
 #     if lineage_key == 'None':
 #         score = metric_function(
@@ -74,11 +76,12 @@ scores = []
 #             lineages.append(lineage)
 #             output_types.append(output_type)
 
-for output_type in meta['output_types']:
+for output_type in adata.uns['output_types']:
     score = metric_function(
         adata,
         output_type,
-        meta,
+        batch_key=batch_key,
+        label_key=label_key,
         adata_raw=unintegrated,
     )
     scores.append(score)
