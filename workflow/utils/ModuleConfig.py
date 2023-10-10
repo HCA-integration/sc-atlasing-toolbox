@@ -29,7 +29,18 @@ class ModuleConfig:
         parameters: pd.DataFrame = None,
         default_output: [str, Rule] = None,
         wildcard_names: list = None,
+        config_params: list = None,
+        explode_by: [str, list] = None,
     ):
+        """
+        :param module_name: name of module
+        :param config: complete config from Snakemake
+        :param parameters: dataframe with parameters for each dataset
+        :param default_output: default output pattern for module
+        :param wildcard_names: list of wildcard names for expanding rules
+        :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
+        :param explode_by: column(s) to explode wildcard_names extracted from config by
+        """
         self.module_name = module_name
         self.default_output = default_output
         self.config = config
@@ -57,7 +68,7 @@ class ModuleConfig:
         )
         
         if wildcard_names is None:
-            wildcard_names = ['dataset', 'file_id']
+            wildcard_names = []
         self.parameters = WildcardParameters(
             module_name=module_name,
             parameters=parameters,
@@ -65,6 +76,8 @@ class ModuleConfig:
             dataset_config=self.datasets,
             default_config=self.config.get('defaults'),
             wildcard_names=wildcard_names,
+            config_params=config_params,
+            explode_by=explode_by,
         )
 
 

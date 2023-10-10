@@ -13,18 +13,34 @@ class WildcardParameters:
         self,
         module_name: str,
         parameters: pd.DataFrame,
-        input_file_wildcards: pd.DataFrame,
+        input_file_wildcards: dict,
         dataset_config: dict,
         default_config: dict,
         wildcard_names: list,
+        config_params: list = None,
+        explode_by: [str, list] = None,
     ):
+        """
+        :param module_name: name of module
+        :param parameters: dataframe with parameters for each dataset
+        :param input_file_wildcards: dictionary with input file wildcards for each dataset
+        :param dataset_config: dictionary with dataset configuration for module
+        :param default_config: dictionary with default configuration for module
+        :param wildcard_names: list of wildcard names for expanding rules
+        :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
+        :param explode_by: column(s) to explode wildcard_names extracted from config by
+        """
         self.module_name = module_name
         
         # determine wildcards
         self.dataset_config = dataset_config
         self.default_config = default_config
-        self.set_wildcards()
-        self.wildcard_names = wildcard_names
+        self.set_wildcards(
+            config_params=config_params,
+            wildcard_names=wildcard_names,
+            explode_by=explode_by,
+        )
+        self.wildcard_names = list(set(wildcard_names + ['dataset', 'file_id']))
         
         if parameters is not None:
             self.parameters_df = parameters
@@ -70,7 +86,7 @@ class WildcardParameters:
         config_params: list = None,
         wildcard_names: list = None,
         explode_by: list = None,
-        config_keys: list = None,
+        config_entries: list = None,
         warn: bool = False,
     ):
         """
@@ -83,19 +99,19 @@ class WildcardParameters:
             Must map to config keys, and prepended by a wildcard name for the config entries
             e.g. ['dataset', 'method', 'label', 'batch']
         :param explode_by: column to explode by, expecting list entry for that column
-        :param config_keys: list of entries to subset the config by, otherwise use all keys
+        :param config_entries: list of entries to subset the config by, otherwise use all keys
         """
-        if not config_params:  # len(self.dataset_config) == 0 or 
-            config_params = []
-        
         if not wildcard_names:
-            wildcard_names = config_params
+            wildcard_names = []
+        
+        if not config_params:  # len(self.dataset_config) == 0 or 
+            config_params = wildcard_names
         
         if len(config_params) != len(wildcard_names):
             raise ValueError('config_params and wildcard_names must be of same length')
             
-        if config_keys is None:
-            config_keys = self.dataset_config.keys()
+        if config_entries is None:
+            config_entries = self.dataset_config.keys()
 
         # collect entries for dataframe
         defaults = self.default_config.get(self.module_name)
@@ -114,7 +130,7 @@ class WildcardParameters:
                     for param in config_params
                 ]
             )
-            for key in config_keys
+            for key in config_entries
         ]
         df = pd.DataFrame.from_records(records, columns=[*['dataset']+wildcard_names])
         if explode_by is not None:

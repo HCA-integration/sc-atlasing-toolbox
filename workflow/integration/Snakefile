@@ -16,6 +16,9 @@ mcfg = IntegrationConfig(
     module_name=module_name,
     config=config,
     parameters=parameters,
+    config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
+    wildcard_names=['method', 'label', 'batch', 'norm_counts', 'raw_counts'],
+    explode_by=['method', 'batch'],
 )
 
 out_dir = mcfg.out_dir
