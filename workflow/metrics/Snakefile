@@ -2,15 +2,10 @@
 Metrics
 """
 from pathlib import Path
-import numpy as np
 import pandas as pd
-from snakemake.utils import Paramspace
 
-from utils.misc import all_but
-from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
-    get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
@@ -28,70 +23,20 @@ envvars:
 # use rule * from integration as integration_ *
 
 
-module_name = 'metrics'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
-
-input_files = get_input_file_wildcards(config, module_name)
-out_dir.mkdir(parents=True, exist_ok=True)
-pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
-
-wildcards_df = get_params_from_config(
-    config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
-    module_name=module_name,
-    config_params=['methods', 'label', 'batch'],
-    wildcard_names=['dataset', 'metric', 'label', 'batch'],
-    defaults=config['defaults'],
+mcfg = ModuleConfig(
+    module_name='metrics',
+    config=config,
+    parameters=pd.read_table(workflow.source_path('params.tsv')),
+    config_params=['label', 'batch', 'methods'],
+    wildcard_names=['label', 'batch', 'metric',],
     explode_by=['metric', 'batch'],
 )
-# .merge(
-#     get_params_from_config(
-#         config=get_datasets_for_module(config, 'integration'),
-#         module_name='integration',
-#         config_params=['methods', 'batch', 'lineage'],
-#         wildcard_names=['dataset', 'method', 'batch', 'lineage_key'],
-#         defaults=config['defaults'],
-#         explode_by=['method', 'lineage_key', 'batch'],
-#         warn=False,
-#     ),
-#     on=['dataset', 'batch', 'lineage_key'],
-# )
 
-parameters = pd.read_table(workflow.source_path('params.tsv'))
-# hyperparams_df = get_hyperparams(config,module_name='integration')
-parameters = wildcards_df \
-    .merge(parameters,on='metric',how='inner') \
-    # .merge(hyperparams_df,on=['dataset', 'method'],how='left')
-# parameters['lineage_key'] = parameters['lineage_key'].astype(str)
+out_dir = mcfg.out_dir
+image_dir = mcfg.image_dir
+paramspace = mcfg.get_paramspace()
+paramspace_no_metric = mcfg.get_paramspace(default=False, exclude=['metric'])
 
-# # setup lineage specific integration
-# def determine_lineage_specific(lineage_key):
-#     if lineage_key == 'None':
-#         return ['global']
-#     return ['per_lineage', 'global']
-
-# parameters['lineage_specific'] = parameters.apply(
-#     lambda row: determine_lineage_specific(row['lineage_key']), axis=1
-# )
-# parameters = parameters.explode('lineage_specific')
-# # only lineage specific
-# parameters = parameters.query('lineage_specific == "per_lineage"')
-
-# add input files
-parameters = pd.DataFrame(input_files).merge(
-    parameters,
-    on='dataset',
-    how='right'
-)
-
-wildcard_names = ['dataset', 'file_id', 'metric', 'batch', 'label']
-paramspace = Paramspace(
-    parameters[[w for w in wildcard_names if w != 'metric']],
-    filename_params=['batch', 'label'],
-    filename_sep='--',
-)
 
 wildcard_constraints:
     dataset='\w+',
@@ -126,6 +71,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=image_dir / module_name,
+            images=image_dir / mcfg.module_name,
             target='all'
         )

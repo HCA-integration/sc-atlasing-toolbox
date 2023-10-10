@@ -1,29 +1,27 @@
 import os
 
 
-def get_integration_output(wildcards):
-    if wildcards.lineage_specific == 'global':
-        return rules.integration_run_method.output[0]
-    return rules.merge_lineage.output[0]
+# def get_integration_output(wildcards):
+#     if wildcards.lineage_specific == 'global':
+#         return rules.integration_run_method.output[0]
+#     return rules.merge_lineage.output[0]
 
 
 rule preprocess:
     input:
-        lambda wildcards: get_input_file(config, wildcards, module_name),
+        lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'preprocessed.h5mu.zarr'),
+        zarr=directory(out_dir / paramspace_no_metric.wildcard_pattern / 'preprocessed.zarr'),
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'scanpy') # TODO use GPU accelerated neighbors
     resources:
-        partition=get_resource(config,profile='cpu',resource_key='partition'),
-        qos=get_resource(config,profile='cpu',resource_key='qos'),
-        gpu=get_resource(config,profile='cpu',resource_key='gpu'),
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
+        partition=lambda w: mcfg.get_resource(resource_key='partition', profile='cpu'),
+        qos=lambda w: mcfg.get_resource(resource_key='qos', profile='cpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='cpu', attempt=attempt),
         time="1-00:00:00",
     # shadow: 'copy-minimal'
     script:
         '../scripts/preprocess.py'
-
 
 rule run:
     message:
@@ -36,36 +34,36 @@ rule run:
        """
     input:
         h5mu=rules.preprocess.output.zarr,
-        unintegrated=lambda w: get_for_dataset(
-            config,
-            w.dataset,
+        unintegrated=lambda wildcards: mcfg.get_for_dataset(
+            dataset=wildcards.dataset,
             query=['input', 'integration'],
             default=rules.preprocess.output.zarr,
-        ),
+        ), # TODO: define optional input for metrics
         metrics_meta=workflow.source_path('../params.tsv')
     output:
-        metric=out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
+        metric=out_dir / f'{paramspace.wildcard_pattern}.tsv'
+    benchmark:
+        out_dir / f'{paramspace.wildcard_pattern}.benchmark.tsv'
     params:
-        env=lambda wildcards: get_params(wildcards,parameters,'env')
+        batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
+        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env'),
     conda:
         lambda wildcards, params: get_env(config, params.env)
     resources:
-        partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
-        qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
-        gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
-        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
+        partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
+        qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
+        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt),
+        gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w)),
         disk_mb=100,
         time="1-08:00:00",
-    benchmark:
-        out_dir / paramspace.wildcard_pattern / '{metric}.benchmark.tsv'
-    # shadow: 'copy-minimal'
     script:
         '../scripts/run.py'
 
 
 rule run_all:
-    input: expand(rules.run.output,zip,**parameters[wildcard_names].to_dict('list'))
-
+    input:
+        mcfg.get_output_files(rules.run.output)
 
 # rule run_per_lineage_all:
 #     input:

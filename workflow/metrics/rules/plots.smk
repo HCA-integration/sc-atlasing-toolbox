@@ -1,3 +1,5 @@
+from utils.wildcards import wildcards_to_str
+
 module plots:
     snakefile: "../../common/rules/plots.smk"
     config: config
@@ -196,15 +198,15 @@ rule plots_all:
     input:
         # funky heatmap
         rules.funkyheatmap.output,
-        expand(rules.funkyheatmap_per_dataset.output,**get_wildcards(parameters,'dataset')),
-        expand(rules.funkyheatmap_per_file.output,**get_wildcards(parameters,'file_id')),
+        mcfg.get_output_files(rules.funkyheatmap_per_dataset.output),
+        mcfg.get_output_files(rules.funkyheatmap_per_file.output),
         # barplot
         expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
-        expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'dataset')),
-        expand(rules.metrics_barplot_per_file.output,metric=['s', 'max_uss', 'score'],**get_wildcards(parameters,'file_id')),
+        expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['dataset'])),
+        expand(rules.metrics_barplot_per_file.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['file_id'])),
         # swarmplot
         expand(rules.metrics_swarmplot.output,metric='score'),
-        expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**get_wildcards(parameters,'dataset')),
-        expand(rules.metrics_swarmplot_per_file.output,metric='score',**get_wildcards(parameters,'file_id')),
+        expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**mcfg.get_wildcards(wildcard_names=['dataset'])),
+        expand(rules.metrics_swarmplot_per_file.output,metric='score',**mcfg.get_wildcards(wildcard_names=['file_id'])),
         # implementation comparison
         # rules.compare_metrics.output,
