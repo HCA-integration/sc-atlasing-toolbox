@@ -30,12 +30,21 @@ defaults:
       - isolated_label_f1
       - pcr
   datasets:
-    - test
+    - test_metrics
+    # - test_integration
     # - scib_metrics
 
 
 DATASETS:
-  test:
+  test_metrics:
+    input:
+      metrics:
+         - test/input/pbmc68k.h5ad
+         - test/input/pbmc68k_2.h5ad
+    metrics:
+      label: bulk_labels
+      batch: louvain
+  test_integration:
     input:
       metrics:
         unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~unintegrated--hyperparams~None/adata.zarr
@@ -55,7 +64,7 @@ DATASETS:
   
   scib_metrics:
     input:
-      metrics: test/data/pbmc68k.h5ad
+      metrics: test/input/pbmc68k.h5ad
     metrics:
       label: bulk_labels
       batch: batch
