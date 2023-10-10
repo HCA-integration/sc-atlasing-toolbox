@@ -23,7 +23,7 @@ rule benchmark:
     output:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
-        wildcards=mcfg.get_wildcards()
+        wildcards=mcfg.get_wildcards(as_df=True)
     group:
         'integration'
     run:

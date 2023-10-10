@@ -31,6 +31,7 @@ class ModuleConfig:
         wildcard_names: list = None,
         config_params: list = None,
         explode_by: [str, list] = None,
+        paramspace_kwargs: dict = None,
     ):
         """
         :param module_name: name of module
@@ -40,6 +41,7 @@ class ModuleConfig:
         :param wildcard_names: list of wildcard names for expanding rules
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
         :param explode_by: column(s) to explode wildcard_names extracted from config by
+        :param paramspace_kwargs: arguments passed to WildcardParameters
         """
         self.module_name = module_name
         self.default_output = default_output
@@ -164,13 +166,15 @@ class ModuleConfig:
         return self.parameters.wildcard_names
 
 
-    def get_output_files(self, pattern: [str, Rule] = None, exclude: list = None) -> list:
+    def get_output_files(self, pattern: [str, Rule] = None, allow_missing=False, **kwargs) -> list:
         """
         Get output file based on wildcards
+        :param pattern: output pattern, defaults to self.default_output
+        :param **kwargs: arguments passed to WildcardParameters.get_wildcards
         """
         if pattern is None:
             pattern = self.default_output
-        return expand(pattern, zip, **self.get_wildcards(exclude=exclude))
+        return expand(pattern, zip, **self.get_wildcards(**kwargs), allow_missing=allow_missing)
 
 
     def get_input_file_wildcards(self):
@@ -185,7 +189,7 @@ class ModuleConfig:
         return self.input_files.get_files_per_dataset(dataset)
 
 
-    def get_input_file(self, dataset, file_id):
+    def get_input_file(self, dataset, file_id, **kwargs):
         return self.input_files.get_file(dataset, file_id)
 
 
@@ -193,12 +197,12 @@ class ModuleConfig:
         return self.parameters.get_parameters()
 
 
-    def get_paramspace(self):
-        return self.parameters.get_paramspace()
+    def get_paramspace(self, **kwargs):
+        return self.parameters.get_paramspace(**kwargs)
 
 
     def get_from_parameters(self, query_dict, parameter_key, **kwargs):
-        return self.parameters.get_from_parameters(query_dict, parameter_key, **kwargs)
+        return self.parameters.get_from_parameters(dict(query_dict), parameter_key, **kwargs)
 
 
     def update_inputs(self, dataset: str, input_files: [str, dict]):

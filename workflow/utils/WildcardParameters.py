@@ -1,3 +1,4 @@
+from pprint import pformat
 import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
@@ -19,6 +20,7 @@ class WildcardParameters:
         wildcard_names: list,
         config_params: list = None,
         explode_by: [str, list] = None,
+        paramspace_kwargs: dict = None,
     ):
         """
         :param module_name: name of module
@@ -40,7 +42,11 @@ class WildcardParameters:
             wildcard_names=wildcard_names,
             explode_by=explode_by,
         )
-        self.wildcard_names = list(set(wildcard_names + ['dataset', 'file_id']))
+        mandatory_wildcards = ['dataset', 'file_id']
+        for wildcard in mandatory_wildcards:
+            while wildcard in wildcard_names:
+                wildcard_names.remove(wildcard)
+        self.wildcard_names = mandatory_wildcards + wildcard_names
         
         if parameters is not None:
             self.parameters_df = parameters
@@ -56,7 +62,14 @@ class WildcardParameters:
             how='left',
         )
         
-        self.paramspace = Paramspace(self.wildcards_df[self.wildcard_names])
+        # set paramspace
+        if paramspace_kwargs is None:
+            paramspace_kwargs = {}
+        self.paramspace_kwargs = paramspace_kwargs
+        self.paramspace = Paramspace(
+            self.wildcards_df[self.wildcard_names],
+            **paramspace_kwargs
+        )
 
 
     @staticmethod
@@ -147,6 +160,7 @@ class WildcardParameters:
             self.parameters_df = parameters_df
         if wildcard_names is not None:
             self.wildcard_names = wildcard_names
+        self.paramspace_kwargs = kwargs
         self.paramspace = Paramspace(
             self.wildcards_df[self.wildcard_names],
             **kwargs
@@ -156,7 +170,8 @@ class WildcardParameters:
     def get_wildcards(
         self,
         subset_dict: [dict, Wildcards] = None,
-        exclude: list = None,
+        exclude: [list, str] = None,
+        wildcard_names: list = None,
         all_params: bool = False,
         as_df: bool = False,
     ) -> [dict, pd.DataFrame]:
@@ -168,14 +183,20 @@ class WildcardParameters:
         """
         if exclude is None:
             exclude = []
+        elif isinstance(exclude, str):
+            exclude = [exclude]
         if subset_dict is None:
             subset_dict = {}
-        wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
+        if wildcard_names is None:
+            wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
+        
         wildcard_names = [wildcard for wildcard in wildcard_names if wildcard not in exclude]
         df = self.wildcards_df[wildcard_names]
         for key, value in subset_dict.items():
+            if key not in df.columns:
+                continue
             df = df[df[key] == value]
-        df = unique_dataframe(df)
+        df = unique_dataframe(df).reset_index(drop=True)
         return df if as_df else df.to_dict('list')
 
 
@@ -183,8 +204,31 @@ class WildcardParameters:
         return self.parameters_df
 
 
-    def get_paramspace(self) -> Paramspace:
-        return self.paramspace
+    def get_paramspace(
+        self,
+        default: bool=True,
+        wildcard_names: list = None,
+        exclude: list = None,
+        **kwargs
+    ) -> Paramspace:
+        """
+        :param default: whether to return the default paramspace (all wildcards)
+        :param wildcard_names: list of wildcard names to subset the paramspace by
+        :param kwargs: additional arguments for snakemake.utils.Paramspace
+        :return: snakemake.utils.Paramspace object
+        """
+        if default:
+            return self.paramspace
+        if exclude is None:
+            exclude = []
+        if wildcard_names is None:
+            wildcard_names = [wildcard for wildcard in self.wildcard_names if wildcard not in exclude]
+        if not kwargs:
+            kwargs = self.paramspace_kwargs
+        return Paramspace(
+            self.wildcards_df[wildcard_names],
+            **kwargs
+        )
 
 
     def get_from_parameters(
@@ -216,10 +260,11 @@ class WildcardParameters:
             params_sub = self.subset_by_wildcards(self.wildcards_df, query_dict)
             columns = list(set(wildcards_sub + [parameter_key]))
             params_sub = unique_dataframe(params_sub[columns])
-        except Exception as e:
-            raise ValueError(
-                f'Error for query_dict={query_dict}, parameter_key={parameter_key}, wildcards_sub={wildcards_sub}'
-                f'\n{self.wildcards_df}\nError message: {e}'
+        except AssertionError as e:
+            raise AssertionError(
+                f'{e} for parameter_key={parameter_key}, wildcards_sub={wildcards_sub}'
+                f'\nquery_dict:\n{pformat(query_dict)}'
+                f'\n{self.wildcards_df}'
             ) from e
         
         try:

@@ -13,23 +13,14 @@ class IntegrationConfig(ModuleConfig):
 
     def __init__(
         self,
-        module_name: str,
-        config: dict,
-        parameters: pd.DataFrame = None,
-        default_output: [str, Rule] = None,
-        wildcard_names: list = None,
-        config_params: list = None,
-        explode_by: [str, list] = None,
+        **kwargs
     ):
-        super().__init__(
-            module_name=module_name,
-            config=config,
-            parameters=parameters,
-            default_output=default_output,
-            wildcard_names=wildcard_names,
-            config_params=config_params,
-            explode_by=explode_by,
-        )
+        if kwargs.get('paramspace_kwargs') is None:
+            kwargs['paramspace_kwargs'] = dict(
+                filename_params=['method', 'hyperparams'],
+                filename_sep='--',
+            )
+        super().__init__(**kwargs)
         
         # set hyperparameters
         self.set_hyperparams()
@@ -44,9 +35,7 @@ class IntegrationConfig(ModuleConfig):
             )
         self.parameters.update(
             wildcards_df=unique_dataframe(wildcards_df),
-            wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams'],
-            filename_params=['method', 'hyperparams'],
-            filename_sep='--',
+            wildcard_names=self.parameters.wildcard_names + ['hyperparams'],
         )
 
 
