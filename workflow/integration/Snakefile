@@ -9,13 +9,10 @@ from utils.environments import get_env
 from IntegrationConfig import IntegrationConfig
 
 
-module_name = 'integration'
-parameters = pd.read_table(workflow.source_path('params.tsv'))
-parameters['output_type'] = parameters['output_type'].str.split(',')
 mcfg = IntegrationConfig(
-    module_name=module_name,
+    module_name='integration',
     config=config,
-    parameters=parameters,
+    parameters=pd.read_table(workflow.source_path('params.tsv')),
     config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
     wildcard_names=['method', 'label', 'batch', 'norm_counts', 'raw_counts'],
     explode_by=['method', 'batch'],
@@ -24,9 +21,6 @@ mcfg = IntegrationConfig(
 out_dir = mcfg.out_dir
 image_dir = mcfg.image_dir
 paramspace = mcfg.get_paramspace()
-
-# subset to datasets that have module defined
-# parameters = parameters[~parameters['method'].isnull()]
 
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
@@ -85,6 +79,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )

@@ -8,7 +8,7 @@ rule merge:
         metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=wildcards),
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=wildcards),
     output:
-        tsv=out_dir / 'results' / 'metrics.tsv',
+        tsv=mcfg.out_dir / 'results' / 'metrics.tsv',
     params:
         wildcards=mcfg.get_wildcards(as_df=True),
         wildcards_string=mcfg.get_wildcards(as_df=True).to_string(index=False),
@@ -32,7 +32,7 @@ use rule merge as merge_per_dataset with:
         metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
-        tsv=out_dir / 'results' / 'per_dataset' / '{dataset}_metrics.tsv',
+        tsv=mcfg.out_dir / 'results' / 'per_dataset' / '{dataset}_metrics.tsv',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True).to_string(index=False)
@@ -48,7 +48,7 @@ use rule merge as merge_per_file with:
         metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
-        tsv=out_dir / 'results' / 'per_file' / '{file_id}.tsv',
+        tsv=mcfg.out_dir / 'results' / 'per_file' / '{file_id}.tsv',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True).to_string(index=False)

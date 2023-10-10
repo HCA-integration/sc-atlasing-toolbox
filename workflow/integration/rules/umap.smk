@@ -24,7 +24,7 @@ def get_colors(wildcards):
     labels = labels if isinstance(labels, list) else [labels]
     batch = mcfg.get_from_parameters(wildcards, 'batch')
     batch = batch if isinstance(batch, list) else [batch]
-    umap_colors = mcfg.get_for_dataset(dataset, query=[module_name, 'umap_colors'], default=[])
+    umap_colors = mcfg.get_for_dataset(dataset, query=[mcfg.module_name, 'umap_colors'], default=[])
     return [*labels, *batch, *umap_colors]
 
 

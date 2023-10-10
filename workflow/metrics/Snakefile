@@ -32,8 +32,6 @@ mcfg = ModuleConfig(
     explode_by=['metric', 'batch'],
 )
 
-out_dir = mcfg.out_dir
-image_dir = mcfg.image_dir
 paramspace = mcfg.get_paramspace()
 paramspace_no_metric = mcfg.get_paramspace(default=False, exclude=['metric'])
 
@@ -71,6 +69,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=image_dir / mcfg.module_name,
+            images=mcfg.image_dir,
             target='all'
         )

@@ -15,11 +15,16 @@ class IntegrationConfig(ModuleConfig):
         self,
         **kwargs
     ):
+        # set default paramspace arguments
         if kwargs.get('paramspace_kwargs') is None:
             kwargs['paramspace_kwargs'] = dict(
                 filename_params=['method', 'hyperparams'],
                 filename_sep='--',
             )
+        
+        # parse output type info
+        kwargs['parameters']['output_type'] = kwargs['parameters']['output_type'].str.split(',')
+        
         super().__init__(**kwargs)
         
         # set hyperparameters

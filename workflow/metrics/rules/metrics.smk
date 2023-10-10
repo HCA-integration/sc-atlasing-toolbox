@@ -11,7 +11,7 @@ rule preprocess:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(out_dir / paramspace_no_metric.wildcard_pattern / 'preprocessed.zarr'),
+        zarr=directory(mcfg.out_dir / paramspace_no_metric.wildcard_pattern / 'preprocessed.zarr'),
     conda:
         get_env(config, 'scanpy') # TODO use GPU accelerated neighbors
     resources:
@@ -41,9 +41,9 @@ rule run:
         ), # TODO: define optional input for metrics
         metrics_meta=workflow.source_path('../params.tsv')
     output:
-        metric=out_dir / f'{paramspace.wildcard_pattern}.tsv'
+        metric=mcfg.out_dir / f'{paramspace.wildcard_pattern}.tsv'
     benchmark:
-        out_dir / f'{paramspace.wildcard_pattern}.benchmark.tsv'
+        mcfg.out_dir / f'{paramspace.wildcard_pattern}.benchmark.tsv'
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
