@@ -206,7 +206,6 @@ class WildcardParameters:
 
     def get_paramspace(
         self,
-        default: bool=True,
         wildcard_names: list = None,
         exclude: list = None,
         **kwargs
@@ -217,12 +216,12 @@ class WildcardParameters:
         :param kwargs: additional arguments for snakemake.utils.Paramspace
         :return: snakemake.utils.Paramspace object
         """
-        if default:
+        if not wildcard_names and not exclude and not kwargs:
             return self.paramspace
         if exclude is None:
             exclude = []
         if wildcard_names is None:
-            wildcard_names = [wildcard for wildcard in self.wildcard_names if wildcard not in exclude]
+            wildcard_names = [w for w in self.wildcard_names if w not in exclude]
         if not kwargs:
             kwargs = self.paramspace_kwargs
         return Paramspace(
@@ -245,9 +244,6 @@ class WildcardParameters:
         :param wildcards_sub: list of wildcards used for subsetting the parameters
         :return: single parameter value or list of parameters as specified by column
         """
-        try:
-            assert parameter_key in self.wildcards_df.columns, 'parameter_key not in wildcards_df.columns'
-
             if wildcards_sub is None:
                 wildcards_sub = self.wildcards_df.columns.tolist()
             assert np.all([key in wildcards_sub for key in query_dict.keys()]), 'Not all query keys in wildcards_sub'
