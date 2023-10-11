@@ -26,7 +26,7 @@ class ModuleConfig:
         self,
         module_name: str,
         config: dict,
-        parameters: pd.DataFrame = None,
+        parameters: [pd.DataFrame, str] = None,
         default_output: [str, Rule] = None,
         wildcard_names: list = None,
         config_params: list = None,
@@ -36,7 +36,7 @@ class ModuleConfig:
         """
         :param module_name: name of module
         :param config: complete config from Snakemake
-        :param parameters: dataframe with parameters for each dataset
+        :param parameters: pd.DataFrame or path to TSV with module specific parameters
         :param default_output: default output pattern for module
         :param wildcard_names: list of wildcard names for expanding rules
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
@@ -71,6 +71,10 @@ class ModuleConfig:
         
         if wildcard_names is None:
             wildcard_names = []
+        
+        if isinstance(parameters, str):
+            parameters = pd.read_table(parameters)
+        
         self.parameters = WildcardParameters(
             module_name=module_name,
             parameters=parameters,

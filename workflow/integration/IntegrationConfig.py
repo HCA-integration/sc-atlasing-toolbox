@@ -23,7 +23,12 @@ class IntegrationConfig(ModuleConfig):
             )
         
         # parse output type info
-        kwargs['parameters']['output_type'] = kwargs['parameters']['output_type'].str.split(',')
+        parameters = kwargs.get('parameters')
+        if isinstance(parameters, str):
+            parameters = pd.read_table(parameters)
+        if isinstance(parameters, pd.DataFrame):
+            parameters['output_type'] = parameters['output_type'].str.split(',')
+            kwargs['parameters'] = parameters
         
         super().__init__(**kwargs)
         

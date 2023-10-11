@@ -12,7 +12,7 @@ from IntegrationConfig import IntegrationConfig
 mcfg = IntegrationConfig(
     module_name='integration',
     config=config,
-    parameters=pd.read_table(workflow.source_path('params.tsv')),
+    parameters=workflow.source_path('params.tsv'),
     config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
     wildcard_names=['method', 'label', 'batch', 'norm_counts', 'raw_counts'],
     explode_by=['method', 'batch'],
