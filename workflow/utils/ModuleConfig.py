@@ -201,7 +201,7 @@ class ModuleConfig:
         return self.parameters.get_paramspace(**kwargs)
 
 
-    def get_from_parameters(self, query_dict, parameter_key, **kwargs):
+    def get_from_parameters(self, query_dict: [dict, Wildcards], parameter_key: str, **kwargs):
         return self.parameters.get_from_parameters(dict(query_dict), parameter_key, **kwargs)
 
 

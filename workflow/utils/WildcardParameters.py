@@ -72,25 +72,35 @@ class WildcardParameters:
         )
 
 
-    @staticmethod
-    def subset_by_wildcards(
-        df: pd.DataFrame,
-        wildcards: [dict, Wildcards]
+    def subset_by_query(
+        self,
+        query_dict: [dict, Wildcards],
+        columns: list = None
     ) -> pd.DataFrame:
         """
-        Helper function to subset df by wildcards
+        Helper function to subset self.wildcards_df by query dictionary
         
-        :param df: dataframe with wildcard names in column and wildcard values in rows
-        :param wildcards: wildcards object from Snakemake
-        :return: subset dataframe
+        :param query_dict: Mapping of column and value to subset by
+        :param columns: columns to subset wildcards_df by
+        :return: subset of wildcards_df
         """
-        if not wildcards:
-            return df
-        wildcards = {k: wildcards[k] for k in wildcards.keys() if k in df.columns}
-        query = ' and '.join([f'{k} == "{v}"' for k, v in wildcards.items()])
-        df = df.query(query)
-        if df.shape[0] == 0:
-            raise ValueError(f'no wildcard combination found in wildcards df {query}')
+        if not query_dict and not columns:
+            return self.wildcards_df
+        
+        if columns is None:
+            columns = self.wildcards_df.columns
+        
+        df = self.wildcards_df.astype(str).copy()
+        # subset by query
+        for key, value in query_dict.items():
+            if key not in df.columns:
+                continue
+            df = df[df[key] == value]
+        
+        # subset by columns
+        df = unique_dataframe(df[columns]).reset_index(drop=True)
+        assert df.shape[0] > 0, f'No wildcard combination found in wildcards df {query_dict}\n{self.wildcards_df}'
+        
         return df
 
 
@@ -190,13 +200,10 @@ class WildcardParameters:
         if wildcard_names is None:
             wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
         
-        wildcard_names = [wildcard for wildcard in wildcard_names if wildcard not in exclude]
-        df = self.wildcards_df[wildcard_names]
-        for key, value in subset_dict.items():
-            if key not in df.columns:
-                continue
-            df = df[df[key] == value]
-        df = unique_dataframe(df).reset_index(drop=True)
+        df = self.subset_by_query(
+            query_dict=subset_dict,
+            columns=[w for w in wildcard_names if w not in exclude]
+        )
         return df if as_df else df.to_dict('list')
 
 
@@ -244,29 +251,24 @@ class WildcardParameters:
         :param wildcards_sub: list of wildcards used for subsetting the parameters
         :return: single parameter value or list of parameters as specified by column
         """
-            if wildcards_sub is None:
-                wildcards_sub = self.wildcards_df.columns.tolist()
+        if wildcards_sub is None:
+            wildcards_sub = self.wildcards_df.columns.tolist()
+        
+        try:
+            assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
             assert np.all([key in wildcards_sub for key in query_dict.keys()]), 'Not all query keys in wildcards_sub'
-
-            # quickfix: ignore hyperparameters
-            # if 'hyperparams' in wildcards_sub:
-            #     wildcards_sub.remove('hyperparams')
-
-            query_dict = {k: v for k, v in query_dict.items() if k in wildcards_sub}
-            params_sub = self.subset_by_wildcards(self.wildcards_df, query_dict)
-            columns = list(set(wildcards_sub + [parameter_key]))
-            params_sub = unique_dataframe(params_sub[columns])
         except AssertionError as e:
             raise AssertionError(
                 f'{e} for parameter_key={parameter_key}, wildcards_sub={wildcards_sub}'
                 f'\nquery_dict:\n{pformat(query_dict)}'
                 f'\n{self.wildcards_df}'
             ) from e
+
+        wildcards_sub = list(set(wildcards_sub + [parameter_key]))
+        params_sub = self.subset_by_query(
+            query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+            columns=[parameter_key]
+        )
+        assert params_sub.shape[0] <= 1, f'More than 1 row after subsetting\n{params_sub}'
         
-        try:
-            assert params_sub.shape[0] == 1
-        except AssertionError as e:
-            raise ValueError(f'More than 1 row after subsetting\n{params_sub}') from e
-        
-        param = params_sub[parameter_key].tolist()
-        return param[0] if len(param) == 1 else param[wildcards_keys]
+        return params_sub[parameter_key].tolist()[0]
