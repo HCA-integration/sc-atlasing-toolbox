@@ -15,10 +15,22 @@ class InputFiles:
         self.module_name = module_name
         self.config = dataset_config
         self.out_dir = output_directory
+        
         self.file_map = {}
         self.wildcards = dict(dataset=[], file_id=[], file_name=[])
         for dataset in self.config:
             self.set_file_per_dataset(dataset)
+        self.file_map_df = pd.DataFrame(
+            [(dataset, name, file_path) for dataset, name_map in self.file_map.items() for name, file_path in name_map.items()],
+            columns=['dataset', 'file_id', 'file_path']
+        )
+        
+        # write file mapping to file
+        self.file_map_df.to_csv(
+            self.out_dir / 'input_files.tsv',
+            sep='\t',
+            index=False
+        )
 
 
     @staticmethod
@@ -62,13 +74,6 @@ class InputFiles:
             self.wildcards['dataset'].append(dataset)
             self.wildcards['file_id'].append(file_id)
             self.wildcards['file_name'].append(file)
-        
-        # write to file
-        pd.DataFrame(self.file_map).to_csv(
-            self.out_dir / 'input_files.tsv',
-            sep='\t',
-            index=False
-        )
 
 
     def get_wildcards(self) -> dict:
@@ -78,11 +83,11 @@ class InputFiles:
         return self.wildcards
 
 
-    def get_files(self) -> dict:
+    def get_files(self, as_df=False) -> [dict, pd.DataFrame]:
         """
         Get the file name to file path mapping for all datasets
         """
-        return self.file_map
+        return self.file_map_df if as_df else self.file_map
 
 
     def get_files_per_dataset(self, dataset) -> dict:
