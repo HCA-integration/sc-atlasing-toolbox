@@ -20,12 +20,13 @@ def all_but(_list, is_not):
 def unique_dataframe(df):
     if df.empty:
         return df
-    hashable_columns = [
-        col for col in df.columns
-        if all(isinstance(df[col].iloc[i], typing.Hashable) for i in range(df.shape[0]))
-    ]
-    duplicated = df[hashable_columns].duplicated()
-    return df[~duplicated]
+    # hashable_columns = [
+    #     col for col in df.columns
+    #     if all(isinstance(df[col].iloc[i], typing.Hashable) for i in range(df.shape[0]))
+    # ]
+    # duplicated = df[hashable_columns].duplicated()
+    duplicated = df.astype(str).duplicated()
+    return df[~duplicated].reset_index(drop=True)
 
 
 def expand_dict(_dict):

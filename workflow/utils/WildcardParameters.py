@@ -90,18 +90,16 @@ class WildcardParameters:
         if columns is None:
             columns = self.wildcards_df.columns
         
-        df = self.wildcards_df.astype(str).copy()
+        df = self.wildcards_df.copy()
         # subset by query
         for key, value in query_dict.items():
             if key not in df.columns:
                 continue
-            df = df[df[key] == value]
+            # df = df[df[key] == value]
+            df = df.query(f'{key} == @value')
         
         # subset by columns
-        df = unique_dataframe(df[columns]).reset_index(drop=True)
-        assert df.shape[0] > 0, f'No wildcard combination found in wildcards df {query_dict}\n{self.wildcards_df}'
-        
-        return df
+        return unique_dataframe(df[columns])
 
 
     def set_wildcards(
@@ -254,21 +252,25 @@ class WildcardParameters:
         if wildcards_sub is None:
             wildcards_sub = self.wildcards_df.columns.tolist()
         
+        assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
+        for key in query_dict:
+            assert key in wildcards_sub, f'Query key "{key}" is not in wildcards_sub'
+        
         try:
-            assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
-            assert np.all([key in wildcards_sub for key in query_dict.keys()]), 'Not all query keys in wildcards_sub'
+            wildcards_sub = list(set(wildcards_sub + [parameter_key]))
+            params_sub = self.subset_by_query(
+                query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                columns=[parameter_key]
+            )
+            assert params_sub.shape[0] > 0, f'No wildcard combination found'
+            assert params_sub.shape[0] == 1, f'More than 1 row after subsetting\n{params_sub}'
+        
         except AssertionError as e:
             raise AssertionError(
-                f'{e} for parameter_key={parameter_key}, wildcards_sub={wildcards_sub}'
+                f'{e} for:\n\tparameter_key="{parameter_key}"\n\twildcards_sub={wildcards_sub}'
                 f'\nquery_dict:\n{pformat(query_dict)}'
-                f'\n{self.wildcards_df}'
+                f'\n{self.wildcards_df[query_dict.keys()]}'
+                f'\nall columns: {self.wildcards_df.columns.tolist()}'
             ) from e
-
-        wildcards_sub = list(set(wildcards_sub + [parameter_key]))
-        params_sub = self.subset_by_query(
-            query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
-            columns=[parameter_key]
-        )
-        assert params_sub.shape[0] <= 1, f'More than 1 row after subsetting\n{params_sub}'
         
         return params_sub[parameter_key].tolist()[0]
