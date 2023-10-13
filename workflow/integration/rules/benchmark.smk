@@ -3,7 +3,10 @@ from utils.wildcards import wildcards_to_str
 
 rule benchmark_per_dataset:
     input:
-        benchmark=lambda wildcards: expand_per(rules.integration_run_method.benchmark,parameters,wildcards,exclude=['dataset']),
+        benchmark=lambda wildcards: mcfg.get_output_files(
+            rules.integration_run_method.benchmark,
+            subset_dict=dict(wildcards)
+        ),
     output:
         benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
     params:
