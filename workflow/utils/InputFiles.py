@@ -7,7 +7,12 @@ from .config import get_from_config
 
 class InputFiles:
 
-    def __init__(self, module_name: str, dataset_config: dict, output_directory: [str, Path]):
+    def __init__(
+        self,
+        module_name: str,
+        dataset_config: dict,
+        output_directory: [str, Path] = None,
+    ):
         """
         module_name: name of the module, needed for querying the config
         config: config containing dataset name, inputs and module parameters
@@ -25,12 +30,13 @@ class InputFiles:
             columns=['dataset', 'file_id', 'file_path']
         )
         
-        # write file mapping to file
-        self.file_map_df.to_csv(
-            self.out_dir / 'input_files.tsv',
-            sep='\t',
-            index=False
-        )
+        if self.out_dir is not None:
+            # write file mapping to file
+            self.file_map_df.to_csv(
+                self.out_dir / 'input_files.tsv',
+                sep='\t',
+                index=False
+            )
 
 
     @staticmethod

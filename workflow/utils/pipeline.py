@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import _get_or_default_from_config, set_defaults
 from .ModuleConfig import ModuleConfig
+from .InputFiles import InputFiles
 
 
 def update_module_configs(config, params):
@@ -53,16 +54,48 @@ def config_for_module(config, module):
     return config
 
 
-def update_input_files(module: str, parsed_configs: dict[ModuleConfig]):
-    datasets = parsed_configs[module].get_config().get('DATASETS')
-    output_map = parsed_configs[module].get_config().get('output_map')
-    for dataset in datasets.keys():
-        input_specification = datasets[dataset]['input'].get(module)
-        if isinstance(input_specification, str) and input_specification in output_map:
-            input_pattern = output_map[input_specification]
-            if input_specification in parsed_configs:
-                input_config = parsed_configs[input_specification]
-                input_files = input_config.get_output_files(input_pattern)
-            else:
-                input_files = input_pattern.format(dataset=dataset)
-            parsed_configs[module].update_inputs(dataset, input_files)
+def update_input_files_per_dataset(
+    dataset: str,
+    module_name: str,
+    config: dict,
+    first_module: str = None,
+    config_class_map: dict[str: ModuleConfig] = None,
+    config_kwargs: dict[str: dict] = {},
+):
+    if module_name == first_module:
+        raise ValueError(f'Circle detected: first module {first_module} cannot be an input module')
+    if first_module is None:
+        first_module = module_name
+    if config_class_map is None:
+        config_class_map = {}
+    
+    file_map = InputFiles.parse(config['DATASETS'][dataset]['input'][module_name])
+    input_files = {}
+    for file_name, file_path in file_map.items():
+        if '/' in file_path:
+            # assert Path(file_path).exists(), f'Missing input file "{file_path}"'
+            input_files |= {file_name: file_path}
+            continue
+        
+        # get output files for input module
+        config = update_input_files_per_dataset(
+            dataset=dataset,
+            module_name=file_path,
+            config=config,
+            first_module=first_module,
+            config_class_map=config_class_map,
+        )
+        
+        ModuleConfigClass = config_class_map.get(module_name, ModuleConfig)
+        input_cfg = ModuleConfigClass(
+            module_name=file_path,
+            config=config,
+            datasets=[dataset],
+            **config_kwargs.get(module_name, {})
+        )
+        input_files |= InputFiles.parse(
+            input_cfg.get_output_files(subset_dict={'dataset': dataset})
+        )
+    
+    config['DATASETS'][dataset]['input'][module_name] = input_files
+    return config

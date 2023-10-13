@@ -17,7 +17,7 @@ class ModuleConfig:
     # wildcard_names = []
     # parameters = WildcardParameters()
     # input_files = InputFiles()
-    # default_output = None
+    # default_target = None
     # out_dir = Path()
     # image_dir = Path()
 
@@ -27,54 +27,44 @@ class ModuleConfig:
         module_name: str,
         config: dict,
         parameters: [pd.DataFrame, str] = None,
-        default_output: [str, Rule] = None,
+        default_target: [str, Rule] = None,
         wildcard_names: list = None,
         config_params: list = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
+        datasets: [str, list] = None,
     ):
         """
         :param module_name: name of module
         :param config: complete config from Snakemake
         :param parameters: pd.DataFrame or path to TSV with module specific parameters
-        :param default_output: default output pattern for module
+        :param default_target: default output pattern for module
         :param wildcard_names: list of wildcard names for expanding rules
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
         :param explode_by: column(s) to explode wildcard_names extracted from config by
         :param paramspace_kwargs: arguments passed to WildcardParameters
         """
         self.module_name = module_name
-        self.default_output = default_output
         self.config = config
         self.set_defaults()
-        
+        self.set_datasets(datasets)
+
         self.out_dir = Path(self.config['output_dir']) / self.module_name
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.image_dir = Path(self.config['images']) / self.module_name
 
-        # get subset of datasets for this module
-        all_datasets = self.config['DATASETS']
-        default_datasets = self.config['defaults'].get('datasets', all_datasets.keys())
-        self.datasets = {
-            dataset: entry for dataset, entry in all_datasets.items()
-            if dataset in default_datasets
-            and module_name in entry.get('input', {}).keys()
-        }
-        for dataset in self.datasets:
-            self.set_defaults_per_dataset(dataset)
-
         self.input_files = InputFiles(
-            module_name=module_name,
+            module_name=self.module_name,
             dataset_config=self.datasets,
             output_directory=self.out_dir,
         )
-        
+
         if wildcard_names is None:
             wildcard_names = []
-        
+
         if isinstance(parameters, str):
             parameters = pd.read_table(parameters)
-        
+
         self.parameters = WildcardParameters(
             module_name=module_name,
             parameters=parameters,
@@ -86,6 +76,8 @@ class ModuleConfig:
             explode_by=explode_by,
         )
 
+        self.set_default_target(default_target)
+
 
     def set_defaults(self, warn: bool = False):
         self.config['DATASETS'] = self.config.get('DATASETS', {})
@@ -93,6 +85,7 @@ class ModuleConfig:
         self.config['defaults'][self.module_name] = self.config['defaults'].get(self.module_name, {})
         datasets = list(self.config['DATASETS'].keys())
         self.config['defaults']['datasets'] = self.config['defaults'].get('datasets', datasets)
+        self.config['output_map'] = self.config.get('output_map', {})
 
 
     def set_defaults_per_dataset(self, dataset: str, warn: bool = False):
@@ -114,6 +107,32 @@ class ModuleConfig:
         # set entry in config
         self.config['DATASETS'][dataset][self.module_name] = entry
         self.datasets[dataset][self.module_name] = entry
+
+
+    def set_datasets(self, datasets: [str, list] = None):
+        all_datasets = self.config['DATASETS']
+        if datasets is None:
+            datasets = all_datasets.keys()
+        
+        default_datasets = self.config['defaults'].get('datasets', all_datasets.keys())
+        default_datasets = [d for d in datasets if d in default_datasets]
+        self.datasets = {
+            dataset: entry for dataset, entry in all_datasets.items()
+            if dataset in default_datasets
+            and self.module_name in entry.get('input', {}).keys()
+        }
+        
+        for dataset in self.datasets:
+            self.set_defaults_per_dataset(dataset)
+
+
+    def set_default_target(self, default_target: [str, Rule] = None):
+        if default_target is not None:
+            self.default_target = default_target
+        elif self.module_name in self.config['output_map']:
+            self.default_target = self.config['output_map'][self.module_name]
+        else:
+            self.default_target = self.out_dir / self.parameters.paramspace.wildcard_pattern / f'{self.module_name}.tsv'
 
 
     def get_for_dataset(
@@ -173,11 +192,11 @@ class ModuleConfig:
     def get_output_files(self, pattern: [str, Rule] = None, allow_missing=False, **kwargs) -> list:
         """
         Get output file based on wildcards
-        :param pattern: output pattern, defaults to self.default_output
+        :param pattern: output pattern, defaults to self.default_target
         :param **kwargs: arguments passed to WildcardParameters.get_wildcards
         """
         if pattern is None:
-            pattern = self.default_output
+            pattern = self.default_target
         return expand(pattern, zip, **self.get_wildcards(**kwargs), allow_missing=allow_missing)
 
 
@@ -211,11 +230,11 @@ class ModuleConfig:
 
     def update_inputs(self, dataset: str, input_files: [str, dict]):
         self.config['DATASETS'][dataset]['input'][self.module_name] = input_files
-        self.__init__(
+        self.set_datasets()
+        self.input_files = InputFiles(
             module_name=self.module_name,
-            config=self.config,
-            parameters=self.parameters_df,
-            default_output=self.default_output
+            dataset_config=self.datasets,
+            output_directory=self.out_dir,
         )
 
 
