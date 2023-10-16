@@ -17,10 +17,8 @@ mcfg = ModuleConfig(
     config_params=['neighbors_key', 'resolutions'],
     wildcard_names=['neighbors_key', 'resolution'],
     rename_config_params={'resolutions': 'resolution'},
+    explode_by='resolution',
 )
-wildcards_df = mcfg.get_wildcards(as_df=True)
-wildcards_df = wildcards_df.explode('resolution').reset_index(drop=True)
-mcfg.parameters.update(wildcards_df)
 paramspace = mcfg.get_paramspace(exclude=['neighbors_key', 'resolution'])
 
 

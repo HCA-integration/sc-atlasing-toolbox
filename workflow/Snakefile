@@ -24,6 +24,7 @@ config_kwargs = {
         config_params=['neighbors_key', 'resolutions'],
         wildcard_names=['neighbors_key', 'resolution'],
         rename_config_params={'resolutions': 'resolution'},
+        explode_by='resolution',
     ),
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),

@@ -1,6 +1,7 @@
 defaults:
   datasets:
-    - test
+    - test_clustering
+    - test_integration_clustering
   preprocessing:
     raw_counts: X
     norm_counts: normcounts
@@ -14,7 +15,7 @@ defaults:
       - neighbors
 
 DATASETS:
-  test:
+  test_clustering:
     input:
       preprocessing: data/pbmc68k.h5ad
       clustering: preprocessing
@@ -31,5 +32,26 @@ DATASETS:
         - 0.5
         - 0.6
         - 0.7
+        - 0.8
+  test_integration_clustering:
+    input:
+      preprocessing: data/pbmc68k.h5ad
+      integration: preprocessing
+      clustering: integration
+    preprocessing:
+      label: bulk_labels
+      batch: phase
+      sample: phase
+    integration:
+      raw_counts: raw
+      norm_counts: normcounts
+      batch: phase
+      methods:
+        unintegrated:
+        combat:
+    clustering:
+      neighbors_key: neighbors
+      resolutions:
+        - 0.4
         - 0.8
 
