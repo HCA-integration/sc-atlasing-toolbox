@@ -60,8 +60,10 @@ def update_input_files_per_dataset(
     config: dict,
     first_module: str = None,
     config_class_map: dict[str: ModuleConfig] = None,
-    config_kwargs: dict[str: dict] = {},
+    config_kwargs: dict[str: dict] = None,
 ):
+    if config_kwargs is None:
+        config_kwargs = {}
     if module_name == first_module:
         raise ValueError(f'Circle detected: first module {first_module} cannot be an input module')
     if first_module is None:
@@ -78,20 +80,21 @@ def update_input_files_per_dataset(
             continue
         
         # get output files for input module
+        input_module = file_path
         config = update_input_files_per_dataset(
             dataset=dataset,
-            module_name=file_path,
+            module_name=input_module,
             config=config,
             first_module=first_module,
             config_class_map=config_class_map,
         )
         
-        ModuleConfigClass = config_class_map.get(module_name, ModuleConfig)
+        ModuleConfigClass = config_class_map.get(input_module, ModuleConfig)
         input_cfg = ModuleConfigClass(
-            module_name=file_path,
+            module_name=input_module,
             config=config,
             datasets=[dataset],
-            **config_kwargs.get(module_name, {})
+            **config_kwargs.get(input_module, {})
         )
         input_files |= InputFiles.parse(
             input_cfg.get_output_files(subset_dict={'dataset': dataset})
