@@ -28,7 +28,8 @@ mcfg = ModuleConfig(
     config=config,
     parameters=workflow.source_path('params.tsv'),
     config_params=['label', 'batch', 'methods'],
-    wildcard_names=['label', 'batch', 'metric',],
+    wildcard_names=['label', 'batch', 'metric'],
+    rename_config_params={'methods': 'metric'},
     explode_by=['metric', 'batch'],
 )
 

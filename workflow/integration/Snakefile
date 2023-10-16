@@ -14,7 +14,8 @@ mcfg = IntegrationConfig(
     config=config,
     parameters=workflow.source_path('params.tsv'),
     config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
-    wildcard_names=['method', 'label', 'batch', 'norm_counts', 'raw_counts'],
+    wildcard_names=['method', 'label', 'batch'],
+    rename_config_params={'methods': 'method'},
     explode_by=['method', 'batch'],
 )
 

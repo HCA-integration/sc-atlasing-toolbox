@@ -16,6 +16,7 @@ mcfg = ModuleConfig(
     config=config,
     config_params=['neighbors_key', 'resolutions'],
     wildcard_names=['neighbors_key', 'resolution'],
+    rename_config_params={'resolutions': 'resolution'},
 )
 wildcards_df = mcfg.get_wildcards(as_df=True)
 wildcards_df = wildcards_df.explode('resolution').reset_index(drop=True)

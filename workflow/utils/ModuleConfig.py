@@ -31,6 +31,7 @@ class ModuleConfig:
         default_target: [str, Rule] = None,
         wildcard_names: list = None,
         config_params: list = None,
+        rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
         datasets: [str, list] = None,
@@ -74,6 +75,7 @@ class ModuleConfig:
             default_config=self.config.get('defaults'),
             wildcard_names=wildcard_names,
             config_params=config_params,
+            rename_config_params=rename_config_params,
             explode_by=explode_by,
         )
 

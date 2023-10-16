@@ -19,6 +19,7 @@ class WildcardParameters:
         default_config: dict,
         wildcard_names: list,
         config_params: list = None,
+        rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
     ):
@@ -41,6 +42,7 @@ class WildcardParameters:
             config_params=config_params,
             wildcard_names=wildcard_names,
             explode_by=explode_by,
+            rename_config_params=rename_config_params,
         )
         mandatory_wildcards = ['dataset', 'file_id']
         for wildcard in mandatory_wildcards:
@@ -108,6 +110,7 @@ class WildcardParameters:
         wildcard_names: list = None,
         explode_by: list = None,
         config_entries: list = None,
+        rename_config_params: dict = None,
         warn: bool = False,
     ):
         """
@@ -128,8 +131,8 @@ class WildcardParameters:
         if not config_params:  # len(self.dataset_config) == 0 or 
             config_params = wildcard_names
         
-        if len(config_params) != len(wildcard_names):
-            raise ValueError('config_params and wildcard_names must be of same length')
+        # if len(config_params) != len(wildcard_names):
+        #     raise ValueError('config_params and wildcard_names must be of same length')
             
         if config_entries is None:
             config_entries = self.dataset_config.keys()
@@ -153,7 +156,13 @@ class WildcardParameters:
             )
             for key in config_entries
         ]
-        df = pd.DataFrame.from_records(records, columns=[*['dataset']+wildcard_names])
+        df = pd.DataFrame.from_records(records, columns=[*['dataset']+config_params])
+        
+        # rename columns
+        if rename_config_params is None:
+            rename_config_params = {}
+        df = df.rename(columns=rename_config_params)
+        
         if explode_by is not None:
             explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
             for column in explode_by:

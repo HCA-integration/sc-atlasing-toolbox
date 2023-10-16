@@ -22,17 +22,20 @@ config_kwargs = {
     'clustering': dict(
         config_params=['neighbors_key', 'resolutions'],
         wildcard_names=['neighbors_key', 'resolution'],
+        rename_config_params={'resolutions': 'resolution'},
     ),
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
         config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
-        wildcard_names=['method', 'label', 'batch', 'norm_counts', 'raw_counts'],
+        wildcard_names=['method', 'label', 'batch'],
+        rename_config_params={'methods': 'method'},
         explode_by=['method', 'batch'],
     ),
     'metrics': dict(
         parameters=workflow.source_path('metrics/params.tsv'),
         config_params=['label', 'batch', 'methods'],
-        wildcard_names=['label', 'batch', 'metric',],
+        wildcard_names=['label', 'batch', 'metric'],
+        rename_config_params={'methods': 'metric'},
         explode_by=['metric', 'batch'],
     ),
 }
