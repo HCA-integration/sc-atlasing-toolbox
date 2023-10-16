@@ -167,6 +167,15 @@ class WildcardParameters:
             explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
             for column in explode_by:
                 df = df.explode(column)
+        
+        # set dtypes
+        df = df.replace({np.nan: None})
+        for k, v in df.items():
+            if isinstance(v, (list, dict)):
+                continue
+            else:
+                df[k] = df[k].astype(str)
+        
         self.wildcards_df = df.reset_index(drop=True)
 
 
@@ -271,14 +280,14 @@ class WildcardParameters:
                 query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
                 columns=[parameter_key]
             )
-            assert params_sub.shape[0] > 0, f'No wildcard combination found'
+            assert params_sub.shape[0] > 0, 'No wildcard combination found'
             assert params_sub.shape[0] == 1, f'More than 1 row after subsetting\n{params_sub}'
         
         except AssertionError as e:
             raise AssertionError(
                 f'{e} for:\n\tparameter_key="{parameter_key}"\n\twildcards_sub={wildcards_sub}'
                 f'\nquery_dict:\n{pformat(query_dict)}'
-                f'\n{self.wildcards_df[query_dict.keys()]}'
+                f'\n{self.wildcards_df[list(query_dict.keys())+[parameter_key]]}'
                 f'\nall columns: {self.wildcards_df.columns.tolist()}'
             ) from e
         
