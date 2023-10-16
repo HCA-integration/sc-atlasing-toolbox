@@ -77,7 +77,8 @@ class WildcardParameters:
     def subset_by_query(
         self,
         query_dict: [dict, Wildcards],
-        columns: list = None
+        columns: list = None,
+        verbose: bool = False,
     ) -> pd.DataFrame:
         """
         Helper function to subset self.wildcards_df by query dictionary
@@ -99,9 +100,16 @@ class WildcardParameters:
                 continue
             # df = df[df[key] == value]
             df = df.query(f'{key} == @value')
+            
+            if verbose:
+                print(f'subset by {key} ==  {value}')
+                print(df.shape)
+        
+        if verbose:
+            print(df.transpose())
         
         # subset by columns
-        return unique_dataframe(df[columns])
+        return unique_dataframe(df[columns]).reset_index(drop=True)
 
 
     def set_wildcards(
@@ -138,7 +146,7 @@ class WildcardParameters:
             config_entries = self.dataset_config.keys()
 
         # collect entries for dataframe
-        defaults = self.default_config.get(self.module_name)
+        defaults = self.default_config.get(self.module_name, {})
         records = [
             (
                 key,
@@ -258,6 +266,8 @@ class WildcardParameters:
         query_dict: [dict, Wildcards],
         parameter_key: str,
         wildcards_sub: [list, None] = None,
+        check_null: bool = False,
+        verbose=False,
     ):
         """
         Get entries from parameters dataframe
@@ -278,7 +288,7 @@ class WildcardParameters:
             wildcards_sub = list(set(wildcards_sub + [parameter_key]))
             params_sub = self.subset_by_query(
                 query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
-                columns=[parameter_key]
+                columns=[parameter_key],
             )
             assert params_sub.shape[0] > 0, 'No wildcard combination found'
             assert params_sub.shape[0] == 1, f'More than 1 row after subsetting\n{params_sub}'
@@ -291,4 +301,15 @@ class WildcardParameters:
                 f'\nall columns: {self.wildcards_df.columns.tolist()}'
             ) from e
         
-        return params_sub[parameter_key].tolist()[0]
+        parameter = params_sub[parameter_key].tolist()[0]
+        if check_null and (pd.isna(parameter) or pd.isnull(parameter) or parameter is None):
+            df = self.subset_by_query(
+                query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                columns=[parameter_key],
+                verbose=True,
+            )
+            print('query_dict:')
+            pprint(query_dict)
+            print('parameter_key:', parameter_key)
+            raise ValueError(f'Parameter should not be NULL for {parameter_key} == {parameter}')
+        return parameter

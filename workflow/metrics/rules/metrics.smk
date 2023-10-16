@@ -36,7 +36,7 @@ rule run:
         h5mu=rules.preprocess.output.zarr,
         unintegrated=lambda wildcards: mcfg.get_for_dataset(
             dataset=wildcards.dataset,
-            query=['input', 'integration'],
+            query=[mcfg.module_name, 'unintegrated'],
             default=rules.preprocess.output.zarr,
         ), # TODO: define optional input for metrics
         metrics_meta=workflow.source_path('../params.tsv')
@@ -47,7 +47,7 @@ rule run:
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
-        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env'),
+        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True),
     conda:
         lambda wildcards, params: get_env(config, params.env)
     resources:
