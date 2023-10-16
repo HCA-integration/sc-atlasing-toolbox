@@ -5,27 +5,22 @@ import seaborn as sns
 input_tsv = snakemake.input.tsv
 output_png = snakemake.output.png
 
-params_keys = [
-    'metric',
-    'category',
-    'hue',
-    'facet_row',
-    'facet_col',
-    'title',
-    'description',
-    'dodge',
-    'xlim',
-    'ylim'
-]
-params = {p: None for p in params_keys}
-params.update(snakemake.params)
 
-category = params['category']
-metric = params['metric']
-facet_row = params['facet_row']
-facet_col = params['facet_col']
-hue = params['hue']
+params = snakemake.params
+category = params.get('category')
+metric = params.get('metric')
+facet_row = params.get('facet_row')
+facet_col = params.get('facet_col')
+hue = params.get('hue')
+hue = None if len(hue) > 6 else hue
 
+xlim = params.get('xlim')
+ylim = params.get('ylim')
+
+title = params.get("title", f"{metric} for {category}")
+description = params.get("description", "")
+
+# read table
 df = pd.read_table(input_tsv)
 
 # convert to category
@@ -52,10 +47,10 @@ g = sns.catplot(
     order=order,
     errwidth=0.5,
     capsize=0.2,
-    dodge=params['dodge'],
+    dodge=params.get('dodge', False),
 )
-g.set(xlim=params['xlim'], ylim=params['ylim'])
+g.set(xlim=xlim, ylim=ylim)
 g.fig.subplots_adjust(top=adjust)
-g.fig.suptitle(f'{params["title"]} {params["description"]}')
+g.fig.suptitle(f'{title} {description}')
 
 g.savefig(output_png)
