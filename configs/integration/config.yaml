@@ -85,12 +85,14 @@ DATASETS:
       label: bulk_labels
       batch: phase
       sample: phase
+      highly_variable_genes: False
     integration:
       label: bulk_labels
       batch: phase
     metrics:
       label: bulk_labels
       batch: phase
+      # unintegrated: preprocessing
 
   # test2:
   #   input:

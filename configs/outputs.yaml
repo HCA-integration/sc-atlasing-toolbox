@@ -10,4 +10,4 @@ output_map:
   pca: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/pca.zarr
   neighbors: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/neighbors.zarr
   preprocessing: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/preprocessed.zarr
-  integration: data/out/integration/dataset~{dataset}/file_id~{file_id}/method~{method}/label~{label}/batch~{batch}/hyperparams~{hyperparams}/postprocessed.zarr
+  integration: data/out/integration/dataset~{dataset}/file_id~{file_id}/batch~{batch}/method~{method}--hyperparams~{hyperparams}--label~{label}/postprocessed.zarr

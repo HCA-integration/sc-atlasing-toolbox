@@ -15,13 +15,9 @@ class IntegrationConfig(ModuleConfig):
         self,
         **kwargs
     ):
-        # set default paramspace arguments
-        if kwargs.get('paramspace_kwargs') is None:
-            kwargs['paramspace_kwargs'] = dict(
-                filename_params=['method', 'hyperparams'],
-                filename_sep='--',
-            )
-        
+        """
+        :param kwargs: parameters for ModuleConfig
+        """
         # parse output type info
         parameters = kwargs.get('parameters')
         if isinstance(parameters, str):
@@ -43,9 +39,19 @@ class IntegrationConfig(ModuleConfig):
                 wildcards_df['label'],
                 'None'
             )
-        self.parameters.update(
+        
+        # set default paramspace arguments
+        if kwargs.get('paramspace_kwargs') is None:
+            paramspace_kwargs = dict(
+                filename_params=['method', 'hyperparams', 'label'],
+                filename_sep='--',
+            )
+        else:
+            paramspace_kwargs = {}
+        self.update_parameters(
             wildcards_df=unique_dataframe(wildcards_df),
             wildcard_names=self.parameters.wildcard_names + ['hyperparams'],
+            **paramspace_kwargs,
         )
 
 

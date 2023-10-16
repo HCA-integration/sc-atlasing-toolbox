@@ -1,3 +1,4 @@
+from pprint import pprint
 from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
@@ -26,17 +27,18 @@ config_kwargs = {
     ),
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
-        config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
-        wildcard_names=['method', 'label', 'batch'],
+        config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
+        wildcard_names=['method', 'batch', 'label'],
         rename_config_params={'methods': 'method'},
         explode_by=['method', 'batch'],
     ),
     'metrics': dict(
         parameters=workflow.source_path('metrics/params.tsv'),
-        config_params=['label', 'batch', 'methods'],
+        config_params=['label', 'batch', 'methods', 'unintegrated'],
         wildcard_names=['label', 'batch', 'metric'],
         rename_config_params={'methods': 'metric'},
         explode_by=['metric', 'batch'],
+        paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
     ),
 }
 
