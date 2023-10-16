@@ -3,6 +3,7 @@ import hashlib
 import pandas as pd
 
 from .config import get_from_config
+from .misc import create_hash
 
 
 class InputFiles:
@@ -50,10 +51,7 @@ class InputFiles:
             input_files = [input_files]
         
         if isinstance(input_files, list):
-            input_files = {
-                hashlib.blake2b(file.encode('utf-8'), digest_size=digest_size).hexdigest(): file
-                for file in input_files
-            }
+            input_files = {create_hash(file): file for file in input_files}
         
         if not isinstance(input_files, dict):
             raise ValueError(f'input_files must be a list or dict, but is {type(input_files)}')

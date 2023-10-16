@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import typing
+import hashlib
 
 
 def remove_outliers(adata, extrema='max', factor=10):
@@ -123,3 +124,8 @@ def merge(dfs, **kwargs):
     )
     print(merged_df)
     return merged_df
+
+
+def create_hash(string: str, digest_size: int = 5):
+    string = string.encode('utf-8')
+    return hashlib.blake2b(string, digest_size=digest_size).hexdigest()

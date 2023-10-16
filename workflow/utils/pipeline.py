@@ -97,7 +97,10 @@ def update_input_files_per_dataset(
             **config_kwargs.get(input_module, {})
         )
         input_files |= InputFiles.parse(
-            input_cfg.get_output_files(subset_dict={'dataset': dataset})
+            input_cfg.get_output_files(
+                subset_dict={'dataset': dataset},
+                as_dict=True
+            )
         )
     
     config['DATASETS'][dataset]['input'][module_name] = input_files

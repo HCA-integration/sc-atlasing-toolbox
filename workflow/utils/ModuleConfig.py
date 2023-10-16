@@ -7,6 +7,7 @@ from snakemake.rules import Rule
 from .WildcardParameters import WildcardParameters
 from .InputFiles import InputFiles
 from .config import get_from_config, _get_or_default_from_config
+from .misc import create_hash
 
 
 class ModuleConfig:
@@ -189,7 +190,13 @@ class ModuleConfig:
         return self.parameters.wildcard_names
 
 
-    def get_output_files(self, pattern: [str, Rule] = None, allow_missing=False, **kwargs) -> list:
+    def get_output_files(
+        self,
+        pattern: [str, Rule] = None,
+        allow_missing=False,
+        as_dict=False,
+        **kwargs
+    ) -> list:
         """
         Get output file based on wildcards
         :param pattern: output pattern, defaults to self.default_target
@@ -197,7 +204,25 @@ class ModuleConfig:
         """
         if pattern is None:
             pattern = self.default_target
-        return expand(pattern, zip, **self.get_wildcards(**kwargs), allow_missing=allow_missing)
+        wildcards = self.get_wildcards(**kwargs)
+        targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
+        if as_dict:
+            task_names = [
+                (
+                    self.module_name
+                    + ':'
+                    + '--'.join(
+                        [
+                            f'{k}={v}' if k != 'file_id' else f'{k}={create_hash(v)}'
+                            for k, v in zip(wildcards.keys(), w)
+                            if k != 'dataset'
+                        ]
+                    )
+                )
+                for w in zip(*wildcards.values())
+            ]
+            targets = dict(zip(task_names, targets))
+        return targets
 
 
     def get_input_file_wildcards(self):
