@@ -10,7 +10,7 @@ rule benchmark_per_dataset:
     output:
         benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
     params:
-        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards) # parameters.query(f'dataset == "{wildcards.dataset}"')[wildcard_names]
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, as_df=True)
     group:
         'integration'
     run:
