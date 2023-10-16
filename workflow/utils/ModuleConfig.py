@@ -1,3 +1,4 @@
+from pprint import pprint
 from typing import Union
 from pathlib import Path
 import pandas as pd
@@ -77,6 +78,7 @@ class ModuleConfig:
             config_params=config_params,
             rename_config_params=rename_config_params,
             explode_by=explode_by,
+            paramspace_kwargs=paramspace_kwargs,
         )
 
         self.set_default_target(default_target)
@@ -135,7 +137,7 @@ class ModuleConfig:
         elif self.module_name in self.config['output_map']:
             self.default_target = self.config['output_map'][self.module_name]
         else:
-            self.default_target = self.out_dir / self.parameters.paramspace.wildcard_pattern / f'{self.module_name}.tsv'
+            self.default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
 
 
     def get_for_dataset(
@@ -263,6 +265,29 @@ class ModuleConfig:
             dataset_config=self.datasets,
             output_directory=self.out_dir,
         )
+
+
+    def update_parameters(
+        self,
+        wildcards_df: pd.DataFrame = None,
+        parameters_df: pd.DataFrame = None,
+        wildcard_names: list = None,
+        **paramspace_kwargs
+    ):
+        """
+        Update parameters and all dependent attributes
+        
+        :param wildcards_df: dataframe with updated wildcards
+        :param parameters_df: dataframe with updated parameters
+        :param wildcard_names: list of wildcard names to subset the paramspace by
+        :param paramspace_kwargs: additional arguments for snakemake.utils.Paramspace
+        """
+        self.parameters.update(
+            wildcards_df=wildcards_df,
+            wildcard_names=wildcard_names,
+            **paramspace_kwargs,
+        )
+        self.set_default_target(self.default_target)
 
 
     def get_profile(self, wildcards: [dict, Wildcards]):

@@ -68,10 +68,10 @@ class WildcardParameters:
         if paramspace_kwargs is None:
             paramspace_kwargs = {}
         self.paramspace_kwargs = paramspace_kwargs
-        self.paramspace = Paramspace(
-            self.wildcards_df[self.wildcard_names],
-            **paramspace_kwargs
-        )
+        # self.paramspace = Paramspace(
+        #     self.wildcards_df[self.wildcard_names],
+        #     **paramspace_kwargs
+        # )
 
 
     def subset_by_query(
@@ -187,7 +187,19 @@ class WildcardParameters:
         self.wildcards_df = df.reset_index(drop=True)
 
 
-    def update(self, wildcards_df=None, parameters_df=None, wildcard_names=None, **kwargs):
+    def update(
+        self,
+        wildcards_df: pd.DataFrame = None,
+        parameters_df: pd.DataFrame = None,
+        wildcard_names: list = None,
+        **kwargs
+    ):
+        """
+        :param wildcards_df: dataframe with updated wildcards
+        :param parameters_df: dataframe with updated parameters
+        :param wildcard_names: list of wildcard names to subset the paramspace by
+        :param kwargs: additional arguments for snakemake.utils.Paramspace
+        """
         if wildcards_df is not None:
             self.wildcards_df = wildcards_df
         if parameters_df is not None:
@@ -195,10 +207,10 @@ class WildcardParameters:
         if wildcard_names is not None:
             self.wildcard_names = wildcard_names
         self.paramspace_kwargs = kwargs
-        self.paramspace = Paramspace(
-            self.wildcards_df[self.wildcard_names],
-            **kwargs
-        )
+        # self.paramspace = Paramspace(
+        #     self.wildcards_df[self.wildcard_names],
+        #     **kwargs
+        # )
 
 
     def get_wildcards(
@@ -247,18 +259,20 @@ class WildcardParameters:
         :param kwargs: additional arguments for snakemake.utils.Paramspace
         :return: snakemake.utils.Paramspace object
         """
-        if not wildcard_names and not exclude and not kwargs:
-            return self.paramspace
         if exclude is None:
             exclude = []
         if wildcard_names is None:
             wildcard_names = [w for w in self.wildcard_names if w not in exclude]
         if not kwargs:
             kwargs = self.paramspace_kwargs
-        return Paramspace(
-            self.wildcards_df[wildcard_names],
-            **kwargs
-        )
+        try:
+            paramspace = Paramspace(
+                self.wildcards_df[wildcard_names],
+                **kwargs
+            )
+        except KeyError as e:
+            raise ValueError(f'{e}\nwildcard names: {wildcard_names}, kwargs: {kwargs}') from e
+        return paramspace
 
 
     def get_from_parameters(
