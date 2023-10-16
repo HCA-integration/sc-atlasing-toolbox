@@ -3,17 +3,20 @@ config_exploration = config.copy()
 if 'DATASETS' not in config_exploration.keys():
     config_exploration["DATASETS"] = {}
 
-for study in dataset_df['study']:
-    config_exploration["DATASETS"][study] = dict(
-        input=dict(
-            preprocessing=expand(rules.load_data_filter_study.output.zarr,study=study)[0]
-        ),
-        preprocessing=dict(
-            raw_counts='X',
-            batch='dataset',
-            lineage=None,
-        )
+
+config_exploration["DATASETS"]["exploration"] = dict(
+    input=dict(
+        preprocessing={
+            study: expand(rules.load_data_filter_study.output.zarr,study=study)[0]
+            for study in dataset_df['study']
+        }
+    ),
+    preprocessing=dict(
+        raw_counts='X',
+        batch='dataset',
+        lineage=None,
     )
+)
 
 
 module preprocessing:
@@ -24,7 +27,11 @@ use rule * from preprocessing as preprocessing_*
 
 
 def get_batch_pcr_input(wildcards):
-    adata_file = expand(rules.preprocessing_pca.output,dataset=wildcards.study)[0]
+    adata_file = expand(
+        rules.preprocessing_pca.output,
+        dataset=wildcards.study,
+        file_id=wildcards.study
+    )[0]
     try:
         # try if metadata DCP file exists
         rules.load_data_obs_merge_dcp.input.dcp(wildcards)
