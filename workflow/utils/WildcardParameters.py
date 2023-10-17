@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from pprint import pformat
 import numpy as np
 import pandas as pd
@@ -152,7 +153,7 @@ class WildcardParameters:
                 key,
                 *[
                     _get_or_default_from_config(
-                        config=self.dataset_config.get(key),
+                        config=self.dataset_config.get(key, {}),
                         defaults=defaults,
                         key=self.module_name,
                         value=param,
@@ -179,7 +180,7 @@ class WildcardParameters:
         # set dtypes
         df = df.replace({np.nan: None})
         for k, v in df.items():
-            if isinstance(v, (list, dict)):
+            if isinstance(v[0], (list, dict)):
                 continue
             else:
                 df[k] = df[k].astype(str)
@@ -280,8 +281,10 @@ class WildcardParameters:
         query_dict: [dict, Wildcards],
         parameter_key: str,
         wildcards_sub: [list, None] = None,
+        check_query_keys: bool = True,
         check_null: bool = False,
-        verbose=False,
+        default: [str, None] = None,
+        verbose: bool = False,
     ):
         """
         Get entries from parameters dataframe
@@ -295,8 +298,9 @@ class WildcardParameters:
             wildcards_sub = self.wildcards_df.columns.tolist()
         
         assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
-        for key in query_dict:
-            assert key in wildcards_sub, f'Query key "{key}" is not in wildcards_sub'
+        if check_query_keys:
+            for key in query_dict:
+                assert key in wildcards_sub, f'Query key "{key}" is not in wildcards_sub'
         
         try:
             wildcards_sub = list(set(wildcards_sub + [parameter_key]))
@@ -316,14 +320,23 @@ class WildcardParameters:
             ) from e
         
         parameter = params_sub[parameter_key].tolist()[0]
-        if check_null and (pd.isna(parameter) or pd.isnull(parameter) or parameter is None):
-            df = self.subset_by_query(
-                query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
-                columns=[parameter_key],
-                verbose=True,
-            )
-            print('query_dict:')
-            pprint(query_dict)
-            print('parameter_key:', parameter_key)
-            raise ValueError(f'Parameter should not be NULL for {parameter_key} == {parameter}')
+        
+        # check if NULL
+        if isinstance(parameter, Iterable):
+            is_null = False
+        else:
+            is_null = pd.isna(parameter) or pd.isnull(parameter) or parameter is None or parameter == 'None'
+        if is_null:
+            if check_null:
+                df = self.subset_by_query(
+                    query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                    columns=[parameter_key],
+                    verbose=True,
+                )
+                print('query_dict:')
+                pprint(query_dict)
+                print('parameter_key:', parameter_key)
+                raise ValueError(f'Parameter should not be NULL for {parameter_key} == {parameter}')
+            else:
+                parameter = default
         return parameter

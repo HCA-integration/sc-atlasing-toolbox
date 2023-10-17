@@ -140,6 +140,15 @@ class ModuleConfig:
             self.default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
 
 
+    def get_defaults(self, module_name: str = None):
+        """
+        Get defaults for module
+        """
+        if module_name is not None:
+            module_name = self.module_name
+        return self.config['defaults'].get(module_name, {}).copy()
+
+
     def get_for_dataset(
         self,
         dataset: str,

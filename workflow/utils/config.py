@@ -148,7 +148,7 @@ def _get_or_default_from_config(
     value,
     return_missing=None,
     warn=True,
-    update=False
+    update=False,
 ):
     """
     Get entry from config or return defaults if not present
@@ -166,9 +166,13 @@ def _get_or_default_from_config(
         print(key, value)
         print('config:', config)
         raise KeyError(f'Key "{key}" not found in config')
-
-    if value in config[key]:
-        entry = config[key][value]
+    
+    config_at_key = config.get(key)
+    if config_at_key is None:
+        config_at_key = {}
+    
+    if value in config_at_key:
+        entry = config_at_key[value]
         #if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
             # don't update lists or nested dictionaries
         #    entry.update(defaults[value])
