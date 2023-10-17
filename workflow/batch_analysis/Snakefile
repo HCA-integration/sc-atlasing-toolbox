@@ -4,19 +4,18 @@ Batch variable analysis with PC regression
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_resource, get_datasets_for_module, get_for_dataset, get_input_file, \
-    get_input_file_per_dataset, get_input_file_wildcards
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'batch_analysis'
-out_dir = Path(config['output_dir']) / module_name
-images_dir = Path(config['images']) / module_name
-wildcard_pattern = '{dataset}/{file_id}'
+mcfg = ModuleConfig(
+    module_name='batch_analysis',
+    config=config,
+    config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample_key'],
+    wildcard_names=[],
+)
 
-input_files = get_input_file_wildcards(config, module_name)
-out_dir.mkdir(parents=True, exist_ok=True)
-pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
+paramspace = mcfg.get_paramspace()
 
 
 wildcard_constraints:
@@ -38,7 +37,8 @@ include: 'rules/batch_pcr.smk'
 
 rule all:
     input:
-        expand(rules.plot.output, zip, **input_files)
+        mcfg.get_output_files(rules.collect.output),
+        mcfg.get_output_files(rules.plot.output),
     default_target: True
 
 
@@ -46,6 +46,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )

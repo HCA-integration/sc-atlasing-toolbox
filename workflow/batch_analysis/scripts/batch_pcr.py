@@ -28,6 +28,11 @@ X_pca = read_elem(z['obsm/X_pca'])
 obs = read_elem(z['obs'])
 uns = read_elem(z['uns'])
 
+# set default sample key
+if sample_key is None or sample_key == 'None':
+    sample_key = 'index'
+    obs[sample_key] = obs.index
+
 # make sure the PCA embedding is an array
 if not isinstance(X_pca, np.ndarray):
     X_pca = X_pca.toarray()
@@ -37,7 +42,7 @@ logger.info('Read covariate setup...')
 with open(setup_file, 'r') as f:
     setup = yaml.safe_load(f)
 n_permute = setup['n_permute']
-n_permute = min(snakemake.params.get('n_permute', 0), n_permute)
+# n_permute = min(snakemake.params.get('n_permute', 0), n_permute)
 logger.info(f'n_permute: {n_permute}')
 
 

@@ -23,8 +23,8 @@ else:
 
 
 def covariate_valid(obs, covariate):
-    return (covariate in obs.columns) \
-        and (obs[covariate][obs[covariate].notna()].nunique() >= 2)
+    return (covariate in obs.columns) and (obs[covariate][obs[covariate].notna()].nunique() >= 2)
+
 
 covariates = [
     covariate for covariate in covariates
@@ -37,7 +37,7 @@ perm_covariates = [
 
 logging.info(f'covariates:\n {pformat(covariates)}')
 logging.info(f'perm_covariates:\n {pformat(perm_covariates)}')
-
+logging.info(f'n_permutations:\n {pformat(n_perms)}')
 
 
 logging.info(f'Write covariate setups to {output_dir}...')
