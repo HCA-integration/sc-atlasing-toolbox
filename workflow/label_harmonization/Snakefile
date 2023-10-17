@@ -1,35 +1,19 @@
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_resource, get_wildcards_from_config, set_defaults
-from utils.wildcards import get_params, get_wildcards
-from utils.config import get_for_dataset, get_input_file, get_input_file_wildcards
 from utils.environments import get_env
-from utils.misc import unpack_dict_in_df
+from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'label_harmonization'
-config = set_defaults(config,module_name,warn=False)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
-wildcard_pattern = '{dataset}/{file_id}'
-
-input_files = get_input_file_wildcards(config, module_name)
-out_dir.mkdir(parents=True, exist_ok=True)
-pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
-
-parameters = get_wildcards_from_config(
-    config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
-    config_params=[module_name],
-    wildcard_names=['dataset', 'module'],
+mcfg = ModuleConfig(
+    module_name='label_harmonization',
+    config=config,
+    config_params=['celltypist', 'organ'],
+    wildcard_names=[],
+    rename_config_params={'celltypist': 'module'},
 )
-# subset to datasets that have module defined
-parameters = parameters[~parameters['module'].isnull()]
 
-# unpack dictionary
-parameters = unpack_dict_in_df(parameters, 'module')
-
+paramspace = mcfg.get_paramspace()
 
 include: 'rules/map_labels.smk'
 include: 'rules/plots.smk'
@@ -37,8 +21,8 @@ include: 'rules/plots.smk'
 
 rule all:
     input:
-        expand(rules.celltypist.output, zip, **input_files),
-        expand(rules.celltypist_plots.output, zip, **input_files),
+        mcfg.get_output_files(rules.celltypist.output),
+        mcfg.get_output_files(rules.celltypist_plots.output),
         rules.plots_all.input,
     default_target: True
 
@@ -55,6 +39,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
