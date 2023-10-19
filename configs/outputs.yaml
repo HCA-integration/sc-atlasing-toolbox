@@ -5,9 +5,9 @@ images: images
 use_gpu: true
 
 output_map:
-  relabel: data/out/relabel/{dataset}.zarr
-  subset: data/out/subset/{dataset}/by_sample.zarr
-  pca: data/out/preprocessing/{dataset}/pca.h5ad
-  neighbors: data/out/preprocessing/{dataset}/neighbors.h5ad
-  preprocessing: data/out/preprocessing/{dataset}/preprocessed.zarr
-  # integration: data/out/integration/dataset~{dataset}/method~{method}/batch~{batch},label~{label},hyperparams~{hyperparams},lineage_key~None/adata.h5ad
+  relabel: data/out/relabel/dataset~{dataset}/file_id~{file_id}.zarr
+  subset: data/out/subset/dataset~{dataset}/file_id~{file_id}/by_sample.zarr
+  pca: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/pca.zarr
+  neighbors: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/neighbors.zarr
+  preprocessing: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/preprocessed.zarr
+  integration: data/out/integration/dataset~{dataset}/file_id~{file_id}/batch~{batch}/method~{method}--hyperparams~{hyperparams}--label~{label}/postprocessed.zarr

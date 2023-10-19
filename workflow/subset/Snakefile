@@ -5,11 +5,11 @@ from pathlib import Path
 
 from utils.config import get_datasets_for_module, get_for_dataset, get_resource, set_defaults
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 module_name = 'subset'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-
+module_config = ModuleConfig(module_name, config)
+paramspace = module_config.get_paramspace()
 
 module common:
     snakefile: "../common/Snakefile"
@@ -19,9 +19,9 @@ use rule * from common as common_ *
 
 rule subset:
     input:
-        lambda wildcards: get_for_dataset(config, wildcards.dataset, ['input', module_name]),
+        lambda wildcards: module_config.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
-        zarr=directory(out_dir / '{dataset}' / '{strategy}.zarr')
+        zarr=directory(module_config.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -38,8 +38,7 @@ rule subset:
 rule all:
     input:
         expand(
-            rules.subset.output,
-            dataset=get_datasets_for_module(config,module=module_name),
+            expand(rules.subset.output, zip, **module_config.get_input_file_wildcards(), allow_missing=True),
             strategy=['by_sample', 'within_sample']
         )
     default_target: True

@@ -2,16 +2,16 @@ rule merge:
     message:
         """
         Merge all metrics for all datasets and methods
-        datasets: {params.wildcards[dataset]}
-        methods: {params.wildcards[method]}
+        {params.wildcards_string}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,wildcard_names),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,wildcard_names),
+        metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=wildcards),
+        benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=wildcards),
     output:
-        tsv=out_dir / 'results' / 'metrics.tsv',
+        tsv=mcfg.out_dir / 'results' / 'metrics.tsv',
     params:
-        wildcards=get_wildcards(parameters,wildcard_names)
+        wildcards=mcfg.get_wildcards(as_df=True),
+        wildcards_string=mcfg.get_wildcards(as_df=True).to_string(index=False),
     conda:
         get_env(config, 'scanpy')
     group:
@@ -26,31 +26,35 @@ use rule merge as merge_per_dataset with:
     message:
         """
         Merge all metrics for {wildcards}
+        {params.wildcards_string}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'dataset')),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
+        metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
+        benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
-        tsv=out_dir / 'results' / 'per_dataset' / '{dataset}_metrics.tsv',
+        tsv=mcfg.out_dir / 'results' / 'per_dataset' / '{dataset}_metrics.tsv',
     params:
-        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'dataset'),wildcards)
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True),
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True).to_string(index=False)
 
 
-use rule merge as merge_per_method with:
+use rule merge as merge_per_file with:
     message:
         """
         Merge all metrics for {wildcards}
+        {params.wildcards_string}
         """
     input:
-        metrics=lambda wildcards: expand_per(rules.run.output,parameters,wildcards,all_but(wildcard_names,'method')),
-        benchmark=lambda wildcards: expand_per(rules.run.benchmark,parameters,wildcards,all_but(wildcard_names,'method')),
+        metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
+        benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
-        tsv=out_dir / 'results' / 'per_method' / '{method}.tsv',
+        tsv=mcfg.out_dir / 'results' / 'per_file' / '{file_id}.tsv',
     params:
-        wildcards=lambda wildcards: get_wildcards(parameters,all_but(wildcard_names,'method'),wildcards)
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True),
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True).to_string(index=False)
 
 
 rule merge_all:
     input:
-        expand(rules.merge_per_dataset.output,zip,**get_wildcards(parameters,['dataset'])),
-        expand(rules.merge_per_method.output,zip,**get_wildcards(parameters,['method'])),
+        mcfg.get_output_files(rules.merge_per_dataset.output, wildcard_names=['dataset']),
+        mcfg.get_output_files(rules.merge_per_file.output, wildcard_names=['file_id']),

@@ -15,6 +15,13 @@ dataset = snakemake.wildcards.dataset
 
 logger.info('Read TSV...')
 df = pd.read_table(input_file)
+
+if df.shape[0] == 0:
+    logger.info('Empty TSV, skip plotting')
+    plt.savefig(output_bar)
+    plt.savefig(output_violin)
+    exit(0)
+
 df = df.sort_values(
     ['pcr', 'n_covariates', 'covariate'],
     ascending=[False, True, False]

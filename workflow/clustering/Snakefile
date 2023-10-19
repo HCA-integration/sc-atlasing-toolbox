@@ -2,17 +2,24 @@
 Clustering
 """
 from pathlib import Path
-from snakemake.utils import Paramspace
+import pandas as pd
 
-from utils.misc import all_but, unique_dataframe
-from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset
+# from utils.misc import all_but, unique_dataframe
+# from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset, \
+#     get_input_file, get_input_file_wildcards
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'clustering'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
+mcfg = ModuleConfig(
+    module_name='clustering',
+    config=config,
+    config_params=['neighbors_key', 'resolutions'],
+    wildcard_names=['neighbors_key', 'resolution'],
+    rename_config_params={'resolutions': 'resolution'},
+    explode_by='resolution',
+)
+paramspace = mcfg.get_paramspace(exclude=['neighbors_key', 'resolution'])
 
 
 wildcard_constraints:
@@ -34,8 +41,8 @@ include: 'rules/clustering.smk'
 
 rule all:
     input:
-        expand(rules.clustering_merge.output,dataset=get_datasets_for_module(config,module=module_name)),
-        expand(rules.clustering_plot_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
+        mcfg.get_output_files(rules.clustering_merge.output),
+        mcfg.get_output_files(rules.clustering_plot_umap.output),
     default_target: True
 
 
@@ -43,7 +50,7 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
 

@@ -37,7 +37,8 @@ def check_and_update_neighbors_info(adata, neighbors_key):
         use_counts = use_rep == 'X' or use_rep is None
         if input_rep.endswith('.zarr'):
             slot = 'X' if use_counts else use_rep
-            adata.obsm[use_rep] = read_elem(zarr.open(input_rep)[slot])
+            with zarr.open(input_rep) as z:
+                adata.obsm[use_rep] = read_elem(z['obsm'][slot])
         else:
             adata_rep = read_anndata(input_rep)
             adata.obsm[use_rep] = adata_rep.X if use_counts else adata_rep.obsm[use_rep]
@@ -76,7 +77,7 @@ for key in neighbors_key:
     check_and_update_neighbors_info(adata, key)
     params |= dict(neighbors_key=key)
     compute_umap(adata, params)
-    if len(neighbors_key) > 1:
+    if key != 'neighbors' or len(neighbors_key) > 1:
         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 
 logging.info(f'Write to {output_file}...')

@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-metrics_columns = ['dataset', 'metric', 'method', 'output_type', 'metric_type', 'score']
+metrics_columns = ['dataset', 'metric', 'output_type', 'metric_type', 'score']
 
 metrics_df = pd.read_table('test/out/metrics/results/metrics.tsv')
 

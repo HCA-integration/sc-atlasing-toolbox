@@ -33,6 +33,8 @@ adata = remove_outliers(adata, 'min', factor=outlier_factor)
 # parse colors
 if 'color' in params and params['color'] is not None:
     colors = params['color'] if isinstance(params['color'], list) else [params['color']]
+    # remove that are not in the data
+    colors = [color for color in colors if color in adata.obs.columns]
     # filter colors with too many categories
     params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:

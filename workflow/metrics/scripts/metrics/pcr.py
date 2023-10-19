@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.sparse import issparse
 
 
-def pcr(adata, output_type, meta, adata_raw, **kwargs):
+def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -12,12 +12,12 @@ def pcr(adata, output_type, meta, adata_raw, **kwargs):
     return scib.me.pcr_comparison(
         adata_pre=adata_raw,
         adata_post=adata,
-        covariate=meta['batch'],
+        covariate=batch_key,
         embed='X_emb' if output_type == 'embed' else 'X_pca',
     )
 
 
-def pcr_y(adata, output_type, meta, adata_raw, **kwargs):
+def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     import scib_metrics
 
     if output_type == 'knn':
@@ -25,22 +25,18 @@ def pcr_y(adata, output_type, meta, adata_raw, **kwargs):
 
     X_pre = adata_raw.X
 
-    if output_type == 'embed':
-        X_post = adata.obsm['X_emb']
-    else:
-        X_post = adata.X
-
+    X_post = adata.obsm['X_emb'] if output_type == 'embed' else adata.X
     X_pre, X_post = [X if isinstance(X, np.ndarray) else X.todense() for X in [X_pre, X_post]]
 
     return scib_metrics.pcr_comparison(
         X_pre=X_pre,
         X_post=X_post,
-        covariate=adata.obs[meta['batch']],
+        covariate=adata.obs[batch_key],
         categorical=True
     )
 
 
-def cell_cycle(adata, output_type, meta, adata_raw, **kwargs):
+def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -52,7 +48,7 @@ def cell_cycle(adata, output_type, meta, adata_raw, **kwargs):
     organism = 'mouse' if upper_case_genes <= 0.1 * adata.n_vars else 'human'
 
     # compute cell cycle score per batch
-    batch_key = meta['batch']
+    batch_key = batch_key
     for batch in adata.obs[batch_key].unique():
         scib.pp.score_cell_cycle(
             adata_raw[adata_raw.obs[batch_key] == batch],
@@ -62,7 +58,7 @@ def cell_cycle(adata, output_type, meta, adata_raw, **kwargs):
     return scib.me.cell_cycle(
         adata_pre=adata_raw,
         adata_post=adata,
-        batch_key=meta['batch'],
+        batch_key=batch_key,
         embed='X_emb' if output_type == 'embed' else 'X_pca',
         recompute_cc=False,
         organism=organism,

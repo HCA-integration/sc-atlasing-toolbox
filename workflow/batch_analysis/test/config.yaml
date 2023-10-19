@@ -54,3 +54,15 @@ DATASETS:
         - cell_suspension.biomaterial_core.biomaterial_id
       n_permutations: 100
       sample_key: sample
+  dummy:
+    input:
+      batch_analysis: test/input/SchulteSchrepping2020.zarr
+    batch_analysis:
+      covariates:
+        - assay
+      permute_covariates:
+        - assay
+
+defaults:
+  datasets:
+    - dummy

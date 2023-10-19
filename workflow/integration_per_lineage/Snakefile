@@ -7,7 +7,8 @@ import pandas as pd
 from snakemake.utils import Paramspace
 
 from utils.misc import all_but, unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
+from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, \
+    get_datasets_for_module, get_for_dataset, get_input_file, get_input_file_wildcards
 from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 from utils.environments import get_env
 
@@ -17,6 +18,10 @@ config = set_defaults(config, module_name)
 image_dir = Path(config['images']) / f'{module_name}_per_lineage'
 out_dir = Path(config['output_dir']) / f'{module_name}_per_lineage'
 Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+input_files = get_input_file_wildcards(config, module_name)
+out_dir.mkdir(parents=True, exist_ok=True)
+pd.DataFrame(input_files).to_csv(out_dir / 'input_files.tsv', sep='\t', index=False)
 
 hyperparams_df = get_hyperparams(config,module_name=module_name)
 # write hyperparameter mapping
@@ -49,7 +54,14 @@ parameters = parameters.merge(
     how='left'
 )
 
-wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams', 'lineage_key']
+# add input files
+parameters = pd.DataFrame(input_files).merge(
+    parameters,
+    on='dataset',
+    how='right'
+)
+
+wildcard_names = ['dataset', 'file_id', 'batch', 'label', 'method', 'hyperparams', 'lineage_key']
 paramspace = Paramspace(
     parameters[wildcard_names],
     filename_params=['method', 'hyperparams', 'lineage_key'],

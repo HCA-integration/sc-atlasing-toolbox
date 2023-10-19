@@ -4,59 +4,32 @@ Integration
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from snakemake.utils import Paramspace
 
-from utils.misc import all_but, unique_dataframe
-from utils.config import get_hyperparams, get_resource, get_params_from_config, set_defaults, get_datasets_for_module, get_for_dataset
-from utils.wildcards import expand_per, get_params, get_wildcards, wildcards_to_str
 from utils.environments import get_env
+from IntegrationConfig import IntegrationConfig
 
 
-module_name = 'integration'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
+mcfg = IntegrationConfig(
+    module_name='integration',
+    config=config,
+    parameters=workflow.source_path('params.tsv'),
+    config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
+    wildcard_names=['method', 'batch', 'label'],
+    rename_config_params={'methods': 'method'},
+    explode_by=['method', 'batch'],
+)
+
+out_dir = mcfg.out_dir
+image_dir = mcfg.image_dir
+paramspace = mcfg.get_paramspace()
+
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 
 envvars:
-   'LD_LIBRARY_PATH',
-   'TF_CPP_MIN_LOG_LEVEL',
-
-parameters = pd.read_table(workflow.source_path('params.tsv'))
-parameters['output_type'] = parameters['output_type'].str.split(',')
-parameters = get_params_from_config(
-    config=get_datasets_for_module(config, module_name),
-    module_name=module_name,
-    config_params=['methods', 'label', 'batch', 'norm_counts', 'raw_counts'],
-    wildcard_names=['dataset', 'method', 'label', 'batch', 'norm_counts', 'raw_counts'],
-    defaults=config['defaults'],
-    explode_by=['method', 'batch'],
-).merge(parameters,on='method')
-
-# subset to datasets that have module defined
-parameters = parameters[~parameters['method'].isnull()]
-
-# TODO: remove redundant wildcards
-# parameters['label'] = np.where(parameters['use_cell_type'], parameters['label'], 'None')
-# parameters = unique_dataframe(parameters)
-
-hyperparams_df = get_hyperparams(config,module_name=module_name)
-parameters = parameters.merge(hyperparams_df,on=['dataset', 'method'],how='left')
-wildcard_names = ['dataset', 'batch', 'label', 'method', 'hyperparams']
-
-# write hyperparameter mapping
-Path(out_dir).mkdir(parents=True, exist_ok=True)
-unique_dataframe(
-    hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
-).to_csv(out_dir / 'hyperparams.tsv', sep='\t', index=False)
-
-paramspace = Paramspace(
-    parameters[wildcard_names],
-    filename_params=['method', 'hyperparams'],
-    filename_sep='--',
-)
+    'LD_LIBRARY_PATH',
+    'TF_CPP_MIN_LOG_LEVEL',
 
 wildcard_constraints:
     dataset='\w+',
@@ -107,6 +80,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )

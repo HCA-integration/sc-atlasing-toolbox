@@ -2,6 +2,7 @@ from pprint import pprint
 from typing import Union
 import warnings
 import pandas as pd
+import hashlib
 
 from .misc import expand_dict_and_serialize
 
@@ -147,7 +148,7 @@ def _get_or_default_from_config(
     value,
     return_missing=None,
     warn=True,
-    update=False
+    update=False,
 ):
     """
     Get entry from config or return defaults if not present
@@ -165,9 +166,13 @@ def _get_or_default_from_config(
         print(key, value)
         print('config:', config)
         raise KeyError(f'Key "{key}" not found in config')
-
-    if value in config[key]:
-        entry = config[key][value]
+    
+    config_at_key = config.get(key)
+    if config_at_key is None:
+        config_at_key = {}
+    
+    if value in config_at_key:
+        entry = config_at_key[value]
         #if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
             # don't update lists or nested dictionaries
         #    entry.update(defaults[value])
@@ -275,7 +280,8 @@ def get_for_dataset(
     default: Union[str,bool,float,int,dict,list, None] = None,
     warn: bool = False,
 ) -> Union[str,bool,float,int,dict,list, None]:
-    """Get any key from the config via query
+    """ TODO: deprecate
+    Get any key from the config via query
 
     Args:
         config (dict): config passed to Snakemake
@@ -303,3 +309,73 @@ def get_for_dataset(
             return default
         value = value.get(q, default)
     return value
+
+
+def get_from_config(
+    config: dict,
+    query: list,
+    default: Union[str,bool,float,int,dict,list, None] = None,
+    warn: bool = False,
+) -> Union[str,bool,float,int,dict,list, None]:
+    """Get any key from the config via query
+
+    Args:
+        config (str): config dictionary
+        query (list): list of keys to walk down the config
+        default (Union[str,bool,float,int,dict,list, None], optional): default value if key not found. Defaults to None.
+
+    Returns:
+        Union[str,bool,float,int,dict,list, None]: value of query in config
+    """
+    value = config # start at top level
+    for q in query: # walk down query
+        try:
+            value = value[q]
+        except (AttributeError, KeyError):
+            if warn:
+                warnings.warn(f'key {q} not found in config for query {query}, returning default')
+            return default
+    return value
+
+
+def get_input_file_per_dataset(config, dataset, module_name, digest_size=5):
+    """Get input files for a given module and dataset
+    This function maps an input file with its unique identifier
+    
+    :param config: config passed from Snakemake
+    :param dataset: dataset key in config['DATASETS']
+    :param module_name: name of module to collect valid datasets for
+    :return: dictionary of input file ID to file
+    """
+    input_files = get_for_dataset(config, dataset, query=['input', module_name])
+    
+    if isinstance(input_files, str):
+        input_files = [input_files]
+    
+    if isinstance(input_files, list):
+        input_files = {
+            hashlib.blake2b(file.encode('utf-8'), digest_size=digest_size).hexdigest(): file
+            for file in input_files
+        }
+    
+    if not isinstance(input_files, dict):
+        raise ValueError(f'input_files must be a list or dict, but is {type(input_files)}')
+    
+    return input_files
+
+
+def get_input_file(config, wildcards, module_name):
+    return get_input_file_per_dataset(config, wildcards.dataset, module_name)[wildcards.file_id]
+
+
+def get_input_file_wildcards(config, module_name):
+    """
+    Reshape the file ID to dataset mapping to a lists of wildcards
+    """
+    all_wildcards = dict(dataset=[], file_id=[], file_name=[])
+    for dataset in get_datasets_for_module(config,module=module_name):
+        for file_id, file in get_input_file_per_dataset(config, dataset, module_name).items():
+            all_wildcards['dataset'].append(dataset)
+            all_wildcards['file_id'].append(file_id)
+            all_wildcards['file_name'].append(file)
+    return all_wildcards

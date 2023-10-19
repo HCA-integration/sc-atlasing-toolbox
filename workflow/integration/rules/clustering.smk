@@ -7,23 +7,25 @@ use rule cluster from clustering as integration_cluster with:
         neighbors_key='neighbors_{output_type}',
         cluster_key_suffix='_{output_type}',
     resources:
-        partition=lambda w: get_resource(config,profile='gpu',resource_key='partition'),
-        qos=lambda w: get_resource(config,profile='gpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='gpu',resource_key='mem_mb', attempt=attempt),
-        gpu=lambda w: get_resource(config,profile='gpu',resource_key='gpu'),
+        partition=lambda w: mcfg.get_resource(profile='gpu', resource_key='partition'),
+        qos=lambda w: mcfg.get_resource(profile='gpu', resource_key='qos'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu', resource_key='mem_mb', attempt=attempt),
+        gpu=lambda w: mcfg.get_resource(profile='gpu', resource_key='gpu'),
 
 
 use rule merge from clustering as integration_cluster_merge with:
     input:
         tsv=lambda wildcards: expand(
             rules.integration_cluster.output.tsv,
-            resolution=get_for_dataset(
-                config,
-                wildcards.dataset,
+            resolution=mcfg.get_for_dataset(
+                dataset=wildcards.dataset,
                 query=['clustering', 'resolutions'],
                 default=[0.4, 0.8, 1.0]
             ),
-            output_type=get_params(wildcards, parameters, 'output_type'),
+            output_type=mcfg.get_from_parameters(
+                query_dict=wildcards,
+                parameter_key='output_type'
+            ),
             allow_missing=True
         ),
     output:
@@ -39,12 +41,12 @@ use rule plot_umap from clustering as integration_cluster_plot_umap with:
     wildcard_constraints:
         lineage_key='((?![/]).)*',
     resources:
-        partition=lambda w: get_resource(config,profile='cpu',resource_key='partition'),
-        qos=lambda w: get_resource(config,profile='cpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        partition=lambda w: mcfg.get_resource(profile='cpu', resource_key='partition'),
+        qos=lambda w: mcfg.get_resource(profile='cpu', resource_key='qos'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu', resource_key='mem_mb', attempt=attempt),
 
 
 rule clustering_all:
     input:
-        expand(rules.integration_cluster_merge.output,zip,**parameters[wildcard_names].to_dict('list')),
-        expand(rules.integration_cluster_plot_umap.output,zip,**parameters[wildcard_names].to_dict('list')),
+        mcfg.get_output_files(rules.integration_cluster_merge.output),
+        mcfg.get_output_files(rules.integration_cluster_plot_umap.output),

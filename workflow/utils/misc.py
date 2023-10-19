@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import typing
+import hashlib
 
 
 def remove_outliers(adata, extrema='max', factor=10):
@@ -20,12 +21,13 @@ def all_but(_list, is_not):
 def unique_dataframe(df):
     if df.empty:
         return df
-    hashable_columns = [
-        col for col in df.columns
-        if all(isinstance(df[col].iloc[i], typing.Hashable) for i in range(df.shape[0]))
-    ]
-    duplicated = df[hashable_columns].duplicated()
-    return df[~duplicated]
+    # hashable_columns = [
+    #     col for col in df.columns
+    #     if all(isinstance(df[col].iloc[i], typing.Hashable) for i in range(df.shape[0]))
+    # ]
+    # duplicated = df[hashable_columns].duplicated()
+    duplicated = df.astype(str).duplicated()
+    return df[~duplicated].reset_index(drop=True)
 
 
 def expand_dict(_dict):
@@ -122,3 +124,8 @@ def merge(dfs, **kwargs):
     )
     print(merged_df)
     return merged_df
+
+
+def create_hash(string: str, digest_size: int = 5):
+    string = string.encode('utf-8')
+    return hashlib.blake2b(string, digest_size=digest_size).hexdigest()

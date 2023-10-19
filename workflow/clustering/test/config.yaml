@@ -16,14 +16,12 @@ resources:
     gpu: 1
     mem_mb: 4000
 
-defaults:
-  datasets:
-    - test
-
 DATASETS:
   test:
     input:
-      clustering: test/input/pbmc68k.h5ad
+      clustering:
+        test_1: test/input/pbmc68k.h5ad
+        test_2: test/input/pbmc68k.h5ad
     clustering:
       neighbors_key: neighbors
       resolutions:
@@ -34,3 +32,23 @@ DATASETS:
         - 0.6
         - 0.7
         - 0.8
+
+  test_single:
+    input:
+      clustering: test/input/pbmc68k.h5ad
+    clustering:
+      neighbors_key: neighbors
+      resolutions:
+        - 0.2
+        - 0.3
+        - 0.4
+
+  test_list:
+    input:
+      clustering:
+        - test/input/pbmc68k.h5ad
+        - test/input/pbmc68k_dup.h5ad
+    clustering:
+      neighbors_key: neighbors
+      resolutions:
+        - 0.2

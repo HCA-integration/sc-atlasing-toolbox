@@ -1,5 +1,3 @@
-
-
 use rule run_method from integration as integration_per_lineage_run with:
     input:
         zarr=rules.preprocessing_per_lineage_assemble.output.zarr,
@@ -17,7 +15,7 @@ use rule run_method from integration as integration_per_lineage_run with:
     resources:
         partition=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='partition'),
         qos=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='qos'),
-        mem_mb=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='mem_mb', attempt=attempt),
         gpu=lambda w: get_resource(config,profile=get_params(w,parameters,'resources'),resource_key='gpu'),
         time="2-00:00:00",
 

@@ -2,7 +2,7 @@ output_dir: test/out
 dataset_meta: test/datasets.tsv
 images: test/images
 
-env_mode: from_file
+env_mode: from_yaml
 use_gpu: true
 
 defaults:
@@ -12,9 +12,10 @@ defaults:
       n_pcs: 50
 
 DATASETS:
-  blood:
+  large:
     input:
-      preprocessing: test/input/load_data/merged/organ/blood.zarr
+      preprocessing:
+        blood: test/input/load_data/merged/organ/blood.zarr
     preprocessing:
       batch: donor
       lineage: development_stage
@@ -33,9 +34,10 @@ DATASETS:
         - study
         - development_stage
   
-  pbmc:
+  all:
     input:
-      preprocessing: test/input/pbmc68k.h5ad
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
     preprocessing:
       raw_counts: counts
       scale: true
@@ -52,7 +54,8 @@ DATASETS:
 
   no_hvg:
     input:
-      preprocessing: test/input/pbmc68k.h5ad
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
     preprocessing:
       raw_counts: counts
       highly_variable_genes: false

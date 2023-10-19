@@ -1,10 +1,16 @@
+from utils.wildcards import wildcards_to_str
+
+
 rule benchmark_per_dataset:
     input:
-        benchmark=lambda wildcards: expand_per(rules.integration_run_method.benchmark,parameters,wildcards,all_but(wildcard_names,'dataset')),
+        benchmark=lambda wildcards: mcfg.get_output_files(
+            rules.integration_run_method.benchmark,
+            subset_dict=dict(wildcards)
+        ),
     output:
         benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
     params:
-        wildcards=lambda wildcards: parameters.query(f'dataset == "{wildcards.dataset}"')[wildcard_names]
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, as_df=True)
     group:
         'integration'
     run:
@@ -16,11 +22,11 @@ rule benchmark_per_dataset:
 
 rule benchmark:
     input:
-        benchmark=expand(rules.integration_run_method.benchmark,zip,**parameters[wildcard_names].to_dict('list')),
+        benchmark=mcfg.get_output_files(rules.integration_run_method.benchmark),
     output:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
-        wildcards=parameters[wildcard_names]
+        wildcards=mcfg.get_wildcards(as_df=True)
     group:
         'integration'
     run:
@@ -73,5 +79,5 @@ rule benchmark_all:
         expand(
             rules.integration_barplot_per_dataset.output,
             metric=['s', 'max_uss', 'mean_load'],
-            dataset=parameters['dataset'].unique().tolist()
+            dataset=mcfg.datasets.keys()
         )

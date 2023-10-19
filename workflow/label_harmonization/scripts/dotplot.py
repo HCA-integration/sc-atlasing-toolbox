@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import scanpy as sc
 
+from utils.io import read_anndata
+
 
 def filter_markers(markers, _keys):
     if isinstance(markers, dict):
@@ -33,7 +35,7 @@ output_per_group.mkdir(exist_ok=True)
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
 
-adata = sc.read(input_file)
+adata = read_anndata(input_file)
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
 
 # add group assignment to adata

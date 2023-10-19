@@ -1,8 +1,11 @@
+from pprint import pprint
 from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils.pipeline import update_module_configs, config_for_module
+from utils.pipeline import update_module_configs, config_for_module, update_input_files_per_dataset
+from utils.ModuleConfig import ModuleConfig
+from integration.IntegrationConfig import IntegrationConfig
 
 
 min_version("6.0")
@@ -16,8 +19,51 @@ configfile: "configs/exploration/config.yaml"
 # params['submodules'] = params['submodules'].str.split(',')
 # config = update_module_configs(config, params)
 
+config_kwargs = {
+    'clustering': dict(
+        config_params=['neighbors_key', 'resolutions'],
+        wildcard_names=['neighbors_key', 'resolution'],
+        rename_config_params={'resolutions': 'resolution'},
+        explode_by='resolution',
+    ),
+    'integration': dict(
+        parameters=workflow.source_path('integration/params.tsv'),
+        config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
+        wildcard_names=['method', 'batch', 'label'],
+        rename_config_params={'methods': 'method'},
+        explode_by=['method', 'batch'],
+    ),
+    'metrics': dict(
+        parameters=workflow.source_path('metrics/params.tsv'),
+        config_params=['label', 'batch', 'methods', 'unintegrated'],
+        wildcard_names=['label', 'batch', 'metric'],
+        rename_config_params={'methods': 'metric'},
+        explode_by=['metric', 'batch'],
+        paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
+    ),
+}
+
+config_classes = {
+    'integration': IntegrationConfig,
+}
+
+config['DATASETS'] = config.get('DATASETS', {})
+default_datasets = config.get('defaults', {}).get('datasets', config['DATASETS'].keys())
+for dataset, dataset_config in config['DATASETS'].items():
+    for module_name in dataset_config.get('input', {}).keys():
+        if dataset not in default_datasets:
+            continue
+        config = update_input_files_per_dataset(
+            dataset=dataset,
+            module_name=module_name,
+            config=config,
+            config_class_map=config_classes,
+            config_kwargs=config_kwargs,
+        )
+
+
+# TODO move to data loader and exploration
 config['dataset_meta'] = Path(config['dataset_meta']).resolve()
-out_dir = Path(config['output_dir'])
 
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -39,17 +85,15 @@ module exploration:
 
 module subset:
     snakefile: "subset/Snakefile"
-    config: config_for_module(config, module='subset')
+    config: config
 
 module preprocessing:
     snakefile: "preprocessing/Snakefile"
-    config: config_for_module(config, module='preprocessing')
-
+    config: config
 
 module clustering:
     snakefile: "clustering/Snakefile"
-    config: config_for_module(config, module='clustering')
-
+    config: config
 
 module label_transfer:
     snakefile: "label_transfer/Snakefile"
@@ -61,15 +105,15 @@ module label_harmonization:
 
 module relabel:
     snakefile: "relabel/Snakefile"
-    config: config_for_module(config, module='relabel')
+    config: config
 
 module integration:
     snakefile: "integration/Snakefile"
-    config: config_for_module(config, module='integration')
+    config: config
 
-module integration_per_lineage:
-    snakefile: "integration_per_lineage/Snakefile"
-    config: config_for_module(config, module='integration')
+# module integration_per_lineage:
+#     snakefile: "integration_per_lineage/Snakefile"
+#     config: config
 
 module metrics:
     snakefile: "metrics/Snakefile"
@@ -85,7 +129,7 @@ use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *
 use rule * from relabel as relabel_ *
 use rule * from integration as integration_ *
-use rule * from integration_per_lineage as integration_per_lineage_ *
+# use rule * from integration_per_lineage as integration_per_lineage_ *
 use rule * from metrics as metrics_ *
 
 

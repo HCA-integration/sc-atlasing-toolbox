@@ -5,21 +5,22 @@ from utils.config import get_datasets_for_module, get_for_dataset, get_resource,
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unlist_dict, unpack_dict_in_df
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
 module_name = 'relabel'
-config = set_defaults(config,module_name,warn=False)
-out_dir = Path(config['output_dir']) / module_name
+module_config = ModuleConfig(module_name, config)
+paramspace = module_config.get_paramspace()
 
 
 rule relabel:
     input:
-        anndata=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name]),
-        mapping=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'mapping', 'file'])
+        anndata=lambda wildcards: module_config.get_input_file(wildcards.dataset, wildcards.file_id),
+        mapping=lambda wildcards: module_config.get_for_dataset(wildcards.dataset, query=[module_name, 'mapping', 'file'])
     output:
-        zarr=directory(out_dir / '{dataset}.zarr'),
+        zarr=directory(module_config.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
-        mapping_order=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'mapping', 'order']),
+        mapping_order=lambda wildcards: module_config.get_for_dataset(wildcards.dataset, query=[module_name, 'mapping', 'order']),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
@@ -32,10 +33,7 @@ rule relabel:
 
 rule relabel_all:
     input:
-        expand(
-            rules.relabel.output,
-            dataset=get_datasets_for_module(config, module_name).keys()
-        )
+        expand(rules.relabel.output, zip, **module_config.get_input_file_wildcards())
 
 
 rule all:

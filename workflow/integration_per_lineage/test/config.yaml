@@ -57,7 +57,8 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: test/input/pbmc68k.h5ad
+      integration:
+        pbmc: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch:
@@ -72,7 +73,8 @@ DATASETS:
 
   test2:
     input:
-      integration: test/input/preprocessing/pbmc/preprocessed.zarr
+      integration:
+        pp_pbmc: test/input/preprocessing/all/pbmc/preprocessed.zarr
     clustering:
       resolutions:
         - 0.5

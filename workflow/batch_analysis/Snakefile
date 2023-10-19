@@ -4,14 +4,19 @@ Batch variable analysis with PC regression
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_resource, get_datasets_for_module, get_for_dataset
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'batch_analysis'
-out_dir = Path(config['output_dir']) / module_name
-images_dir = Path(config['images']) / module_name
-datasets = get_datasets_for_module(config,module=module_name)
+mcfg = ModuleConfig(
+    module_name='batch_analysis',
+    config=config,
+    config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample_key'],
+    wildcard_names=[],
+)
+
+paramspace = mcfg.get_paramspace()
+
 
 wildcard_constraints:
     dataset='\w+',
@@ -32,7 +37,8 @@ include: 'rules/batch_pcr.smk'
 
 rule all:
     input:
-        expand(rules.plot.output,dataset=datasets)
+        mcfg.get_output_files(rules.collect.output),
+        mcfg.get_output_files(rules.plot.output),
     default_target: True
 
 
@@ -40,6 +46,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )

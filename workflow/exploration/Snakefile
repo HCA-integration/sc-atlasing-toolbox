@@ -7,12 +7,19 @@ import pandas as pd
 from utils.data import load_dataset_df
 from utils.config import get_resource
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'exploration'
 dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
-out_dir = Path(config['output_dir']) / module_name
-images_dir = Path(config['images']) / module_name
+mcfg = ModuleConfig(
+    module_name='exploration',
+    config=config,
+    # parameters=dataset_df,
+)
+
+out_dir = mcfg.out_dir
+images_dir = mcfg.image_dir
+module_name = mcfg.module_name
 
 wildcard_constraints:
     dataset='\w+',

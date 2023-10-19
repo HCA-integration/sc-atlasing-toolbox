@@ -4,15 +4,21 @@ Preprocessing
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults
+from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults, \
+    get_input_file, get_input_file_wildcards
 from utils.misc import ifelse
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
 module_name = 'preprocessing'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-image_dir = Path(config['images']) / module_name
+module_config = ModuleConfig(module_name, config)
+paramspace = module_config.get_paramspace()
+
+out_dir = module_config.out_dir
+image_dir = module_config.image_dir
+input_files = module_config.get_input_file_wildcards()
+wildcard_pattern = paramspace.wildcard_pattern
 
 
 wildcard_constraints:
@@ -36,13 +42,13 @@ include: 'rules/plots.smk'
 
 rule plots_all:
     input:
-        expand(rules.plot_embedding.output,dataset=get_datasets_for_module(config,module=module_name)),
-        expand(rules.plot_umap.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.plot_embedding.output, zip, **input_files),
+        expand(rules.plot_umap.output, zip, **input_files),
 
 
 rule all:
     input:
-        expand(rules.assemble.output,dataset=get_datasets_for_module(config,module=module_name)),
+        expand(rules.assemble.output, zip, **input_files),
         rules.plots_all.input,
     default_target: True
 

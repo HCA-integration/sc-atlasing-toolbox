@@ -8,9 +8,9 @@ checkpoint split_lineage:
         resources: {resources.mem_mb}MB
         """
     input:
-        lambda wildcards: get_for_dataset(config, wildcards.dataset, query=['input', module_name])
+        lambda wildcards: get_input_file(config, wildcards, module_name)
     output:
-        directory(out_dir / 'split_lineage' / 'dataset~{dataset}')
+        directory(out_dir / 'split_lineage' / 'file_id~{file_id}' / 'dataset~{dataset}')
     params:
         # batch=lambda wildcards: get_for_dataset(config, wildcards.dabtaset, [module_name, 'batch']),
         label=lambda wildcards: get_for_dataset(config, wildcards.dataset, [module_name, 'label']),

@@ -46,19 +46,17 @@ defaults:
       - ilisi_y
       - graph_connectivity
       - isolated_label_asw_y
-      - isolated_label_f1_y
       - pcr
       - kbet_y
       - nmi
-        - ari
-        - asw_label
-        - asw_batch
-        - clisi
-        - ilisi
-        - graph_connectivity
-        - isolated_label_asw
-        - isolated_label_f1
-        - pcr
+      - ari
+      - asw_label
+      - asw_batch
+      - clisi
+      - ilisi
+      - graph_connectivity
+      - isolated_label_asw
+      - isolated_label_f1
   preprocessing:
     raw_counts: X
     batch: study
@@ -73,22 +71,28 @@ defaults:
 DATASETS:
   test:
     input:
-      subset: data/pbmc68k.h5ad
+      subset:
+        test_data: data/pbmc68k.h5ad
+        test_data2: data/pbmc68k.h5ad
       preprocessing: subset
       integration: preprocessing
+      metrics: integration
     subset:
       label: bulk_labels
       sample: phase
+      n_cells: 1000
     preprocessing:
       label: bulk_labels
       batch: phase
       sample: phase
+      highly_variable_genes: False
     integration:
       label: bulk_labels
       batch: phase
     metrics:
       label: bulk_labels
       batch: phase
+      # unintegrated: preprocessing
 
   # test2:
   #   input:
