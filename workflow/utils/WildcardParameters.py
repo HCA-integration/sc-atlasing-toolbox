@@ -177,6 +177,10 @@ class WildcardParameters:
             for column in explode_by:
                 df = df.explode(column)
         
+        if df.empty:
+            self.wildcards_df = df
+            return
+        
         # set dtypes
         df = df.replace({np.nan: None})
         for k, v in df.items():
