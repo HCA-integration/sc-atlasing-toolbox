@@ -47,7 +47,8 @@ config_classes = {
     'integration': IntegrationConfig,
 }
 
-default_datasets = config['defaults'].get('datasets', config['DATASETS'].keys())
+config['DATASETS'] = config.get('DATASETS', {})
+default_datasets = config.get('defaults', {}).get('datasets', config['DATASETS'].keys())
 for dataset, dataset_config in config['DATASETS'].items():
     for module_name in dataset_config.get('input', {}).keys():
         if dataset not in default_datasets:
@@ -110,9 +111,9 @@ module integration:
     snakefile: "integration/Snakefile"
     config: config
 
-module integration_per_lineage:
-    snakefile: "integration_per_lineage/Snakefile"
-    config: config
+# module integration_per_lineage:
+#     snakefile: "integration_per_lineage/Snakefile"
+#     config: config
 
 module metrics:
     snakefile: "metrics/Snakefile"
@@ -128,7 +129,7 @@ use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *
 use rule * from relabel as relabel_ *
 use rule * from integration as integration_ *
-use rule * from integration_per_lineage as integration_per_lineage_ *
+# use rule * from integration_per_lineage as integration_per_lineage_ *
 use rule * from metrics as metrics_ *
 
 
