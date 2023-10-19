@@ -8,6 +8,7 @@ from utils.config import get_resource, get_wildcards_from_config, set_defaults
 from utils.wildcards import get_params, get_wildcards
 from utils.misc import unpack_dict_in_df
 from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
 
 
 def get_h5ad(wildcards):
@@ -19,6 +20,15 @@ module common:
     config: config
 
 use rule * from common as common_ *
+
+mcfg = ModuleConfig(
+    module_name='label_transfer',
+    config=config,
+    config_params=['labels'], #['label', 'methods'],
+    wildcard_names=[],
+    # rename_config_params={'methods': 'method'},
+)
+paramspace = mcfg.get_paramspace()
 
 module_name = 'label_transfer'
 config = set_defaults(config,module_name)
@@ -34,7 +44,7 @@ parameters = get_wildcards_from_config(
     config_keys=config['defaults']['datasets'],
     config_params=[module_name, 'label'],
     wildcard_names=['dataset', module_name, 'label'],
-)
+).merge(mcfg.get_wildcards(as_df=True))
 
 # subset to datasets that have module defined
 parameters = parameters[(~parameters[module_name].isnull()) & (parameters[module_name] != {})]
@@ -48,7 +58,7 @@ else:
 
 rule get_model:
     output:
-        model=out_dir / 'models' / '{method}' / '{model}.pkl'
+        model=mcfg.out_dir / 'models' / '{method}' / '{model}.pkl'
     conda:
         lambda wildcards: get_env(config, wildcards.method)
     params:
@@ -59,25 +69,29 @@ rule get_model:
 
 rule run:
     input:
-        h5ad=get_h5ad,
+        h5ad=lambda wildcards: mcfg.get_input_file(**wildcards),
         model=rules.get_model.output.model,
     output:
-        tsv=out_dir / '{method}' / '{dataset}' / '{model}.tsv',
-        png=out_dir / 'figures' / '{method}-{dataset}-{model}.png',
+        tsv=mcfg.out_dir / '{dataset}' / '{file_id}' / '{method}' / '{model}.tsv',
+        png=mcfg.image_dir / '{dataset}' / '{file_id}' / '{method}-{model}.png',
     conda:
         lambda wildcards: get_env(config, wildcards.method)
     params:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
         label_key=lambda wildcards: get_params(wildcards,parameters,'label')
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb')
+        mem_mb=mcfg.get_resource(profile='cpu_merged',resource_key='mem_mb')
     script:
         'scripts/celltypist.py'
 
 
 rule all:
     input:
-        expand(rules.run.output,zip,**get_wildcards(parameters, ['dataset', 'method', 'model']))
+        expand(
+            rules.run.output,
+            zip,
+            **get_wildcards(parameters, ['dataset', 'file_id', 'method', 'model'])
+        )
     default_target: True
 
 
@@ -85,6 +99,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
