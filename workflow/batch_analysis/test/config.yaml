@@ -5,11 +5,14 @@ dcp_metadata: test/dcp_metadata.tsv
 images: test/images
 
 os: intel
+# defaults:
+#   datasets:
+#     - dummy
 
 DATASETS:
-  SchulteSchrepping2020:
+  blood_pca:
     input:
-      batch_analysis: test/input/SchulteSchrepping2020.zarr
+      batch_analysis: test/input/blood_pca.zarr
     batch_analysis:
       covariates:
         - sample
@@ -56,13 +59,9 @@ DATASETS:
       sample_key: sample
   dummy:
     input:
-      batch_analysis: test/input/SchulteSchrepping2020.zarr
+      batch_analysis: test/input/blood_pca.zarr
     batch_analysis:
       covariates:
         - assay
       permute_covariates:
         - assay
-
-defaults:
-  datasets:
-    - dummy

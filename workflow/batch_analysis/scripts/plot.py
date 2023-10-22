@@ -38,8 +38,9 @@ g = sns.barplot(
     # errorbar='sd',
 )
 g.set(title=f'PCR of covariates for: {dataset}')
-bar_labels = df.groupby('covariate')['pcr'].mean().round(2).astype(str).str.cat(
-    df.groupby('covariate')['n_covariates'].first(),
+grouped_by_covariate = df.groupby('covariate', sort=False)
+bar_labels = grouped_by_covariate['pcr'].first().round(2).astype(str).str.cat(
+    grouped_by_covariate['n_covariates'].first(),
     sep=', '
 )
 g.bar_label(

@@ -1,12 +1,19 @@
+from pathlib import Path
 from pprint import pprint
 import pandas as pd
+import anndata
 from anndata.experimental import read_elem
 import zarr
+import logging
+logging.basicConfig(level=logging.INFO)
+
+from utils_pipeline.io import link_zarr
 
 in_file = snakemake.input[0]
 in_dcp = snakemake.input[1]
 out_obs = snakemake.output.obs
 out_stats = snakemake.output.stats
+out_adata = snakemake.output.zarr
 
 def explode_table(df, col, sep=' \|\| '):
     df = df.copy()
@@ -16,38 +23,57 @@ def explode_table(df, col, sep=' \|\| '):
 
 id_cols = snakemake.params.id_cols
 
-obs_df = read_elem(zarr.open(in_file)['obs'])
 dcp_tsv = pd.read_table(in_dcp)
-
-obs_ids = set(obs_df['donor_id'].unique())
-n_donors = len(obs_ids)
+with zarr.open(in_file) as z:
+    obs_df = read_elem(z['obs'])
 
 # identify ID column
 cols = []
 intersection = []
+n_donors = []
+cxg_ids = []
 
 for col in id_cols:
     if col not in dcp_tsv.columns:
         continue
     
-    # explode ID column
-    dcp_tsv_exploded = explode_table(dcp_tsv, col)
+    for cxg_id in ['donor_id', 'sample']:
+        # explode ID column
+        dcp_tsv_exploded = explode_table(dcp_tsv, col)
 
-    # count ID overlaps
-    dcp_ids = set(dcp_tsv_exploded[col].unique())
-    intersect = obs_ids.intersection(dcp_ids)
-    n_intersect = len(intersect)
+        # count ID overlaps
+        dcp_ids = set(dcp_tsv_exploded[col].unique())
+        obs_ids = set(obs_df[cxg_id].unique())
+        intersect = obs_ids.intersection(dcp_ids)
 
-    cols.append(col)
-    intersection.append(n_intersect)
+        cols.append(col)
+        cxg_ids.append(cxg_id)
+        intersection.append(len(intersect))
+        n_donors.append(len(obs_ids))
 
-intersect_df = pd.DataFrame({'columns': cols, 'intersection': intersection}).set_index('columns')
-intersect_df['cxg_donors'] = n_donors
-intersect_df['intersection_fraction'] = intersect_df['intersection'] / n_donors
+intersect_df = pd.DataFrame(
+    {
+        'dcp_column': cols,
+        'cxg_column': cxg_ids,
+        'intersection': intersection,
+        'n_cxg': n_donors,
+    }
+)
+intersect_df['intersection_fraction'] = intersect_df['intersection'] / intersect_df['n_cxg']
 print(intersect_df)
 
+# identify ID column with most overlap
 argmax = intersect_df['intersection'].argmax()
-id_col = intersect_df.index.tolist()[argmax]
+intersect_max = intersect_df.iloc[argmax,:]
+assert isinstance(intersect_max, pd.Series), f'max intersection is not a Series\n{intersect_max}'
+id_col = intersect_max['dcp_column']
+cxg_col = intersect_max['cxg_column']
+
+# get IDs that don't match
+intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(obs_df[cxg_col].unique()))
+intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
+intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
+intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
 
 metadata_columns  = [id_col] + snakemake.params.metadata_cols
 metadata_columns = [c for c in metadata_columns if c in dcp_tsv.columns]
@@ -60,7 +86,7 @@ dcp_tsv = dcp_tsv[metadata_columns].drop_duplicates()
 print(dcp_tsv)
 obs_df = obs_df.merge(
     dcp_tsv,
-    left_on='donor_id',
+    left_on=cxg_col,
     right_on=id_col,
     how='left'
 )
@@ -73,6 +99,21 @@ print(obs_df)
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
-intersect_df.loc[id_col,:][['intersection', 'cxg_donors', 'intersection_fraction']].to_csv(out_stats, sep='\t', index=True)
+intersect_max.to_csv(out_stats, sep='\t', index=True)
 # TODO: metadata column completeness
 # TODO: aggregatedness of donor ID
+
+# save anndata
+logging.info(f'Write to {out_adata}...')
+adata = anndata.AnnData(obs=obs_df)
+adata.write_zarr(out_adata)
+
+if in_file.endswith('.zarr'):
+    input_files = [f.name for f in Path(in_file).iterdir()]
+    files_to_keep = [f for f in input_files if f not in ['obs']]
+    link_zarr(
+        in_dir=in_file,
+        out_dir=out_adata,
+        file_names=files_to_keep,
+        overwrite=True,
+)

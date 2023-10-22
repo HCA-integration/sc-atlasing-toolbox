@@ -3,18 +3,18 @@ resources:
     partition: cpu
     qos: normal
     gpu: 0
-    mem_mb: 16000
+    mem_mb: 64000
     disk_mb: 150000
   cpu:
     partition: cpu
     qos: normal
     gpu: 0
-    mem_mb: 16000
+    mem_mb: 50000
   gpu:
     partition: gpu
     qos: normal
     gpu: 1
-    mem_mb: 16000
+    mem_mb: 50000
 
 os: intel
 use_gpu: true
