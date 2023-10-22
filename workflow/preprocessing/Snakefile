@@ -4,21 +4,15 @@ Preprocessing
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults, \
-    get_input_file, get_input_file_wildcards
-from utils.misc import ifelse
+# from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults, \
+#     get_input_file, get_input_file_wildcards
+# from utils.misc import ifelse
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'preprocessing'
-module_config = ModuleConfig(module_name, config)
-paramspace = module_config.get_paramspace()
-
-out_dir = module_config.out_dir
-image_dir = module_config.image_dir
-input_files = module_config.get_input_file_wildcards()
-wildcard_pattern = paramspace.wildcard_pattern
+mcfg = ModuleConfig('preprocessing', config)
+paramspace = mcfg.get_paramspace()
 
 
 wildcard_constraints:
@@ -42,13 +36,13 @@ include: 'rules/plots.smk'
 
 rule plots_all:
     input:
-        expand(rules.plot_embedding.output, zip, **input_files),
-        expand(rules.plot_umap.output, zip, **input_files),
+        mcfg.get_output_files(rules.plot_embedding.output),
+        mcfg.get_output_files(rules.plot_umap.output),
 
 
 rule all:
     input:
-        expand(rules.assemble.output, zip, **input_files),
+        mcfg.get_output_files(rules.assemble.output),
         rules.plots_all.input,
     default_target: True
 
@@ -57,6 +51,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
