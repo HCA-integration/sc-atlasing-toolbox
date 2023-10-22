@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from snakemake.utils import min_version
 
-from utils.pipeline import update_module_configs, config_for_module, update_input_files_per_dataset
+from utils.pipeline import update_module_configs, config_for_module, update_input_files_per_dataset, update_file_for_module_param
 from utils.ModuleConfig import ModuleConfig
 from integration.IntegrationConfig import IntegrationConfig
 
@@ -60,6 +60,15 @@ for dataset, dataset_config in config['DATASETS'].items():
             config_class_map=config_classes,
             config_kwargs=config_kwargs,
         )
+        # update files for metrics
+        config = update_file_for_module_param(
+            dataset=dataset,
+            module_name=module_name,
+            config=config,
+            key='unintegrated',
+            config_class_map=config_classes,
+            config_kwargs=config_kwargs,
+        )
 
 
 # TODO move to data loader and exploration
@@ -81,6 +90,10 @@ module load_data:
 
 module exploration:
     snakefile: "exploration/Snakefile"
+    config: config
+
+module batch_analysis:
+    snakefile: "batch_analysis/Snakefile"
     config: config
 
 module subset:
@@ -124,6 +137,7 @@ use rule * from load_data as load_data_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
+use rule * from batch_analysis as batch_analysis_ *
 use rule * from subset as subset_ *
 use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *
