@@ -93,7 +93,8 @@ rule plot_stats:
     input:
         unpack(collect_stats)
     output:
-        intersection=image_dir / 'dcp_metadata' / 'id_intersection.png'
+        intersection_plot=image_dir / 'dcp_metadata' / 'id_intersection.png',
+        intersection_stats=out_dir / 'dcp_metadata' / 'id_intersection.tsv',
     conda:
         get_env(config, 'plots', env_dir='../../../envs/')
     script:
@@ -103,4 +104,4 @@ rule plot_stats:
 rule dcp_metadata_all:
     input:
         rules.obs_merge_dcp_all.output,
-        rules.plot_stats.output.intersection
+        rules.plot_stats.output,

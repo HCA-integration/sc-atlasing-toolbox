@@ -62,6 +62,12 @@ assert isinstance(intersect_max, pd.Series), f'max intersection is not a Series\
 id_col = intersect_max['dcp_column']
 cxg_col = intersect_max['cxg_column']
 
+# get IDs that don't match
+intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(obs_df[cxg_col].unique()))
+intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
+intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
+intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
+
 metadata_columns  = [id_col] + snakemake.params.metadata_cols
 metadata_columns = [c for c in metadata_columns if c in dcp_tsv.columns]
 print('DCP metadata columns:')
@@ -86,6 +92,6 @@ print(obs_df)
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
-intersect_max[['dcp_column', 'cxg_column', 'intersection', 'n_cxg', 'intersection_fraction']].to_csv(out_stats, sep='\t', index=True)
+intersect_max.to_csv(out_stats, sep='\t', index=True)
 # TODO: metadata column completeness
 # TODO: aggregatedness of donor ID
