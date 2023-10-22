@@ -1,10 +1,7 @@
-config_exploration = config.copy()
+if 'DATASETS' not in config.keys():
+    config["DATASETS"] = {}
 
-if 'DATASETS' not in config_exploration.keys():
-    config_exploration["DATASETS"] = {}
-
-
-config_exploration["DATASETS"]["exploration"] = dict(
+config["DATASETS"]["exploration"] = dict(
     input=dict(
         preprocessing={
             study: expand(rules.load_data_filter_study.output.zarr,study=study)[0]
@@ -18,18 +15,17 @@ config_exploration["DATASETS"]["exploration"] = dict(
     )
 )
 
-
-module preprocessing:
+module preprocessing_for_batch_pcr:
     snakefile: "../../preprocessing/Snakefile"
-    config: config_exploration
+    config: config
 
-use rule * from preprocessing as preprocessing_*
+use rule * from preprocessing_for_batch_pcr as preprocessing_for_batch_pcr_*
 
 
 def get_batch_pcr_input(wildcards):
     adata_file = expand(
-        rules.preprocessing_pca.output,
-        dataset=wildcards.study,
+        rules.preprocessing_for_batch_pcr_pca.output,
+        dataset='exploration',
         file_id=wildcards.study
     )[0]
     try:
