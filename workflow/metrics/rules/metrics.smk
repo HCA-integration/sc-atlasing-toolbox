@@ -23,6 +23,21 @@ rule preprocess:
     script:
         '../scripts/preprocess.py'
 
+def get_metric_input(wildcards):
+    inputs = dict(
+        h5mu=rules.preprocess.output.zarr,
+        metrics_meta=workflow.source_path('../params.tsv')
+    )
+    if mcfg.get_from_parameters(wildcards, 'comparison'):
+        unintegrated_file = mcfg.get_for_dataset(
+            dataset=wildcards.dataset,
+            query=[mcfg.module_name, 'unintegrated'],
+            default=rules.preprocess.output.zarr,
+        )
+        inputs |= dict(unintegrated=unintegrated_file)
+    return inputs
+
+
 rule run:
     message:
        """
@@ -33,13 +48,7 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        h5mu=rules.preprocess.output.zarr,
-        unintegrated=lambda wildcards: mcfg.get_for_dataset(
-            dataset=wildcards.dataset,
-            query=[mcfg.module_name, 'unintegrated'],
-            default=rules.preprocess.output.zarr,
-        ), # TODO: define optional input for metrics
-        metrics_meta=workflow.source_path('../params.tsv')
+        unpack(get_metric_input)
     output:
         metric=mcfg.out_dir / f'{paramspace.wildcard_pattern}.tsv'
     benchmark:

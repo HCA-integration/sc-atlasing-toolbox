@@ -62,14 +62,14 @@ def update_input_files_per_dataset(
     config_class_map: dict[str: ModuleConfig] = None,
     config_kwargs: dict[str: dict] = None,
 ):
-    if config_kwargs is None:
-        config_kwargs = {}
     if module_name == first_module:
         raise ValueError(f'Circle detected: first module {first_module} cannot be an input module')
     if first_module is None:
         first_module = module_name
     if config_class_map is None:
         config_class_map = {}
+    if config_kwargs is None:
+        config_kwargs = {}
     
     file_map = InputFiles.parse(config['DATASETS'][dataset]['input'][module_name])
     input_files = {}
@@ -104,4 +104,42 @@ def update_input_files_per_dataset(
         )
     
     config['DATASETS'][dataset]['input'][module_name] = input_files
+    return config
+
+
+def update_file_for_module_param(
+    dataset: str,
+    module_name: str,
+    config: dict,
+    key: str,
+    subset_dict: dict = None,
+    config_class_map: dict[str: ModuleConfig] = None,
+    config_kwargs: dict[str: dict] = None,
+):
+    """
+    :param dataset: dataset name
+    :param module_name: module name
+    :param config: config dict
+    :param key: key in module that should specify a file name
+    """
+    if config_class_map is None:
+        config_class_map = {}
+    if config_kwargs is None:
+        config_kwargs = {}
+    
+    dataset_config = config['DATASETS'].get(dataset, {})
+    file_pattern = dataset_config.get(module_name, {}).get(key)
+    if file_pattern in dataset_config['input']:
+        input_module = file_pattern
+        ModuleConfigClass = config_class_map.get(input_module, ModuleConfig)
+        input_cfg = ModuleConfigClass(
+            module_name=input_module,
+            config=config,
+            datasets=[dataset],
+            **config_kwargs.get(input_module, {})
+        )
+        if subset_dict is None:
+            subset_dict = {}
+        subset_dict |= {'dataset': dataset}
+        dataset_config[module_name][key] = input_cfg.get_output_files(subset_dict=subset_dict)[0]
     return config
