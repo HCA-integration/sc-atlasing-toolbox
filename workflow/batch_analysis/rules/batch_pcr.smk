@@ -1,27 +1,27 @@
-for _, row in mcfg.get_wildcards(as_df=True).iterrows():
-    dataset = row['dataset']
-    file_id = row['file_id']
-    config["DATASETS"][dataset]['input'].update(
-            {
-                'preprocessing': mcfg.get_input_file(dataset, file_id)
-            }
-    )
-    pp_config = mcfg.get_defaults(module_name='preprocessing')
-    pp_config.update(config["DATASETS"][dataset].get("preprocessing", {}))
-    pp_config.update(dict(raw_counts='X', batch='study'))
-    config["DATASETS"][dataset]["preprocessing"] = pp_config
+# for _, row in mcfg.get_wildcards(as_df=True).iterrows():
+#     dataset = row['dataset']
+#     file_id = row['file_id']
+#     config["DATASETS"][dataset]['input'].update(
+#             {
+#                 'preprocessing': mcfg.get_input_file(dataset, file_id)
+#             }
+#     )
+#     pp_config = mcfg.get_defaults(module_name='preprocessing')
+#     pp_config.update(config["DATASETS"][dataset].get("preprocessing", {}))
+#     pp_config.update(dict(raw_counts='X', batch='study'))
+#     config["DATASETS"][dataset]["preprocessing"] = pp_config
 
 
-module preprocessing:
-    snakefile: "../../preprocessing/Snakefile"
-    config: config
+# module preprocessing:
+#     snakefile: "../../preprocessing/Snakefile"
+#     config: config
 
-use rule * from preprocessing as preprocessing_*
+# use rule * from preprocessing as preprocessing_*
 
 
 checkpoint determine_covariates:
     input:
-        anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
+        anndata=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
         directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup')
     params:
@@ -51,7 +51,8 @@ def get_from_checkpoint(wildcards, pattern=None):
 
 rule batch_pcr:
     input:
-        anndata=rules.preprocessing_pca.output.zarr,
+        anndata=lambda wildcards: mcfg.get_input_file(**wildcards),
+        # anndata=rules.preprocessing_pca.output.zarr,
         setup=get_checkpoint_output,
     output:
         tsv=mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / '{covariate}.tsv',

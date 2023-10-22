@@ -1,12 +1,19 @@
+from pathlib import Path
 from pprint import pprint
 import pandas as pd
+import anndata
 from anndata.experimental import read_elem
 import zarr
+import logging
+logging.basicConfig(level=logging.INFO)
+
+from utils_pipeline.io import link_zarr
 
 in_file = snakemake.input[0]
 in_dcp = snakemake.input[1]
 out_obs = snakemake.output.obs
 out_stats = snakemake.output.stats
+out_adata = snakemake.output.zarr
 
 def explode_table(df, col, sep=' \|\| '):
     df = df.copy()
@@ -95,3 +102,18 @@ obs_df.to_csv(out_obs, sep='\t', index=False)
 intersect_max.to_csv(out_stats, sep='\t', index=True)
 # TODO: metadata column completeness
 # TODO: aggregatedness of donor ID
+
+# save anndata
+logging.info(f'Write to {out_adata}...')
+adata = anndata.AnnData(obs=obs_df)
+adata.write_zarr(out_adata)
+
+if in_file.endswith('.zarr'):
+    input_files = [f.name for f in Path(in_file).iterdir()]
+    files_to_keep = [f for f in input_files if f not in ['obs']]
+    link_zarr(
+        in_dir=in_file,
+        out_dir=out_adata,
+        file_names=files_to_keep,
+        overwrite=True,
+)

@@ -29,6 +29,7 @@ rule obs_merge_dcp:
         dcp=lambda wildcards: metadata_df.query('study == @wildcards.study')['filename'].values[0],
         # dcp=rules.download_dcp_tsv.output.tsv,
     output:
+        zarr=directory(out_dir / 'dcp_metadata' / '{study}' / 'adata.zarr'),
         obs=out_dir / 'dcp_metadata' / '{study}' / 'obs_merged.tsv',
         stats=out_dir / 'dcp_metadata' / '{study}' / 'stats.tsv'
     params:
