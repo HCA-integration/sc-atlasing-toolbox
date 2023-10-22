@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import logging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('Run metric')
+logger.setLevel(logging.INFO)
 
 try:
     from sklearnex import patch_sklearn
@@ -31,11 +32,11 @@ metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = metrics_meta.loc[metric]['metric_type']
 metric_function = metric_map[metric]
 
-logging.info(f'Read {input_adata} ...')
+logger.info(f'Read {input_adata} ...')
 adata = read_anndata(input_adata)
 
 if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
-    logging.info(f'Read unintegrated data {input_unintegrated}...')
+    logger.info(f'Read unintegrated data {input_unintegrated}...')
     unintegrated = read_anndata(input_unintegrated)
     # unintegrated = anndata_to_mudata(
     #     unintegrated,
@@ -43,7 +44,7 @@ if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
     #     # prefix='lineage~'
     # )
 else:
-    logging.info('Skip unintegrated data...')
+    logger.info('Skip unintegrated data...')
     unintegrated = adata
 
 output_types = []
