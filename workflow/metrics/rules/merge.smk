@@ -9,6 +9,7 @@ rule merge:
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=wildcards),
     output:
         tsv=mcfg.out_dir / 'results' / 'metrics.tsv',
+        extra_columns=mcfg.out_dir / 'results' / 'extra_columns.txt',
     params:
         wildcards=mcfg.get_wildcards(as_df=True),
         wildcards_string=mcfg.get_wildcards(as_df=True).to_string(index=False),
@@ -33,6 +34,7 @@ use rule merge as merge_per_dataset with:
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
         tsv=mcfg.out_dir / 'results' / 'per_dataset' / '{dataset}_metrics.tsv',
+        extra_columns=mcfg.out_dir / 'results' / 'per_dataset' / '{dataset}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True).to_string(index=False)
@@ -49,6 +51,7 @@ use rule merge as merge_per_file with:
         benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
     output:
         tsv=mcfg.out_dir / 'results' / 'per_file' / '{file_id}.tsv',
+        extra_columns=mcfg.out_dir / 'results' / 'per_file' / '{file_id}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True).to_string(index=False)

@@ -130,12 +130,13 @@ rule compare_metrics:
 
 rule funkyheatmap:
     input:
-        tsv=rules.merge.output.tsv
+        tsv=rules.merge.output.tsv,
+        extra_columns=rules.merge.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'all' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'all' / 'funky_heatmap.tsv'
     params:
-        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
+        id_vars=['dataset', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
@@ -153,12 +154,13 @@ rule funkyheatmap:
 
 use rule funkyheatmap as funkyheatmap_per_dataset with:
     input:
-        tsv=rules.merge_per_dataset.output.tsv
+        tsv=rules.merge_per_dataset.output.tsv,
+        extra_columns=rules.merge_per_dataset.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.tsv',
     params:
-        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'],
+        id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
@@ -167,12 +169,13 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
 
 use rule funkyheatmap as funkyheatmap_per_file with:
     input:
-        tsv=rules.merge_per_file.output.tsv
+        tsv=rules.merge_per_file.output.tsv,
+        extra_columns=rules.merge_per_file.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.tsv',
     params:
-        id_vars=['dataset', 'file_id', 'output_type', 'batch', 'label'],
+        id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
         weight_batch=0.4,
