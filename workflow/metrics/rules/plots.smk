@@ -167,6 +167,36 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         n_top=50,
 
 
+use rule funkyheatmap as funkyheatmap_per_batch with:
+    input:
+        tsv=rules.merge_per_batch.output.tsv,
+        extra_columns=rules.merge_per_batch.output.extra_columns,
+    output:
+        pdf=mcfg.image_dir / 'per_batch' / '{batch}' / 'funky_heatmap.pdf',
+        tsv=mcfg.image_dir / 'per_batch' / '{batch}' / 'funky_heatmap.tsv',
+    params:
+        id_vars=['dataset', 'output_type', 'batch', 'label'],
+        variable_var='metric',
+        value_var='score',
+        weight_batch=0.4,
+        n_top=50,
+
+
+use rule funkyheatmap as funkyheatmap_per_label with:
+    input:
+        tsv=rules.merge_per_label.output.tsv,
+        extra_columns=rules.merge_per_label.output.extra_columns,
+    output:
+        pdf=mcfg.image_dir / 'per_label' / '{label}' / 'funky_heatmap.pdf',
+        tsv=mcfg.image_dir / 'per_label' / '{label}' / 'funky_heatmap.tsv',
+    params:
+        id_vars=['dataset', 'output_type', 'batch', 'label'],
+        variable_var='metric',
+        value_var='score',
+        weight_batch=0.4,
+        n_top=50,
+
+
 use rule funkyheatmap as funkyheatmap_per_file with:
     input:
         tsv=rules.merge_per_file.output.tsv,
@@ -202,6 +232,8 @@ rule plots_all:
         # funky heatmap
         rules.funkyheatmap.output,
         mcfg.get_output_files(rules.funkyheatmap_per_dataset.output),
+        mcfg.get_output_files(rules.funkyheatmap_per_batch.output),
+        mcfg.get_output_files(rules.funkyheatmap_per_label.output),
         mcfg.get_output_files(rules.funkyheatmap_per_file.output),
         # barplot
         expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),

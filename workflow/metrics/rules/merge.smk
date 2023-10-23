@@ -40,6 +40,40 @@ use rule merge as merge_per_dataset with:
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True).to_string(index=False)
 
 
+use rule merge as merge_per_batch with:
+    message:
+        """
+        Merge all metrics for {wildcards}
+        {params.wildcards_string}
+        """
+    input:
+        metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
+        benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
+    output:
+        tsv=mcfg.out_dir / 'results' / 'per_batch' / '{batch}_metrics.tsv',
+        extra_columns=mcfg.out_dir / 'results' / 'per_batch' / '{batch}_extra_columns.txt',
+    params:
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True),
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True).to_string(index=False)
+
+
+use rule merge as merge_per_label with:
+    message:
+        """
+        Merge all metrics for {wildcards}
+        {params.wildcards_string}
+        """
+    input:
+        metrics=lambda wildcards: mcfg.get_output_files(rules.run.output, subset_dict=dict(wildcards)),
+        benchmark=lambda wildcards: mcfg.get_output_files(rules.run.benchmark, subset_dict=dict(wildcards)),
+    output:
+        tsv=mcfg.out_dir / 'results' / 'per_label' / '{label}_metrics.tsv',
+        extra_columns=mcfg.out_dir / 'results' / 'per_label' / '{label}_extra_columns.txt',
+    params:
+        wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True),
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True).to_string(index=False)
+
+
 use rule merge as merge_per_file with:
     message:
         """
@@ -60,4 +94,6 @@ use rule merge as merge_per_file with:
 rule merge_all:
     input:
         mcfg.get_output_files(rules.merge_per_dataset.output, wildcard_names=['dataset']),
+        mcfg.get_output_files(rules.merge_per_batch.output, wildcard_names=['batch']),
+        mcfg.get_output_files(rules.merge_per_label.output, wildcard_names=['label']),
         mcfg.get_output_files(rules.merge_per_file.output, wildcard_names=['file_id']),
