@@ -16,7 +16,6 @@ from utils.io import read_anndata
 
 
 input_adata = snakemake.input.h5mu
-input_unintegrated = snakemake.input.unintegrated
 output_file = snakemake.output.metric
 dataset = snakemake.wildcards.dataset
 file_id = snakemake.wildcards.file_id
@@ -35,7 +34,8 @@ metric_function = metric_map[metric]
 logger.info(f'Read {input_adata} ...')
 adata = read_anndata(input_adata)
 
-if metrics_meta.query(f'metric == "{metric}"')['comparison'].all():
+if 'unintegrated' in snakemake.input.keys():
+    input_unintegrated = snakemake.input.unintegrated
     logger.info(f'Read unintegrated data {input_unintegrated}...')
     unintegrated = read_anndata(input_unintegrated)
     # unintegrated = anndata_to_mudata(
@@ -92,13 +92,11 @@ for output_type in adata.uns['output_types']:
 write_metrics(
     scores=scores,
     output_types=output_types,
-    # lineages=lineages,
-    # lineage_specific=lineage_specific,
-    # lineage_key=lineage_key,  # TODO: better name for per lineage specific evaluation
     metric=metric,
     metric_type=metric_type,
+    batch=batch_key,
+    label=label_key,
     file_id=file_id,
-    # hyperparams='TODO',
     dataset=dataset,
     filename=output_file
 )
