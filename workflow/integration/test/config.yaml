@@ -68,7 +68,7 @@ DATASETS:
     integration:
       label:
         - bulk_labels
-        - leiden
+        - louvain
       batch:
         - phase
         - batch_2

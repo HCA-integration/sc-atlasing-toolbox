@@ -19,7 +19,7 @@ label_key = wildcards.label
 params = snakemake.params
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
+train_params = ['n_epochs', 'max_epochs', 'observed_lib_size', 'n_samples_per_label']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 early_stopping_kwargs = {
