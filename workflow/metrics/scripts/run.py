@@ -22,10 +22,6 @@ file_id = snakemake.wildcards.file_id
 metric = snakemake.wildcards.metric
 batch_key = snakemake.params.batch_key
 label_key = snakemake.params.label_key
-# method = snakemake.wildcards.method
-# hyperparams = snakemake.wildcards.hyperparams
-# lineage_specific = snakemake.wildcards.lineage_specific
-# lineage_key = snakemake.wildcards.lineage_key
 
 metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = metrics_meta.loc[metric]['metric_type']
@@ -49,35 +45,15 @@ else:
 
 output_types = []
 scores = []
-# lineages = []
-# meta = get_from_adata(adata)
-# for output_type in meta['output_types']:
-#     if lineage_key == 'None':
-#         score = metric_function(
-#             mudata[lineage_key],
-#             output_type,
-#             meta,
-#             adata_raw=unintegrated[lineage_key],
-#         )
-#         scores.append(score)
-#         lineages.append('global')
-#         output_types.append(output_type)
-#     else:
-#         for lineage in mudata.mod:
-#             score = np.nan
-#             if mudata[lineage].obs[meta['label']].nunique() == 1:
-#                 continue
-#             score = metric_function(
-#                 mudata[lineage],
-#                 output_type,
-#                 meta,
-#                 adata_raw=unintegrated[lineage],
-#             )
-#             scores.append(score)
-#             lineages.append(lineage)
-#             output_types.append(output_type)
-
 for output_type in adata.uns['output_types']:
+    logger.info(f'Run metric {metric} for {output_type}...')
+    
+    # TODO: only for metrics that require labels
+    logger.info('Filtering out cells without labels')
+    logger.info(f'Before: {adata.shape}')
+    adata = adata[adata.obs[label_key].notna()]
+    logger.info(f'After: {adata.shape}')
+    
     score = metric_function(
         adata,
         output_type,
