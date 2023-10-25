@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from pprint import pformat
+from pprint import pformat, pprint
 import numpy as np
 import pandas as pd
 from snakemake.utils import Paramspace
@@ -206,9 +206,9 @@ class WildcardParameters:
         :param kwargs: additional arguments for snakemake.utils.Paramspace
         """
         if wildcards_df is not None:
-            self.wildcards_df = wildcards_df
+            self.wildcards_df = unique_dataframe(wildcards_df)
         if parameters_df is not None:
-            self.parameters_df = parameters_df
+            self.parameters_df = unique_dataframe(parameters_df)
         if wildcard_names is not None:
             self.wildcard_names = wildcard_names
         self.paramspace_kwargs = kwargs
@@ -340,7 +340,7 @@ class WildcardParameters:
                 print('query_dict:')
                 pprint(query_dict)
                 print('parameter_key:', parameter_key)
-                raise ValueError(f'Parameter should not be NULL for {parameter_key} == {parameter}')
+                raise ValueError(f'Parameter should not be null. parameter: {parameter_key}, value:{parameter}')
             else:
                 parameter = default
         return parameter
