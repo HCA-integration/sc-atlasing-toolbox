@@ -34,11 +34,6 @@ if 'unintegrated' in snakemake.input.keys():
     input_unintegrated = snakemake.input.unintegrated
     logger.info(f'Read unintegrated data {input_unintegrated}...')
     unintegrated = read_anndata(input_unintegrated)
-    # unintegrated = anndata_to_mudata(
-    #     unintegrated,
-    #     group_key=lineage_key,
-    #     # prefix='lineage~'
-    # )
 else:
     logger.info('Skip unintegrated data...')
     unintegrated = adata

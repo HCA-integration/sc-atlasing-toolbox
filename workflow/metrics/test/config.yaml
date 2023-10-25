@@ -30,17 +30,17 @@ defaults:
       - isolated_label_f1
       - pcr
   datasets:
-    # - test_metrics
+    - test_metrics
     - test_integration
-    # - scib_metrics
+    - scib_metrics
 
 
 DATASETS:
   test_metrics:
     input:
       metrics:
-         - test/input/pbmc68k.h5ad
-         - test/input/pbmc68k_2.h5ad
+        - test/input/pbmc68k.h5ad
+        - test/input/pbmc68k_2.h5ad
     metrics:
       label: bulk_labels
       batch: louvain

@@ -1,12 +1,3 @@
-import os
-
-
-# def get_integration_output(wildcards):
-#     if wildcards.lineage_specific == 'global':
-#         return rules.integration_run_method.output[0]
-#     return rules.merge_lineage.output[0]
-
-
 rule preprocess:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -19,7 +10,6 @@ rule preprocess:
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile='cpu'),
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='cpu', attempt=attempt),
         time="1-00:00:00",
-    # shadow: 'copy-minimal'
     script:
         '../scripts/preprocess.py'
 
@@ -73,11 +63,3 @@ rule run:
 rule run_all:
     input:
         mcfg.get_output_files(rules.run.output)
-
-# rule run_per_lineage_all:
-#     input:
-#         expand(
-#             rules.run.output,
-#             zip,
-#             **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
-#         )
