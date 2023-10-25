@@ -26,6 +26,6 @@ rule postprocess:
     output:
         zarr=directory('{dataset}/{method}/postprocessed.zarr'),
     conda:
-        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/postprocess.py'
