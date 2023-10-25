@@ -4,9 +4,15 @@ Compute UMAP
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
-import scanpy as sc
 from anndata.experimental import read_elem
 import zarr
+try:
+    import rapids_singlecell as sc
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    import scanpy as sc
+    logging.info('Importing rapids failed, using scanpy...')
 
 from utils.io import read_anndata, link_zarr
 
@@ -44,14 +50,14 @@ def check_and_update_neighbors_info(adata, neighbors_key):
             adata.obsm[use_rep] = adata_rep.X if use_counts else adata_rep.obsm[use_rep]
 
 
-def compute_umap(adata, params):
-    try:
-        logging.info('Compute UMAP...')
-        sc.tl.umap(adata, method='rapids', **params)
-    except Exception as e:
-        print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
-        print(e)
-        sc.tl.umap(adata, **params)
+# def compute_umap(adata, params):
+#     try:
+#         logging.info('Compute UMAP...')
+#         sc.tl.umap(adata, method='rapids', **params)
+#     except Exception as e:
+#         print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
+#         print(e)
+#         sc.tl.umap(adata, **params)
 
 
 input_file = snakemake.input[0]
@@ -76,7 +82,7 @@ if not isinstance(neighbors_key, list):
 for key in neighbors_key:
     check_and_update_neighbors_info(adata, key)
     params |= dict(neighbors_key=key)
-    compute_umap(adata, params)
+    sc.tl.umap(adata, **params)
     if key != 'neighbors' or len(neighbors_key) > 1:
         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 

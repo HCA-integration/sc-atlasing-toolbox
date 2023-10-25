@@ -7,8 +7,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
-from scipy import sparse
-import scanpy as sc
+import scanpy
+try:
+    import rapids_singlecell as sc
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+    rapids = True
+except ImportError as e:
+    sc = scanpy
+    logging.info('Importing rapids failed, using scanpy...')
+    rapids = False
+
 from utils.io import read_anndata, link_zarr
 
 
@@ -20,7 +29,7 @@ lineage_key = snakemake.params.get('lineage')
 
 if args is None:
     args = {}
-subset_to_hvg = isinstance(args, dict) and 'subset' in args and args['subset']
+subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
@@ -30,7 +39,6 @@ if adata.n_obs == 0:
     adata.write(output_file)
     exit(0)
 
-# sc.pp.filter_genes(adata, min_cells=1)
 # scanpy.pp.log1p was supposed to add it but it's not saved
 adata.uns["log1p"] = {"base": None}
 
@@ -48,7 +56,15 @@ else:
 
     logging.info('Select features...')
     adata_hvg = adata.copy()
-    sc.pp.filter_genes(adata_hvg, min_cells=1)
+    scanpy.pp.filter_genes(adata_hvg, min_cells=1)
+    
+    if 'subset' in args:
+        del args['subset']
+    
+    # make sure data is on GPU for rapids_singlecell
+    if rapids:
+        sc.utils.anndata_to_GPU(adata_hvg)
+    
     sc.pp.highly_variable_genes(
         adata_hvg,
         batch_key=batch_key,

@@ -10,8 +10,8 @@ try:
 except ImportError:
     logger.info('no hardware acceleration for sklearn')
 
-from metrics.utils import anndata_to_mudata, write_metrics
 from metrics import metric_map
+from metrics.utils import write_metrics
 from utils.io import read_anndata
 
 

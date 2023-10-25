@@ -4,10 +4,18 @@ PCA on highly variable genes
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
-from scipy import sparse
-import scanpy as sc
+try:
+    import rapids_singlecell as sc
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+    rapids = True
+except ImportError as e:
+    import scanpy as sc
+    logging.info('Importing rapids failed, using scanpy...')
+    rapids = False
 
 from utils.io import read_anndata, link_zarr
+from utils.misc import ensure_sparse
 
 
 input_file = snakemake.input[0]
@@ -19,18 +27,21 @@ args = snakemake.params.get('args', {})
 logging.info(f'Read "{input_file}"...')
 adata = read_anndata(input_file)
 adata.X = read_anndata(input_counts)[:, adata.var_names].X
+ensure_sparse(adata)
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
     adata.write(output_file)
     exit(0)
 
+# make sure data is on GPU for rapids_singlecell
+if rapids:
+    sc.utils.anndata_to_GPU(adata)
+
 # scaling
 if scale:
     logging.info('Scale data...')
-    sc.pp.scale(adata, max_value=10, zero_center=True)
-else:
-    adata.X = sparse.csr_matrix(adata.X)
+    sc.pp.scale(adata, max_value=10)
 
 logging.info('PCA...')
 sc.pp.pca(adata, use_highly_variable=True, **args)

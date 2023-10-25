@@ -10,8 +10,7 @@ rule normalize:
     output:
         zarr=directory('{dataset}_normalized.zarr'),
     conda:
-        get_env(config, 'scanpy')
-    # shadow: 'minimal'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/normalize.py'
 
@@ -22,8 +21,7 @@ rule highly_variable_genes:
     output:
         zarr=directory('{dataset}_highly_variable_genes.zarr')
     conda:
-        get_env(config, 'scanpy')
-    # shadow: 'minimal'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/highly_variable_genes.py'
 
@@ -35,8 +33,7 @@ rule pca:
     output:
         zarr=directory('{dataset}_pca.zarr')
     conda:
-        get_env(config, 'scanpy')
-    # shadow: 'minimal'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/pca.py'
 
@@ -47,8 +44,7 @@ rule neighbors:
     output:
         zarr=directory('{dataset}_neighbors.zarr')
     conda:
-        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
-    # shadow: 'minimal'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/neighbors.py'
 
@@ -60,8 +56,7 @@ rule umap:
     output:
         zarr=directory('{dataset}_umap.zarr')
     conda:
-        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
-    # shadow: 'minimal'
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
         '../scripts/umap.py'
 
@@ -107,6 +102,6 @@ rule plot_umap:
     output:
         plot='plot_{dataset}.png',
     conda:
-        get_env(config, 'scanpy', gpu_env='scanpy_rapids')
+        get_env(config, 'scanpy')
     script:
         '../scripts/plot_umap.py'
