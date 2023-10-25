@@ -16,7 +16,7 @@ mcfg = IntegrationConfig(
     config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
     wildcard_names=['method', 'batch', 'label'],
     rename_config_params={'methods': 'method'},
-    explode_by=['method', 'batch'],
+    explode_by=['method', 'batch', 'label'],
 )
 
 out_dir = mcfg.out_dir
@@ -71,7 +71,7 @@ include: 'rules/clustering.smk'
 rule all:
     input:
         rules.run_all.input,
-        rules.clustering_all.input,
+        # rules.clustering_all.input,
         rules.plots_all.input,
     default_target: True
 

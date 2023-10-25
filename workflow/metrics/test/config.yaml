@@ -31,31 +31,33 @@ defaults:
       - pcr
   datasets:
     - test_metrics
-    # - test_integration
-    # - scib_metrics
+    - test_integration
+    - scib_metrics
 
 
 DATASETS:
   test_metrics:
     input:
       metrics:
-         - test/input/pbmc68k.h5ad
-         - test/input/pbmc68k_2.h5ad
+        - test/input/pbmc68k.h5ad
+        - test/input/pbmc68k_2.h5ad
     metrics:
       label: bulk_labels
       batch: louvain
   test_integration:
     input:
       metrics:
-        unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~unintegrated--hyperparams~None/adata.zarr
-        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~bbknn--hyperparams~None/adata.zarr
-        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~harmony--hyperparams~None/adata.zarr
-        scanorama: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/label~bulk_labels/method~scanorama--hyperparams~None/adata.zarr
+        unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None/postprocessed.zarr
+        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~bbknn--hyperparams~None--label~None/postprocessed.zarr
+        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~harmony--hyperparams~None--label~None/postprocessed.zarr
+        scanorama: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None/postprocessed.zarr
     metrics:
-      label: bulk_labels
-      batch:
+      label:
+        - bulk_labels
         - louvain
-        - phase
+      batch:
+        - batch
+        - batch_2
       methods:
         - nmi
         - pcr

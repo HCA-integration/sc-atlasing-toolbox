@@ -33,6 +33,9 @@ for col in [facet_row, facet_col]:
     if col is not None:
         df[col] = df[col].astype('category')
 
+if hue in df.columns:
+    hue = None if df[hue].nunique() > 6 else hue
+
 # plot parameters
 n_rows = 1 if facet_row is None else df[facet_row].nunique()
 n_cols = 1 if facet_col is None else df[facet_col].nunique()

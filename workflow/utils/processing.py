@@ -1,8 +1,14 @@
-import numpy as np
-from scipy import sparse
-import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
+import numpy as np
+from scipy import sparse
+try:
+    import rapids_singlecell as sc
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    import scanpy as sc
+    logging.info('Importing rapids failed, using scanpy...')
 
 from .misc import ensure_sparse
 
@@ -54,26 +60,34 @@ def process(adata, output_type, adata_raw=None):
     return adata
 
 
-def compute_neighbors(adata, output_type):
+def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities', dist_key='distances', check_params=True):
+    assert neighbors_key in adata.uns, f'neighbors key "{neighbors_key}" not on .uns'
+    assert adata.uns[neighbors_key]['connectivities_key'] == conn_key, f'"{conn_key} is not saved as conectivities_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
+    assert adata.uns[neighbors_key]['distances_key'] == dist_key, f'"{dist_key} is not saved as distances_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
+    assert conn_key in adata.obsp, f'"{conn_key}" not in .obsp {adata.obsp.keys()}'
+    assert dist_key in adata.obsp, f'"{dist_key}" not in .obsp {adata.obsp.keys()}'
+    if check_params:
+        assert 'params' in adata.uns[neighbors_key]
+        assert 'use_rep' in adata.uns[neighbors_key]['params']
+
+
+def compute_neighbors(adata, output_type=None):
     """ Compute kNN graph based on output type.
 
     :param adata: integrated anndata object
     :param output_type: string of output type
     :return: anndata with kNN graph based on output type
     """
-    neighbors_key = f'neighbors_{output_type}'
-    conn_key = f'connectivities_{output_type}'
-    dist_key = f'distances_{output_type}'
-
-    def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities', dist_key='distances', check_params=True):
-        assert neighbors_key in adata.uns, f'neighbors key "{neighbors_key}" not on .uns'
-        assert adata.uns[neighbors_key]['connectivities_key'] == conn_key, f'"{conn_key} is not saved as conectivities_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
-        assert adata.uns[neighbors_key]['distances_key'] == dist_key, f'"{dist_key} is not saved as distances_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
-        assert conn_key in adata.obsp, f'"{conn_key}" not in .obsp {adata.obsp.keys()}'
-        assert dist_key in adata.obsp, f'"{dist_key}" not in .obsp {adata.obsp.keys()}'
-        if check_params:
-            assert 'params' in adata.uns[neighbors_key]
-            assert 'use_rep' in adata.uns[neighbors_key]['params']
+    neighbors_key = 'neighbors'
+    conn_key = 'connectivities'
+    dist_key = 'distances'
+    
+    if not output_type:
+        output_type = 'full'
+    else:
+        neighbors_key = '_'.join([neighbors_key, output_type])
+        conn_key = '_'.join([conn_key, output_type])
+        dist_key = '_'.join([dist_key, output_type])
 
     try:
         logging.info(adata.__str__())
@@ -106,7 +120,6 @@ def compute_neighbors(adata, output_type):
         sc.pp.pca(adata_knn, use_highly_variable=True)
         sc.pp.neighbors(adata_knn, use_rep='X_pca')
         assert_neighbors(adata_knn)
-
         # save PCA
         adata.obsm['X_pca'] = adata_knn.obsm['X_pca']
         adata.varm['PCs'] = adata_knn.varm['PCs']

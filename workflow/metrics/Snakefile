@@ -30,7 +30,7 @@ mcfg = ModuleConfig(
     config_params=['label', 'batch', 'methods', 'unintegrated'],
     wildcard_names=['label', 'batch', 'metric'],
     rename_config_params={'methods': 'metric'},
-    explode_by=['metric', 'batch'],
+    explode_by=['metric', 'batch', 'label'],
     paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
 )
 

@@ -13,28 +13,48 @@ defaults:
       scgen:
         max_epochs: 10
       scvi:
+        n_latent: 30
         n_hidden: 128
-        dispersion: gene
+        dispersion:
+          - gene
+          #- gene-batch
+          #- gene-label
+          #- gene-cell
+        # scArches params
+        use_layer_norm: both
+        use_batch_norm: none
+        encode_covariates: True
+        dropout_rate: 0.2
+        n_layers: 2
+        # training params
         max_epochs: 10
         use_observed_lib_size: true
       scanvi:
+        n_latent: 30
         n_hidden: 128
         dispersion: gene
+        # scArches params
+        use_layer_norm: both
+        use_batch_norm: none
+        encode_covariates: True
+        dropout_rate: 0.2
+        n_layers: 2
+        # training params
         max_epochs: 10
         use_observed_lib_size: true
+        # n_samples_per_label: 100
       scpoli:
         supervised:
           - true
           - false
         model:
-          embedding_dims: 5
+          embedding_dims: 30
           recon_loss: nb
-          # latent_dim: 30
+          latent_dim: 100
           # hidden_layer_sizes: [512, 512]
         train:
-          n_epochs: 20
+          n_epochs: 10
           eta: 5
-
   metrics:
     methods:
       - nmi_leiden_y

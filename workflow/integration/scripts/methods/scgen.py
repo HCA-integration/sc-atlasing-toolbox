@@ -19,6 +19,9 @@ label_key = wildcards.label
 params = snakemake.params
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
+train_params = ['n_epochs', 'max_epochs', 'observed_lib_size', 'n_samples_per_label']
+model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
+train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 early_stopping_kwargs = {
     "early_stopping_metric": "val_loss",
     "patience": 20,
@@ -47,13 +50,13 @@ adata = remove_sparsity(adata) # remove sparsity
 # model = scgen.SCGEN(adata)
 
 model = sca.models.scgen(
-    adata = adata,
-    hidden_layer_sizes=[256,128]
+    adata=adata,
+    **model_params,
 )
 
 # train model
 model.train(
-    **hyperparams,
+    **train_params,
     early_stopping_kwargs=early_stopping_kwargs,
 )
 

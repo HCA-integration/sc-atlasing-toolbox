@@ -12,7 +12,6 @@ metric = params.get('metric')
 facet_row = params.get('facet_row')
 facet_col = params.get('facet_col')
 hue = params.get('hue')
-hue = None if len(hue) > 6 else hue
 
 xlim = params.get('xlim')
 ylim = params.get('ylim')
@@ -28,6 +27,10 @@ df[category] = df[category].astype('category')
 for col in [facet_row, facet_col, hue]:
     if col is not None:
         df[col] = df[col].astype(str).astype('category')
+
+
+if hue in df.columns:
+    hue = None if df[hue].nunique() > 6 else hue
 
 # plot parameters
 n_rows = 1 if facet_row is None else df[facet_row].nunique()

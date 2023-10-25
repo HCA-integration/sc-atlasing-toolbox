@@ -3,7 +3,8 @@ from scipy import sparse
 import scanpy as sc
 import pandas as pd
 import logging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('Metric utils')
+logger.setLevel(logging.INFO)
 
 
 def get_from_adata(adata):
@@ -61,12 +62,12 @@ def compute_neighbors(adata, output_type):
 
     try:
         assert_neighbors(adata, neighbors_key=neighbors_key, conn_key=conn_key, dist_key=dist_key)
-        logging.info(f'kNN graph already computed for {output_type}. Using pre-computed {output_type} kNN graph')
-        logging.info(adata.__str__())
+        logger.info(f'kNN graph already computed for {output_type}. Using pre-computed {output_type} kNN graph')
+        logger.info(adata.__str__())
         return
     except AssertionError:
-        logging.info(f'Compute kNN graph for {output_type}...')
-        logging.info(adata.__str__())
+        logger.info(f'Compute kNN graph for {output_type}...')
+        logger.info(adata.__str__())
 
     if output_type == 'knn':
         assert_neighbors(adata, check_params=False)
@@ -122,17 +123,17 @@ def select_neighbors(adata, output_type):
 
 def anndata_to_mudata(adata, group_key, prefix=''):
     import mudata as mu
-    import logging
-    logging.basicConfig(level=logging.INFO)
+    import logger
+    logger.basicConfig(level=logger.INFO)
 
     if isinstance(adata, mu.MuData):
-        logging.info('Data is already a MuData object')
+        logger.info('Data is already a MuData object')
         mudata = adata
     elif group_key not in adata.obs.columns:
-        logging.info('Data is global AnnData object, use generic group name.')
+        logger.info('Data is global AnnData object, use generic group name.')
         mudata = mu.MuData({group_key: adata})
     else:
-        logging.info('Data is AnnData object, split by group.')
+        logger.info('Data is AnnData object, split by group.')
         mudata = mu.MuData(
             {
                 f"{prefix}{group.replace(' ', '_').replace('/', '_')}":

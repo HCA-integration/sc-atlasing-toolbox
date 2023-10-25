@@ -1,12 +1,3 @@
-import os
-
-
-# def get_integration_output(wildcards):
-#     if wildcards.lineage_specific == 'global':
-#         return rules.integration_run_method.output[0]
-#     return rules.merge_lineage.output[0]
-
-
 rule preprocess:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -19,9 +10,23 @@ rule preprocess:
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile='cpu'),
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='cpu', attempt=attempt),
         time="1-00:00:00",
-    # shadow: 'copy-minimal'
     script:
         '../scripts/preprocess.py'
+
+def get_metric_input(wildcards):
+    inputs = dict(
+        h5mu=rules.preprocess.output.zarr,
+        metrics_meta=workflow.source_path('../params.tsv')
+    )
+    if mcfg.get_from_parameters(wildcards, 'comparison'):
+        unintegrated_file = mcfg.get_for_dataset(
+            dataset=wildcards.dataset,
+            query=[mcfg.module_name, 'unintegrated'],
+            default=rules.preprocess.output.zarr,
+        )
+        inputs |= dict(unintegrated=unintegrated_file)
+    return inputs
+
 
 rule run:
     message:
@@ -33,13 +38,7 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        h5mu=rules.preprocess.output.zarr,
-        unintegrated=lambda wildcards: mcfg.get_for_dataset(
-            dataset=wildcards.dataset,
-            query=[mcfg.module_name, 'unintegrated'],
-            default=rules.preprocess.output.zarr,
-        ), # TODO: define optional input for metrics
-        metrics_meta=workflow.source_path('../params.tsv')
+        unpack(get_metric_input)
     output:
         metric=mcfg.out_dir / f'{paramspace.wildcard_pattern}.tsv'
     benchmark:
@@ -64,11 +63,3 @@ rule run:
 rule run_all:
     input:
         mcfg.get_output_files(rules.run.output)
-
-# rule run_per_lineage_all:
-#     input:
-#         expand(
-#             rules.run.output,
-#             zip,
-#             **parameters.query('lineage_specific == "per_lineage"')[wildcard_names].to_dict('list')
-#         )

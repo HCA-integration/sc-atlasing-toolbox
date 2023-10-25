@@ -21,9 +21,14 @@ suppressPackageStartupMessages({
   library(dynutils)
 })
 
+# read files
 dt <- fread(input_file)
 dt[, (id_vars) := lapply(.SD, as.character), .SDcols = id_vars]
 print(head(dt))
+
+extra_columns <- readLines(snakemake@input$extra_columns)
+print(extra_columns)
+id_vars <- unique(c(id_vars, extra_columns))
 
 # remove unintegrated output types without corresponding method
 if ('unintegrated' %in% dt$method & uniqueN(dt$method) > 1) {
