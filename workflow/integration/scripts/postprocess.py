@@ -4,6 +4,7 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
+from methods.utils import check_output
 from utils.io import read_anndata, link_zarr
 from utils.processing import compute_neighbors
 
@@ -17,6 +18,8 @@ logging.info(adata.uns)
 
 output_type = adata.uns['integration']['output_type']
 output_types = [output_type] if isinstance(output_type, str) else output_type
+
+check_output(adata, output_types)
 
 for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')

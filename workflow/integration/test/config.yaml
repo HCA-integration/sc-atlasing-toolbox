@@ -87,7 +87,7 @@ DATASETS:
 
   test3:
     input:
-      integration: test/input/preprocessing/all/pbmc/preprocessed.zarr
+      integration: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
       raw_counts: raw
       norm_counts: X

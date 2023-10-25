@@ -3,10 +3,9 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata
+from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr
 from utils_pipeline.accessors import select_layer
-from utils_pipeline.processing import process
 
 
 input_file = snakemake.input[0]
@@ -36,7 +35,7 @@ else:
     logging.info(adata.obsp.keys())
     files_to_keep.extend(['obsp', 'uns'])
 
-adata = process(adata=adata, adata_raw=adata, output_type=params['output_type'])
+adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 # write file

@@ -1,10 +1,5 @@
-import numpy as np
-from scipy import sparse
 import scanpy as sc
 import pandas as pd
-import logging
-logger = logging.getLogger('Metric utils')
-logger.setLevel(logging.INFO)
 
 
 def write_metrics(filename, scores, output_types, **kwargs):
