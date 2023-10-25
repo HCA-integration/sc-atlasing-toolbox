@@ -22,7 +22,7 @@ adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 # adata = scib.ig.scvi(adata_raw, batch=wildcards.batch, **params['hyperparams'])
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size']
+train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
@@ -37,13 +37,6 @@ scvi.model.SCVI.setup_anndata(
 
 model = scvi.model.SCVI(
     adata,
-    n_latent=20,
-    # scArches params
-    use_layer_norm="both",
-    use_batch_norm="none",
-    encode_covariates=True,
-    dropout_rate=0.2,
-    n_layers=2,
     **model_params
 )
 model.train(**train_params)

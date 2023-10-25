@@ -13,11 +13,12 @@ output_file = snakemake.output[0]
 output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 params = snakemake.params
+batch_key = wildcards.batch
+label_key = wildcards.label
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-cell_type_keys = [wildcards.label] if 'supervised' in hyperparams.keys() and hyperparams['supervised'] else None
-model_params = hyperparams['model'] if 'model' in hyperparams.keys() else {}
-train_params = hyperparams['train'] if 'train' in hyperparams.keys() else {}
+model_params = hyperparams.get('model', {})
+train_params = hyperparams.get('train', {})
 pretrain_epochs = int(0.8 * model_params['n_epochs']) if 'n_epochs' in model_params else None
 early_stopping_kwargs = {
     "early_stopping_metric": "val_prototype_loss",
@@ -45,11 +46,14 @@ adata = adata_raw.copy()
 adata.X = select_layer(adata, params['raw_counts'], force_dense=True)
 adata.X = adata.X.astype('float32')
 
+if label_key in adata.obs.columns:
+    adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
+
 # train model
 model = scPoli(
     adata=adata,
-    condition_keys=wildcards.batch,
-    cell_type_keys=cell_type_keys,
+    condition_keys=batch_key,
+    cell_type_keys=[label_key] if hyperparams.get('supervised', False) else None,
     **model_params,
 )
 

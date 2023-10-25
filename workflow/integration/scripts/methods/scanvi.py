@@ -11,6 +11,8 @@ output_adata = snakemake.output[0]
 output_model = snakemake.output.model
 wildcards = snakemake.wildcards
 params = snakemake.params
+batch_key = wildcards.batch
+label_key = wildcards.label
 
 adata_raw = read_anndata(input_adata)
 adata_raw.X = select_layer(adata_raw, params['norm_counts'])
@@ -22,30 +24,25 @@ adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
 # adata = scib.ig.scanvi(adata_raw, batch=wildcards.batch, labels=wildcards.label, **params['hyperparams'])
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size']
+train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
-# train SCVI
+# prepare data for model
 adata = adata_raw.copy()
 adata.layers['counts'] = select_layer(adata, params['raw_counts'])
+adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
 
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",
     # categorical_covariate_keys=[batch], # Does not work with scArches
-    batch_key=wildcards.batch,
+    batch_key=batch_key,
 )
 
+# train SCVI
 model = scvi.model.SCVI(
     adata,
-    n_latent=20,
-    # scArches params
-    use_layer_norm="both",
-    use_batch_norm="none",
-    encode_covariates=True,
-    dropout_rate=0.2,
-    n_layers=2,
     **model_params
 )
 model.train(**train_params)
@@ -53,11 +50,11 @@ model.train(**train_params)
 # train SCANVI on top of SCVI
 model = scvi.model.SCANVI.from_scvi_model(
     model,
-    labels_key=wildcards.label,
-    unlabeled_category='unlabeled',
+    labels_key=label_key,
+    unlabeled_category='nan',
     **model_params
 )
-model.train(n_samples_per_label=100, **train_params)
+model.train(**train_params)
 model.save(output_model, overwrite=True)
 
 # prepare output adata
