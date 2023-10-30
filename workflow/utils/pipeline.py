@@ -9,6 +9,7 @@ from .ModuleConfig import ModuleConfig
 from .InputFiles import InputFiles
 
 
+# deprecated
 def update_module_configs(config, params):
     """
     Update config with parameters from modules TSV
@@ -38,6 +39,7 @@ def update_module_configs(config, params):
     return config
 
 
+# deprecated
 def config_for_module(config, module):
     if 'DATASETS' not in config:
         config['DATASETS'] = {}
@@ -93,7 +95,6 @@ def update_input_files_per_dataset(
         input_cfg = ModuleConfigClass(
             module_name=input_module,
             config=config,
-            datasets=[dataset],
             **config_kwargs.get(input_module, {})
         )
         input_files |= InputFiles.parse(
@@ -135,7 +136,6 @@ def update_file_for_module_param(
         input_cfg = ModuleConfigClass(
             module_name=input_module,
             config=config,
-            datasets=[dataset],
             **config_kwargs.get(input_module, {})
         )
         if subset_dict is None:

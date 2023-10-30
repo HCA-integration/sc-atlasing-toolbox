@@ -35,7 +35,6 @@ class ModuleConfig:
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
-        datasets: [str, list] = None,
     ):
         """
         :param module_name: name of module
@@ -50,7 +49,7 @@ class ModuleConfig:
         self.module_name = module_name
         self.config = config
         self.set_defaults()
-        self.set_datasets(datasets)
+        self.set_datasets()
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -114,17 +113,13 @@ class ModuleConfig:
         self.datasets[dataset][self.module_name] = entry
 
 
-    def set_datasets(self, datasets: [str, list] = None):
-        all_datasets = self.config['DATASETS']
-        if datasets is None:
-            datasets = all_datasets.keys()
-        
-        default_datasets = self.config['defaults'].get('datasets', all_datasets.keys())
-        default_datasets = [d for d in datasets if d in default_datasets]
+    def set_datasets(self):
+        """
+        Set dataset configs
+        """
         self.datasets = {
-            dataset: entry for dataset, entry in all_datasets.items()
-            if dataset in default_datasets
-            and self.module_name in entry.get('input', {}).keys()
+            dataset: entry for dataset, entry in self.config['DATASETS'].items()
+            if self.module_name in entry.get('input', {}).keys()
         }
         
         for dataset in self.datasets:

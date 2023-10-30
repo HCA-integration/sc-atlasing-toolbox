@@ -99,8 +99,11 @@ class WildcardParameters:
         for key, value in query_dict.items():
             if key not in df.columns:
                 continue
-            # df = df[df[key] == value]
-            df = df.query(f'{key} == @value')
+            if isinstance(value, (list, tuple, set)):
+                df = df[df[key].isin(value)]
+            else:
+                # df = df[df[key] == value]
+                df = df.query(f'{key} == @value')
             
             if verbose:
                 print(f'subset by {key} ==  {value}')
@@ -225,11 +228,17 @@ class WildcardParameters:
         wildcard_names: list = None,
         all_params: bool = False,
         as_df: bool = False,
+        default_datasets: bool = True,
     ) -> [dict, pd.DataFrame]:
         """
         Retrieve wildcard instances as dictionary
         
         :param exclude: list of wildcard names to exclude
+        :param subset_dict: dictionary with column (must be present in parameters_df) to value mapping
+        :param wildcard_names: list of wildcard names to subset the wildcards by
+        :param all_params: whether to include all parameters. If False (default), used defined wilcard names
+        :param as_df: whether to return a dataframe instead of a dictionary
+        :param default_datasets: whether to subset to default datasets (default: True)
         :return: dictionary of wildcards that can be applied directly for expanding target files
         """
         if exclude is None:
@@ -241,10 +250,17 @@ class WildcardParameters:
         if wildcard_names is None:
             wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
         
+        if default_datasets:
+            query_dict = {'dataset': self.default_config['datasets']}
+        else:
+            query_dict = {}
+        query_dict |= subset_dict
+        
         df = self.subset_by_query(
-            query_dict=subset_dict,
+            query_dict=query_dict,
             columns=[w for w in wildcard_names if w not in exclude]
         )
+        
         return df if as_df else df.to_dict('list')
 
 
