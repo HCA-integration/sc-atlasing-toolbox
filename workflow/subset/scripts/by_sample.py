@@ -11,7 +11,7 @@ strategy = snakemake.wildcards.strategy
 n_cell_max = snakemake.params.get('n_cells')
 n_cell_max = np.iinfo(int).max if n_cell_max is None else int(n_cell_max)
 sample_key = snakemake.params.get('sample_key')
-label_key = snakemake.params.get('label_key')
+# label_key = snakemake.params.get('label_key')
 
 
 logging.info(f'Read {input_file}...')
@@ -25,8 +25,8 @@ except KeyError:
     raise AssertionError(f'sample key "{sample_key}" not in adata')
 
 # remove unannoted cells
-adata = adata[adata.obs[label_key].notna()]
-logging.info(f'After removing unannotated cells: {adata.shape}')
+# adata = adata[adata.obs[label_key].notna()]
+# logging.info(f'After removing unannotated cells: {adata.shape}')
 
 samples = []
 n_cells = 0
