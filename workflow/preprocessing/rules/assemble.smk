@@ -10,8 +10,10 @@ use rule normalize from preprocessing as preprocessing_normalize with:
     params:
         raw_counts=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'raw_counts']),
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu_merged',resource_key='disk_mb'),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
 
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
@@ -24,8 +26,10 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         batch=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'batch']),
         lineage=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'lineage']),
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu_merged',resource_key='disk_mb'),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
 
 
 use rule pca from preprocessing as preprocessing_pca with:
@@ -38,8 +42,10 @@ use rule pca from preprocessing as preprocessing_pca with:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'pca'], default={}),
         scale=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'scale']),
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu_merged',resource_key='disk_mb'),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
 
 
 use rule neighbors from preprocessing as preprocessing_neighbors with:

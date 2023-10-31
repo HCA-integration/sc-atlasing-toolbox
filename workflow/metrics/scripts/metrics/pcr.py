@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
@@ -47,20 +48,27 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     upper_case_genes = sum(adata.var_names.str.isupper())
     organism = 'mouse' if upper_case_genes <= 0.1 * adata.n_vars else 'human'
 
-    # compute cell cycle score per batch
-    batch_key = batch_key
-    for batch in adata.obs[batch_key].unique():
-        scib.pp.score_cell_cycle(
-            adata_raw[adata_raw.obs[batch_key] == batch],
-            organism=organism
+    try:
+        # compute cell cycle score per batch
+        batch_key = batch_key
+        for batch in adata.obs[batch_key].unique():
+            scib.pp.score_cell_cycle(
+                adata_raw[adata_raw.obs[batch_key] == batch],
+                organism=organism
+            )
+        
+        # compute score
+        score = scib.me.cell_cycle(
+            adata_pre=adata_raw,
+            adata_post=adata,
+            batch_key=batch_key,
+            embed='X_emb' if output_type == 'embed' else 'X_pca',
+            recompute_cc=False,
+            organism=organism,
+            verbose=False,
         )
+    except ValueError as e:
+        warnings.warn(f'ValueError in cell cycle score: {e}')
+        score = np.nan
 
-    return scib.me.cell_cycle(
-        adata_pre=adata_raw,
-        adata_post=adata,
-        batch_key=batch_key,
-        embed='X_emb' if output_type == 'embed' else 'X_pca',
-        recompute_cc=False,
-        organism=organism,
-        verbose=False,
-    )
+    return score

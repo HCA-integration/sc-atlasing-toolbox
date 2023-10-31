@@ -1,0 +1,25 @@
+output_dir: test/out
+dataset_meta: test/datasets.tsv
+images: test/images
+
+env_mode: local
+use_gpu: false
+
+DATASETS:
+  no_gpu:
+    input:
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
+    preprocessing:
+      raw_counts: counts
+      scale: true
+      highly_variable_genes:
+        n_top_genes: 100
+        subset: false
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
+        - umap

@@ -1,6 +1,7 @@
 from pathlib import Path
 import logging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('Preprocess for metrics')
+logger.setLevel(logging.INFO)
 
 from utils.processing import compute_neighbors
 from utils.io import read_anndata, link_zarr
@@ -8,10 +9,10 @@ from utils.io import read_anndata, link_zarr
 
 input_adata = snakemake.input[0]
 output_file = snakemake.output[0]
-# lineage_key = snakemake.wildcards.lineage_key
-# lineage_specific = snakemake.wildcards.lineage_specific
+label_key = snakemake.params.label_key
+neighbor_args = snakemake.params.neighbor_args
 
-files_to_overwrite = ['.zattrs', '.zgroup', 'obsp', 'var', 'uns']
+files_to_overwrite = ['obsp', 'var', 'uns']
 
 logging.info('Read file...')
 adata = read_anndata(input_adata)
@@ -22,9 +23,18 @@ output_type = adata.uns.get('integration', {'output_type': 'full'}).get('output_
 output_types = [output_type] if isinstance(output_type, str) else output_type
 adata.uns['output_types'] = output_types
 
+n_obs = adata.n_obs
+# logger.info('Filtering out cells without labels')
+# TODO: only for metrics that require labels?
+# TODO: Error when connectivities/distances have different dimensions than X
+# logger.info(f'Before: {adata.n_obs} cells')
+# adata = adata[(adata.obs[label_key].notna() | adata.obs[label_key] != 'NA') ]
+# logger.info(f'After: {adata.n_obs} cells')
+force_neighbors = n_obs > adata.n_obs
+
 for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
-    compute_neighbors(adata, output_type)
+    compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
     if output_type == 'full':
         files_to_overwrite.extend(['obsm', 'varm'])
 

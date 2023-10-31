@@ -12,7 +12,7 @@ dependencies:
   - cuda-nvrtc=11.4
   - rapids=23.08
   - scanpy
+  - anndata
   - pip
   - pip:
     - rapids-singlecell
-    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1

@@ -1,3 +1,4 @@
+import numpy as np
 from .utils import select_neighbors, rename_categories
 
 
@@ -17,9 +18,12 @@ def clisi(adata, output_type, batch_key, label_key, **kwargs):
 def clisi_y(adata, output_type, batch_key, label_key, **kwargs):
     import scib_metrics
 
+    if output_type == 'knn':
+        return np.nan
+    
     adata = select_neighbors(adata, output_type)
     labels = rename_categories(adata, label_key)
-
+    
     return scib_metrics.clisi_knn(
         X=adata.obsp['distances'],
         labels=labels
@@ -41,6 +45,9 @@ def ilisi(adata, output_type, batch_key, label_key, **kwargs):
 def ilisi_y(adata, output_type, batch_key, label_key, **kwargs):
     import scib_metrics
 
+    if output_type == 'knn':
+        return np.nan
+    
     adata = select_neighbors(adata, output_type)
     batches = rename_categories(adata, batch_key)
 

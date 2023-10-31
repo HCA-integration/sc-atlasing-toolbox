@@ -2,10 +2,9 @@ from scipy.sparse import issparse
 import torch
 from scarches.models.scpoli import scPoli
 
-from utils import add_metadata
+from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata
 from utils_pipeline.accessors import select_layer
-from utils_pipeline.processing import process
 
 
 input_file = snakemake.input[0]
@@ -35,14 +34,13 @@ early_stopping_kwargs = {
 print('GPU available:', torch.cuda.is_available())
 # scvi.settings.batch_size = 32
 
-adata_raw = read_anndata(input_file)
-adata_raw.X = select_layer(adata_raw, params['norm_counts'])
+adata = read_anndata(input_file)
+adata.X = select_layer(adata, params['norm_counts'])
 
 # subset to HVGs
-adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+adata = adata[:, adata.var['highly_variable']]
 
 # prepare anndata for training
-adata = adata_raw.copy()
 adata.X = select_layer(adata, params['raw_counts'], force_dense=True)
 adata.X = adata.X.astype('float32')
 
@@ -68,9 +66,8 @@ model.train(
 model.save(output_model, overwrite=True)
 
 # prepare output adata
-adata = adata_raw.copy()
 adata.obsm["X_emb"] = model.get_latent(adata, mean=True)
-adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
+adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 adata.write_zarr(output_file)

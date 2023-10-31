@@ -4,11 +4,9 @@ import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
 
-from utils import add_metadata
+from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata
 from utils_pipeline.accessors import select_layer
-from utils_pipeline.processing import process
-
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -35,13 +33,13 @@ logging.info(hyperparams)
 # check GPU
 logging.info(f'GPU available: {torch.cuda.is_available()}')
 
-adata_raw = read_anndata(input_file)
-adata_raw.X = select_layer(adata_raw, params['norm_counts'])
+adata = read_anndata(input_file)
+adata.X = select_layer(adata, params['norm_counts'])
 
 # subset to HVGs
-adata_raw = adata_raw[:, adata_raw.var['highly_variable']]
+adata = adata[:, adata.var['highly_variable']]
 
-adata = adata_raw.copy()
+adata = adata.copy()
 adata.X = select_layer(adata, params['norm_counts'])
 adata.X = adata.X.astype('float32')
 adata = remove_sparsity(adata) # remove sparsity
@@ -72,7 +70,7 @@ model.save(output_model, overwrite=True)
 # prepare output adata
 adata.X = corrected_adata.X
 adata.obsm["X_emb"] = corrected_adata.obsm["latent_corrected"]
-adata = process(adata=adata, adata_raw=adata_raw, output_type=params['output_type'])
+adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 # Save output

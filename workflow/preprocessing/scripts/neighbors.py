@@ -4,9 +4,16 @@ Build kNN graph on embedding
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
-import scanpy as sc
+try:
+    import rapids_singlecell as sc
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    import scanpy as sc
+    logging.info('Importing rapids failed, using scanpy...')
 
 from utils.io import read_anndata, link_zarr
+from utils.processing import assert_neighbors
 
 
 input_file = snakemake.input[0]
@@ -31,13 +38,8 @@ if 'use_rep' not in params:
 logging.info(str(params))
 
 # compute kNN graph
-try:
-    logging.info('Compute kNN graph...')
-    sc.pp.neighbors(adata, method='rapids', **params)
-except Exception as e:
-    logging.info(e)
-    logging.info('Rapids failed, defaulting to UMAP implementation')
-    sc.pp.neighbors(adata, **params)
+sc.pp.neighbors(adata, **params)
+assert_neighbors(adata)
 
 logging.info(f'Write to {output_file}...')
 del adata.raw

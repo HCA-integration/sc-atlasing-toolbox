@@ -44,6 +44,7 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: louvain
+  
   test_integration:
     input:
       metrics:
@@ -52,6 +53,7 @@ DATASETS:
         harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~harmony--hyperparams~None--label~None/postprocessed.zarr
         scanorama: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None/postprocessed.zarr
     metrics:
+      unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None/postprocessed.zarr
       label:
         - bulk_labels
         - louvain

@@ -4,11 +4,13 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 
+from methods.utils import check_output
 from utils.io import read_anndata, link_zarr
 from utils.processing import compute_neighbors
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
+neighbor_args = snakemake.params.neighbor_args
 
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
@@ -18,9 +20,11 @@ logging.info(adata.uns)
 output_type = adata.uns['integration']['output_type']
 output_types = [output_type] if isinstance(output_type, str) else output_type
 
+check_output(adata, output_types)
+
 for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
-    compute_neighbors(adata, output_type)
+    compute_neighbors(adata, output_type, **neighbor_args)
 
 logging.info('Write file...')
 del adata.X

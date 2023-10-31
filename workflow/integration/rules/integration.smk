@@ -33,6 +33,8 @@ use rule postprocess from integration as integration_postprocess with:
         zarr=rules.integration_run_method.output.zarr,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
+    params:
+        neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
     resources:
         partition=lambda w: mcfg.get_resource(profile='gpu', resource_key='partition'),
         qos=lambda w: mcfg.get_resource(profile='gpu', resource_key='qos'),
