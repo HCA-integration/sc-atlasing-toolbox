@@ -34,9 +34,16 @@ adata.uns['neighbors'] = neighbors
 adata.obsp['connectivities'] = adata.obsp[neighbors['connectivities_key']]
 adata.obsp['distances'] = adata.obsp[neighbors['distances_key']]
 
-logging.info(f'Leiden clustering with resolution {resolution}...')
-cluster_key = f'leiden_{resolution}{cluster_key_suffix}'
-sc.tl.leiden(
+cluster_alg = 'louvain'
+logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
+cluster_key = f'{cluster_alg}_{resolution}{cluster_key_suffix}'
+
+cluster_alg_map = {
+    'louvain': sc.tl.louvain,
+    'leiden': sc.tl.leiden,
+}
+
+cluster_alg_map[cluster_alg](
     adata,
     resolution=resolution,
     key_added=cluster_key,
