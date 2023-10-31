@@ -42,13 +42,7 @@ output_types = []
 scores = []
 for output_type in adata.uns['output_types']:
     logger.info(f'Run metric {metric} for {output_type}...')
-    
-    # TODO: only for metrics that require labels
-    logger.info('Filtering out cells without labels')
-    logger.info(f'Before: {adata.shape}')
-    adata = adata[adata.obs[label_key].notna()]
-    logger.info(f'After: {adata.shape}')
-    
+    adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
     score = metric_function(
         adata,
         output_type,
