@@ -5,6 +5,7 @@ rule preprocess:
         zarr=directory(mcfg.out_dir / paramspace_no_metric.wildcard_pattern / 'preprocessed.zarr'),
     params:
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:

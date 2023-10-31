@@ -10,6 +10,7 @@ from utils.processing import compute_neighbors
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
+neighbor_args = snakemake.params.neighbor_args
 
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
@@ -23,7 +24,7 @@ check_output(adata, output_types)
 
 for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
-    compute_neighbors(adata, output_type)
+    compute_neighbors(adata, output_type, **neighbor_args)
 
 logging.info('Write file...')
 del adata.X

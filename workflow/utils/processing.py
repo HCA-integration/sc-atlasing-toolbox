@@ -22,11 +22,13 @@ def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities'
         assert 'use_rep' in adata.uns[neighbors_key]['params']
 
 
-def compute_neighbors(adata, output_type=None):
+def compute_neighbors(adata, output_type=None, force=False, **kwargs):
     """ Compute kNN graph based on output type.
 
     :param adata: integrated anndata object
     :param output_type: string of output type
+    :param force: force re-computation of kNN graph
+    :param kwargs: additional arguments for sc.pp.neighbors
     :return: anndata with kNN graph based on output type
     """
     neighbors_key = 'neighbors'
@@ -43,6 +45,7 @@ def compute_neighbors(adata, output_type=None):
     try:
         logging.info(adata.__str__())
         logging.info(adata.uns.get(neighbors_key))
+        assert not force
         assert_neighbors(adata, neighbors_key=neighbors_key, conn_key=conn_key, dist_key=dist_key)
         logging.info(f'kNN graph already computed for {output_type}. Using pre-computed {output_type} kNN graph')
         return
@@ -62,14 +65,16 @@ def compute_neighbors(adata, output_type=None):
     elif output_type == 'embed':
         assert 'X_emb' in adata.obsm
         adata_knn = adata.copy()
-        sc.pp.neighbors(adata_knn, use_rep='X_emb')  # TODO: use rapids
+        kwargs |= dict(use_rep='X_emb')
+        sc.pp.neighbors(adata_knn, **kwargs)
         assert_neighbors(adata_knn)
 
     elif output_type == 'full':
         assert isinstance(adata.X, (np.ndarray, sparse.csr_matrix, sparse.csc_matrix))
         adata_knn = adata.copy()
         sc.pp.pca(adata_knn, use_highly_variable=True)
-        sc.pp.neighbors(adata_knn, use_rep='X_pca')
+        kwargs |= dict(use_rep='X_pca')
+        sc.pp.neighbors(adata_knn, **kwargs)
         assert_neighbors(adata_knn)
         # save PCA
         adata.obsm['X_pca'] = adata_knn.obsm['X_pca']

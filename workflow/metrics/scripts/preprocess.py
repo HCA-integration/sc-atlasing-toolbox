@@ -10,6 +10,7 @@ from utils.io import read_anndata, link_zarr
 input_adata = snakemake.input[0]
 output_file = snakemake.output[0]
 label_key = snakemake.params.label_key
+neighbor_args = snakemake.params.neighbor_args
 
 files_to_overwrite = ['obsp', 'var', 'uns']
 
@@ -33,7 +34,7 @@ force_neighbors = n_obs > adata.n_obs
 
 for output_type in output_types:
     logging.info(f'Computing neighbors for output type {output_type}...')
-    compute_neighbors(adata, output_type, force=force_neighbors)
+    compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
     if output_type == 'full':
         files_to_overwrite.extend(['obsm', 'varm'])
 
