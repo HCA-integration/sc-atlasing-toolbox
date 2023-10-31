@@ -41,17 +41,18 @@ adata.X = select_layer(adata, params['norm_counts'])
 adata = adata[:, adata.var['highly_variable']]
 
 # prepare anndata for training
-adata.X = select_layer(adata, params['raw_counts'], force_dense=True)
+adata.X = select_layer(adata, params['raw_counts'], force_sparse=True)
 adata.X = adata.X.astype('float32')
 
 if label_key in adata.obs.columns:
-    adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
+    adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
 
 # train model
 model = scPoli(
     adata=adata,
-    condition_keys=batch_key,
+    condition_keys=[batch_key],
     cell_type_keys=[label_key] if hyperparams.get('supervised', False) else None,
+    unknown_ct_names=['NA'],
     **model_params,
 )
 
