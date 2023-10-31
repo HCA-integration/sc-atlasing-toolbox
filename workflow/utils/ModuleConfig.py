@@ -1,3 +1,4 @@
+import warnings
 from pprint import pprint
 from typing import Union
 from pathlib import Path
@@ -132,7 +133,9 @@ class ModuleConfig:
         elif self.module_name in self.config['output_map']:
             self.default_target = self.config['output_map'][self.module_name]
         else:
-            self.default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
+            default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
+            warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
+            self.default_target = default_target
 
 
     def get_defaults(self, module_name: str = None):

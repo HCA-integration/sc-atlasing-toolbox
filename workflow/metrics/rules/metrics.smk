@@ -2,7 +2,7 @@ rule preprocess:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / paramspace_no_metric.wildcard_pattern / 'preprocessed.zarr'),
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr'),
     params:
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
@@ -27,7 +27,7 @@ def get_metric_input(wildcards):
         if unintegrated_file == 'None' or unintegrated_file is None:
             wstring = ", ".join([f"{k}={v}" for k, v in wildcards.items()])
             warnings.warn(
-                'Unintegrated file is not defined for metrics module. Using default input...\n'
+                '\nUnintegrated file is not defined for metrics module. Using default input...\n'
                 f'wildcards: {wstring}'
             )
             unintegrated_file = rules.preprocess.output.zarr
@@ -47,9 +47,9 @@ rule run:
     input:
         unpack(get_metric_input)
     output:
-        metric=mcfg.out_dir / f'{paramspace.wildcard_pattern}.tsv'
+        metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
     benchmark:
-        mcfg.out_dir / f'{paramspace.wildcard_pattern}.benchmark.tsv'
+        mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.benchmark.tsv'
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
@@ -69,4 +69,4 @@ rule run:
 
 rule run_all:
     input:
-        mcfg.get_output_files(rules.run.output)
+        mcfg.get_output_files(rules.run.output, all_params=True)
