@@ -61,6 +61,8 @@ rule batch_pcr:
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key', check_query_keys=False),
     conda:
         get_env(config, 'scib_accel')
+    threads:
+        lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False, as_type=float)
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
