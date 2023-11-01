@@ -1,3 +1,4 @@
+from pprint import pprint
 import glob
 from anndata.experimental import read_elem
 import zarr
@@ -5,8 +6,9 @@ import zarr
 from utils import SCHEMAS
 
 # single dataset
-single_outputs = glob.glob('test/out/*/processed/*.zarr')
-print(single_outputs)
+single_outputs = glob.glob('test/out/*/harmonize_metadata/*.zarr')
+print('harmonised metadata output:')
+pprint(single_outputs)
 
 for file in single_outputs:
     print(f'Check {file}...')
@@ -26,7 +28,9 @@ for file in single_outputs:
 
 # merged datasets
 
-merged_outputs = glob.glob('test/out/*/merged/*.zarr')
+merged_outputs = glob.glob('test/out/*/merged/study/*.zarr') + glob.glob('test/out/*/merged/organ/*.zarr')
+print('merged output:')
+pprint( merged_outputs)
 
 for file in merged_outputs:
     print(f'Check {file}...')
