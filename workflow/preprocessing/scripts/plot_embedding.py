@@ -32,10 +32,16 @@ except:
 # parse colors
 if 'color' in params and params['color'] is not None:
     colors = params['color'] if isinstance(params['color'], list) else [params['color']]
-    # filter colors with too many categories
-    params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
+    # remove that are not in the data
+    colors = [color for color in colors if color in adata.obs.columns]
+    # filter colors with too few or too many categories
+    params['color'] = [color for color in colors if 1 < adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:
         params['color'] = None
+    else:
+        for color in params['color']:
+            if adata.obs[color].dtype.name == 'category':
+                adata.obs[color] = adata.obs[color].astype('str')
 
 # plot embedding
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)

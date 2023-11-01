@@ -31,8 +31,8 @@ if 'color' in params and params['color'] is not None:
     colors = params['color'] if isinstance(params['color'], list) else [params['color']]
     # remove that are not in the data
     colors = [color for color in colors if color in adata.obs.columns]
-    # filter colors with too many categories
-    params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
+    # filter colors with too few or too many categories
+    params['color'] = [color for color in colors if 1 < adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:
         params['color'] = None
     else:
@@ -46,9 +46,13 @@ if isinstance(neighbors_key, list):
     neighbors_keys = params['neighbors_key']
     del params['neighbors_key']
     for neighbors_key in neighbors_keys:
+        basis = f'X_umap_{neighbors_key}'
+        # remove outliers
+        adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+        adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
         sc.pl.embedding(
             adata[adata.obs.sample(adata.n_obs).index],
-            f'X_umap_{neighbors_key}',
+            basis,
             show=False,
             neighbors_key=neighbors_key,
             **params
@@ -60,6 +64,10 @@ if isinstance(neighbors_key, list):
     output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
 else:
     # plot UMAP
+    basis = 'X_umap'
+    # remove outliers
+    adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+    adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
     sc.pl.umap(
         adata[adata.obs.sample(adata.n_obs).index],
         show=False,

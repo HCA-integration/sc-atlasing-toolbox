@@ -4,8 +4,8 @@ import typing
 import hashlib
 
 
-def remove_outliers(adata, extrema='max', factor=10):
-    umap = adata.obsm['X_umap']
+def remove_outliers(adata, extrema='max', factor=10, rep='X_umap'):
+    umap = adata.obsm[rep]
     if extrema == 'max':
         abs_values = np.abs(umap.max(axis=1))
     elif extrema == 'min':
