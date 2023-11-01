@@ -23,9 +23,9 @@ studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
 #         expand(rules.download_dcp_tsv.output,study=dataset_df['study'])
 
 
-rule obs_merge_dcp:
+rule add_dcp_metadata:
     input:
-        zarr=rules.filter.output.zarr,
+        zarr=rules.load_data_merge_study.output.zarr,
         dcp=lambda wildcards: metadata_df.query('study == @wildcards.study')['filename'].values[0],
         # dcp=rules.download_dcp_tsv.output.tsv,
     output:
@@ -77,15 +77,15 @@ rule obs_merge_dcp:
         '../scripts/obs_merge_dcp.py'
 
 
-rule obs_merge_dcp_all:
+rule add_dcp_metadata_all:
     input:
-        expand(rules.obs_merge_dcp.output,study=studies)
+        expand(rules.add_dcp_metadata.output,study=studies)
 
 
 def collect_stats(wildcards):
     return {
         study:
-        expand(rules.obs_merge_dcp.output.stats,study=study)[0]
+        expand(rules.add_dcp_metadata.output.stats,study=study)[0]
         for study in studies
     }
 
@@ -104,5 +104,5 @@ rule plot_stats:
 
 rule dcp_metadata_all:
     input:
-        rules.obs_merge_dcp_all.output,
+        rules.add_dcp_metadata_all.output,
         rules.plot_stats.output,
