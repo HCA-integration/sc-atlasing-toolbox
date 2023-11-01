@@ -24,7 +24,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, X='X', layers='layers', uns='uns')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')

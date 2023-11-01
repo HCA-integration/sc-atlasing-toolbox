@@ -20,7 +20,7 @@ print('params:', params)
 assert 'basis' in params, '"basis" is positional and must be defined'
 basis = params['basis']
 
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, obs='obs', obsm='obsm')
 
 
 # convert to dense matrix

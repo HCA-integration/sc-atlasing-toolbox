@@ -24,11 +24,7 @@ if 'outlier_factor' in params:
 else:
     outlier_factor = 10
 
-adata = read_anndata(input_file)
-
-# remove outliers
-adata = remove_outliers(adata, 'max', factor=outlier_factor)
-adata = remove_outliers(adata, 'min', factor=outlier_factor)
+adata = read_anndata(input_file, obs='obs', obsm='obsm')
 
 # parse colors
 if 'color' in params and params['color'] is not None:

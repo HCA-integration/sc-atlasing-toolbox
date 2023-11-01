@@ -2,14 +2,37 @@ import os
 from pathlib import Path
 import shutil
 import anndata as ad
+import zarr
 
 
-def read_anndata(file):
+def read_anndata(file, **kwargs):
+    """
+    Read anndata file
+    :param file: path to anndata file
+    :param kwargs: kwargs for partial zarr reader
+    """
     if file.endswith('.zarr'):
-        adata = ad.read_zarr(file)
+        adata = read_zarr_partial(file, **kwargs)
     else:
-        adata = ad.read(file)
+        adata = ad.read(file, backed='r')
     return adata
+
+
+def read_zarr_partial(file, **kwargs):
+    """
+    Partially read zarr files
+    :param file: path to zarr file
+    :param kwargs: dict of slot_name: slot, by default use all available slot for the zarr file
+    :return: AnnData object
+    """
+    slots = {}
+    with zarr.open(file) as z:
+        if not kwargs:
+            kwargs = {x: x for x in z}
+        for slot_name, slot in kwargs.items():
+            print(f'Read slot "{slot}", store as "{slot_name}"...')
+            slots[slot_name] = ad.experimental.read_elem(z[slot])
+        return ad.AnnData(**slots)
 
 
 def read_anndata_or_mudata(file):
