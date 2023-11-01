@@ -71,9 +71,9 @@ adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axi
 # CELLxGENE specific
 if 'batch_condition' in adata.uns.keys():
     batch_columns = adata.uns['batch_condition']
-    adata.obs['batch'] = adata.obs[batch_columns].apply(lambda x: '-'.join(x), axis=1)
+    adata.obs['batch_condition'] = adata.obs[batch_columns].apply(lambda x: '-'.join(x), axis=1)
 else:
-    adata.obs['batch'] = meta['study']
+    adata.obs['batch_condition'] = meta['study']
 
 # Checking schema version
 if 'schema_version' not in adata.uns.keys():
@@ -120,6 +120,12 @@ adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
 
 # making sure all columns are in the object
 all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
+
+tech_covariates = meta.get('tech_covariates')
+if isinstance(tech_covariates, str):
+    tech_covariates = meta['tech_covariates'].split(',')
+    all_columns = get_union(all_columns, tech_covariates)
+
 for column in all_columns:
     if column not in adata.obs.columns:
         adata.obs[column] = np.nan

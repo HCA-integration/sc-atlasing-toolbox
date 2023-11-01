@@ -1,3 +1,5 @@
+download_columns = ['url', 'dataset', 'collection_id', 'dataset_id', 'project_uuid']
+
 rule download:
     message:
         """
@@ -6,7 +8,7 @@ rule download:
     output:
         h5ad=out_dir / 'download' / '{dataset}.h5ad'
     params:
-        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"').reset_index(drop=True)
+        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"')[download_columns].reset_index(drop=True)
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
     script:
@@ -82,7 +84,8 @@ use rule merge from load_data as load_data_merge_study with:
         zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
     params:
         dataset=lambda wildcards: wildcards.study,
-        merge_strategy='inner'
+        merge_strategy='inner',
+        keep_all_columns=True,
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,

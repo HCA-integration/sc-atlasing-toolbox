@@ -47,7 +47,7 @@ SCHEMAS = {
         'organ',
         'donor',
         'sample',
-        'batch',
+        'batch_condition',
         'author_annotation',
         'reference',
         'study',

@@ -6,14 +6,15 @@ import pandas as pd
 import scanpy as sc
 import anndata
 
-from utils import SCHEMAS
+from utils import SCHEMAS, get_union
 from utils_pipeline.io import link_zarr
 
 
-logging.basicConfig(level=logging.INFO)
-
-def read_adata(file):
+def read_adata(file, keep_columns):
     ad = anndata.read_zarr(file)
+    if not keep_columns:
+        logging.info('Keep only mandatory columns...')
+        ad.obs = ad.obs[get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])]
     ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
     del ad.layers
@@ -25,13 +26,14 @@ def read_adata(file):
 dataset = snakemake.params.dataset
 files = snakemake.input
 out_file = snakemake.output.zarr
-merge_strategy = snakemake.params.merge_strategy
+merge_strategy = snakemake.params.get('merge_strategy', 'inner')
+keep_all_columns = snakemake.params.get('keep_all_columns', False)
 
 if len(files) == 1:
     link_zarr(in_dir=files[0], out_dir=out_file)
 else:
     logging.info(f'Read first file {files[0]}...')
-    adata = read_adata(files[0])
+    adata = read_adata(files[0], keep_all_columns)
     logging.info(adata.__str__())
 
     uns_per_dataset = {
@@ -40,7 +42,7 @@ else:
 
     for file in files[1:]:
         logging.info(f'Read {file}...')
-        _adata = read_adata(file)
+        _adata = read_adata(file, keep_all_columns)
         logging.info(_adata.__str__())
 
         if _adata.n_obs == 0:
