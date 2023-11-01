@@ -13,7 +13,7 @@ use rule normalize from preprocessing as preprocessing_normalize with:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
@@ -29,7 +29,7 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule pca from preprocessing as preprocessing_pca with:
@@ -45,7 +45,7 @@ use rule pca from preprocessing as preprocessing_pca with:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule neighbors from preprocessing as preprocessing_neighbors with:
@@ -59,7 +59,7 @@ use rule neighbors from preprocessing as preprocessing_neighbors with:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule umap from preprocessing as preprocessing_umap with:
@@ -74,7 +74,7 @@ use rule umap from preprocessing as preprocessing_umap with:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 def collect_files(wildcards):
@@ -98,7 +98,7 @@ use rule assemble from preprocessing as preprocessing_assemble with:
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr')
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     conda:
         get_env(config, 'scanpy')
