@@ -4,6 +4,13 @@ import typing
 import hashlib
 
 
+def get_use_gpu(config):
+    use_gpu = bool(config.get('use_gpu', False))
+    if isinstance(use_gpu, str):
+        use_gpu = use_gpu.lower() == 'true'
+    return use_gpu
+
+
 def remove_outliers(adata, extrema='max', factor=10, rep='X_umap'):
     umap = adata.obsm[rep]
     if extrema == 'max':

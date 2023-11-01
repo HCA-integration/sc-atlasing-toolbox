@@ -1,4 +1,4 @@
-from .misc import ifelse
+from .misc import ifelse, get_use_gpu
 
 
 def get_env(
@@ -12,7 +12,7 @@ def get_env(
         mode = config.get('env_mod', 'local')
     if gpu_env is None:
         gpu_env = env_name
-    env_name = ifelse(config.get('use_gpu', False), _if=gpu_env, _else=env_name)
+    env_name = ifelse(get_use_gpu(config), _if=gpu_env, _else=env_name)
 
     if mode == 'from_yaml':
         return f'{env_dir}/{env_name}.yaml'

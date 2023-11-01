@@ -9,7 +9,7 @@ from snakemake.rules import Rule
 from .WildcardParameters import WildcardParameters
 from .InputFiles import InputFiles
 from .config import get_from_config, _get_or_default_from_config
-from .misc import create_hash
+from .misc import create_hash, get_use_gpu
 
 
 class ModuleConfig:
@@ -316,6 +316,8 @@ class ModuleConfig:
         """
         if 'resources' not in self.config or not profile:
             return ''
+        # overwrite profile to cpu if turned off in config
+        profile = profile if get_use_gpu(self.config) else 'cpu'
         resources = self.config['resources']
         try:
             res = resources[profile][resource_key]
