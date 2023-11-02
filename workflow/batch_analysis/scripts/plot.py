@@ -12,6 +12,7 @@ input_file = snakemake.input.tsv
 output_bar = snakemake.output.barplot
 output_violin = snakemake.output.violinplot
 dataset = snakemake.wildcards.dataset
+file_id = snakemake.wildcards.file_id
 
 logger.info('Read TSV...')
 df = pd.read_table(input_file)
@@ -33,11 +34,12 @@ g = sns.barplot(
     x='pcr',
     y='covariate',
     hue='permuted',
+    errorbar='sd',
     dodge=True,
-    errwidth=0,
-    # errorbar='sd',
+    errwidth=1,
+    capsize=.1,
 )
-g.set(title=f'PCR of covariates for: {dataset}')
+g.set(title=f'PCR of covariates for: {dataset} {file_id}')
 grouped_by_covariate = df.groupby('covariate', sort=False)
 bar_labels = grouped_by_covariate['pcr'].first().round(2).astype(str).str.cat(
     grouped_by_covariate['n_covariates'].first(),
@@ -65,6 +67,7 @@ g = sns.violinplot(
     dodge=False,
 )
 sns.despine()
+g.set(title=f'PCR of covariates for: {dataset} {file_id}')
 
 logger.info('Save violin plot...')
 plt.savefig(output_violin, bbox_inches='tight',dpi=300)
