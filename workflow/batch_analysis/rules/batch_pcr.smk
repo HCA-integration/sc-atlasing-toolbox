@@ -26,7 +26,8 @@ checkpoint determine_covariates:
         directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup')
     params:
         covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'covariates', default=[]),
-        permute_covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'permute_covariates', default=[]),
+        permute_covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'permute_covariates', default=None),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key', check_query_keys=False),
         n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10),
     conda:
         get_env(config, 'scanpy')

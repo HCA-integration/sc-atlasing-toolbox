@@ -8,10 +8,13 @@ from pathlib import Path
 
 input_file = snakemake.input.anndata
 output_dir = snakemake.output[0]
+sample_key = snakemake.params.get('sample_key')
 Path(output_dir).mkdir(parents=True)
 
 covariates = snakemake.params.get('covariates', [])
-perm_covariates = snakemake.params.get('permute_covariates', [])
+perm_covariates = snakemake.params.get('permute_covariates')
+if perm_covariates is None:
+    perm_covariates = covariates
 n_perms = snakemake.params.get('n_perms', 10)
 
 logging.info(f'Read {input_file}...')
@@ -32,7 +35,7 @@ covariates = [
 ]
 perm_covariates = [
     covariate for covariate in perm_covariates
-    if covariate_valid(obs, covariate)
+    if covariate_valid(obs, covariate) and covariate != sample_key
 ]
 
 logging.info(f'covariates:\n {pformat(covariates)}')
