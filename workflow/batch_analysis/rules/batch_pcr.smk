@@ -63,11 +63,11 @@ rule batch_pcr:
     conda:
         get_env(config, 'scib_accel')
     threads:
-        lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False, as_type=float)
+        lambda wildcards: min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False, as_type=float))
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/batch_pcr.py'
 
