@@ -10,10 +10,10 @@ use rule normalize from preprocessing as preprocessing_normalize with:
     params:
         raw_counts=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'raw_counts']),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
@@ -26,10 +26,10 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         batch=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'batch']),
         lineage=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'lineage']),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule pca from preprocessing as preprocessing_pca with:
