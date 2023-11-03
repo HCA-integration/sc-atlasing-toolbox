@@ -21,7 +21,7 @@ output_file = snakemake.output[0]
 params = dict(snakemake.params.args.items())
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, obs='obs', obsm='obsm', uns='uns')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
@@ -35,6 +35,7 @@ if 'use_rep' not in params:
         params['n_pcs'] = adata.obsm['X_pca'].shape[1]
     else:
         params['use_rep'] = 'X'
+        adata.X = read_anndata(input_file, X='X').X
 logging.info(str(params))
 
 # compute kNN graph
@@ -42,10 +43,6 @@ sc.pp.neighbors(adata, **params)
 assert_neighbors(adata)
 
 logging.info(f'Write to {output_file}...')
-del adata.raw
-del adata.X
-del adata.layers
-del adata.obsm
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
