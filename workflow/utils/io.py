@@ -13,8 +13,10 @@ def read_anndata(file, **kwargs):
     """
     if file.endswith('.zarr'):
         adata = read_zarr_partial(file, **kwargs)
+    elif file.endswith('.h5ad'):
+        adata = ad.read_h5ad(file)
     else:
-        adata = ad.read(file, backed='r')
+        raise ValueError(f'Unknown file format: {file}')
     return adata
 
 
