@@ -1,6 +1,7 @@
 from pathlib import Path
-from pprint import pprint
+from pprint import pformat
 import pandas as pd
+import numpy as np
 import anndata
 from anndata.experimental import read_elem
 import zarr
@@ -14,6 +15,7 @@ in_dcp = snakemake.input[1]
 out_obs = snakemake.output.obs
 out_stats = snakemake.output.stats
 out_adata = snakemake.output.zarr
+metadata_columns = snakemake.params.metadata_cols
 
 def explode_table(df, col, sep=' \|\| '):
     df = df.copy()
@@ -60,11 +62,11 @@ intersect_df = pd.DataFrame(
     }
 )
 intersect_df['intersection_fraction'] = intersect_df['intersection'] / intersect_df['n_cxg']
-print(intersect_df)
+logging.info(intersect_df)
 
 # identify ID column with most overlap
 argmax = intersect_df['intersection'].argmax()
-intersect_max = intersect_df.iloc[argmax,:]
+intersect_max = intersect_df.iloc[argmax,:].copy()
 assert isinstance(intersect_max, pd.Series), f'max intersection is not a Series\n{intersect_max}'
 id_col = intersect_max['dcp_column']
 cxg_col = intersect_max['cxg_column']
@@ -75,15 +77,25 @@ intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_t
 intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
 intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
 
-metadata_columns  = [id_col] + snakemake.params.metadata_cols
-metadata_columns = [c for c in metadata_columns if c in dcp_tsv.columns]
-print('DCP metadata columns:')
-pprint(metadata_columns)
+metadata_columns  = set([id_col] + metadata_columns)
+metadata_columns = [c for c in dcp_tsv.columns if sum([c.startswith(mc) for mc in metadata_columns]) > 0]
+logging.info('DCP metadata columns:')
+logging.info(pformat(metadata_columns))
 
-# merge on ID column
+# explode columns
 dcp_tsv = explode_table(dcp_tsv, id_col).dropna(subset=[id_col])
 dcp_tsv = dcp_tsv[metadata_columns].drop_duplicates()
-print(dcp_tsv)
+logging.info(dcp_tsv)
+
+# deal with columns that cause error when writing zarr file
+for col in metadata_columns:
+    if dcp_tsv[col].apply(isinstance, args=((str, bool, np.bool_),)).any():
+        dcp_tsv[col] = dcp_tsv[col].astype(str)
+    elif dcp_tsv[col].isnull().all():
+        # remove columns that are all null
+        del dcp_tsv[col]
+
+# merge on ID column
 obs_df = obs_df.merge(
     dcp_tsv,
     left_on=cxg_col,
@@ -95,7 +107,7 @@ obs_df = obs_df.merge(
 obs_df = obs_df.drop_duplicates(subset=["barcode"])
 
 # save obs
-print(obs_df)
+logging.info(obs_df)
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
