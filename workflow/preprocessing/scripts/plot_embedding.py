@@ -10,6 +10,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
 
+wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
 if params is None:
     params = {}
 else:
@@ -46,4 +47,5 @@ if 'color' in params and params['color'] is not None:
 # plot embedding
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.embedding(adata, show=False, **params)
+plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
 plt.savefig(output_file, bbox_inches='tight', dpi=200)

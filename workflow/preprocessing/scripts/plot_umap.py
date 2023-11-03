@@ -17,6 +17,7 @@ output_plot = Path(snakemake.output.plot)
 output_additional = Path(snakemake.output.additional_plots)
 output_additional.mkdir(exist_ok=True)
 
+wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
 params = dict(snakemake.params.items())
 if 'outlier_factor' in params:
     outlier_factor = params['outlier_factor']
@@ -57,7 +58,7 @@ if isinstance(neighbors_key, list):
             neighbors_key=neighbors_key,
             **params
         )
-        plt.suptitle(f'neighbors_key: {neighbors_key}, n={adata.n_obs}')
+        plt.suptitle(f'{wildcards_string}, neighbors_key: {neighbors_key}, n={adata.n_obs}')
         fig_file = output_additional / f'{neighbors_key}.png'
         plt.savefig(fig_file, bbox_inches='tight', dpi=200)
     logging.info(f'link {output_plot} to {fig_file}')
@@ -73,5 +74,5 @@ else:
         show=False,
         **params
     )
-    plt.suptitle(f'n={adata.n_obs}')
+    plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
     plt.savefig(output_plot, bbox_inches='tight', dpi=200)
