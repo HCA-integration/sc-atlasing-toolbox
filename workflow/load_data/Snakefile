@@ -58,6 +58,7 @@ module load_data:
 
 include: 'rules/load_data.smk'
 include: 'rules/dcp_metadata.smk'
+include: 'rules/merge.smk'
 
 rule all:
     input:

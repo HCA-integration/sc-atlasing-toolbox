@@ -13,7 +13,7 @@ from utils_pipeline.io import link_zarr
 def read_adata(file, keep_columns):
     ad = anndata.read_zarr(file)
     if not keep_columns:
-        logging.info('Keep only mandatory columns...')
+        logging.info(f'Keep only mandatory columns for {file}...')
         ad.obs = ad.obs[get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])]
     ad.var = ad.var[SCHEMAS['CELLxGENE_VARS']]
     # remove data
