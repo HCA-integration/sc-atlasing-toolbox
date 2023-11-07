@@ -1,3 +1,5 @@
+download_columns = ['url', 'dataset', 'collection_id', 'dataset_id', 'project_uuid']
+
 rule download:
     message:
         """
@@ -6,7 +8,7 @@ rule download:
     output:
         h5ad=out_dir / 'download' / '{dataset}.h5ad'
     params:
-        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"').reset_index(drop=True)
+        dataset_df=lambda w: dataset_df.query(f'dataset == "{w.dataset}"')[download_columns].reset_index(drop=True)
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
     script:
@@ -82,7 +84,8 @@ use rule merge from load_data as load_data_merge_study with:
         zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
     params:
         dataset=lambda wildcards: wildcards.study,
-        merge_strategy='inner'
+        merge_strategy='inner',
+        keep_all_columns=True,
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
@@ -103,69 +106,3 @@ use rule filter from load_data as load_data_filter_study with:
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
-
-
-rule filter_all:
-    input: expand(rules.load_data_filter_study.output,**get_wildcards(dataset_df,['study']))
-
-
-use rule merge from load_data as load_data_merge_organ with:
-    input:
-        lambda wildcards: expand(
-            rules.load_data_filter_study.output.zarr,
-            **get_wildcards(dataset_df,['study'],wildcards),
-        ),
-    output:
-        zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
-    params:
-        dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer'
-    resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
-    threads:
-        dataset_df['dataset'].nunique()
-
-
-use rule merge from load_data as load_data_merge_organ_filter with:
-    input:
-        lambda wildcards: expand(
-            rules.load_data_filter_study.output.removed,
-            **get_wildcards(dataset_df,['study'],wildcards),
-        ),
-    output:
-        zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
-    params:
-        dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer'
-    resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
-    threads:
-        dataset_df['dataset'].nunique()
-
-
-use rule merge from load_data as load_data_merge_subset with:
-    input:
-        lambda wildcards: expand(
-            rules.load_data_filter_study.output.zarr,
-            **get_wildcards(dataset_df,['study'],wildcards),
-        ),
-    output:
-        zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
-    params:
-        dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
-        merge_strategy='outer'
-    resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
-    threads:
-        dataset_df['dataset'].nunique()
-
-
-rule  merge_subset_all:
-    input:
-        expand(
-            rules.load_data_merge_subset.output,
-            **get_wildcards(dataset_df,['organ', 'subset'],drop_na=True)
-        )

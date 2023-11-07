@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.11.2023 Optimise batch PCR analysis
+
+- parallelise permutations per covariate withing script
+- use unfiltered files for merging DCP columns
+- optimise Preprocessing io
+
 ## 19.10.2023 Handle multiple inputs
 
 ### New feature: allow multiple inputs to a module

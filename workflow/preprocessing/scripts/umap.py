@@ -66,7 +66,7 @@ output_file = snakemake.output[0]
 params = dict(snakemake.params.items())
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, obs='obs', obsm='obsm', obsp='obsp', uns='uns')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')

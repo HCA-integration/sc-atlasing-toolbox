@@ -25,8 +25,8 @@ scale = snakemake.params.get('scale', False)
 args = snakemake.params.get('args', {})
 
 logging.info(f'Read "{input_file}"...')
-adata = read_anndata(input_file)
-adata.X = read_anndata(input_counts)[:, adata.var_names].X
+adata = read_anndata(input_file, var='var', obs='obs', uns='uns')
+adata.X = read_anndata(input_counts, X='X', var='var', obs='obs')[:, adata.var_names].X
 ensure_sparse(adata)
 
 if adata.n_obs == 0:

@@ -33,7 +33,7 @@ subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, X='X', obs='obs', var='var', uns='uns')
 
 if adata.n_obs == 0:
     adata.write(output_file)

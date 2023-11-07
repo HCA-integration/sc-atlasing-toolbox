@@ -17,7 +17,6 @@ DATASETS:
       covariates:
         - sample
         - donor
-        - batch
         - assay
         - sex
         - disease
@@ -39,7 +38,6 @@ DATASETS:
         - cell_suspension.biomaterial_core.biomaterial_id
       permute_covariates:
         - assay
-        - batch
         - donor
         - sequencing_protocol.method.ontology
         - library_preparation_protocol.cell_barcode.barcode_read

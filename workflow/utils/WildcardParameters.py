@@ -305,6 +305,7 @@ class WildcardParameters:
         check_null: bool = False,
         default: [str, None] = None,
         verbose: bool = False,
+        as_type: type = None,
     ):
         """
         Get entries from parameters dataframe
@@ -312,6 +313,7 @@ class WildcardParameters:
         :param query_dict: dictionary with column (must be present in parameters_df) to value mapping
         :param parameter_key: key of parameter
         :param wildcards_sub: list of wildcards used for subsetting the parameters
+        :param check_query_keys: whether to check if all keys in query_dict are in wildcards_sub
         :return: single parameter value or list of parameters as specified by column
         """
         if wildcards_sub is None:
@@ -343,9 +345,9 @@ class WildcardParameters:
         
         # check if NULL
         if isinstance(parameter, Iterable):
-            is_null = False
+            is_null = parameter == 'None'
         else:
-            is_null = pd.isna(parameter) or pd.isnull(parameter) or parameter is None or parameter == 'None'
+            is_null = pd.isna(parameter) or pd.isnull(parameter) or parameter is None
         if is_null:
             if check_null:
                 df = self.subset_by_query(
@@ -359,4 +361,6 @@ class WildcardParameters:
                 raise ValueError(f'Parameter should not be null. parameter: {parameter_key}, value:{parameter}')
             else:
                 parameter = default
+        if as_type is not None:
+            return as_type(parameter)
         return parameter

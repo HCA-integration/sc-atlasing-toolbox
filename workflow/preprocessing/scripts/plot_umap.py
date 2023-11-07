@@ -17,6 +17,7 @@ output_plot = Path(snakemake.output.plot)
 output_additional = Path(snakemake.output.additional_plots)
 output_additional.mkdir(exist_ok=True)
 
+wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
 params = dict(snakemake.params.items())
 if 'outlier_factor' in params:
     outlier_factor = params['outlier_factor']
@@ -24,19 +25,15 @@ if 'outlier_factor' in params:
 else:
     outlier_factor = 10
 
-adata = read_anndata(input_file)
-
-# remove outliers
-adata = remove_outliers(adata, 'max', factor=outlier_factor)
-adata = remove_outliers(adata, 'min', factor=outlier_factor)
+adata = read_anndata(input_file, obs='obs', obsm='obsm')
 
 # parse colors
 if 'color' in params and params['color'] is not None:
     colors = params['color'] if isinstance(params['color'], list) else [params['color']]
     # remove that are not in the data
     colors = [color for color in colors if color in adata.obs.columns]
-    # filter colors with too many categories
-    params['color'] = [color for color in colors if adata.obs[color].nunique() <= 128]
+    # filter colors with too few or too many categories
+    params['color'] = [color for color in colors if 1 < adata.obs[color].nunique() <= 128]
     if len(params['color']) == 0:
         params['color'] = None
     else:
@@ -50,24 +47,32 @@ if isinstance(neighbors_key, list):
     neighbors_keys = params['neighbors_key']
     del params['neighbors_key']
     for neighbors_key in neighbors_keys:
+        basis = f'X_umap_{neighbors_key}'
+        # remove outliers
+        adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+        adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
         sc.pl.embedding(
             adata[adata.obs.sample(adata.n_obs).index],
-            f'X_umap_{neighbors_key}',
+            basis,
             show=False,
             neighbors_key=neighbors_key,
             **params
         )
-        plt.suptitle(f'neighbors_key: {neighbors_key}, n={adata.n_obs}')
+        plt.suptitle(f'{wildcards_string}, neighbors_key: {neighbors_key}, n={adata.n_obs}')
         fig_file = output_additional / f'{neighbors_key}.png'
         plt.savefig(fig_file, bbox_inches='tight', dpi=200)
     logging.info(f'link {output_plot} to {fig_file}')
     output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
 else:
     # plot UMAP
+    basis = 'X_umap'
+    # remove outliers
+    adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+    adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
     sc.pl.umap(
         adata[adata.obs.sample(adata.n_obs).index],
         show=False,
         **params
     )
-    plt.suptitle(f'n={adata.n_obs}')
+    plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
     plt.savefig(output_plot, bbox_inches='tight', dpi=200)

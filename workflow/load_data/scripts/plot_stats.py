@@ -22,4 +22,4 @@ plot = stats_df['intersection_fraction'].sort_values().plot.barh(
 for container in plot.containers:
     plot.bar_label(container)
 plot.set_xlabel('ID overlap fraction (normed over CxG donors/samples)')
-plt.savefig(out_intersection_plot, bbox_inches='tight')
+plt.savefig(out_intersection_plot, bbox_inches='tight', dpi=300)
