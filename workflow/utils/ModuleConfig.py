@@ -318,6 +318,10 @@ class ModuleConfig:
             return ''
         # overwrite profile to cpu if turned off in config
         profile = profile if get_use_gpu(self.config) else 'cpu'
+        
+        if attempt > 2:
+            profile = 'cpu'
+        
         resources = self.config['resources']
         try:
             res = resources[profile][resource_key]
