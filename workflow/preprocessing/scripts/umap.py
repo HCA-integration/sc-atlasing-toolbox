@@ -15,6 +15,7 @@ except ImportError as e:
     logging.info('Importing rapids failed, using scanpy...')
 
 from utils.io import read_anndata, link_zarr
+from utils.misc import ensure_dense
 
 
 def check_and_update_neighbors_info(adata, neighbors_key):
@@ -40,24 +41,12 @@ def check_and_update_neighbors_info(adata, neighbors_key):
     use_rep = adata.uns[neighbors_key]['params'].get('use_rep', None)
     if use_rep not in adata.obsm:
         logging.info(f'Read {input_rep}...')
-        use_counts = use_rep == 'X' or use_rep is None
-        if input_rep.endswith('.zarr'):
-            slot = 'X' if use_counts else use_rep
-            with zarr.open(input_rep) as z:
-                adata.obsm[use_rep] = read_elem(z['obsm'][slot])
+        use_counts = (use_rep == 'X') or (use_rep is None)
+        if use_counts:
+            adata.X = read_anndata(input_rep, X='X').X
+            ensure_dense(adata)
         else:
-            adata_rep = read_anndata(input_rep)
-            adata.obsm[use_rep] = adata_rep.X if use_counts else adata_rep.obsm[use_rep]
-
-
-# def compute_umap(adata, params):
-#     try:
-#         logging.info('Compute UMAP...')
-#         sc.tl.umap(adata, method='rapids', **params)
-#     except Exception as e:
-#         print('sc.tl.umap: Rapids failed, defaulting to UMAP implementation')
-#         print(e)
-#         sc.tl.umap(adata, **params)
+            adata.obsm[use_rep] = read_anndata(input_rep, obsm='obsm').obsm[use_rep]
 
 
 input_file = snakemake.input[0]
@@ -66,7 +55,7 @@ output_file = snakemake.output[0]
 params = dict(snakemake.params.items())
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', obsm='obsm', obsp='obsp', uns='uns')
+adata = read_anndata(input_file, obs='obs', obsm='obsm', obsp='obsp', uns='uns', var='var')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
@@ -76,15 +65,15 @@ if adata.n_obs == 0:
 neighbors_key = params.get('neighbors_key', 'neighbors')
 
 # compute UMAP
-if not isinstance(neighbors_key, list):
-    neighbors_key = [neighbors_key]
+# for key in neighbors_key:
+#     check_and_update_neighbors_info(adata, key)
+#     params |= dict(neighbors_key=key)
+#     sc.tl.umap(adata, **params)
+#     if key != 'neighbors' or len(neighbors_key) > 1:
+#         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
 
-for key in neighbors_key:
-    check_and_update_neighbors_info(adata, key)
-    params |= dict(neighbors_key=key)
-    sc.tl.umap(adata, **params)
-    if key != 'neighbors' or len(neighbors_key) > 1:
-        adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
+check_and_update_neighbors_info(adata, neighbors_key)
+sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')
 del adata.raw

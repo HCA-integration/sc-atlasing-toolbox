@@ -41,38 +41,43 @@ if 'color' in params and params['color'] is not None:
             if adata.obs[color].dtype.name == 'category':
                 adata.obs[color] = adata.obs[color].astype('str')
 
-# parse neighbors key
-neighbors_key = params.get('neighbors_key', 'neighbors')
-if isinstance(neighbors_key, list):
-    neighbors_keys = params['neighbors_key']
-    del params['neighbors_key']
-    for neighbors_key in neighbors_keys:
-        basis = f'X_umap_{neighbors_key}'
-        # remove outliers
-        adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
-        adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
-        sc.pl.embedding(
-            adata[adata.obs.sample(adata.n_obs).index],
-            basis,
-            show=False,
-            neighbors_key=neighbors_key,
-            **params
-        )
-        plt.suptitle(f'{wildcards_string}, neighbors_key: {neighbors_key}, n={adata.n_obs}')
-        fig_file = output_additional / f'{neighbors_key}.png'
-        plt.savefig(fig_file, bbox_inches='tight', dpi=200)
-    logging.info(f'link {output_plot} to {fig_file}')
-    output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
-else:
-    # plot UMAP
-    basis = 'X_umap'
-    # remove outliers
-    adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
-    adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
-    sc.pl.umap(
-        adata[adata.obs.sample(adata.n_obs).index],
-        show=False,
-        **params
-    )
-    plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
-    plt.savefig(output_plot, bbox_inches='tight', dpi=200)
+# # parse neighbors key
+# neighbors_key = params.get('neighbors_key', 'neighbors')
+# if isinstance(neighbors_key, list):
+#     neighbors_keys = params['neighbors_key']
+#     del params['neighbors_key']
+#     for neighbors_key in neighbors_keys:
+#         basis = f'X_umap_{neighbors_key}'
+#         # remove outliers
+#         adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+#         adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
+#         sc.pl.embedding(
+#             adata[adata.obs.sample(adata.n_obs).index],
+#             basis,
+#             show=False,
+#             neighbors_key=neighbors_key,
+#             **params
+#         )
+#         plt.suptitle(f'{wildcards_string}, neighbors_key: {neighbors_key}, n={adata.n_obs}')
+#         fig_file = output_additional / f'{neighbors_key}.png'
+#         plt.savefig(fig_file, bbox_inches='tight', dpi=200)
+#     logging.info(f'link {output_plot} to {fig_file}')
+#     output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
+# else:
+
+# determine basis
+basis = params.get('basis', 'X_umap')
+if 'basis' in params:
+    del params['basis']
+
+# remove outliers
+adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
+adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
+sc.pl.embedding(
+    adata[adata.obs.sample(adata.n_obs).index],
+    basis=basis,
+    show=False,
+    **params
+)
+plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
+plt.savefig(output_plot, bbox_inches='tight', dpi=200)

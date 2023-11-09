@@ -109,11 +109,24 @@ def ifelse(statement, _if, _else):
         return _else
 
 
-def ensure_sparse(adata):
+def ensure_sparse(adata, layer='X'):
     from scipy.sparse import csr_matrix, issparse
 
     if not issparse(adata.X):
-        adata.X = csr_matrix(adata.X)
+        if layer == 'X':
+            adata.X = csr_matrix(adata.X)
+        else:
+            adata.layers[layer] = csr_matrix(adata.layers[layer])
+
+
+def ensure_dense(adata, layer='X'):
+    from scipy.sparse import issparse
+
+    if issparse(adata.X):
+        if layer == 'X':
+            adata.X = adata.X.todense()
+        else:
+            adata.layers[layer] = adata.layers[layer].todense()
 
 
 def merge(dfs, **kwargs):

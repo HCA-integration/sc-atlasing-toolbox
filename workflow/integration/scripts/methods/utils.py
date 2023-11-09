@@ -52,7 +52,8 @@ def remove_slots(adata, output_type):
     elif 'embed' in output_type:
         del adata.X
     elif 'knn' in output_type:
-        del adata.X
+        # del adata.X
+        pass
     else:
         raise ValueError(f'Invalid output type {output_type}')
     return adata

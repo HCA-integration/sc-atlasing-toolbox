@@ -14,7 +14,7 @@ use rule plot_umap from preprocessing as preprocessing_plot_umap with:
         anndata=rules.umap.output.zarr,
     output:
         plot=mcfg.image_dir / paramspace.wildcard_pattern / 'umap.png',
-        additional_plots=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'umap'),
+        # additional_plots=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'umap'),
     params:
         color=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'colors']),
         ncols=1,
