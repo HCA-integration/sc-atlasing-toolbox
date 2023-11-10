@@ -3,13 +3,12 @@ Data Subsetting for benchmark
 """
 from pathlib import Path
 
-from utils.config import get_datasets_for_module, get_for_dataset, get_resource, set_defaults
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 module_name = 'subset'
-module_config = ModuleConfig(module_name, config)
-paramspace = module_config.get_paramspace()
+mcfg = ModuleConfig(module_name, config)
+paramspace = mcfg.get_paramspace()
 
 module common:
     snakefile: "../common/Snakefile"
@@ -19,16 +18,16 @@ use rule * from common as common_ *
 
 rule subset:
     input:
-        lambda wildcards: module_config.get_input_file(wildcards.dataset, wildcards.file_id),
+        lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
-        zarr=directory(module_config.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     params:
-        n_cells=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'n_cells']),
-        sample_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'sample']),
-        label_key=lambda wildcards: get_for_dataset(config, wildcards.dataset, query=[module_name, 'label']),
+        n_cells=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'n_cells']),
+        sample_key=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'sample']),
+        label_key=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'label']),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
@@ -38,7 +37,7 @@ rule subset:
 rule all:
     input:
         expand(
-            expand(rules.subset.output, zip, **module_config.get_input_file_wildcards(), allow_missing=True),
+            expand(rules.subset.output, zip, **mcfg.get_input_file_wildcards(), allow_missing=True),
             strategy=['by_sample', 'within_sample']
         )
     default_target: True
@@ -48,6 +47,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
