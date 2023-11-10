@@ -20,6 +20,7 @@ from utils.misc import ensure_dense
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params.get('args', {})
+extra_uns = snakemake.params.get('extra_uns', {})
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsm='obsm', uns='uns', var='var')
@@ -56,6 +57,9 @@ else:
     # compute kNN graph
     sc.pp.neighbors(adata, **params)
     assert_neighbors(adata)
+
+# update .uns
+adata.uns |= extra_uns
 
 logging.info(f'Write to {output_file}...')
 del adata.X

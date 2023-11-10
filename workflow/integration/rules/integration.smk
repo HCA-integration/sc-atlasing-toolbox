@@ -48,7 +48,8 @@ use rule neighbors from preprocessing as integration_postprocess with:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
     params:
-        args=lambda wildcards: update_neighbors_args(wildcards)
+        args=lambda wildcards: update_neighbors_args(wildcards),
+        extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
