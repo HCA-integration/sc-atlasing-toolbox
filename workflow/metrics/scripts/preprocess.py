@@ -15,13 +15,11 @@ neighbor_args = snakemake.params.neighbor_args
 files_to_overwrite = ['obsp', 'var', 'uns']
 
 logging.info('Read file...')
-adata = read_anndata(input_adata)
+adata = read_anndata(input_adata)  # TODO: read only necessary slots
 
 # determine output types
 # default output type is 'full'
-output_type = adata.uns.get('integration', {'output_type': 'full'}).get('output_type')
-output_types = [output_type] if isinstance(output_type, str) else output_type
-adata.uns['output_types'] = output_types
+output_type = adata.uns.get('output_type', 'full')
 
 n_obs = adata.n_obs
 # logger.info('Filtering out cells without labels')
@@ -32,11 +30,10 @@ n_obs = adata.n_obs
 # logger.info(f'After: {adata.n_obs} cells')
 force_neighbors = n_obs > adata.n_obs
 
-for output_type in output_types:
-    logging.info(f'Computing neighbors for output type {output_type}...')
-    compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
-    if output_type == 'full':
-        files_to_overwrite.extend(['obsm', 'varm'])
+logging.info(f'Computing neighbors for output type {output_type}...')
+compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
+if output_type == 'full':
+    files_to_overwrite.extend(['obsm', 'varm'])
 
 # write to file
 logging.info(adata.__str__())

@@ -48,12 +48,15 @@ DATASETS:
   test_integration:
     input:
       metrics:
-        unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None/postprocessed.zarr
-        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~bbknn--hyperparams~None--label~None/postprocessed.zarr
-        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~harmony--hyperparams~None--label~None/postprocessed.zarr
-        scanorama: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None/postprocessed.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~full/postprocessed.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~knn/postprocessed.zarr
+        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~bbknn--hyperparams~None--label~None--output_type~knn/postprocessed.zarr
+        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~harmony--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
+        scanorama_full: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~full/postprocessed.zarr
+        scanorama_embed: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
     metrics:
-      unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None/postprocessed.zarr
+      unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~full/postprocessed.zarr
       label:
         - bulk_labels
         - louvain
