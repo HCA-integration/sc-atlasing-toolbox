@@ -18,14 +18,3 @@ rule run_method:
     # shadow: 'minimal'
     script:
         '../scripts/methods/{wildcards.method}.py'
-
-
-rule postprocess:
-    input:
-        zarr=rules.run_method.output.zarr,
-    output:
-        zarr=directory('{dataset}/{method}/postprocessed.zarr'),
-    conda:
-        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
-    script:
-        '../scripts/postprocess.py'

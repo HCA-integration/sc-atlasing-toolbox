@@ -28,20 +28,6 @@ use rule run_method from integration as integration_run_method with:
         time="2-00:00:00",
 
 
-# use rule postprocess from integration as integration_postprocess with:
-#     input:
-#         zarr=rules.integration_run_method.output.zarr,
-#     output:
-#         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
-#     params:
-#         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
-#     resources:
-#         partition=lambda w: mcfg.get_resource(profile='gpu', resource_key='partition'),
-#         qos=lambda w: mcfg.get_resource(profile='gpu', resource_key='qos'),
-#         mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu', resource_key='mem_mb', attempt=attempt),
-#         gpu=lambda w: mcfg.get_resource(profile='gpu', resource_key='gpu'),
-
-
 def update_neighbors_args(wildcards):
     args = mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={})
     output_type = wildcards.output_type
