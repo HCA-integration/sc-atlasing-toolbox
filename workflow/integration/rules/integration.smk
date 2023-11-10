@@ -32,7 +32,7 @@ def update_neighbors_args(wildcards):
     args = mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={})
     output_type = wildcards.output_type
     if output_type == 'full':
-        args |= {'use_rep': 'X'}
+        args |= {'use_rep': 'X_pca'}
     elif output_type == 'embed':
         args |= {'use_rep': 'X_emb'}
     elif output_type == 'knn':
