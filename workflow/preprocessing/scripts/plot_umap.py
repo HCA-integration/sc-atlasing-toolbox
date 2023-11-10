@@ -14,8 +14,8 @@ sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 
 input_file = snakemake.input[0]
 output_plot = Path(snakemake.output.plot)
-output_additional = Path(snakemake.output.additional_plots)
-output_additional.mkdir(exist_ok=True)
+# output_additional = Path(snakemake.output.additional_plots)
+# output_additional.mkdir(exist_ok=True)
 
 wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
 params = dict(snakemake.params.items())
