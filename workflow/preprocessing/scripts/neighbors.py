@@ -14,13 +14,14 @@ except ImportError as e:
 
 from utils.io import read_anndata, link_zarr
 from utils.processing import assert_neighbors
-from utils.misc import ensure_dense
+from utils.misc import ensure_dense, ensure_sparse
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params.get('args', {})
 extra_uns = snakemake.params.get('extra_uns', {})
+files_to_overwrite = ['obsp', 'uns']
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsm='obsm', uns='uns', var='var')
@@ -52,9 +53,16 @@ else:
     if params['use_rep'] == 'X':
         adata.X = read_anndata(input_file, X='X').X
         ensure_dense(adata)
-    logging.info(str(params))
-
+    elif params['use_rep'] == 'X_pca' and 'X_pca' not in adata.obsm:
+        adata.X = read_anndata(input_file, X='X').X
+        ensure_sparse(adata)
+        pca_params = adata.uns.get('preprocessing', {}).get('pca', {})
+        logging.info(f'Compute PCA with parameters: {pca_params}...')
+        files_to_overwrite.extend(['obsm', 'varm'])
+        sc.pp.pca(adata, **pca_params)
+    
     # compute kNN graph
+    logging.info(f'parameters: {params}')
     sc.pp.neighbors(adata, **params)
     assert_neighbors(adata)
 
@@ -67,7 +75,7 @@ adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
     input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['obsp', 'uns']]
+    files_to_keep = [f for f in input_files if f not in files_to_overwrite]
     link_zarr(
         in_dir=input_file,
         out_dir=output_file,
