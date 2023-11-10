@@ -40,13 +40,13 @@ def check_and_update_neighbors_info(adata, neighbors_key):
     # check if representation is available in current anndata, otherwise read from file
     use_rep = adata.uns[neighbors_key]['params'].get('use_rep', None)
     if use_rep not in adata.obsm:
-        logging.info(f'Read {input_rep}...')
+        logging.info(f'Read representation file {input_rep}...')
         use_counts = (use_rep == 'X') or (use_rep is None)
         if use_counts:
             adata.X = read_anndata(input_rep, X='X').X
             ensure_dense(adata)
         else:
-            adata.obsm[use_rep] = read_anndata(input_rep, obsm='obsm').obsm[use_rep]
+            adata.obsm[use_rep] = read_anndata(input_rep, obs='obs', obsm='obsm').obsm[use_rep]
 
 
 input_file = snakemake.input[0]
