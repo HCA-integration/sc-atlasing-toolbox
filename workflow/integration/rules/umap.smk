@@ -28,7 +28,6 @@ use rule plot_umap from preprocessing as integration_plot_umap with:
         anndata=rules.integration_compute_umap.output.zarr,
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
-        additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern),
     params:
         color=get_colors,
         ncols=1,
