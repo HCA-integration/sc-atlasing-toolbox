@@ -10,16 +10,16 @@ use rule run_method from integration as integration_run_method with:
     input:
         h5ad=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'adata.zarr'),
-        model=touch(directory(out_dir / paramspace.wildcard_pattern / 'model'))
+        zarr=directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'adata.zarr'),
+        model=touch(directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'model'))
     benchmark:
-        out_dir / paramspace.wildcard_pattern / 'benchmark.tsv'
+        out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'benchmark.tsv'
     params:
-        norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts'),
-        raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts'),
-        output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_type'),
-        hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict'),
-        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env'),
+        norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
+        raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
+        output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', exclude=['output_type']),
+        hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict', exclude=['output_type']),
+        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', exclude=['output_type']),
     resources:
         partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
@@ -28,18 +28,33 @@ use rule run_method from integration as integration_run_method with:
         time="2-00:00:00",
 
 
-use rule postprocess from integration as integration_postprocess with:
+def update_neighbors_args(wildcards):
+    args = mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={})
+    output_type = wildcards.output_type
+    if output_type == 'full':
+        args |= {'use_rep': 'X_pca'}
+    elif output_type == 'embed':
+        args |= {'use_rep': 'X_emb'}
+    elif output_type == 'knn':
+        args = False
+    else:
+        raise ValueError(f'Unknown output_type {output_type}')
+    return args
+
+
+use rule neighbors from preprocessing as integration_postprocess with:
     input:
         zarr=rules.integration_run_method.output.zarr,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
     params:
-        neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
+        args=lambda wildcards: update_neighbors_args(wildcards),
+        extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
     resources:
-        partition=lambda w: mcfg.get_resource(profile='gpu', resource_key='partition'),
-        qos=lambda w: mcfg.get_resource(profile='gpu', resource_key='qos'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu', resource_key='mem_mb', attempt=attempt),
-        gpu=lambda w: mcfg.get_resource(profile='gpu', resource_key='gpu'),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
 rule run_all:

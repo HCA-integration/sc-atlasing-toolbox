@@ -218,15 +218,27 @@ class ModuleConfig:
         wildcards = self.get_wildcards(**kwargs)
         targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
         if as_dict:
+            
+            def get_wildcard_string(wildcard_name, wildcard_value):
+                if wildcard_name == 'file_id':
+                    if '/' in wildcard_value:
+                        wildcard_value = create_hash(wildcard_value)
+                    else:
+                        wildcard_value = wildcard_value.replace('file_id=', '')
+                        split_values = wildcard_value.split('--', 1)
+                        wildcard_value = split_values[0]
+                        if len(split_values) > 1:
+                            wildcard_value = f'{wildcard_value}--{create_hash(split_values[1])}'
+                return f'{wildcard_name}={wildcard_value}'
+            
             task_names = [
                 (
                     self.module_name
                     + ':'
                     + '--'.join(
                         [
-                            f'{k}={v}' if k != 'file_id' else f'{k}={create_hash(v)}'
-                            for k, v in zip(wildcards.keys(), w)
-                            if k != 'dataset'
+                            get_wildcard_string(k, v)
+                            for k, v in zip(wildcards.keys(), w) if k != 'dataset'
                         ]
                     )
                 )
@@ -318,6 +330,10 @@ class ModuleConfig:
             return ''
         # overwrite profile to cpu if turned off in config
         profile = profile if get_use_gpu(self.config) else 'cpu'
+        
+        if attempt > 2:
+            profile = 'cpu'
+        
         resources = self.config['resources']
         try:
             res = resources[profile][resource_key]

@@ -121,7 +121,7 @@ As part of the pipeline, the `normalization` and `highly_variable_genes` rules w
 **Output**
 
 - `.obsm["X_pca"]` PCA embedding
-- `.uns["preprocessing"]["pca]` containing all the arguments passed to the `scanpy.pp.pca` function (`use_highly_variable=True` included)
+- `.uns["preprocessing"]["pca"]` containing all the arguments passed to the `scanpy.pp.pca` function (`use_highly_variable=True` included)
 - `.uns["preprocessing"]["scale"]`: whether the matrix was scaled or not before PCA
 
 **Parameters**

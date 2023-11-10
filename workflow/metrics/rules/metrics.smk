@@ -17,6 +17,7 @@ rule preprocess:
     script:
         '../scripts/preprocess.py'
 
+
 def get_metric_input(wildcards):
     inputs = dict(
         h5mu=rules.preprocess.output.zarr,

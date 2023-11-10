@@ -3,14 +3,9 @@
 use rule umap from preprocessing as integration_compute_umap with:
     input:
         anndata=rules.integration_postprocess.output.zarr,
-        rep=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
+        rep=rules.integration_postprocess.output.zarr,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
-    params:
-        neighbors_key=lambda w: [
-            f'neighbors_{output_type}' for output_type
-            in mcfg.get_from_parameters(w, 'output_type')
-        ],
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
@@ -33,13 +28,9 @@ use rule plot_umap from preprocessing as integration_plot_umap with:
         anndata=rules.integration_compute_umap.output.zarr,
     output:
         plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
-        additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern),
     params:
         color=get_colors,
         ncols=1,
-        neighbors_key=lambda w: [
-            f'neighbors_{output_type}' for output_type
-            in mcfg.get_from_parameters(w, 'output_type')],
         outlier_factor=10,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),

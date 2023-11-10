@@ -14,7 +14,7 @@ mcfg = IntegrationConfig(
     config=config,
     parameters=workflow.source_path('params.tsv'),
     config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
-    wildcard_names=['method', 'batch', 'label'],
+    wildcard_names=['method', 'batch', 'label', 'output_type'],
     rename_config_params={'methods': 'method'},
     explode_by=['method', 'batch', 'label'],
 )
@@ -65,7 +65,7 @@ use rule * from common as common_ *
 include: 'rules/integration.smk'
 include: 'rules/benchmark.smk'
 include: 'rules/umap.smk'
-include: 'rules/clustering.smk'
+# include: 'rules/clustering.smk'
 
 
 rule all:

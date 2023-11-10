@@ -110,6 +110,7 @@ DATASETS:
       label: bulk_labels
       batch: phase
     metrics:
+      unintegrated: preprocessing
       label: bulk_labels
       batch: phase
       # unintegrated: preprocessing

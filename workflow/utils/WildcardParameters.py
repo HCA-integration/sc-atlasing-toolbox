@@ -301,6 +301,7 @@ class WildcardParameters:
         query_dict: [dict, Wildcards],
         parameter_key: str,
         wildcards_sub: [list, None] = None,
+        exclude: [list, str] = None,
         check_query_keys: bool = True,
         check_null: bool = False,
         default: [str, None] = None,
@@ -313,11 +314,15 @@ class WildcardParameters:
         :param query_dict: dictionary with column (must be present in parameters_df) to value mapping
         :param parameter_key: key of parameter
         :param wildcards_sub: list of wildcards used for subsetting the parameters
+        :param exclude: list of wildcard names to exclude
         :param check_query_keys: whether to check if all keys in query_dict are in wildcards_sub
         :return: single parameter value or list of parameters as specified by column
         """
         if wildcards_sub is None:
             wildcards_sub = self.wildcards_df.columns.tolist()
+        if exclude is not None:
+            exclude = [exclude] if isinstance(exclude, str) else exclude
+            wildcards_sub = [w for w in wildcards_sub if w not in exclude]
         
         assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
         if check_query_keys:

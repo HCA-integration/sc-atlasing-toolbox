@@ -29,7 +29,7 @@ config_kwargs = {
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
         config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
-        wildcard_names=['method', 'batch', 'label'],
+        wildcard_names=['method', 'batch', 'label', 'output_type'],
         rename_config_params={'methods': 'method'},
         explode_by=['method', 'batch'],
     ),

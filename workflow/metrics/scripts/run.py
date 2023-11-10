@@ -38,25 +38,20 @@ else:
     logger.info('Skip unintegrated data...')
     unintegrated = adata
 
-output_types = []
-scores = []
-for output_type in adata.uns['output_types']:
-    logger.info(f'Run metric {metric} for {output_type}...')
-    adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
-    score = metric_function(
-        adata,
-        output_type,
-        batch_key=batch_key,
-        label_key=label_key,
-        adata_raw=unintegrated,
-    )
-    scores.append(score)
-    output_types.append(output_type)
-
+output_type = adata.uns.get('output_type', 'full')
+logger.info(f'Run metric {metric} for {output_type}...')
+adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
+score = metric_function(
+    adata,
+    output_type,
+    batch_key=batch_key,
+    label_key=label_key,
+    adata_raw=unintegrated,
+)
 
 write_metrics(
-    scores=scores,
-    output_types=output_types,
+    scores=[score],
+    output_types=[output_type],
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,

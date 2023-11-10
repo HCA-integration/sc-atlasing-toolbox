@@ -24,6 +24,8 @@ class IntegrationConfig(ModuleConfig):
             parameters = pd.read_table(parameters)
         if isinstance(parameters, pd.DataFrame):
             parameters['output_type'] = parameters['output_type'].str.split(',')
+            parameters['output_types'] = parameters['output_type']
+            parameters = parameters.explode('output_type')
             kwargs['parameters'] = parameters
         
         super().__init__(**kwargs)
@@ -43,7 +45,7 @@ class IntegrationConfig(ModuleConfig):
         # set default paramspace arguments
         if kwargs.get('paramspace_kwargs') is None:
             paramspace_kwargs = dict(
-                filename_params=['method', 'hyperparams', 'label'],
+                filename_params=['method', 'hyperparams', 'label', 'output_type'],
                 filename_sep='--',
             )
         else:
