@@ -1,0 +1,20 @@
+output_dir: test/out
+images: test/images
+
+DATASETS:
+  test:
+    input:
+      split_data:
+        pbmc: test/input/pbmc68k.h5ad
+    split_data:
+      key: bulk_labels
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - Dendritic
+        - CD14+_Monocyte
+        - CD19+_B
+        # - CD34+
+        # - CD4+/CD45RA+/CD25- Naive T
+        # - Dendritic
+        # - CD14+ Monocyte
+        # - CD19+ B

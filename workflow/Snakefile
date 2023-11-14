@@ -20,6 +20,12 @@ configfile: "configs/exploration/config.yaml"
 # config = update_module_configs(config, params)
 
 config_kwargs = {
+    'split_data': dict(
+        config_params=['key', 'values'],
+        wildcard_names=['key', 'value'],
+        rename_config_params={'values': 'value'},
+        explode_by=['value'],
+    ),
     'clustering': dict(
         config_params=['neighbors_key', 'resolutions'],
         wildcard_names=['neighbors_key', 'resolution'],
@@ -96,6 +102,10 @@ module batch_analysis:
     snakefile: "batch_analysis/Snakefile"
     config: config
 
+module split_data:
+    snakefile: "split_data/Snakefile"
+    config: config
+
 module subset:
     snakefile: "subset/Snakefile"
     config: config
@@ -124,10 +134,6 @@ module integration:
     snakefile: "integration/Snakefile"
     config: config
 
-# module integration_per_lineage:
-#     snakefile: "integration_per_lineage/Snakefile"
-#     config: config
-
 module metrics:
     snakefile: "metrics/Snakefile"
     config: config
@@ -138,6 +144,7 @@ use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
 use rule * from batch_analysis as batch_analysis_ *
+use rule * from split_data as split_data_ *
 use rule * from subset as subset_ *
 use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *

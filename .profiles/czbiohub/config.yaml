@@ -7,7 +7,7 @@ cluster:
     --mem={resources.mem_mb}
     --time={resources.time}
     --job-name={rule}
-    --output=logs/%j-{rule}-{wildcards}.out
+    --output=logs/%j-{rule}.out
     --parsable
 default-resources:
   - partition=cpu
