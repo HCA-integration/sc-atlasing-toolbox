@@ -204,8 +204,8 @@ class ModuleConfig:
     def get_output_files(
         self,
         pattern: [str, Rule] = None,
-        allow_missing=False,
-        as_dict=False,
+        allow_missing: bool=False,
+        as_dict: bool=False,
         **kwargs
     ) -> list:
         """
@@ -224,26 +224,20 @@ class ModuleConfig:
                     if '/' in wildcard_value:
                         wildcard_value = create_hash(wildcard_value)
                     else:
-                        wildcard_value = wildcard_value.replace('file_id=', '')
-                        split_values = wildcard_value.split('--', 1)
-                        wildcard_value = split_values[0]
-                        if len(split_values) > 1:
-                            wildcard_value = f'{wildcard_value}--{create_hash(split_values[1])}'
-                return f'{wildcard_name}={wildcard_value}'
+                        return f'{self.module_name}:{wildcard_value}'
+                return f'{self.module_name}_{wildcard_name}={wildcard_value}'
+            
+            def shorten_name(name):
+                split_values = name.split(f'--{self.module_name}_', 1)
+                if len(split_values) > 1 and len(name) > 300:
+                    name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
+                return name
             
             task_names = [
-                (
-                    self.module_name
-                    + ':'
-                    + '--'.join(
-                        [
-                            get_wildcard_string(k, v)
-                            for k, v in zip(wildcards.keys(), w) if k != 'dataset'
-                        ]
-                    )
-                )
+                '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcards.keys(), w) if k != 'dataset'])
                 for w in zip(*wildcards.values())
             ]
+            task_names = [shorten_name(name) for name in task_names]
             targets = dict(zip(task_names, targets))
         return targets
 
