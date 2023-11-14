@@ -1,0 +1,42 @@
+defaults:
+  datasets:
+    - test_split_data
+    - test_split_data_preprocessing
+
+DATASETS:
+  test_split_data:
+    input:
+      split_data:
+        pbmc: data/pbmc68k.h5ad
+      preprocessing: split_data
+    split_data:
+      key: bulk_labels
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - Dendritic
+        - CD14+_Monocyte
+        - CD19+_B
+
+  test_split_data_preprocessing:
+    input:
+      split_data:
+        pbmc: data/pbmc68k.h5ad
+      preprocessing: split_data
+    split_data:
+      key: bulk_labels
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - Dendritic
+        - CD14+_Monocyte
+        - CD19+_B
+    preprocessing:
+      raw_counts: X
+      norm_counts: normcounts
+      batch: study
+      lineage: lineage
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
