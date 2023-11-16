@@ -1,0 +1,24 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  Lee2020:
+    input:
+      qc: 
+        Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
+    qc:
+      sample: sample
+      donor: donor
+      categories:
+        - disease
+  test:
+    input:
+      qc:
+        test: test/input/pbmc68k.h5ad
+        test2: test/input/pbmc68k.h5ad
+    qc:
+      sample: batch
+      donor: phase
+      categories:
+        - phase
