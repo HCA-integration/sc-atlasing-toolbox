@@ -101,6 +101,7 @@ def plot_qc_joint(
 
 input_obs = snakemake.input.obs
 output_joint = snakemake.output.joint
+output_joint_mito = snakemake.output.joint_mito
 output_joint_log = snakemake.output.joint_log
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
@@ -136,6 +137,19 @@ plot_qc_joint(
 )
 plt.tight_layout()
 plt.savefig(output_joint)
+
+plot_qc_joint(
+    obs,
+    x='n_genes_by_counts',
+    y='pct_counts_mito',
+    hue='total_counts',
+    palette='plasma',
+    marginal_hue=hue,
+    title=f'Joint QC for {dataset}',
+)
+plt.tight_layout()
+plt.savefig(output_joint_mito)
+
 
 _, obs = plot_qc_joint(
     obs,

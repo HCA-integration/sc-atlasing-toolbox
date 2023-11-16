@@ -16,6 +16,7 @@ rule qc_plot:
         obs=rules.qc_stats.output.obs
     output:
         joint=mcfg.image_dir / params.wildcard_pattern / 'joint.png',
+        joint_mito=mcfg.image_dir / params.wildcard_pattern / 'joint_mito.png',
         joint_log=mcfg.image_dir / params.wildcard_pattern / 'joint_log.png',
         violin=mcfg.image_dir / params.wildcard_pattern / 'violin.png',
         average_jitter=mcfg.image_dir / params.wildcard_pattern / 'average_jitter.png',
