@@ -2,11 +2,13 @@ metric	metric_type	output_type	comparison	env	resources
 asw_batch	batch_correction	full,embed	False	scib_accel	cpu
 graph_connectivity	batch_correction	full,embed,knn	False	scib_accel	cpu
 ilisi	batch_correction	full,embed,knn	False	scib_accel	cpu
+ilisi_re	batch_correction	full,embed,knn	False	scib_accel	cpu
 pcr	batch_correction	full,embed	True	scib_accel	cpu
 ari	bio_conservation	full,embed,knn	False	scib_accel	cpu
 asw_label	bio_conservation	full,embed	False	scib_accel	cpu
 cell_cycle	bio_conservation	full	True	scib_accel	cpu
 clisi	bio_conservation	full,embed,knn	False	scib_accel	cpu
+clisi_re	bio_conservation	full,embed,knn	False	scib_accel	cpu
 isolated_label_asw	bio_conservation	full,embed	False	scib_accel	cpu
 isolated_label_f1	bio_conservation	full,embed,knn	False	scib_accel	cpu
 nmi	bio_conservation	full,embed,knn	False	scib_accel	cpu

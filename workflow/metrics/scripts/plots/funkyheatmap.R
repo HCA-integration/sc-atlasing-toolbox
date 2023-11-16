@@ -21,14 +21,17 @@ suppressPackageStartupMessages({
   library(dynutils)
 })
 
+extra_columns <- readLines(snakemake@input$extra_columns)
+print(extra_columns)
+id_vars <- unique(c(id_vars, extra_columns))
+
 # read files
 dt <- fread(input_file)
 dt[, (id_vars) := lapply(.SD, as.character), .SDcols = id_vars]
 print(head(dt))
 
-extra_columns <- readLines(snakemake@input$extra_columns)
-print(extra_columns)
-id_vars <- unique(c(id_vars, extra_columns))
+# remove metrics that are NA
+dt <- dt[!is.na(score),]
 
 # remove unintegrated output types without corresponding method
 if ('unintegrated' %in% dt$method & uniqueN(dt$method) > 1) {
@@ -42,8 +45,8 @@ if ('unintegrated' %in% dt$method & uniqueN(dt$method) > 1) {
 
 # define groups of interest to be plotted in funkyheatmap
 integration_setup <- id_vars
-bio_metrics <- unique(dt[metric_type == 'bio_conservation' & !is.na(score), metric]) 
-batch_metrics <- unique(dt[metric_type == 'batch_correction' & !is.na(score), metric])
+bio_metrics <- unique(dt[metric_type == 'bio_conservation', metric])
+batch_metrics <- unique(dt[metric_type == 'batch_correction', metric])
 metrics <- c(bio_metrics, batch_metrics)
 
 # subset data.table to columns of interest & transform
@@ -71,6 +74,13 @@ print(scaled_metrics_tab)
 # calculate average score by group and 
 score_group_batch <- rowMeans(scaled_metrics_tab[, batch_metrics, with=FALSE], na.rm = TRUE)
 score_group_bio <- rowMeans(scaled_metrics_tab[, bio_metrics, with=FALSE], na.rm = TRUE)
+
+if (length(batch_metrics) == 0) {
+  score_group_batch <- 0
+}
+if (length(bio_metrics) == 0) {
+  score_group_bio <- 0
+}
 
 # weighted overall score
 score_all <- (weight_batch * score_group_batch + (1 - weight_batch) * score_group_bio)

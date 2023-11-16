@@ -30,15 +30,6 @@ mcfg = ModuleConfig(
 )
 paramspace = mcfg.get_paramspace()
 
-wildcard_constraints:
-    dataset='\w+',
-    method='\w+',
-    batch='((?![/]).)*',
-    label='((?![/]).)*',
-    hyperparams='((?![/]).)*',
-    lineage_key='((?![/]).)*',
-    lineage_specific='((?![/]).)*',
-
 
 module common:
     snakefile: "../common/Snakefile"

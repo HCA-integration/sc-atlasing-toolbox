@@ -236,9 +236,9 @@ rule plots_all:
         mcfg.get_output_files(rules.funkyheatmap_per_label.output),
         mcfg.get_output_files(rules.funkyheatmap_per_file.output),
         # # barplot
-        # expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
-        # expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['dataset'])),
-        # expand(rules.metrics_barplot_per_file.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['file_id'])),
+        expand(rules.metrics_barplot.output,metric=['s', 'max_uss', 'score']),
+        expand(rules.metrics_barplot_per_dataset.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['dataset'])),
+        expand(rules.metrics_barplot_per_file.output,metric=['s', 'max_uss', 'score'],**mcfg.get_wildcards(wildcard_names=['file_id'])),
         # # swarmplot
         # expand(rules.metrics_swarmplot.output,metric='score'),
         # expand(rules.metrics_swarmplot_per_dataset.output,metric='score',**mcfg.get_wildcards(wildcard_names=['dataset'])),
