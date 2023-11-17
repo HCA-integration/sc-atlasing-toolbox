@@ -62,7 +62,7 @@ rule add_dcp_metadata:
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs/')
     script:
-        '../scripts/obs_merge_dcp.py'
+        '../scripts/add_dcp_metadata.py'
 
 
 rule add_dcp_metadata_all:
