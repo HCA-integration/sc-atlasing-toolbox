@@ -17,8 +17,8 @@ def plot_qc_joint(
         marginal_hue=None,
         marginal_legend=False,
         palette=None,
-        x_threshold=(0, np.inf),
-        y_threshold=(0, np.inf),
+        x_threshold=None,
+        y_threshold=None,
         title='',
         return_df=False
 ):
@@ -38,6 +38,10 @@ def plot_qc_joint(
     :return:
         seaborn plot (and df dataframe with updated values, if `return_df=True`)
     """
+    if not x_threshold:
+        x_threshold=(0, np.inf)
+    if not y_threshold:
+        y_threshold=(0, np.inf)
 
     def log1p_base(_x, base):
         return np.log1p(_x) / np.log(base)
@@ -80,7 +84,7 @@ def plot_qc_joint(
         bins=100
     )
 
-    g.fig.suptitle(title)
+    g.fig.suptitle(title, fontsize=13)
 
     # x threshold
     for t, t_def in zip(x_threshold, (0, np.inf)):
@@ -108,6 +112,12 @@ output_avg = snakemake.output.average_jitter
 hue = snakemake.params.hue
 sample = snakemake.params.sample
 dataset = snakemake.params.dataset
+thresholds = {
+    'total_counts': snakemake.params.get('total_counts'),
+    'n_genes_by_counts': snakemake.params.get('n_genes_by_counts'),
+    'pct_counts_mito': snakemake.params.get('pct_counts_mito'),
+}
+
 
 print(f'Read {input_obs}...')
 obs = pd.read_table(input_obs, index_col=0)
@@ -122,48 +132,68 @@ if obs.shape[0] == 0:
 
 
 sns.set_theme(style='white')
-sc.set_figure_params(frameon=False)
+sc.set_figure_params(frameon=False, fontsize=10, dpi_save=300)
 plt.rcParams['figure.figsize'] = 12, 12
 
-print('Joint QC plot...')
+split_datasets = dataset.split('--')
+if len(split_datasets) > 1:
+    dataset = ' '.join([split_datasets[0], split_datasets[-1]])
+
+print('Joint QC plots...')
+
+joint_title = f'Joint QC for {dataset}\nmargin hue: {hue}'
+
+# n_counts vs n_features
+x = 'total_counts'
+y = 'n_genes_by_counts'
+
 plot_qc_joint(
     obs,
-    x='total_counts',
-    y='n_genes_by_counts',
+    x=x,
+    y=y,
     hue='pct_counts_mito',
     palette='plasma',
     marginal_hue=hue,
-    title=f'Joint QC for {dataset}',
+    x_threshold=thresholds[x],
+    y_threshold=thresholds[y],
+    title=joint_title,
 )
 plt.tight_layout()
 plt.savefig(output_joint)
 
-plot_qc_joint(
-    obs,
-    x='n_genes_by_counts',
-    y='pct_counts_mito',
-    hue='total_counts',
-    palette='plasma',
-    marginal_hue=hue,
-    title=f'Joint QC for {dataset}',
-)
-plt.tight_layout()
-plt.savefig(output_joint_mito)
-
-
 _, obs = plot_qc_joint(
     obs,
-    x='total_counts',
-    y='n_genes_by_counts',
+    x=x,
+    y=y,
     log=10,
     hue='pct_counts_mito',
     palette='plasma',
     marginal_hue=hue,
-    title=f'Joint QC for {dataset}',
+    x_threshold=thresholds[x],
+    y_threshold=thresholds[y],
+    title=joint_title,
     return_df=True,
 )
 plt.tight_layout()
 plt.savefig(output_joint_log)
+
+
+# n_feature x mito frac
+x = 'n_genes_by_counts'
+y = 'pct_counts_mito'
+plot_qc_joint(
+    obs,
+    x=x,
+    y=y,
+    hue='total_counts',
+    palette='plasma',
+    marginal_hue=hue,
+    x_threshold=thresholds[x],
+    y_threshold=thresholds[y],
+    title=joint_title,
+)
+plt.tight_layout()
+plt.savefig(output_joint_mito)
 
 print('Violin plots...')
 fig, axes = plt.subplots(nrows=2, ncols=1)
@@ -175,6 +205,7 @@ sc.pl.violin(
     groupby=hue,
     rotation=90,
     show=False,
+    fill=False,
     ax=axes[0],
 )
 
@@ -184,6 +215,7 @@ sc.pl.violin(
     groupby=hue,
     rotation=90,
     show=False,
+    fill=False,
     ax=axes[1],
 )
 fig.suptitle(dataset)

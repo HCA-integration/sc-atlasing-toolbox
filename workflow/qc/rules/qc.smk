@@ -1,19 +1,19 @@
-rule qc_stats:
+rule qc_metrics:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        obs=mcfg.out_dir / params.wildcard_pattern / 'obs.tsv'
+        obs=mcfg.out_dir / params.wildcard_pattern / 'qc_metrics.tsv'
     conda:
         get_env(config, 'scanpy')
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
-        '../scripts/qc_stats.py'
+        '../scripts/qc_metrics.py'
 
 
-rule qc_plot:
+rule qc_metrics_plot:
     input:
-        obs=rules.qc_stats.output.obs
+        obs=rules.qc_metrics.output.obs
     output:
         joint=mcfg.image_dir / params.wildcard_pattern / 'joint.png',
         joint_mito=mcfg.image_dir / params.wildcard_pattern / 'joint_mito.png',
@@ -29,9 +29,26 @@ rule qc_plot:
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
-        '../scripts/qc_plot.py'
+        '../scripts/qc_metrics_plot.py'
 
 
-rule qc_all:
+rule doublets:
     input:
-        mcfg.get_output_files(rules.qc_plot.output),
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+    output:
+        obs=mcfg.out_dir / params.wildcard_pattern / 'doublets.tsv',
+        zarr=directory(mcfg.out_dir / params.wildcard_pattern / 'doublets.zarr'),
+    conda:
+        get_env(config, 'qc')
+    params:
+        batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
+    resources:
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
+    script:
+        '../scripts/doublets.py'
+
+
+rule qc_metrics_all:
+    input:
+        mcfg.get_output_files(rules.qc_metrics_plot.output),
+        # mcfg.get_output_files(rules.doublets.output),

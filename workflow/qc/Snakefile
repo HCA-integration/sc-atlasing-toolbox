@@ -11,7 +11,7 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['sample', 'donor', 'categories'],
+    config_params=['sample', 'donor', 'batch', 'categories'],
 )
 params = mcfg.get_paramspace()
 
@@ -33,7 +33,7 @@ include: 'rules/qc.smk'
 rule all:
     input:
         rules.summary_all.input,
-        rules.qc_all.input,
+        rules.qc_metrics_all.input,
     default_target: True
 
 

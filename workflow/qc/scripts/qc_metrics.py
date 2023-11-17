@@ -6,7 +6,7 @@ from utils.io import read_anndata
 input_zarr = snakemake.input.zarr
 output_obs = snakemake.output.obs
 
-adata = read_anndata(snakemake.input[0])
+adata = read_anndata(snakemake.input[0], X='X', obs='obs', var='var')
 
 print('Calculate QC stats...')
 if 'feature_name' in adata.var.columns:

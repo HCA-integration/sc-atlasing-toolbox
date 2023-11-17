@@ -12,6 +12,7 @@ DATASETS:
       donor: donor
       categories:
         - disease
+      batch: donor
   test:
     input:
       qc:
@@ -20,5 +21,4 @@ DATASETS:
     qc:
       sample: batch
       donor: phase
-      categories:
-        - phase
+      batch: phase
