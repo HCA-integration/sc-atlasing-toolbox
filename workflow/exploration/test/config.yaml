@@ -4,37 +4,27 @@ schema_file: test/data/schema_mapping.tsv
 dcp_metadata: test/dcp_metadata.tsv
 images: test/images
 
-os: intel
 
-filter_per_organ:
-  blood:
-    cells_per_sample:
-      min: 50
-      max: 10000
-    mito_pct: 30
-    remove_by_colum:
-      dataset:
-        - Lee2020_2
+DATASETS:
+  test:
+    input:
+      exploration:
+        Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
+    exploration:
+      sample: sample
+      donor: donor
+      summary_columns:
+        - disease
+      pca_colors:
+        - donor
+        - assay
+        - sex
+        - disease
+        - self_reported_ethnicity
+        - development_stage
 
-filter_per_study:
-  SchulteSchrepping2020:
-    remove_by_colum:
-      sample:
-        - Schulte-Schrepping_C2P01H_d0
-        - Schulte-Schrepping_C2P05F_d0
-        - Schulte-Schrepping_C2P07H_d0
-        - Schulte-Schrepping_C2P10H_d0
-        - Schulte-Schrepping_C2P13F_d0
-        - Schulte-Schrepping_C2P15H_d0
-        - Schulte-Schrepping_C2P16H_d0
-        - Schulte-Schrepping_C2P19H_d0
-      donor:
-        - C19-CB-0008
-      disease:
-        - influenza
-
-ORGANS:
-  blood:
+defaults:
+  exploration:
     marker_genes:
       "Pan-immune": [ "CD44" ]
       "T": [ "CD3D","CD4","CD8A" ]
