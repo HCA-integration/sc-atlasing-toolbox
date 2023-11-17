@@ -11,13 +11,13 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['sample', 'donor', 'batch', 'categories'],
+    config_params=['sample', 'donor', 'batch'],
 )
 params = mcfg.get_paramspace()
 
 wildcard_constraints:
-    dataset='[^/]+',
-    file_id='[^/]+',
+    dataset=r'[^/]+',
+    file_id=r'[^/]+',
 
 module common:
     snakefile: "../common/Snakefile"
@@ -25,14 +25,11 @@ module common:
 
 use rule * from common as common_ *
 
-
-include: 'rules/summary.smk'
 include: 'rules/qc.smk'
 
 
 rule all:
     input:
-        rules.summary_all.input,
         rules.qc_metrics_all.input,
     default_target: True
 
