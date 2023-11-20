@@ -32,23 +32,6 @@ rule qc_metrics_plot:
         '../scripts/qc_metrics_plot.py'
 
 
-rule doublets:
-    input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
-    output:
-        obs=mcfg.out_dir / params.wildcard_pattern / 'doublets.tsv',
-        zarr=directory(mcfg.out_dir / params.wildcard_pattern / 'doublets.zarr'),
-    conda:
-        get_env(config, 'qc')
-    params:
-        batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
-    resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
-    script:
-        '../scripts/doublets.py'
-
-
 rule qc_metrics_all:
     input:
         mcfg.get_output_files(rules.qc_metrics_plot.output),
-        # mcfg.get_output_files(rules.doublets.output),

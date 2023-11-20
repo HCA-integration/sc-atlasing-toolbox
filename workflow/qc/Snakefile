@@ -26,11 +26,13 @@ module common:
 use rule * from common as common_ *
 
 include: 'rules/qc.smk'
+include: 'rules/doublets.smk'
 
 
 rule all:
     input:
         rules.qc_metrics_all.input,
+        rules.doublets_all.input,
     default_target: True
 
 
