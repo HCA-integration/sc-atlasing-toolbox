@@ -1,6 +1,8 @@
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 import seaborn as sns
 import scanpy as sc
 import anndata
@@ -9,18 +11,20 @@ from utils.io import read_anndata
 
 
 def plot_qc_joint(
-        df,
-        x,
-        y,
-        log=1,
-        hue=None,
-        marginal_hue=None,
-        marginal_legend=False,
-        palette=None,
-        x_threshold=None,
-        y_threshold=None,
-        title='',
-        return_df=False
+    df,
+    x,
+    y,
+    log_x=1,
+    log_y=1,
+    hue=None,
+    main_plot_function=None,
+    marginal_hue=None,
+    marginal_legend=False,
+    x_threshold=None,
+    y_threshold=None,
+    title='',
+    return_df=False,
+    **kwargs,
 ):
     """
     Plot scatter plot with marginal histograms from df columns.
@@ -31,13 +35,14 @@ def plot_qc_joint(
     :param log: log base for transforming values. Default 1, no transformation
     :param hue: df column with annotations for color coding scatter plot points
     :param marginal_hue: df column with annotations for color coding marginal plot distributions
-    :param palette: a matplotlib colormap for scatterplot points
     :param x_threshold: tuple of upper and lower filter thresholds for x axis
     :param y_threshold: tuple of upper and lower filter thresholds for y axis
     :param title: Title text for plot
     :return:
         seaborn plot (and df dataframe with updated values, if `return_df=True`)
     """
+    if main_plot_function is None:
+        main_plot_function = sns.scatterplot
     if not x_threshold:
         x_threshold=(0, np.inf)
     if not y_threshold:
@@ -46,14 +51,16 @@ def plot_qc_joint(
     def log1p_base(_x, base):
         return np.log1p(_x) / np.log(base)
 
-    if log > 1:
-        x_log = f'log{log} {x}'
-        y_log = f'log{log} {y}'
-        df[x_log] = log1p_base(df[x], log)
-        df[y_log] = log1p_base(df[y], log)
-        x_threshold = log1p_base(x_threshold, log)
-        y_threshold = log1p_base(y_threshold, log)
+    if log_x > 1:
+        x_log = f'log{log_x} {x}'
+        df[x_log] = log1p_base(df[x], log_x)
+        x_threshold = log1p_base(x_threshold, log_x)
         x = x_log
+    
+    if log_y > 1:
+        y_log = f'log{log_y} {y}'
+        df[y_log] = log1p_base(df[y], log_y)
+        y_threshold = log1p_base(y_threshold, log_y)
         y = y_log
 
     g = sns.JointGrid(
@@ -65,14 +72,13 @@ def plot_qc_joint(
     )
     # main plot
     g.plot_joint(
-        sns.scatterplot,
+        main_plot_function,
         data=df,
-        alpha=.3,
         hue=hue,
-        s=2,
-        palette=palette,
+        **kwargs,
     )
     # marginal hist plot
+    marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
     use_marg_hue = marginal_hue is not None
     g.plot_marginals(
         sns.histplot,
@@ -84,7 +90,7 @@ def plot_qc_joint(
         bins=100
     )
 
-    g.fig.suptitle(title, fontsize=13)
+    g.fig.suptitle(title, fontsize=12)
 
     # x threshold
     for t, t_def in zip(x_threshold, (0, np.inf)):
@@ -105,11 +111,9 @@ def plot_qc_joint(
 
 input_obs = snakemake.input.obs
 output_joint = snakemake.output.joint
-output_joint_mito = snakemake.output.joint_mito
-output_joint_log = snakemake.output.joint_log
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
-hue = snakemake.params.hue
+hues = snakemake.params.hue
 sample = snakemake.params.sample
 dataset = snakemake.params.dataset
 thresholds = {
@@ -118,14 +122,15 @@ thresholds = {
     'pct_counts_mito': snakemake.params.get('pct_counts_mito'),
 }
 
+output_joint = Path(output_joint)
+output_joint.mkdir(parents=True, exist_ok=True)
+
 
 print(f'Read {input_obs}...')
 obs = pd.read_table(input_obs, index_col=0)
 
 # if no cells filtered out, save empty plots
 if obs.shape[0] == 0:
-    plt.savefig(output_joint)
-    plt.savefig(output_joint_log)
     plt.savefig(output_violin)
     plt.savefig(output_avg)
     exit()
@@ -139,64 +144,115 @@ split_datasets = dataset.split('--')
 if len(split_datasets) > 1:
     dataset = ' '.join([split_datasets[0], split_datasets[-1]])
 
+if isinstance(hues, str):
+    hues = [hues]
+hues = [hue for hue in hues if hue in obs.columns]
+hues = [hue for hue in hues if obs[hue].nunique() > 1]
+if len(hues) == 0:
+    hues = [None]
+
 print('Joint QC plots...')
 
-joint_title = f'Joint QC for {dataset}\nmargin hue: {hue}'
+# TODO
+# density plot
+# log scale n_genes
+# color by donor
+# color by disease
 
 # n_counts vs n_features
 x = 'total_counts'
 y = 'n_genes_by_counts'
 
-plot_qc_joint(
-    obs,
-    x=x,
-    y=y,
-    hue='pct_counts_mito',
-    palette='plasma',
-    marginal_hue=hue,
-    x_threshold=thresholds[x],
-    y_threshold=thresholds[y],
-    title=joint_title,
-)
-plt.tight_layout()
-plt.savefig(output_joint)
+for hue in hues+['pct_counts_mito']:
+    joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
+    palette = 'plasma' if obs[hue].nunique() > 50 else None
+    legend = obs[hue].nunique() <= 20
+    plot_qc_joint(
+        obs,
+        x=x,
+        y=y,
+        hue=hue,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title=joint_title,
+        s=2,
+        alpha=.6,
+        palette=palette,
+        legend=legend,
+    )
+    plt.tight_layout()
+    plt.savefig(output_joint / f'counts_vs_genes_hue={hue}.png')
 
-_, obs = plot_qc_joint(
-    obs,
-    x=x,
-    y=y,
-    log=10,
-    hue='pct_counts_mito',
-    palette='plasma',
-    marginal_hue=hue,
-    x_threshold=thresholds[x],
-    y_threshold=thresholds[y],
-    title=joint_title,
-    return_df=True,
-)
-plt.tight_layout()
-plt.savefig(output_joint_log)
+    _, obs = plot_qc_joint(
+        obs,
+        x=x,
+        y=y,
+        log_x=10,
+        log_y=10,
+        hue=hue,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title=joint_title,
+        return_df=True,
+        s=2,
+        alpha=.6,
+        palette=palette,
+        legend=legend,
+    )
+    plt.tight_layout()
+    plt.savefig(output_joint / f'log_counts_vs_log_genes_hue={hue}.png')
 
 
 # n_feature x mito frac
 x = 'n_genes_by_counts'
 y = 'pct_counts_mito'
-plot_qc_joint(
-    obs,
-    x=x,
-    y=y,
-    hue='total_counts',
-    palette='plasma',
-    marginal_hue=hue,
-    x_threshold=thresholds[x],
-    y_threshold=thresholds[y],
-    title=joint_title,
-)
-plt.tight_layout()
-plt.savefig(output_joint_mito)
+
+for hue in hues:
+    joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
+    palette = 'plasma' if obs[hue].nunique() > 50 else None
+    legend = obs[hue].nunique() <= 20
+    plot_qc_joint(
+        obs,
+        x=x,
+        y=y,
+        # log_x=10,
+        hue=hue,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title=joint_title,
+        s=2,
+        alpha=.6,
+        palette=palette,
+        legend=legend,
+    )
+    plt.tight_layout()
+    plt.savefig(output_joint / f'genes_vs_mito_frac_hue={hue}.png')
+
+    plot_qc_joint(
+        obs.sample(n=int(min(1e4, obs.shape[0])), random_state=42),
+        x=x,
+        y=y,
+        # main_plot_function=Axes.hexbin,
+        main_plot_function=sns.kdeplot,
+        # log_x=10,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title=joint_title,
+        fill=True,
+        cmap='plasma',
+        alpha=.8,
+    )
+    plt.tight_layout()
+    plt.savefig(output_joint / f'genes_vs_mito_frac_kde_hue={hue}.png')
+
 
 print('Violin plots...')
 fig, axes = plt.subplots(nrows=2, ncols=1)
+hue = hues[0]
 
 adata = anndata.AnnData(obs=obs)
 sc.pl.violin(
