@@ -10,9 +10,10 @@ DATASETS:
     qc:
       sample: sample
       donor: donor
-      categories:
-        - disease
       batch: donor
+      hue:
+        - donor
+        - doublet_score
   test:
     input:
       qc:
@@ -22,3 +23,7 @@ DATASETS:
       sample: batch
       donor: phase
       batch: phase
+      hue:
+        - batch
+        - phase
+        - doublet_score

@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -165,8 +166,13 @@ y = 'n_genes_by_counts'
 
 for hue in hues+['pct_counts_mito']:
     joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
-    palette = 'plasma' if obs[hue].nunique() > 50 else None
-    legend = obs[hue].nunique() <= 20
+    if is_numeric_dtype(obs[hue]):
+        palette = 'plasma'
+        legend = 'brief'
+    else:
+        palette = None # if obs[hue].nunique() > 100 else 'plasma'
+        legend = obs[hue].nunique() <= 20
+
     plot_qc_joint(
         obs,
         x=x,
@@ -253,6 +259,7 @@ for hue in hues:
 print('Violin plots...')
 fig, axes = plt.subplots(nrows=2, ncols=1)
 hue = hues[0]
+obs[hue] = obs[hue].astype('category')
 
 adata = anndata.AnnData(obs=obs)
 sc.pl.violin(

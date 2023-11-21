@@ -1,6 +1,6 @@
 rule qc_metrics:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=rules.doublets.output.zarr# lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
         obs=mcfg.out_dir / params.wildcard_pattern / 'qc_metrics.tsv'
     conda:

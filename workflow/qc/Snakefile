@@ -25,8 +25,8 @@ module common:
 
 use rule * from common as common_ *
 
-include: 'rules/qc.smk'
 include: 'rules/doublets.smk'
+include: 'rules/qc.smk'
 
 
 rule all:
