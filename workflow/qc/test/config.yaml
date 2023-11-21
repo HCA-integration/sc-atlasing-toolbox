@@ -13,7 +13,8 @@ DATASETS:
       batch: donor
       hue:
         - donor
-        - doublet_score
+        - scrublet_score
+        - doubletdetection_score
   test:
     input:
       qc:
@@ -22,8 +23,7 @@ DATASETS:
     qc:
       sample: batch
       donor: phase
-      batch: phase
       hue:
-        - batch
         - phase
-        - doublet_score
+        - scrublet_score
+        - doubletdetection_score

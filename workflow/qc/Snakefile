@@ -12,6 +12,7 @@ mcfg = ModuleConfig(
     module_name='qc',
     config=config,
     config_params=['sample', 'donor', 'batch', 'hue'],
+    rename_config_params={'batch': 'batch_key'},
 )
 params = mcfg.get_paramspace()
 

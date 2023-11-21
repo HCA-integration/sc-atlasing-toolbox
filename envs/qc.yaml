@@ -12,3 +12,6 @@ dependencies:
   - zarr
   - scrublet
   - cffi
+  - pip
+  - pip:
+    - doubletdetection

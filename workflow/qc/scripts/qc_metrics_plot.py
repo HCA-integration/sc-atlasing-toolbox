@@ -79,7 +79,8 @@ def plot_qc_joint(
         **kwargs,
     )
     # marginal hist plot
-    marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
+    if marginal_hue in df.columns:
+        marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
     use_marg_hue = marginal_hue is not None
     g.plot_marginals(
         sns.histplot,
@@ -237,23 +238,22 @@ for hue in hues:
     plt.tight_layout()
     plt.savefig(output_joint / f'genes_vs_mito_frac_hue={hue}.png')
 
-    plot_qc_joint(
-        obs.sample(n=int(min(1e4, obs.shape[0])), random_state=42),
-        x=x,
-        y=y,
-        # main_plot_function=Axes.hexbin,
-        main_plot_function=sns.kdeplot,
-        # log_x=10,
-        marginal_hue=hue,
-        x_threshold=thresholds[x],
-        y_threshold=thresholds[y],
-        title=joint_title,
-        fill=True,
-        cmap='plasma',
-        alpha=.8,
-    )
-    plt.tight_layout()
-    plt.savefig(output_joint / f'genes_vs_mito_frac_kde_hue={hue}.png')
+plot_qc_joint(
+    obs.sample(n=int(min(1e5, obs.shape[0])), random_state=42),
+    x=x,
+    y=y,
+    # main_plot_function=Axes.hexbin,
+    main_plot_function=sns.kdeplot,
+    # log_x=10,
+    x_threshold=thresholds[x],
+    y_threshold=thresholds[y],
+    title=joint_title,
+    fill=True,
+    cmap='plasma',
+    alpha=.8,
+)
+plt.tight_layout()
+plt.savefig(output_joint / f'genes_vs_mito_frac_kde.png')
 
 
 print('Violin plots...')
