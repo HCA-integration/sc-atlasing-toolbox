@@ -14,14 +14,16 @@ output_zarr = snakemake.output.zarr
 adata = read_anndata(input_anndata, obs='obs')
 
 scrub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_scrublet])
+scrub_scores.index = scrub_scores.index.astype(str)
 doub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_doubletdetection])
+doub_scores.index = doub_scores.index.astype(str)
 
 print(scrub_scores)
 print(doub_scores)
 
-adata.obs = adata.obs.join(scrub_scores)
+adata.obs = adata.obs.merge(scrub_scores, left_index=True, right_index=True, how='left')
 print(adata.obs)
-adata.obs = adata.obs.join(doub_scores)
+adata.obs = adata.obs.merge(doub_scores, left_index=True, right_index=True, how='left')
 print(adata.obs)
 
 adata.write_zarr(output_zarr)
