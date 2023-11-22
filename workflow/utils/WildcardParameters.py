@@ -23,6 +23,7 @@ class WildcardParameters:
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
+        dtypes: dict = None,
     ):
         """
         :param module_name: name of module
@@ -33,6 +34,8 @@ class WildcardParameters:
         :param wildcard_names: list of wildcard names for expanding rules
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
         :param explode_by: column(s) to explode wildcard_names extracted from config by
+        :param paramspace_kwargs: additional arguments for snakemake.utils.Paramspace
+        :param dtypes: dictionary with dtypes for wildcard columns
         """
         self.module_name = module_name
         
@@ -44,6 +47,7 @@ class WildcardParameters:
             wildcard_names=wildcard_names,
             explode_by=explode_by,
             rename_config_params=rename_config_params,
+            dtypes=dtypes,
         )
         mandatory_wildcards = ['dataset', 'file_id']
         for wildcard in mandatory_wildcards:
@@ -123,6 +127,7 @@ class WildcardParameters:
         explode_by: list = None,
         config_entries: list = None,
         rename_config_params: dict = None,
+        dtypes: dict = None,
         warn: bool = False,
     ):
         """
@@ -137,6 +142,9 @@ class WildcardParameters:
         :param explode_by: column to explode by, expecting list entry for that column
         :param config_entries: list of entries to subset the config by, otherwise use all keys
         """
+        if dtypes is None:
+            dtypes = {}
+        
         if not wildcard_names:
             wildcard_names = []
         
@@ -168,7 +176,14 @@ class WildcardParameters:
             )
             for key in config_entries
         ]
-        df = pd.DataFrame.from_records(records, columns=[*['dataset']+config_params])
+        # create dataframe
+        columns = [*['dataset']+config_params]
+        df = pd.DataFrame.from_records(records, columns=columns)
+        df = df.convert_dtypes()
+        
+        default_dtypes = {col: 'object' for col in columns}
+        dtypes = default_dtypes | dtypes
+        df = df.astype(dtypes)
         
         # rename columns
         if rename_config_params is None:
@@ -186,11 +201,11 @@ class WildcardParameters:
         
         # set dtypes
         df = df.replace({np.nan: None})
-        for k, v in df.items():
+        for i, v in df.items():
             if isinstance(v[0], (list, dict)):
                 continue
             else:
-                df[k] = df[k].astype(str)
+                df[i] = df[i].astype(str)
         
         self.wildcards_df = df.reset_index(drop=True)
 

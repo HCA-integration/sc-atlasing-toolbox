@@ -36,6 +36,7 @@ class ModuleConfig:
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
+        dtypes: dict = None,
     ):
         """
         :param module_name: name of module
@@ -46,6 +47,7 @@ class ModuleConfig:
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
         :param explode_by: column(s) to explode wildcard_names extracted from config by
         :param paramspace_kwargs: arguments passed to WildcardParameters
+        :param dtypes: dictionary of dtypes for parameters DataFrame
         """
         self.module_name = module_name
         self.config = config
@@ -79,9 +81,12 @@ class ModuleConfig:
             rename_config_params=rename_config_params,
             explode_by=explode_by,
             paramspace_kwargs=paramspace_kwargs,
+            dtypes=dtypes,
         )
 
         self.set_default_target(default_target)
+        
+        # TODO: write output file mapping
 
 
     def set_defaults(self, warn: bool = False):
@@ -229,7 +234,7 @@ class ModuleConfig:
             
             def shorten_name(name):
                 split_values = name.split(f'--{self.module_name}_', 1)
-                if len(split_values) > 1 and len(name) > 300:
+                if len(split_values) > 1 and len(name) > 200:
                     name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
                 return name
             
