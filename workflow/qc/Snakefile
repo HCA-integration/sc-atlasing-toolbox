@@ -11,8 +11,9 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['sample', 'donor', 'batch', 'hue', 'doublets'],
+    config_params=['sample', 'donor', 'batch', 'hue', 'doublets', 'thresholds'],
     rename_config_params={'batch': 'batch_key'},
+    dtypes={'thresholds': str},
 )
 params = mcfg.get_paramspace()
 

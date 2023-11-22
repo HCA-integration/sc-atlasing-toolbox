@@ -97,14 +97,14 @@ def plot_qc_joint(
     # x threshold
     for t, t_def in zip(x_threshold, (0, np.inf)):
         if t != t_def:
-            g.ax_joint.axhline(y=t, color='red')
-            g.ax_marg_y.axhline(y=t, color='red')
+            g.ax_joint.axvline(x=t, color='red')
+            g.ax_marg_x.axvline(x=t, color='red')
 
     # y threshold
     for t, t_def in zip(y_threshold, (0, np.inf)):
         if t != t_def:
-            g.ax_joint.axvline(x=t, color='red')
-            g.ax_marg_x.axvline(x=t, color='red')
+            g.ax_joint.axhline(y=t, color='red')
+            g.ax_marg_y.axhline(y=t, color='red')
 
     if return_df:
         return g, df
@@ -115,14 +115,34 @@ input_obs = snakemake.input.obs
 output_joint = snakemake.output.joint
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
+file_id = snakemake.wildcards.file_id
 hues = snakemake.params.hue
 sample = snakemake.params.sample
 dataset = snakemake.params.dataset
+
+# set default thresholds
+threshold_keys = ['total_counts', 'n_genes_by_counts', 'pct_counts_mito']
+thresholds = {f'{key}_min': 0 for key in threshold_keys} | {f'{key}_max': np.inf for key in threshold_keys}
+
+# update to user thresholds
+user_thresholds = snakemake.params.get('thresholds')
+if user_thresholds is None:
+    user_thresholds = {}
+elif isinstance(user_thresholds, str):
+    import ast
+    user_thresholds = ast.literal_eval(user_thresholds)
+elif isinstance(user_thresholds, dict):
+    pass
+else:
+    ValueError('thresholds must be a dict or string')
+thresholds |= user_thresholds.get(file_id, {})
+
+# transform to shape expected by plot_qc_joint
 thresholds = {
-    'total_counts': snakemake.params.get('total_counts'),
-    'n_genes_by_counts': snakemake.params.get('n_genes_by_counts'),
-    'pct_counts_mito': snakemake.params.get('pct_counts_mito'),
+    key: (thresholds[f'{key}_min'], thresholds[f'{key}_max']) for key in threshold_keys
 }
+print(thresholds)
+
 
 output_joint = Path(output_joint)
 output_joint.mkdir(parents=True, exist_ok=True)

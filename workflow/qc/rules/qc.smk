@@ -28,6 +28,7 @@ rule qc_metrics_plot:
         dataset=lambda wildcards: wildcards.file_id,
         hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=mcfg.get_from_parameters(wildcards, 'donor')),
         sample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample'),
+        thresholds=lambda wildcards: mcfg.get_from_parameters(wildcards, 'thresholds', default={}),
     conda:
         get_env(config, 'scanpy')
     resources:
