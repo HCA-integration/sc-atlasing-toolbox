@@ -247,6 +247,7 @@ plot_qc_joint(
     # log_x=10,
     x_threshold=thresholds[x],
     y_threshold=thresholds[y],
+    marginal_hue=sample,
     title=joint_title,
     fill=True,
     cmap='plasma',
