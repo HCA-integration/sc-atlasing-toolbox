@@ -1,6 +1,12 @@
+def get_qc_input(wildcards):
+    if mcfg.get_from_parameters(wildcards, 'doublets', default=False):
+        return rules.collect_doublets.output.zarr
+    return mcfg.get_input_file(**wildcards)
+
+
 rule qc_metrics:
     input:
-        zarr=rules.collect_doublets.output.zarr# lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=get_qc_input
     output:
         obs=mcfg.out_dir / params.wildcard_pattern / 'qc_metrics.tsv'
     conda:
@@ -32,4 +38,5 @@ rule qc_metrics_plot:
 
 rule qc_metrics_all:
     input:
+        mcfg.get_output_files(rules.qc_metrics.output),
         mcfg.get_output_files(rules.qc_metrics_plot.output),

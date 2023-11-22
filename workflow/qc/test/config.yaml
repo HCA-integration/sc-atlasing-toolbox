@@ -11,6 +11,7 @@ DATASETS:
       sample: sample
       donor: donor
       batch: donor
+      doublets: True
       hue:
         - donor
         - scrublet_score
@@ -25,5 +26,3 @@ DATASETS:
       donor: phase
       hue:
         - phase
-        - scrublet_score
-        - doubletdetection_score
