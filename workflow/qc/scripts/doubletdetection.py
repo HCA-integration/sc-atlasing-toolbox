@@ -10,6 +10,7 @@ input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
 batch_key = snakemake.params.get('batch_key')
 batch = snakemake.wildcards.batch
+threads = snakemake.threads
 
 # read data
 logger.info(f'Read {input_zarr}...')
@@ -22,8 +23,13 @@ if batch_key in adata.obs.columns:
 
 # run doubletdetection
 logger.info('Run doubletdetection...')
-clf = doubletdetection.BoostClassifier()
-labels = clf.fit(adata.X).predict()
+clf = doubletdetection.BoostClassifier(
+    n_iters=10,
+    n_top_var_genes=4000,
+    clustering_algorithm="leiden",
+    n_jobs=threads,
+)
+labels = clf.fit(adata.X).predict(p_thresh=1e-16, voter_thresh=0.5)
 scores = clf.doublet_score()
 
 # save results

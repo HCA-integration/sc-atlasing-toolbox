@@ -54,6 +54,7 @@ rule doubletdetection:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
         get_env(config, 'qc')
+    threads: 3
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     shadow: "minimal"
