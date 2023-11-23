@@ -1,7 +1,3 @@
-rule filter_all:
-    input: expand(rules.load_data_filter_study.output,**get_wildcards(dataset_df,['study']))
-
-
 use rule merge from load_data as load_data_merge_organ with:
     input:
         lambda wildcards: expand(

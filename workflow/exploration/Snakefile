@@ -1,30 +1,16 @@
 """
 Exploration
 """
-from pathlib import Path
-import pandas as pd
-
-from utils.data import load_dataset_df
-from utils.config import get_resource
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 
-dataset_df = load_dataset_df(workflow.source_path(config['dataset_meta']))
 mcfg = ModuleConfig(
     module_name='exploration',
     config=config,
-    # parameters=dataset_df,
+    config_params=['sample', 'donor', 'summary_columns', 'pca_colors', 'marker_genes']
 )
-
-out_dir = mcfg.out_dir
-images_dir = mcfg.image_dir
-module_name = mcfg.module_name
-
-wildcard_constraints:
-    dataset='\w+',
-    study='\w+',
-    organ='\w+',
+params = mcfg.get_paramspace()
 
 
 module common:
@@ -34,21 +20,10 @@ module common:
 use rule * from common as common_ *
 
 
-config['dataset_meta'] = Path(config['dataset_meta']).resolve()
-
-module load_data:
-    snakefile: "../load_data/Snakefile"
-    config: config
-
-use rule * from load_data as load_data_ *
-
-
 include: 'rules/summary.smk'
 include: 'rules/pseudobulk.smk'
 include: 'rules/marker_genes.smk'
-include: 'rules/qc.smk'
 include: 'rules/barcode_matching.smk'
-include: 'rules/batch_pcr.smk'
 
 
 rule all:
@@ -56,9 +31,7 @@ rule all:
         rules.summary_all.input,
         rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
-        rules.qc_all.input,
         rules.barcode_matching_all.input,
-        rules.batch_pcr_all.input,
     default_target: True
 
 
@@ -66,6 +39,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )

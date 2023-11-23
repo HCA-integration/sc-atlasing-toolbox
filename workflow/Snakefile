@@ -102,6 +102,10 @@ module batch_analysis:
     snakefile: "batch_analysis/Snakefile"
     config: config
 
+module qc:
+    snakefile: "qc/Snakefile"
+    config: config
+
 module split_data:
     snakefile: "split_data/Snakefile"
     config: config
@@ -144,6 +148,7 @@ use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
 use rule * from batch_analysis as batch_analysis_ *
+use rule * from qc as qc_ *
 use rule * from split_data as split_data_ *
 use rule * from subset as subset_ *
 use rule * from label_transfer as label_transfer_ *

@@ -1,0 +1,34 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  Lee2020:
+    input:
+      qc: 
+        Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
+    qc:
+      sample: sample
+      donor: donor
+      batch: donor
+      doublets: True
+      hue:
+        - donor
+        - scrublet_score
+        - doubletdetection_score
+  test:
+    input:
+      qc:
+        test: test/input/pbmc68k.h5ad
+        test2: test/input/pbmc68k.h5ad
+    qc:
+      sample: batch
+      donor: phase
+      hue:
+        - phase
+      thresholds:
+        test:
+          total_counts_min: 100
+          total_counts_max: 1000
+          n_genes_by_counts_max: 500
+          pct_counts_mito_max: 0.1

@@ -46,12 +46,10 @@ rule link:
         lambda wildcards: checkpoints.split.get(**wildcards).output[0] + '/value~{value}.zarr',
     output:
         directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
-    run:
-        in_file = Path(input[0]).resolve()
-        out_file = Path(output[0]).resolve()
-        relative_out_path = os.path.relpath(in_file, out_file.parent.resolve())
-        out_file.symlink_to(Path(relative_out_path))
-
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    script:
+        'scripts/link_zarr.py'
 
 rule all:
     input:
