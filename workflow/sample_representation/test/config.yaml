@@ -1,0 +1,10 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  blood_pca:
+    input:
+      sample_representation: test/input/blood_pca.zarr
+    sample_representation:
+      sample: sample
