@@ -20,6 +20,12 @@ configfile: "configs/exploration/config.yaml"
 # config = update_module_configs(config, params)
 
 config_kwargs = {
+    'batch_analysis': dict(
+        config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample'],
+    ),
+    'sample_representation': dict(
+        config_params=['covariates', 'sample'],
+    ),
     'split_data': dict(
         config_params=['key', 'values'],
         wildcard_names=['key', 'value'],
@@ -98,6 +104,10 @@ module exploration:
     snakefile: "exploration/Snakefile"
     config: config
 
+module sample_representation:
+    snakefile: "sample_representation/Snakefile"
+    config: config
+
 module batch_analysis:
     snakefile: "batch_analysis/Snakefile"
     config: config
@@ -147,6 +157,7 @@ use rule * from load_data as load_data_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
+use rule * from sample_representation as sample_representation_ *
 use rule * from batch_analysis as batch_analysis_ *
 use rule * from qc as qc_ *
 use rule * from split_data as split_data_ *

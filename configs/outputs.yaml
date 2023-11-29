@@ -6,6 +6,7 @@ use_gpu: true
 
 output_map:
   # qc: data/out/qc/dataset~{dataset}/file_id~{file_id}/filtered.zarr
+  sample_representation: data/out/sample_representation/dataset~{dataset}/file_id~{file_id}/pseudobulk.h5ad
   split_data: data/out/split_data/dataset~{dataset}/file_id~{file_id}/key~{key}/value~{value}.zarr
   relabel: data/out/relabel/dataset~{dataset}/file_id~{file_id}.zarr
   subset: data/out/subset/dataset~{dataset}/file_id~{file_id}/by_sample.zarr
