@@ -79,6 +79,7 @@ else:
         'organ': organ,
         'per_dataset': uns_per_dataset,
     }
+    adata.obs_names = adata.uns['dataset'] + '-' + adata.obs.reset_index(drop=True).index.astype(str)
     print(adata)
     print(adata.var)
 
