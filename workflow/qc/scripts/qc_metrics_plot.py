@@ -238,8 +238,12 @@ y = 'pct_counts_mito'
 
 for hue in hues:
     joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
-    palette = 'plasma' if obs[hue].nunique() > 50 else None
-    legend = obs[hue].nunique() <= 20
+    if is_numeric_dtype(obs[hue]):
+        palette = 'plasma'
+        legend = 'brief'
+    else:
+        palette = None # if obs[hue].nunique() > 100 else 'plasma'
+        legend = obs[hue].nunique() <= 20
     plot_qc_joint(
         obs,
         x=x,
