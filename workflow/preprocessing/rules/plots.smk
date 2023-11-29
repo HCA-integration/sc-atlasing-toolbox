@@ -18,4 +18,3 @@ use rule plot_umap from preprocessing as preprocessing_plot_umap with:
     params:
         color=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'colors']),
         ncols=1,
-        outlier_factor=10
