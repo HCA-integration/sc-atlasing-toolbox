@@ -17,7 +17,7 @@ def save_empty(input_zarr, output_zarr, output_removed):
     link_zarr(
         in_dir=input_zarr,
         out_dir=output_zarr,
-        relative_path=False,
+        # relative_path=False,
     )
 
     # save removed cells
