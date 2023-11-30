@@ -320,6 +320,7 @@ class WildcardParameters:
         check_query_keys: bool = True,
         check_null: bool = False,
         default: [str, None] = None,
+        single_value: bool = True,
         verbose: bool = False,
         as_type: type = None,
     ):
@@ -351,7 +352,8 @@ class WildcardParameters:
                 columns=[parameter_key],
             )
             assert params_sub.shape[0] > 0, 'No wildcard combination found'
-            assert params_sub.shape[0] == 1, f'More than 1 row after subsetting\n{params_sub}'
+            if single_value:
+                assert params_sub.shape[0] == 1, f'More than 1 row after subsetting\n{params_sub}'
         
         except AssertionError as e:
             raise AssertionError(
@@ -361,7 +363,9 @@ class WildcardParameters:
                 f'\nall columns: {self.wildcards_df.columns.tolist()}'
             ) from e
         
-        parameter = params_sub[parameter_key].tolist()[0]
+        parameter = params_sub[parameter_key].tolist()
+        if single_value:
+            parameter = parameter[0]
         
         # check if NULL
         if isinstance(parameter, Iterable):

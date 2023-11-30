@@ -33,6 +33,8 @@ checkpoint split:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
         directory(mcfg.out_dir / 'splits' / paramspace.wildcard_pattern.replace('/value~{value}', ''))
+    params:
+        values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False)
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
     conda:
