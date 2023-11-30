@@ -37,7 +37,7 @@ adata.uns['preprocessing']['pca'] = args
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.obsm['X_pca'] = np.zeros((0, 50))
+    adata.obsm['X_pca'] = np.zeros((0, 30))
     adata.write_zarr(output_file)
     exit(0)
 
@@ -54,6 +54,7 @@ if scale:
     sc.pp.scale(adata, max_value=10)
 
 logging.info('PCA...')
+# args['n_comps'] = np.min([adata.n_obs-1, adata.n_vars-1, args.get('n_comps', 30)])
 sc.pp.pca(adata, use_highly_variable=True, **args)
 
 logging.info(f'Write to "{output_file}"...')
