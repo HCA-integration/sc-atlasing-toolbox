@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import doubletdetection
 import logging
@@ -17,7 +18,7 @@ logger.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, X='X', obs='obs')
 
 if adata.n_obs == 0:
-    adata.obs.to_csv(output_tsv, sep='\t')
+    pd.DataFrame(columns=['doubletdetection_score', 'doubletdetection_prediction']).to_csv(output_tsv, sep='\t')
     exit(0)
 
 
@@ -31,6 +32,7 @@ logger.info('Run doubletdetection...')
 clf = doubletdetection.BoostClassifier(
     n_iters=10,
     n_top_var_genes=4000,
+    n_components=np.min([adata.n_obs, adata.n_vars, 30]),
     clustering_algorithm="leiden",
     n_jobs=threads,
 )

@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import scanpy as sc
 import logging
@@ -16,7 +17,7 @@ logger.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, X='X', obs='obs')
 
 if adata.n_obs == 0:
-    adata.obs.to_csv(output_tsv, sep='\t')
+    pd.DataFrame(columns=['scrublet_score', 'scrublet_prediction']).to_csv(output_tsv, sep='\t')
     exit(0)
 
 # subset to batch
@@ -37,7 +38,7 @@ sc.external.pp.scrublet(
     normalize_variance=True,
     log_transform=False,
     mean_center=True,
-    n_prin_comps=30,
+    n_prin_comps=np.min([adata.n_obs-1, adata.n_vars-1, 30]),
     use_approx_neighbors=True,
     get_doublet_neighbor_parents=False,
     n_neighbors=None,
