@@ -16,6 +16,11 @@ threads = snakemake.threads
 logger.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, X='X', obs='obs')
 
+if adata.n_obs == 0:
+    adata.obs.to_csv(output_tsv, sep='\t')
+    exit(0)
+
+
 # subset to batch
 logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:

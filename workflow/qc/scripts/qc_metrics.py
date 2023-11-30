@@ -8,6 +8,10 @@ output_obs = snakemake.output.obs
 
 adata = read_anndata(snakemake.input[0], X='X', obs='obs', var='var')
 
+if adata.n_obs == 0:
+    adata.obs.to_csv(output_obs, sep='\t')
+    exit(0)
+
 print('Calculate QC stats...')
 if 'feature_name' in adata.var.columns:
     var_names = adata.var['feature_name']
