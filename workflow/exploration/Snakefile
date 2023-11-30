@@ -21,7 +21,6 @@ use rule * from common as common_ *
 
 
 include: 'rules/summary.smk'
-include: 'rules/pseudobulk.smk'
 include: 'rules/marker_genes.smk'
 include: 'rules/barcode_matching.smk'
 
@@ -29,7 +28,6 @@ include: 'rules/barcode_matching.smk'
 rule all:
     input:
         rules.summary_all.input,
-        rules.pseudobulk_all.input,
         rules.marker_genes_all.input,
         rules.barcode_matching_all.input,
     default_target: True

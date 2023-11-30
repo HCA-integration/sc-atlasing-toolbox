@@ -1,0 +1,14 @@
+DATASETS:
+  test:
+    input:
+      sample_representation: 
+        blood: data/out/load_data/merged/organ/blood.zarr/
+      preprocessing: sample_representation
+    sample_representation:
+      sample: sample
+    preprocessing:
+      colors:
+        - cell_type
+        - dataset
+        - disease
+        - assay

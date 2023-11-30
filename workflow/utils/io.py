@@ -1,3 +1,4 @@
+import warnings
 import os
 from pathlib import Path
 import shutil
@@ -33,7 +34,11 @@ def read_zarr_partial(file, **kwargs):
             kwargs = {x: x for x in z}
         for slot_name, slot in kwargs.items():
             print(f'Read slot "{slot}", store as "{slot_name}"...')
-            slots[slot_name] = ad.experimental.read_elem(z[slot])
+            if slot not in z:
+                warnings.warn(f'Slot "{slot}" not found in zarr file, skip...')
+                slots[slot_name] = None
+            else:
+                slots[slot_name] = ad.experimental.read_elem(z[slot])
         return ad.AnnData(**slots)
 
 

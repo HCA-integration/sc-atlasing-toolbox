@@ -28,6 +28,7 @@ id_cols = snakemake.params.id_cols
 dcp_tsv = pd.read_table(in_dcp)
 with zarr.open(in_file) as z:
     obs_df = read_elem(z['obs'])
+n_obs = obs_df.shape[0]
 
 # identify ID column
 cols = []
@@ -95,6 +96,9 @@ for col in metadata_columns:
         # remove columns that are all null
         del dcp_tsv[col]
 
+# rename columns
+obs_df['index'] = obs_df.reset_index().index
+
 # merge on ID column
 obs_df = obs_df.merge(
     dcp_tsv,
@@ -104,10 +108,13 @@ obs_df = obs_df.merge(
 )
 
 # make unique per barcode
-obs_df = obs_df.drop_duplicates(subset=["barcode"])
+obs_df = obs_df.drop_duplicates(subset=["index"])
+del obs_df['index']
+assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
 
 # save obs
-logging.info(obs_df)
+logging.info(obs_df.shape)
+logging.info(f'save obs to {out_obs}...')
 obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats

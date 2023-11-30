@@ -221,7 +221,10 @@ class ModuleConfig:
         if pattern is None:
             pattern = self.default_target
         wildcards = self.get_wildcards(**kwargs)
-        targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
+        try:
+            targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
+        except WildcardError:
+            raise ValueError(f'Invalid wildcard "{wildcards}" for pattern "{pattern}"')
         if as_dict:
             
             def get_wildcard_string(wildcard_name, wildcard_value):

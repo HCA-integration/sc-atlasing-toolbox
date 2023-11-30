@@ -12,6 +12,8 @@ def get_use_gpu(config):
 
 
 def remove_outliers(adata, extrema='max', factor=10, rep='X_umap'):
+    if factor == 0:
+        return adata
     umap = adata.obsm[rep]
     if extrema == 'max':
         abs_values = np.abs(umap.max(axis=1))
