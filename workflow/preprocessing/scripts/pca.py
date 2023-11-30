@@ -2,6 +2,7 @@
 PCA on highly variable genes
 """
 from pathlib import Path
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 try:
@@ -26,13 +27,22 @@ args = snakemake.params.get('args', {})
 
 logging.info(f'Read "{input_file}"...')
 adata = read_anndata(input_file, var='var', obs='obs', uns='uns')
-adata.X = read_anndata(input_counts, X='X', var='var', obs='obs')[:, adata.var_names].X
-ensure_sparse(adata)
+
+# add preprocessing metadata
+if 'preprocessing' not in adata.uns:
+    adata.uns['preprocessing'] = {}
+
+adata.uns['preprocessing']['scaled'] = scale
+adata.uns['preprocessing']['pca'] = args
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.write(output_file)
+    adata.obsm['X_pca'] = np.zeros((0, 50))
+    adata.write_zarr(output_file)
     exit(0)
+
+adata.X = read_anndata(input_counts, X='X', var='var', obs='obs')[:, adata.var_names].X
+ensure_sparse(adata)
 
 # make sure data is on GPU for rapids_singlecell
 if rapids:
@@ -46,17 +56,8 @@ if scale:
 logging.info('PCA...')
 sc.pp.pca(adata, use_highly_variable=True, **args)
 
-# add preprocessing metadata
-if 'preprocessing' not in adata.uns:
-    adata.uns['preprocessing'] = {}
-
-adata.uns['preprocessing']['scaled'] = scale
-adata.uns['preprocessing']['pca'] = args
-
 logging.info(f'Write to "{output_file}"...')
-del adata.raw
 del adata.X
-del adata.layers
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):

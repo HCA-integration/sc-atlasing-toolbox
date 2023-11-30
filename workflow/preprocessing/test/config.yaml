@@ -65,3 +65,8 @@ DATASETS:
       colors:
         - bulk_labels
         - batch
+
+  empty:
+    input:
+      preprocessing:
+        pbmc: test/input/empty.zarr

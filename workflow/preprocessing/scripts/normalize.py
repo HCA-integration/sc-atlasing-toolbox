@@ -2,6 +2,7 @@
 Normalisation
 """
 from pathlib import Path
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy import sparse
@@ -28,7 +29,8 @@ adata = read_anndata(input_file, X='X', layers='layers', uns='uns')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.write(output_file)
+    adata.X = np.zeros((0, adata.n_vars))
+    adata.write_zarr(output_file)
     exit(0)
 
 # select counts layer

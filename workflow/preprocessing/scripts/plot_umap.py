@@ -27,6 +27,11 @@ else:
 
 adata = read_anndata(input_file, obs='obs', obsm='obsm')
 
+if adata.obs.shape[0] == 0:
+    plt.savefig(output_plot)
+    exit()
+
+
 # parse colors
 if 'color' in params and params['color'] is not None:
     colors = params['color'] if isinstance(params['color'], list) else [params['color']]

@@ -35,8 +35,16 @@ logging.info(str(args))
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, X='X', obs='obs', var='var', uns='uns')
 
+# add metadata
+if 'preprocessing' not in adata.uns:
+    adata.uns['preprocessing'] = {}
+
+adata.uns['preprocessing']['highly_variable_genes'] = args
+
 if adata.n_obs == 0:
-    adata.write(output_file)
+    logging.info('No data, write empty file...')
+    adata.var['highly_variable'] = True
+    adata.write_zarr(output_file)
     exit(0)
 
 # scanpy.pp.log1p was supposed to add it but it's not saved
@@ -91,12 +99,6 @@ else:
     # subset to HVGs
     if subset_to_hvg:
         adata = adata[:, adata.var['highly_variable']]
-
-# add metadata
-if 'preprocessing' not in adata.uns:
-    adata.uns['preprocessing'] = {}
-
-adata.uns['preprocessing']['highly_variable_genes'] = args
 
 logging.info(f'Write to {output_file}...')
 del adata.raw
