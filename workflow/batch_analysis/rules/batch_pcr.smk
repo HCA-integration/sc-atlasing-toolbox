@@ -38,7 +38,7 @@ rule batch_pcr:
         tsv=mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / '{covariate}.tsv',
     params:
         n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False),
-        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key', check_query_keys=False),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
     conda:
         get_env(config, 'scib_accel')
     threads:
