@@ -1,12 +1,6 @@
-def get_qc_input(wildcards):
-    if mcfg.get_from_parameters(wildcards, 'doublets', default=False):
-        return rules.collect_doublets.output.zarr
-    return mcfg.get_input_file(**wildcards)
-
-
-rule qc_metrics:
+rule metrics:
     input:
-        zarr=get_qc_input
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
         obs=mcfg.out_dir / params.wildcard_pattern / 'qc_metrics.tsv'
     conda:
@@ -14,12 +8,12 @@ rule qc_metrics:
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
-        '../scripts/qc_metrics.py'
+        '../scripts/metrics.py'
 
 
-rule qc_metrics_plot:
+rule metrics_plot:
     input:
-        obs=rules.qc_metrics.output.obs
+        obs=rules.metrics.output.obs
     output:
         joint=directory(mcfg.image_dir / params.wildcard_pattern / 'joint_plots'),
         violin=mcfg.image_dir / params.wildcard_pattern / 'violin.png',
@@ -34,10 +28,10 @@ rule qc_metrics_plot:
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
-        '../scripts/qc_metrics_plot.py'
+        '../scripts/metrics_plot.py'
 
 
-rule qc_metrics_all:
+rule metrics_all:
     input:
-        mcfg.get_output_files(rules.qc_metrics.output),
-        mcfg.get_output_files(rules.qc_metrics_plot.output),
+        mcfg.get_output_files(rules.metrics.output),
+        mcfg.get_output_files(rules.metrics_plot.output),

@@ -5,11 +5,8 @@ images: test/images
 DATASETS:
   test:
     input:
-      qc:
+      doublets:
         test: data/pbmc68k.h5ad
         test2: data/pbmc68k.h5ad
-    qc:
-      sample: batch
-      donor: phase
-      categories:
-        - phase
+    doublets:
+      batch: phase

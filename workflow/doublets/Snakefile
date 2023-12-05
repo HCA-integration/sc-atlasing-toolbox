@@ -9,10 +9,10 @@ from utils.environments import get_env
 
 
 mcfg = ModuleConfig(
-    module_name='qc',
+    module_name='doublets',
     config=config,
-    config_params=['sample', 'donor', 'hue', 'thresholds'],
-    dtypes={'thresholds': str},
+    config_params=['batch'],
+    rename_config_params={'batch': 'batch_key'}
 )
 params = mcfg.get_paramspace()
 
@@ -26,12 +26,12 @@ module common:
 
 use rule * from common as common_ *
 
-include: 'rules/qc.smk'
+include: 'rules/doublets.smk'
 
 
 rule all:
     input:
-        rules.metrics_all.input,
+        mcfg.get_output_files(rules.collect.output),
     default_target: True
 
 

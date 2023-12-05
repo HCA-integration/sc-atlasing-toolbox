@@ -10,12 +10,9 @@ DATASETS:
     qc:
       sample: sample
       donor: donor
-      batch: donor
-      doublets: True
       hue:
         - donor
-        - scrublet_score
-        - doubletdetection_score
+        - development_stage
   test:
     input:
       qc:

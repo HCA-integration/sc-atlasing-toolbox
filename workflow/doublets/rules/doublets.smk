@@ -2,7 +2,7 @@ checkpoint split_batches:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        batches=directory(mcfg.out_dir / 'doublets' / params.wildcard_pattern / '_batches'),
+        batches=directory(mcfg.out_dir / params.wildcard_pattern / '_batches'),
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key'),
     conda:
@@ -33,7 +33,7 @@ rule scrublet:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         batch=get_checkpoint_output,
     output:
-        tsv=mcfg.out_dir / 'doublets' / params.wildcard_pattern / 'scrublet' / '{batch}.tsv',
+        tsv=mcfg.out_dir / params.wildcard_pattern / 'scrublet' / '{batch}.tsv',
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
@@ -52,7 +52,7 @@ rule doubletdetection:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         batch=get_checkpoint_output
     output:
-        tsv=mcfg.out_dir / 'doublets' / params.wildcard_pattern / 'doubletdetection' / '{batch}.tsv',
+        tsv=mcfg.out_dir / params.wildcard_pattern / 'doubletdetection' / '{batch}.tsv',
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
@@ -68,22 +68,16 @@ rule doubletdetection:
         '../scripts/doubletdetection.py'
 
 
-rule collect_doublets:
+rule collect:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         scrublet=lambda wildcards: get_from_checkpoint(wildcards, rules.scrublet.output.tsv),
         doubletdetection=lambda wildcards: get_from_checkpoint(wildcards, rules.doubletdetection.output.tsv),
     output:
-        zarr=directory(mcfg.out_dir / 'doublets' / f'{params.wildcard_pattern}.zarr'),
+        zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
     conda:
         get_env(config, 'scanpy')
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
-        '../scripts/collect_doublets.py'
-            
-
-
-rule doublets_all:
-    input:
-        mcfg.get_output_files(rules.collect_doublets.output),
+        '../scripts/collect.py'
