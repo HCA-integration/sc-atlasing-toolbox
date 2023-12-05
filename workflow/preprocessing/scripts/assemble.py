@@ -109,7 +109,7 @@ def assemble_zarr(file, file_type, files_to_link):
     if output_file / 'obs' not in files_to_link:
         files_to_link.append((file / 'obs', output_file / 'obs'))
     if output_file / 'var' not in files_to_link:
-        files_to_link.append((file / 'var', output_file / 'raw' / 'var'))
+        files_to_link.append((file / 'var', output_file / 'var'))
     return files_to_link
 
 

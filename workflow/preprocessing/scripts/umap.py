@@ -78,6 +78,7 @@ check_and_update_neighbors_info(adata, neighbors_key)
 sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')
+del adata.X
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):
