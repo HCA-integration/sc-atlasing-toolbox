@@ -1,0 +1,16 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  Lee2020:
+    input:
+      doublets: 
+        Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
+    doublets:
+      batch: donor
+  test:
+    input:
+      doublets:
+        test: test/input/pbmc68k.h5ad
+        test2: test/input/pbmc68k.h5ad
