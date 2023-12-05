@@ -3,6 +3,7 @@ Assemble multiple preprocessing outputs into single file
 """
 from pathlib import Path
 from pprint import pformat
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy import sparse
@@ -75,6 +76,7 @@ def assemble_zarr(file, file_type, files_to_link):
     if file_type == 'counts':
         logging.debug('add raw counts')
         files_to_link.append((file / 'X', output_file / 'raw' / 'X'))
+        files_to_link.append((file / 'obs', output_file / 'obs'))
         files_to_link.append((file / 'var', output_file / 'raw' / 'var'))
     elif file_type == 'normalize':
         logging.debug('add normalised counts')
@@ -104,6 +106,10 @@ def assemble_zarr(file, file_type, files_to_link):
         files_to_link.append((file / 'obsm' / 'X_umap', output_file / 'obsm' / 'X_umap'))
     else:
         ValueError(f'Unknown file type {file_type}')
+    if output_file / 'obs' not in files_to_link:
+        files_to_link.append((file / 'obs', output_file / 'obs'))
+    if output_file / 'var' not in files_to_link:
+        files_to_link.append((file / 'var', output_file / 'var'))
     return files_to_link
 
 
@@ -115,14 +121,9 @@ files_to_link = []
 for file_type, file in snakemake.input.items():
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
-        adata = read_anndata(file)
-        del adata.layers
-        del adata.obsm
-        del adata.obsp
-        del adata.uns
-        del adata.varm
-        del adata.varp
-        del adata.raw
+        adata = read_anndata(file, X='X', obs='obs', var='var')
+        if adata.X is None:
+            adata.X = np.zeros((adata.n_obs, adata.n_vars))
 
     if file.endswith('.h5ad'):
         adata = assemble_h5ad(file, file_type, adata)

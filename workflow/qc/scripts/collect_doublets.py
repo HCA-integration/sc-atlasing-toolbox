@@ -13,6 +13,10 @@ output_zarr = snakemake.output.zarr
 # read AnnData
 adata = read_anndata(input_anndata, obs='obs')
 
+if adata.n_obs == 0:
+    adata.write_zarr(output_zarr)
+    exit(0)
+
 scrub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_scrublet])
 scrub_scores.index = scrub_scores.index.astype(str)
 doub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_doubletdetection])

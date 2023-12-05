@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import scanpy as sc
 import logging
@@ -20,6 +21,12 @@ logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
     adata = adata[adata.obs[batch_key] == batch].copy()
 
+if adata.n_obs < 10:
+    columns = ['scrublet_score', 'scrublet_prediction']
+    df = pd.DataFrame(index=adata.obs.index, columns=columns, dtype=float).fillna(0)
+    df.to_csv(output_tsv, sep='\t')
+    exit(0)
+
 # run scrublet
 logger.info('Run scrublet...')
 sc.external.pp.scrublet(
@@ -33,7 +40,7 @@ sc.external.pp.scrublet(
     normalize_variance=True,
     log_transform=False,
     mean_center=True,
-    n_prin_comps=30,
+    n_prin_comps=np.min([adata.n_obs-1, adata.n_vars-1, 30]),
     use_approx_neighbors=True,
     get_doublet_neighbor_parents=False,
     n_neighbors=None,

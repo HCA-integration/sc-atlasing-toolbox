@@ -23,6 +23,9 @@ basis = params['basis']
 
 adata = read_anndata(input_file, obs='obs', obsm='obsm')
 
+if adata.obs.shape[0] == 0:
+    plt.savefig(output_file)
+    exit()
 
 # convert to dense matrix
 try:

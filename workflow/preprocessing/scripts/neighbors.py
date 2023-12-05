@@ -28,7 +28,7 @@ adata = read_anndata(input_file, obs='obs', obsm='obsm', uns='uns', var='var')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.write(output_file)
+    adata.write_zarr(output_file)
     exit(0)
 
 # set defaults
@@ -44,6 +44,7 @@ if params == False:
     )
     assert_neighbors(adata)
 else:
+    # set representation for neighbors
     if 'use_rep' not in params:
         if 'X_pca' in adata.obsm:
             params['use_rep'] = 'X_pca'
@@ -60,6 +61,9 @@ else:
         logging.info(f'Compute PCA with parameters: {pca_params}...')
         files_to_overwrite.extend(['obsm', 'varm'])
         sc.pp.pca(adata, **pca_params)
+    
+    # set n_neighbors
+    params['n_neighbors'] = min(params.get('n_neighbors', 15), adata.n_obs)
     
     # compute kNN graph
     logging.info(f'parameters: {params}')

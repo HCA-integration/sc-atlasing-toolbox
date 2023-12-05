@@ -2,6 +2,7 @@
 Compute UMAP
 """
 from pathlib import Path
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 from anndata.experimental import read_elem
@@ -59,6 +60,7 @@ adata = read_anndata(input_file, obs='obs', obsm='obsm', obsp='obsp', uns='uns',
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
+    adata.obsm['X_umap'] = np.zeros((0, 2))
     adata.write_zarr(output_file)
     exit(0)
 
@@ -76,10 +78,7 @@ check_and_update_neighbors_info(adata, neighbors_key)
 sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')
-del adata.raw
 del adata.X
-del adata.layers
-del adata.obsp
 adata.write_zarr(output_file)
 
 if input_file.endswith('.zarr'):

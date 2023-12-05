@@ -13,6 +13,7 @@ from utils.misc import ensure_sparse
 input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 split_key = snakemake.wildcards.key
+values = snakemake.params.get('values', [])
 
 out_dir = Path(output_dir)
 if not out_dir.exists():
@@ -33,15 +34,20 @@ adata = read_anndata(
 for layer in ['X']+list(adata.layers.keys()):
     ensure_sparse(adata, layer=layer)
 
-splits = adata.obs[split_key].astype(str).unique()
-logging.info(f'splits: {splits}')
+file_value_map = {
+    s.replace(' ', '_').replace('/', '_'): s
+    for s in adata.obs[split_key].astype(str).unique()
+}
+split_files = list(file_value_map.keys())
+split_files = set(split_files + values)
+logging.info(f'splits: {split_files}')
 
-for split in splits:
+for split_file in split_files:
+    split = file_value_map.get(split_file)
     logging.info(f'Split by {split_key}={split}')
     # split anndata
     adata_sub = adata[adata.obs[split_key] == split]
     # write to file
-    split_file = split.replace(' ', '_').replace('/', '_')
     out_file = out_dir / f"value~{split_file}.zarr"
 
     logging.info(f'write to {out_file}...')

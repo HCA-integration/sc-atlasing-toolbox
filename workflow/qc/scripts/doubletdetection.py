@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import doubletdetection
 import logging
@@ -21,11 +22,18 @@ logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
     adata = adata[adata.obs[batch_key] == batch].copy()
 
+if adata.n_obs < 10:
+    columns = ['doubletdetection_score', 'doubletdetection_prediction']
+    df = pd.DataFrame(index=adata.obs.index, columns=columns, dtype=float).fillna(0)
+    df.to_csv(output_tsv, sep='\t')
+    exit(0)
+
 # run doubletdetection
 logger.info('Run doubletdetection...')
 clf = doubletdetection.BoostClassifier(
     n_iters=10,
     n_top_var_genes=4000,
+    n_components=np.min([adata.n_obs, adata.n_vars, 30]),
     clustering_algorithm="leiden",
     n_jobs=threads,
 )

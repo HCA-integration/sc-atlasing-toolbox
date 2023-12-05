@@ -39,7 +39,10 @@ rule scrublet:
     conda:
         get_env(config, 'qc')
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     script:
         '../scripts/scrublet.py'
 
@@ -56,7 +59,10 @@ rule doubletdetection:
         get_env(config, 'qc')
     threads: 3
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     shadow: "minimal"
     script:
         '../scripts/doubletdetection.py'

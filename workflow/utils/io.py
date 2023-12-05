@@ -63,6 +63,9 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=T
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
     
+    if not in_dir.exists():
+        return
+    
     if file_names is None:
         file_names = [f.name for f in in_dir.iterdir()]
 
