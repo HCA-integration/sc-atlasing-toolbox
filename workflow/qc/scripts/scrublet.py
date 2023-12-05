@@ -16,14 +16,16 @@ batch = snakemake.wildcards.batch
 logger.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, X='X', obs='obs')
 
-if adata.n_obs == 0:
-    pd.DataFrame(columns=['scrublet_score', 'scrublet_prediction']).to_csv(output_tsv, sep='\t')
-    exit(0)
-
 # subset to batch
 logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
     adata = adata[adata.obs[batch_key] == batch].copy()
+
+if adata.n_obs < 10:
+    columns = ['scrublet_score', 'scrublet_prediction']
+    df = pd.DataFrame(index=adata.obs.index, columns=columns, dtype=float).fillna(0)
+    df.to_csv(output_tsv, sep='\t')
+    exit(0)
 
 # run scrublet
 logger.info('Run scrublet...')
