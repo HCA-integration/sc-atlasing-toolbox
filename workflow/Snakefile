@@ -116,6 +116,10 @@ module qc:
     snakefile: "qc/Snakefile"
     config: config
 
+module doublets:
+    snakefile: "doublets/Snakefile"
+    config: config
+
 module split_data:
     snakefile: "split_data/Snakefile"
     config: config
@@ -159,6 +163,7 @@ use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
 use rule * from sample_representation as sample_representation_ *
 use rule * from batch_analysis as batch_analysis_ *
+use rule * from doublets as doublets_ *
 use rule * from qc as qc_ *
 use rule * from split_data as split_data_ *
 use rule * from subset as subset_ *
