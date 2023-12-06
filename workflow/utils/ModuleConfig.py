@@ -138,7 +138,8 @@ class ModuleConfig:
         elif self.module_name in self.config['output_map']:
             self.default_target = self.config['output_map'][self.module_name]
         else:
-            default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
+            wildcard_pattern = self.parameters.get_paramspace().wildcard_pattern
+            default_target = self.out_dir / f'{wildcard_pattern}.zarr'
             warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
             self.default_target = default_target
 
