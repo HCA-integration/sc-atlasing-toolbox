@@ -36,8 +36,8 @@ include: 'rules/plots.smk'
 
 rule plots_all:
     input:
-        mcfg.get_output_files(rules.plot_embedding.output),
-        mcfg.get_output_files(rules.plot_umap.output),
+        mcfg.get_output_files(rules.preprocessing_plot_pca.output),
+        mcfg.get_output_files(rules.preprocessing_plot_umap.output),
 
 
 rule all:

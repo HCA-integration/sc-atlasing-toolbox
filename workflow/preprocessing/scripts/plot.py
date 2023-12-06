@@ -8,30 +8,27 @@ import scanpy as sc
 from pandas.api.types import is_numeric_dtype
 
 from utils.io import read_anndata
-from utils.misc import remove_outliers
+from utils.misc import ensure_dense, remove_outliers
 
 
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 
 input_file = snakemake.input[0]
 output_plot = Path(snakemake.output.plot)
-# output_additional = Path(snakemake.output.additional_plots)
-# output_additional.mkdir(exist_ok=True)
+# output_plot.mkdir(exist_ok=True)
 
-wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
 params = dict(snakemake.params.items())
-if 'outlier_factor' in params:
-    outlier_factor = params['outlier_factor']
-    del params['outlier_factor']
-else:
-    outlier_factor = 10
+basis = params['basis']
+wildcards_string = ', '.join([f'{k}: {v}' for k, v in snakemake.wildcards.items()])
+logging.info(f'Wildcard string: {wildcards_string}...')
 
+logging.info(f'Read file {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsm='obsm')
+ensure_dense(adata, basis)
 
 if adata.obs.shape[0] == 0:
-    plt.savefig(output_plot)
+    logging.info('No cells, skip...')
     exit()
-
 
 # parse colors
 if 'color' in params and params['color'] is not None:
@@ -50,43 +47,20 @@ if 'color' in params and params['color'] is not None:
     else:
         del params['color']
 
-# # parse neighbors key
-# neighbors_key = params.get('neighbors_key', 'neighbors')
-# if isinstance(neighbors_key, list):
-#     neighbors_keys = params['neighbors_key']
-#     del params['neighbors_key']
-#     for neighbors_key in neighbors_keys:
-#         basis = f'X_umap_{neighbors_key}'
-#         # remove outliers
-#         adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
-#         adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
-#         sc.pl.embedding(
-#             adata[adata.obs.sample(adata.n_obs).index],
-#             basis,
-#             show=False,
-#             neighbors_key=neighbors_key,
-#             **params
-#         )
-#         plt.suptitle(f'{wildcards_string}, neighbors_key: {neighbors_key}, n={adata.n_obs}')
-#         fig_file = output_additional / f'{neighbors_key}.png'
-#         plt.savefig(fig_file, bbox_inches='tight', dpi=200)
-#     logging.info(f'link {output_plot} to {fig_file}')
-#     output_plot.symlink_to(fig_file.resolve(), target_is_directory=False)
-# else:
-
-# determine basis
-basis = params.get('basis', 'X_umap')
-if 'basis' in params:
-    del params['basis']
-
 # remove outliers
+if 'outlier_factor' in params:
+    outlier_factor = params['outlier_factor']
+    del params['outlier_factor']
+else:
+    outlier_factor = 0
 adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
+
+# plot embedding
 sc.pl.embedding(
     adata[adata.obs.sample(adata.n_obs).index],
-    basis=basis,
     show=False,
     **params
 )
-plt.suptitle(f'{wildcards_string}, n={adata.n_obs}')
+plt.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
 plt.savefig(output_plot, bbox_inches='tight', dpi=200)

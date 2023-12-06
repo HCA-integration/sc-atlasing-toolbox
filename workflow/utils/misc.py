@@ -117,8 +117,10 @@ def ensure_sparse(adata, layer='X'):
     if not issparse(adata.X):
         if layer == 'X':
             adata.X = csr_matrix(adata.X)
-        else:
+        elif layer in adata.layers:
             adata.layers[layer] = csr_matrix(adata.layers[layer])
+        elif layer in adata.obsm:
+            adata.obsm[layer] = csr_matrix(adata.obsm[layer])
 
 
 def ensure_dense(adata, layer='X'):
@@ -127,8 +129,10 @@ def ensure_dense(adata, layer='X'):
     if issparse(adata.X):
         if layer == 'X':
             adata.X = adata.X.todense()
-        else:
+        elif layer in adata.layers:
             adata.layers[layer] = adata.layers[layer].todense()
+        elif layer in adata.obsm:
+            adata.obsm[layer] = adata.obsm[layer].todense()
 
 
 def merge(dfs, **kwargs):
