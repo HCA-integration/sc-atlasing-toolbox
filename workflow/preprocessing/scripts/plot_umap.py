@@ -5,6 +5,7 @@ import warnings
 warnings.filterwarnings("ignore", message="Warning: No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 from matplotlib import pyplot as plt
 import scanpy as sc
+from pandas.api.types import is_numeric_dtype
 
 from utils.io import read_anndata
 from utils.misc import remove_outliers
@@ -38,13 +39,16 @@ if 'color' in params and params['color'] is not None:
     # remove that are not in the data
     colors = [color for color in colors if color in adata.obs.columns]
     # filter colors with too few or too many categories
-    params['color'] = [color for color in colors if 1 < adata.obs[color].nunique() <= 128]
-    if len(params['color']) == 0:
-        params['color'] = None
-    else:
-        for color in params['color']:
+    colors = [color for color in colors if 1 < adata.obs[color].nunique() <= 128 or is_numeric_dtype(adata.obs[color])]
+    
+    # set color parameters
+    if len(colors) > 0:
+        for color in colors:
             if adata.obs[color].dtype.name == 'category':
                 adata.obs[color] = adata.obs[color].astype('str')
+        params['color'] = colors
+    else:
+        del params['color']
 
 # # parse neighbors key
 # neighbors_key = params.get('neighbors_key', 'neighbors')
