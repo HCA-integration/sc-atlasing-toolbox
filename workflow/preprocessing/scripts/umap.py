@@ -39,7 +39,7 @@ def check_and_update_neighbors_info(adata, neighbors_key):
         raise e
 
     # determine n_neighbors if missing
-    if 'n_neighbors' not in adata.uns[neighbors_key]:
+    if 'n_neighbors' not in adata.uns[neighbors_key]['params']:
         distances_key = adata.uns[neighbors_key]['distances_key']
         n_neighbors = np.unique(adata.obsp[distances_key].nonzero()[0], return_counts=True)[1]
         assert len(np.unique(n_neighbors)) == 1, f'Number of neighbors is not consistent!\nn_neighbors: {np.unique(n_neighbors)}'
