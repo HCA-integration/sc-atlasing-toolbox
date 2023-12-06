@@ -1,7 +1,3 @@
-output_dir: test/out
-images: test/images
-
-
 DATASETS:
   test:
     input:
