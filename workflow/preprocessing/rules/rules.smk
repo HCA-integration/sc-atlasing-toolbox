@@ -85,23 +85,14 @@ rule assemble:
 
 ### Plots ###
 
-rule plot_embedding:
+rule plots:
     input:
         anndata='{dataset}.h5ad',
     output:
-        plot='plot_{dataset}_pca.png',
+        plots=directory('{dataset}_plot'),
+    params:
+        basis='X_pca'
     conda:
         get_env(config, 'scanpy')
     script:
-        '../scripts/plot_embedding.py'
-
-
-rule plot_umap:
-    input:
-        anndata='{dataset}.h5ad'
-    output:
-        plot='plot_{dataset}.png',
-    conda:
-        get_env(config, 'scanpy')
-    script:
-        '../scripts/plot_umap.py'
+        '../scripts/plot.py'

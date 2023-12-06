@@ -14,7 +14,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='clustering',
     config=config,
-    config_params=['neighbors_key', 'resolutions'],
+    config_params=['neighbors_key', 'resolutions', 'algorithm'],
     wildcard_names=['neighbors_key', 'resolution'],
     rename_config_params={'resolutions': 'resolution'},
     explode_by='resolution',

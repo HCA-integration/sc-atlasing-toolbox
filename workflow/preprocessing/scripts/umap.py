@@ -5,8 +5,6 @@ from pathlib import Path
 import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
-from anndata.experimental import read_elem
-import zarr
 try:
     import rapids_singlecell as sc
     import cupy as cp
@@ -15,28 +13,37 @@ except ImportError as e:
     import scanpy as sc
     logging.info('Importing rapids failed, using scanpy...')
 
-from utils.io import read_anndata, link_zarr
+from utils.io import read_anndata, link_zarr_partial
 from utils.misc import ensure_dense
 
 
 def check_and_update_neighbors_info(adata, neighbors_key):
     # check if representation is available
+    if neighbors_key not in adata.uns:
+        adata.uns[neighbors_key] = {
+            'connectivities_key': 'connectivities',
+            'distances_key': 'distances',
+            'params': {
+                'use_rep': 'X_pca',
+                'method': None,
+            },
+        }
+    adata.uns[neighbors_key]['params'] = adata.uns[neighbors_key].get('params', {'use_rep': 'X'})
+    
     try:
-        if neighbors_key not in adata.uns:
-            adata.uns[neighbors_key] = {
-                'connectivities_key': 'connectivities',
-                'distances_key': 'distances',
-                'params': {
-                    'use_rep': 'X_pca',
-                    'method': None,
-                },
-            }
         assert adata.uns[neighbors_key]['connectivities_key'] in adata.obsp
         assert adata.uns[neighbors_key]['distances_key'] in adata.obsp
     except AssertionError as e:
         logging.info(f'neighbors_key: {neighbors_key}')
         logging.info(adata.__str__())
         raise e
+
+    # determine n_neighbors if missing
+    if 'n_neighbors' not in adata.uns[neighbors_key]['params']:
+        distances_key = adata.uns[neighbors_key]['distances_key']
+        n_neighbors = np.unique(adata.obsp[distances_key].nonzero()[0], return_counts=True)[1]
+        assert len(np.unique(n_neighbors)) == 1, f'Number of neighbors is not consistent!\nn_neighbors: {np.unique(n_neighbors)}'
+        adata.uns[neighbors_key]['params']['n_neighbors'] = int(n_neighbors[0])
 
     # check if representation is available in current anndata, otherwise read from file
     use_rep = adata.uns[neighbors_key]['params'].get('use_rep', None)
@@ -65,28 +72,10 @@ if adata.n_obs == 0:
     exit(0)
 
 neighbors_key = params.get('neighbors_key', 'neighbors')
-
-# compute UMAP
-# for key in neighbors_key:
-#     check_and_update_neighbors_info(adata, key)
-#     params |= dict(neighbors_key=key)
-#     sc.tl.umap(adata, **params)
-#     if key != 'neighbors' or len(neighbors_key) > 1:
-#         adata.obsm[f'X_umap_{key}'] = adata.obsm['X_umap']
-
 check_and_update_neighbors_info(adata, neighbors_key)
 sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')
 del adata.X
 adata.write_zarr(output_file)
-
-if input_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['obsm', 'uns']]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=files_to_keep,
-        overwrite=True,
-)
+link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])

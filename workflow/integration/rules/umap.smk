@@ -23,13 +23,14 @@ def get_colors(wildcards):
     return [*labels, *batch, *umap_colors]
 
 
-use rule plot_umap from preprocessing as integration_plot_umap with:
+use rule plots from preprocessing as integration_plot_umap with:
     input:
         anndata=rules.integration_compute_umap.output.zarr,
     output:
-        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
+        plots=directory(image_dir / 'umap' / f'{paramspace.wildcard_pattern}'),
     params:
         color=get_colors,
+        basis='X_umap',
         ncols=1,
         outlier_factor=10,
     resources:

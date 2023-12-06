@@ -93,3 +93,22 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=T
                 )
             )
         new_file.symlink_to(path_to_link_to)
+
+
+def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
+    """
+    Link zarr files excluding defined slots
+    """
+    if not in_dir.endswith('.zarr'):
+        return
+    if files_to_keep is None:
+        files_to_keep = []
+    in_dirs = [f.name for f in Path(in_dir).iterdir()]
+    files_to_link = [f for f in in_dirs if f not in files_to_keep]
+    link_zarr(
+        in_dir=in_dir,
+        out_dir=out_dir,
+        file_names=files_to_link,
+        overwrite=overwrite,
+        relative_path=relative_path,
+    )
