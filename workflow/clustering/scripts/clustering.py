@@ -2,6 +2,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
+import numpy as np
 try:
     import rapids_singlecell as sc
     import cupy as cp
@@ -15,8 +16,8 @@ from utils.io import read_anndata
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 resolution = float(snakemake.wildcards.resolution)
-cluster_key_suffix = snakemake.params.get('cluster_key_suffix', '')
 neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
+cluster_alg = snakemake.params.get('algorithm', 'louvain')
 
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(input_file)
@@ -34,9 +35,8 @@ adata.uns['neighbors'] = neighbors
 adata.obsp['connectivities'] = adata.obsp[neighbors['connectivities_key']]
 adata.obsp['distances'] = adata.obsp[neighbors['distances_key']]
 
-cluster_alg = 'louvain'
 logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
-cluster_key = f'{cluster_alg}_{resolution}{cluster_key_suffix}'
+cluster_key = f'{cluster_alg}_{resolution}'
 
 cluster_alg_map = {
     'louvain': sc.tl.louvain,
