@@ -111,28 +111,47 @@ def ifelse(statement, _if, _else):
         return _else
 
 
-def ensure_sparse(adata, layer='X'):
+def check_sparse(matrix):
+    import anndata as ad
     from scipy.sparse import csr_matrix, issparse
+    
+    return issparse(matrix) or isinstance(
+        matrix, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)
+    )
 
-    if not issparse(adata.X):
-        if layer == 'X':
-            adata.X = csr_matrix(adata.X)
-        elif layer in adata.layers:
-            adata.layers[layer] = csr_matrix(adata.layers[layer])
-        elif layer in adata.obsm:
-            adata.obsm[layer] = csr_matrix(adata.obsm[layer])
+
+def ensure_sparse(adata, layer='X'):
+    from scipy.sparse import csr_matrix
+    
+    if layer == 'X':
+        matrix = adata.X
+        if not check_sparse(matrix):
+            adata.X = csr_matrix(matrix)
+    elif layer in adata.layers:
+        matrix = adata.layers[layer]
+        if not check_sparse(matrix):
+            adata.layers[layer] = csr_matrix(matrix)
+    elif layer in adata.obsm:
+        matrix = adata.obsm[layer]
+        if not check_sparse(matrix):
+            adata.obsm[layer] = csr_matrix(matrix)
 
 
 def ensure_dense(adata, layer='X'):
-    from scipy.sparse import issparse
-
-    if issparse(adata.X):
-        if layer == 'X':
-            adata.X = adata.X.todense()
-        elif layer in adata.layers:
-            adata.layers[layer] = adata.layers[layer].todense()
-        elif layer in adata.obsm:
-            adata.obsm[layer] = adata.obsm[layer].todense()
+    from scipy.sparse import csr_matrix
+    
+    if layer == 'X':
+        matrix = adata.X
+        if check_sparse(matrix):
+            adata.X = matrix.todense()
+    elif layer in adata.layers:
+        matrix = adata.layers[layer]
+        if check_sparse(matrix):
+            adata.layers[layer] = matrix.todense()
+    elif layer in adata.obsm:
+        matrix = adata.obsm[layer]
+        if check_sparse(matrix):
+            adata.obsm[layer] = matrix.todense()
 
 
 def merge(dfs, **kwargs):
