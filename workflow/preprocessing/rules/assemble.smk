@@ -42,9 +42,9 @@ use rule pca from preprocessing as preprocessing_pca with:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'pca'], default={}),
         scale=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'scale']),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
@@ -56,9 +56,9 @@ use rule neighbors from preprocessing as preprocessing_neighbors with:
     params:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'neighbors'], default={}),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
@@ -71,9 +71,9 @@ use rule umap from preprocessing as preprocessing_umap with:
     params:
         neighbors_key='neighbors',
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
