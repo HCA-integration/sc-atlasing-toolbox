@@ -9,7 +9,7 @@ def get_env(
     gpu_env=None,
 ):
     if mode is None:
-        mode = config.get('env_mod', 'local')
+        mode = config.get('env_mode', 'local')
     if gpu_env is None:
         gpu_env = env_name
     env_name = ifelse(get_use_gpu(config), _if=gpu_env, _else=env_name)
