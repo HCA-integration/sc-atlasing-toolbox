@@ -11,7 +11,7 @@ DATASETS:
       preprocessing:
         pbmc: test/input/pbmc68k.h5ad
     preprocessing:
-      raw_counts: counts
+      raw_counts: layers/counts
       scale: true
       highly_variable_genes:
         n_top_genes: 100

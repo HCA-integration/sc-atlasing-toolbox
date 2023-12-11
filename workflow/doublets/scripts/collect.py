@@ -19,6 +19,8 @@ if adata.n_obs == 0:
 
 scrub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_scrublet])
 scrub_scores.index = scrub_scores.index.astype(str)
+scrub_scores['scrublet_prediction'] = scrub_scores['scrublet_prediction'].astype(str)
+
 doub_scores = pd.concat([pd.read_table(f, index_col=0) for f in input_doubletdetection])
 doub_scores.index = doub_scores.index.astype(str)
 
@@ -26,7 +28,6 @@ print(scrub_scores)
 print(doub_scores)
 
 adata.obs = adata.obs.merge(scrub_scores, left_index=True, right_index=True, how='left')
-print(adata.obs)
 adata.obs = adata.obs.merge(doub_scores, left_index=True, right_index=True, how='left')
 print(adata.obs)
 

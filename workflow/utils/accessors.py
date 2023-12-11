@@ -1,10 +1,11 @@
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
 
 
-def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float64'):
+def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float32'):
+    from scipy.sparse import csr_matrix, issparse
+    from dask.array import Array as DaskArray
+    
     # select matrix
-    # matrix = adata.X  if layer == 'X' or layer is None else adata.layers[layer]
     if layer == 'X' or layer is None:
         matrix = adata.X
     elif layer in adata.layers:
@@ -17,6 +18,9 @@ def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='flo
             raise ValueError(f'Cannot find layer "{layer}" and no counts in adata.raw') from e
     else:
         raise ValueError(f'Invalid layer {layer}')
+
+    if isinstance(matrix, DaskArray):
+        return matrix
 
     if force_dense and force_sparse:
         raise ValueError('force_dense and force_sparse cannot both be True')

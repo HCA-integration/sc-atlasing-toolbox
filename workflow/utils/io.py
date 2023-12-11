@@ -4,44 +4,146 @@ from pathlib import Path
 import shutil
 import anndata as ad
 import zarr
+import h5py
+from scipy.sparse import csr_matrix
+from anndata.experimental import read_elem, sparse_dataset
 
 
-def read_anndata(file, **kwargs):
+def read_anndata(
+    file: str,
+    dask: bool = False,
+    backed: bool = False,
+    **kwargs
+) -> ad.AnnData:
     """
     Read anndata file
-    :param file: path to anndata file
-    :param kwargs: kwargs for partial zarr reader
+    :param file: path to anndata file in zarr or h5ad format
+    :param kwargs: AnnData parameter to zarr group mapping
     """
-    if file.endswith('.zarr'):
-        adata = read_zarr_partial(file, **kwargs)
+    assert Path(file).exists(), f'File not found: {file}'
+    
+    if dask:
+        read_func = read_dask
+    elif backed:
+        read_func = read_partial
+    else:
+        read_func = read_partial
+    
+    if file.endswith(('.zarr', '.zarr/')):
+        func = zarr.open
+        file_type = 'zarr'
     elif file.endswith('.h5ad'):
-        adata = ad.read_h5ad(file)
+        func = h5py.File
+        file_type = 'h5py'
     else:
         raise ValueError(f'Unknown file format: {file}')
+    
+    f = func(file, 'r')
+    kwargs = {x: x for x in f} if not kwargs else kwargs
+    if len(f.keys()) == 0:
+        return ad.AnnData()
+    # check if keys are available
+    for name, slot in kwargs.items():
+        if slot not in f:
+            warnings.warn(
+                f'Cannot find "{slot}" for AnnData parameter `{name}` from "{file}"'
+            )
+    adata = read_func(f, backed=backed, **kwargs)
+    if not backed and file_type == 'h5py':
+        f.close()
+    
     return adata
 
 
-def read_zarr_partial(file, **kwargs):
+def read_partial(
+    group: [h5py.Group, zarr.Group],
+    backed: bool = False,
+    force_sparse_types: [str, list] = None,
+    **kwargs
+) -> ad.AnnData:
     """
-    Partially read zarr files
-    :param file: path to zarr file
-    :param kwargs: dict of slot_name: slot, by default use all available slot for the zarr file
+    Partially read zarr or h5py groups
+    :params group: file group
+    :params force_sparse_types: encoding types to convert to sparse_dataset via csr_matrix
+    :params backed: read sparse matrix as sparse_dataset
+    :params **kwargs: dict of slot_name: slot, by default use all available slot for the zarr file
     :return: AnnData object
     """
+    if force_sparse_types is None:
+        force_sparse_types = []
+    elif isinstance(force_sparse_types, str):
+        force_sparse_types = [force_sparse_types]
     slots = {}
-    with zarr.open(file) as z:
-        if not kwargs:
-            kwargs = {x: x for x in z}
-        for slot_name, slot in kwargs.items():
-            print(f'Read slot "{slot}", store as "{slot_name}"...')
-            if slot not in z:
-                warnings.warn(f'Slot "{slot}" not found in zarr file, skip...')
-                slots[slot_name] = None
+    for slot_name, slot in kwargs.items():
+        print(f'Read slot "{slot}", store as "{slot_name}"...')
+        if slot not in group:
+            warnings.warn(f'Slot "{slot}" not found, skip...')
+            slots[slot_name] = None
+        else:
+            elem = group[slot]
+            iospec = ad._io.specs.get_spec(elem)
+            if iospec.encoding_type in ("csr_matrix", "csc_matrix") and backed:
+                slots[slot_name] = sparse_dataset(elem)
+            elif iospec.encoding_type in force_sparse_types:
+                slots[slot_name] = csr_matrix(read_elem(elem))
+                if backed:
+                    slots[slot_name] = sparse_dataset(slots[slot_name])
             else:
-                slots[slot_name] = ad.experimental.read_elem(z[slot])
-        return ad.AnnData(**slots)
+                slots[slot_name] = read_elem(elem)
+    return ad.AnnData(**slots)
 
 
+def read_dask(
+    group: [h5py.Group, zarr.Group],
+    backed: bool = False,
+    obs_chunk: int = 1000,
+    **kwargs
+) -> ad.AnnData:
+    """
+    Modified from https://anndata.readthedocs.io/en/latest/tutorials/notebooks/%7Bread%2Cwrite%7D_dispatched.html
+    """
+    from anndata.experimental import read_dispatched
+    from utils.sparse_dask import sparse_dataset_as_dask
+    
+    def callback(func, elem_name: str, elem, iospec):
+        import re
+        import dask.array as da
+        import sparse
+        
+        elem_matches = [
+            not (
+                bool(re.match(f'/{e}(/.?|$)', elem_name)) 
+                or f'/{e}'.startswith(elem_name) 
+            )
+            for e in kwargs.values()
+        ]
+        if elem_name != '/' and all(elem_matches):
+            print('skip reading', elem_name)
+            return None
+        else:
+            print('read', elem_name)
+        
+        if elem_name != '/' and all(elem_matches):
+            print('skip reading', elem_name)
+            return None
+        elif iospec.encoding_type in (
+            "dataframe",
+            "awkward-array",
+        ):
+            # Preventing recursing inside of these types
+            return read_elem(elem)
+        elif iospec.encoding_type in ("csr_matrix", "csc_matrix"):
+            # return da.from_array(read_elem(elem))
+            matrix = sparse_dataset_as_dask(sparse_dataset(elem), obs_chunk)
+            return matrix.map_blocks(sparse.COO)
+        elif iospec.encoding_type == "array":
+            return da.from_zarr(elem)
+        return func(elem)
+
+    return read_dispatched(group, callback=callback)
+
+
+# deprecated
 def read_anndata_or_mudata(file):
     if file.endswith('.h5mu'):
         import mudata as mu
@@ -54,6 +156,21 @@ def read_anndata_or_mudata(file):
     else:
         print('Read as anndata...')
         return read_anndata(file)
+
+
+def write_zarr(adata, file):
+    def sparse_coo_to_csr(matrix):
+        from dask.array import Array as DaskArray
+        import sparse
+        
+        if isinstance(matrix, DaskArray) and isinstance(matrix._meta, sparse.COO):
+            matrix = matrix.map_blocks(csr_matrix, dtype='float32')
+        return matrix
+    
+    adata.X = sparse_coo_to_csr(adata.X)
+    for layer in adata.layers:
+        adata.layers[layer] = sparse_coo_to_csr(adata.layers[layer])
+    adata.write_zarr(file) # doesn't seem to work with dask array
 
 
 def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=True):

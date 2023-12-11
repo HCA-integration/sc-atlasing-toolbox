@@ -2,24 +2,28 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import anndata as ad
 import logging
 logger = logging.getLogger('Scrublet')
 
-from utils.io import read_anndata, link_zarr
+from utils.io import read_anndata
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
 batch_key = snakemake.params.get('batch_key')
 batch = snakemake.wildcards.batch
 
-# read data
 logger.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, X='X', obs='obs')
+adata = read_anndata(input_zarr, backed=True, X='X', obs='obs')
 
-# subset to batch
 logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key] == batch].copy()
+    adata = adata[adata.obs[batch_key] == batch]
+else:
+    adata = adata
+
+if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
+    adata.X = adata.X.to_memory()
 
 if adata.n_obs < 10:
     columns = ['scrublet_score', 'scrublet_prediction']

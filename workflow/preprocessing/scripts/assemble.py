@@ -106,10 +106,6 @@ def assemble_zarr(file, file_type, files_to_link):
         files_to_link.append((file / 'obsm' / 'X_umap', output_file / 'obsm' / 'X_umap'))
     else:
         ValueError(f'Unknown file type {file_type}')
-    if output_file / 'obs' not in files_to_link:
-        files_to_link.append((file / 'obs', output_file / 'obs'))
-    if output_file / 'var' not in files_to_link:
-        files_to_link.append((file / 'var', output_file / 'var'))
     return files_to_link
 
 
@@ -134,6 +130,11 @@ for file_type, file in snakemake.input.items():
         files_to_link = assemble_zarr(file, file_type, files_to_link)
     else:
         ValueError(f'Unknown file type {file}')
+
+# if output_file / 'obs' not in files_to_link:
+#     files_to_link.append((file / 'obs', output_file / 'obs'))
+# if output_file / 'var' not in files_to_link:
+#     files_to_link.append((file / 'var', output_file / 'var'))
 
 logging.info(f'Write to {output_file}...')
 adata.write_zarr(output_file)
