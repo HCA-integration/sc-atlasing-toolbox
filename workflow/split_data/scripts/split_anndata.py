@@ -6,6 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
+import anndata as ad
 
 from utils.io import read_anndata
 from utils.misc import ensure_sparse
@@ -22,6 +23,7 @@ if not out_dir.exists():
 logging.info(f'Read anndata file {input_file}...')
 adata = read_anndata(
     input_file,
+    backed=True,
     X='X',
     obs='obs',
     var='var',
@@ -51,5 +53,7 @@ for split_file in split_files:
     out_file = out_dir / f"value~{split_file}.zarr"
 
     logging.info(f'write to {out_file}...')
+    if adata_sub.n_obs == 0:
+        adata_sub = ad.AnnData(obs=adata_sub.obs, var=adata_sub.var)
     adata_sub.write_zarr(out_file)
     del adata_sub

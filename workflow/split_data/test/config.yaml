@@ -6,6 +6,7 @@ DATASETS:
     input:
       split_data:
         pbmc: test/input/pbmc68k.h5ad
+        zarr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     split_data:
       key: bulk_labels
       values:
