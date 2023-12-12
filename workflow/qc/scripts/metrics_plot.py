@@ -7,6 +7,8 @@ from matplotlib.axes import Axes
 import seaborn as sns
 import scanpy as sc
 import anndata
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 
@@ -111,10 +113,15 @@ def plot_qc_joint(
     return g
 
 
-input_obs = snakemake.input.obs
+input_zarr = snakemake.input.zarr
 output_joint = snakemake.output.joint
 output_violin = snakemake.output.violin
 output_avg = snakemake.output.average_jitter
+
+output_joint = Path(output_joint)
+output_joint.mkdir(parents=True, exist_ok=True)
+
+
 file_id = snakemake.wildcards.file_id
 hues = snakemake.params.hue
 sample = snakemake.params.sample
@@ -141,18 +148,16 @@ thresholds |= user_thresholds.get(file_id, {})
 thresholds = {
     key: (thresholds[f'{key}_min'], thresholds[f'{key}_max']) for key in threshold_keys
 }
-print(thresholds)
+logging.info(thresholds)
 
 
-output_joint = Path(output_joint)
-output_joint.mkdir(parents=True, exist_ok=True)
-
-
-print(f'Read {input_obs}...')
-obs = pd.read_table(input_obs, index_col=0)
+logging.info(f'Read obs from{input_zarr}...')
+adata = read_anndata(input_zarr, obs='obs')
+obs = adata.obs
 
 # if no cells filtered out, save empty plots
 if obs.shape[0] == 0:
+    logging.info('Save empty plots...')
     plt.savefig(output_violin)
     plt.savefig(output_avg)
     exit()
@@ -173,7 +178,7 @@ hues = [hue for hue in hues if obs[hue].nunique() > 1]
 if len(hues) == 0:
     hues = [None]
 
-print('Joint QC plots...')
+logging.info('Joint QC plots...')
 
 # TODO
 # density plot
@@ -281,12 +286,11 @@ plt.tight_layout()
 plt.savefig(output_joint / f'genes_vs_mito_frac_kde.png')
 
 
-print('Violin plots...')
+logging.info('Violin plots...')
 fig, axes = plt.subplots(nrows=2, ncols=1)
 hue = hues[0]
 obs[hue] = obs[hue].astype('category')
 
-adata = anndata.AnnData(obs=obs)
 sc.pl.violin(
     adata,
     keys='log10 total_counts',
@@ -315,7 +319,7 @@ fig.suptitle(dataset)
 plt.tight_layout()
 plt.savefig(output_violin)
 
-print('Average scatter plots...')
+logging.info('Average scatter plots...')
 fig, axes = plt.subplots(nrows=3, ncols=1)
 
 df = (
