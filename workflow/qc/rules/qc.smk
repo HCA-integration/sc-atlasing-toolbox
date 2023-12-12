@@ -2,7 +2,7 @@ rule metrics:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        obs=mcfg.out_dir / params.wildcard_pattern / 'qc_metrics.tsv'
+        zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr')
     conda:
         get_env(config, 'scanpy')
     resources:
@@ -13,7 +13,7 @@ rule metrics:
 
 rule metrics_plot:
     input:
-        obs=rules.metrics.output.obs
+        zarr=rules.metrics.output.zarr
     output:
         joint=directory(mcfg.image_dir / params.wildcard_pattern / 'joint_plots'),
         violin=mcfg.image_dir / params.wildcard_pattern / 'violin.png',
