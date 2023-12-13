@@ -3,6 +3,7 @@ Compute UMAP
 """
 from pathlib import Path
 import numpy as np
+import anndata as ad
 import logging
 logging.basicConfig(level=logging.INFO)
 try:
@@ -13,7 +14,7 @@ except ImportError as e:
     import scanpy as sc
     logging.info('Importing rapids failed, using scanpy...')
 
-from utils.io import read_anndata, link_zarr_partial
+from utils.io import read_anndata, link_zarr_partial, check_slot_exists
 from utils.misc import ensure_dense
 
 
@@ -28,7 +29,7 @@ def check_and_update_neighbors_info(adata, neighbors_key):
                 'method': None,
             },
         }
-    adata.uns[neighbors_key]['params'] = adata.uns[neighbors_key].get('params', {'use_rep': 'X'})
+    adata.uns[neighbors_key]['params'] = adata.uns[neighbors_key].get('params', {'use_rep': 'X_pca'})
     
     try:
         assert adata.uns[neighbors_key]['connectivities_key'] in adata.obsp
@@ -45,16 +46,34 @@ def check_and_update_neighbors_info(adata, neighbors_key):
         assert len(np.unique(n_neighbors)) == 1, f'Number of neighbors is not consistent!\nn_neighbors: {np.unique(n_neighbors)}'
         adata.uns[neighbors_key]['params']['n_neighbors'] = int(n_neighbors[0])
 
-    # check if representation is available in current anndata, otherwise read from file
-    use_rep = adata.uns[neighbors_key]['params'].get('use_rep', None)
+    # get correct cell-level representation for UMAP
+    use_rep = adata.uns[neighbors_key]['params'].get('use_rep')
     if use_rep not in adata.obsm:
-        logging.info(f'Read representation file {input_rep}...')
-        use_counts = (use_rep == 'X') or (use_rep is None)
-        if use_counts:
-            adata.X = read_anndata(input_rep, X='X').X
+        logging.info(f'Read representation file {input_rep} for use_rep="{use_rep}"...')
+        if use_rep == 'X':
+            adata = ad.AnnData(
+                X=read_anndata(input_rep, X='X').X,
+                obs=adata.obs,
+                obsp=adata.obsp,
+                uns=adata.uns,
+            )
             ensure_dense(adata)
+        elif check_slot_exists(input_rep, f'obsm/{use_rep}'):
+            adata_rep = read_anndata(input_rep, X=f'obsm/{use_rep}')
+            ensure_dense(adata_rep)
+            adata.obsm[use_rep] = adata_rep.X
+        elif use_rep == 'X_pca':
+            adata = ad.AnnData(
+                X=read_anndata(input_rep, X='X').X,
+                obs=adata.obs,
+                obsp=adata.obsp,
+                uns=adata.uns,
+            )
+            sc.pp.pca(adata, n_comps=50)
         else:
-            adata.obsm[use_rep] = read_anndata(input_rep, obs='obs', obsm='obsm').obsm[use_rep]
+            raise ValueError(f'Cannot find representation {use_rep} from {input_rep}')
+        
+    return adata
 
 
 input_file = snakemake.input[0]
@@ -63,7 +82,7 @@ output_file = snakemake.output[0]
 params = dict(snakemake.params.items())
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', obsm='obsm', obsp='obsp', uns='uns', var='var')
+adata = read_anndata(input_file, obs='obs', obsp='obsp', uns='uns')
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
@@ -72,7 +91,7 @@ if adata.n_obs == 0:
     exit(0)
 
 neighbors_key = params.get('neighbors_key', 'neighbors')
-check_and_update_neighbors_info(adata, neighbors_key)
+adata = check_and_update_neighbors_info(adata, neighbors_key)
 sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')

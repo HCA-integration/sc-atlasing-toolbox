@@ -40,12 +40,12 @@ if params == False:
     adata.uns['neighbors']['params'] |= dict(
         connectivities_key='connectivities',
         distances_key='distances',
-        use_rep='X',
+        use_rep='X_pca' if 'X_pca' in adata.obsm else 'X',
     )
     assert_neighbors(adata)
 else:
     # set representation for neighbors
-    if 'use_rep' not in params:
+    if 'use_rep' not in params: # determine use_rep if missing
         if 'X_pca' in adata.obsm:
             params['use_rep'] = 'X_pca'
             params['n_pcs'] = adata.obsm['X_pca'].shape[1]
@@ -54,7 +54,8 @@ else:
     if params['use_rep'] == 'X':
         adata.X = read_anndata(input_file, X='X').X
         ensure_dense(adata)
-    elif params['use_rep'] == 'X_pca' and 'X_pca' not in adata.obsm:
+    elif 'X_pca' not in adata.obsm and params['use_rep'] == 'X_pca':
+        # compute PCA if PCA is missing
         adata.X = read_anndata(input_file, X='X').X
         ensure_sparse(adata)
         pca_params = adata.uns.get('preprocessing', {}).get('pca', {})
