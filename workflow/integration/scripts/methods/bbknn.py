@@ -1,24 +1,31 @@
 import scanpy as sc
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata
+from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
 
 
-input_adata = snakemake.input[0]
-output_adata = snakemake.output[0]
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 
-adata = read_anndata(input_adata)
-adata.X = select_layer(adata, params['norm_counts'])
+files_to_keep = ['obsp', 'uns']
 
-# subset to HVGs
-adata = adata[:, adata.var['highly_variable']]
+logging.info(f'Read {input_file}...')
+adata = read_anndata(input_file, obs='obs', var='var', obsm='obsm', uns='uns')
+
+assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 
 # quickfix: remove batches with fewer than 3 cells
-adata = adata[adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index]
+min_batches = adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index
+if min_batches.nunique() < adata.n_obs:
+    files_to_keep.extend(['obs', 'obsm', 'layers'])
+    adata.layers = read_anndata(input_file, layers='layers').layers
+    adata = adata[min_batches]
 
 # run method
 adata = sc.external.pp.bbknn(adata, batch_key=batch_key, use_rep='X_pca', copy=True)
@@ -27,4 +34,5 @@ adata = sc.external.pp.bbknn(adata, batch_key=batch_key, use_rep='X_pca', copy=T
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_adata)
+adata.write_zarr(output_file)
+link_zarr_partial(input_file, output_file, files_to_keep=files_to_keep)
