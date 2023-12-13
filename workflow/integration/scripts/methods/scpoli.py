@@ -3,7 +3,7 @@ import torch
 from scarches.models.scpoli import scPoli
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata
+from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
 
 
@@ -34,7 +34,7 @@ early_stopping_kwargs = {
 print('GPU available:', torch.cuda.is_available())
 # scvi.settings.batch_size = 32
 
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers')
 adata.X = select_layer(adata, params['norm_counts'])
 
 # subset to HVGs
@@ -72,3 +72,4 @@ adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 adata.write_zarr(output_file)
+link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])

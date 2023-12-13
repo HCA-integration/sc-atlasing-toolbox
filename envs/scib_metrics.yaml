@@ -4,11 +4,12 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.9
-  - scanpy=1.9
-  - numpy<1.24
-  - matplotlib<3.7
-  - pandas<2.0.0
+  - python=3.10
+  - anndata=0.10
+  - zarr
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - cuda-nvcc
   - cuda-toolkit=11.4
   - cudnn=8.4.1.50
@@ -16,7 +17,6 @@ dependencies:
   # - jaxlib=0.4.6
   - scvi-tools
   # - faiss-gpu
-  - zarr
   - pip
   - pip:
     # requirements taken from https://github.com/google/jax/issues/13758#issuecomment-1384857047
@@ -29,4 +29,4 @@ dependencies:
     - optax==0.1.4
     - orbax<0.1.6
     - scib-metrics
-    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1
+    - git+https://github.com/scverse/scanpy.git@master

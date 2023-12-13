@@ -9,6 +9,25 @@ from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
 
 
+def get_file_reader(file):
+    if file.endswith(('.zarr', '.zarr/')):
+        func = zarr.open
+        file_type = 'zarr'
+    elif file.endswith('.h5ad'):
+        func = h5py.File
+        file_type = 'h5py'
+    else:
+        raise ValueError(f'Unknown file format: {file}')
+    return func, file_type
+
+
+def check_slot_exists(file, slot):
+    func, file_type = get_file_reader(file)
+    with func(file, 'r') as f:
+        exists = slot in f
+    return exists
+
+
 def read_anndata(
     file: str,
     dask: bool = False,
@@ -29,14 +48,7 @@ def read_anndata(
     else:
         read_func = read_partial
     
-    if file.endswith(('.zarr', '.zarr/')):
-        func = zarr.open
-        file_type = 'zarr'
-    elif file.endswith('.h5ad'):
-        func = h5py.File
-        file_type = 'h5py'
-    else:
-        raise ValueError(f'Unknown file format: {file}')
+    func, file_type = get_file_reader(file)
     
     f = func(file, 'r')
     kwargs = {x: x for x in f} if not kwargs else kwargs

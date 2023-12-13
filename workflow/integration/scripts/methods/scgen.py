@@ -5,7 +5,7 @@ import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata
+from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
 
 input_file = snakemake.input[0]
@@ -33,14 +33,12 @@ logging.info(hyperparams)
 # check GPU
 logging.info(f'GPU available: {torch.cuda.is_available()}')
 
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', uns='uns')
 adata.X = select_layer(adata, params['norm_counts'])
 
 # subset to HVGs
 adata = adata[:, adata.var['highly_variable']]
 
-adata = adata.copy()
-adata.X = select_layer(adata, params['norm_counts'])
 adata.X = adata.X.astype('float32')
 adata = remove_sparsity(adata) # remove sparsity
 
@@ -75,3 +73,4 @@ add_metadata(adata, wildcards, params)
 
 # Save output
 adata.write_zarr(output_file)
+link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])

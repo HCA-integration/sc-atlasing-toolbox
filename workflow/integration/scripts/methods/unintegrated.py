@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr
+from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
 
 
@@ -13,11 +13,11 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', obsp='obsp', uns='uns')
 adata.X = select_layer(adata, params['norm_counts'])
 
 # prepare output adata
-files_to_keep = ['obsm', 'uns', 'layers']
+files_to_keep = ['obsm', 'uns']
 
 if 'X_pca' not in adata.obsm:
     sc.pp.pca(adata, use_highly_variable=True)
@@ -39,15 +39,5 @@ adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 # write file
-del adata.layers
 adata.write_zarr(output_file)
-
-if input_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_link = [f for f in input_files if f not in files_to_keep]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=files_to_link,
-        overwrite=True,
-    )
+link_zarr_partial(input_file, output_file, files_to_keep=files_to_keep)

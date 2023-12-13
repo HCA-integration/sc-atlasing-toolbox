@@ -3,12 +3,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.9
-  - anndata=0.8
-  - scanpy=1.9
-  - pandas<2.0.0
-  - numpy<1.24
+  - python=3.10
+  - anndata=0.10
+  # - scanpy=1.9
+  # - pandas<2.0.0
+  # - numpy<1.24
   - zarr
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - matplotlib
   - seaborn
   - r-base=4.2
@@ -16,3 +19,6 @@ dependencies:
   - r-complexupset
   - rpy2
   - upsetplot
+  - pip
+  - pip:
+    - git+https://github.com/scverse/scanpy.git@master
