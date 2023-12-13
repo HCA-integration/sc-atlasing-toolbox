@@ -23,7 +23,7 @@ def assemble_h5ad(file, file_type, adata):
         return d
 
     logging.info(f'Read {file}...')
-    adata_pp = read_anndata(file)
+    adata_pp = read_anndata(file, backed=True)
     adata.uns = deep_update(adata.uns, adata_pp.uns)
 
     if file_type == 'counts':
@@ -117,7 +117,7 @@ files_to_link = []
 for file_type, file in snakemake.input.items():
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
-        adata = read_anndata(file, X='X', obs='obs', var='var')
+        adata = read_anndata(file, backed=True, X='X', obs='obs', var='var')
         if adata.X is None:
             adata.X = np.zeros((adata.n_obs, adata.n_vars))
 
