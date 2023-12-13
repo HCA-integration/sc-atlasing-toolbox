@@ -8,19 +8,40 @@ from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 
-module_name = 'relabel'
-module_config = ModuleConfig(module_name, config)
-paramspace = module_config.get_paramspace()
+mcfg = ModuleConfig(
+    module_name='relabel',
+    config=config,
+    # config_params=['new_columns', 'merge_columns'],
+)
+
+paramspace = mcfg.get_paramspace()
+
+
+def relabel_input_files(wildcards):
+    input_files = {'anndata': mcfg.get_input_file(**wildcards)}
+    
+    new_column_config = mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'new_columns'])
+    if isinstance(new_column_config, dict):
+        assert 'file' in new_column_config, f'new_columns config must contain a file key for {wildcards}'
+        assert 'order' in new_column_config, f'new_columns config must contain a order key for {wildcards}'
+        input_files['new_columns'] = new_column_config.get('file')
+    
+    merge_column_config = mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'merge_columns'])
+    if isinstance(merge_column_config, dict):
+        assert 'file' in merge_column_config, f'merge_columns config must contain a file key for {wildcards}'
+        input_files['merge_columns'] = merge_column_config.get('file')
+
+    return input_files
 
 
 rule relabel:
     input:
-        anndata=lambda wildcards: module_config.get_input_file(wildcards.dataset, wildcards.file_id),
-        mapping=lambda wildcards: module_config.get_for_dataset(wildcards.dataset, query=[module_name, 'mapping', 'file'])
+        unpack(relabel_input_files)
     output:
-        zarr=directory(module_config.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
-        mapping_order=lambda wildcards: module_config.get_for_dataset(wildcards.dataset, query=[module_name, 'mapping', 'order']),
+        mapping_order=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'new_columns', 'order']),
+        merge_sep=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'merge_columns', 'sep'], default='-'),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
@@ -33,7 +54,7 @@ rule relabel:
 
 rule relabel_all:
     input:
-        expand(rules.relabel.output, zip, **module_config.get_input_file_wildcards())
+        expand(rules.relabel.output, zip, **mcfg.get_input_file_wildcards())
 
 
 rule all:
@@ -54,6 +75,6 @@ rule dependency_graph:
     input:
         expand(
             rules.common_dependency_graph.input,
-            images=config['images'] + f'/{module_name}',
+            images=mcfg.image_dir,
             target='all'
         )
