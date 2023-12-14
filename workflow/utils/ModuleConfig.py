@@ -3,6 +3,7 @@ from pprint import pprint
 from typing import Union
 from pathlib import Path
 import pandas as pd
+from snakemake.exceptions import WildcardError
 from snakemake.io import expand, Wildcards
 from snakemake.rules import Rule
 
@@ -37,6 +38,7 @@ class ModuleConfig:
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
         dtypes: dict = None,
+        warn: bool = True,
     ):
         """
         :param module_name: name of module
@@ -52,7 +54,7 @@ class ModuleConfig:
         self.module_name = module_name
         self.config = config
         self.set_defaults()
-        self.set_datasets()
+        self.set_datasets(warn=False)
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -84,7 +86,7 @@ class ModuleConfig:
             dtypes=dtypes,
         )
 
-        self.set_default_target(default_target)
+        self.set_default_target(default_target, warn=warn)
         
         # TODO: write output file mapping
 
@@ -119,7 +121,7 @@ class ModuleConfig:
         self.datasets[dataset][self.module_name] = entry
 
 
-    def set_datasets(self):
+    def set_datasets(self, warn: bool = False):
         """
         Set dataset configs
         """
@@ -129,10 +131,10 @@ class ModuleConfig:
         }
         
         for dataset in self.datasets:
-            self.set_defaults_per_dataset(dataset)
+            self.set_defaults_per_dataset(dataset, warn=warn)
 
 
-    def set_default_target(self, default_target: [str, Rule] = None):
+    def set_default_target(self, default_target: [str, Rule] = None, warn: bool = False):
         if default_target is not None:
             self.default_target = default_target
         elif self.module_name in self.config['output_map']:
@@ -140,7 +142,8 @@ class ModuleConfig:
         else:
             wildcard_pattern = self.parameters.get_paramspace().wildcard_pattern
             default_target = self.out_dir / f'{wildcard_pattern}.zarr'
-            warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
+            if warn:
+                warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
             self.default_target = default_target
 
 

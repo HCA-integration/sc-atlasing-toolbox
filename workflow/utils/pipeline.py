@@ -95,6 +95,7 @@ def update_input_files_per_dataset(
         input_cfg = ModuleConfigClass(
             module_name=input_module,
             config=config,
+            warn=False,
             **config_kwargs.get(input_module, {})
         )
         output_files = input_cfg.get_output_files(
