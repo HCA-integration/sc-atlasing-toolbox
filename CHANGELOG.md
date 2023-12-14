@@ -1,5 +1,47 @@
 # Changelog
 
+## 14.12.2023 extend relabel model
+
+Extend the model to allow for merging of existing columns.
+
+The old way of writing the config:
+
+```yaml
+DATASET:
+...
+      relabel:
+        mapping:
+          file:  test/input/mapping_test.tsv
+          order:
+            - bulk_labels
+            - lineage
+```
+
+becomes:
+
+```yaml
+...
+      relabel:
+        new_columns:
+          file:  test/input/mapping_test.tsv
+          order:
+            - bulk_labels
+            - lineage
+```
+
+And the extension is specified as follows:
+
+```yaml
+...
+      relabel:
+        new_columns:
+          ...
+        merge_columns:
+          file:  test/input/merge_test.tsv
+          sep: '-'
+```
+
+
 ## 7.11.2023 Optimise batch PCR analysis
 
 - parallelise permutations per covariate withing script
