@@ -13,7 +13,9 @@ output_dir = Path(output_dir)
 output_dir.mkdir(exist_ok=True, parents=True)
 
 if batch_key not in adata.obs.columns:
-    open(output_dir / 'no_batch.txt', 'a').close()
+    open(output_dir / 'no_batch.txt', 'w').close()
 else:
+    value_counts = adata.obs[batch_key].value_counts()
     for batch in adata.obs[batch_key].unique():
-        open(output_dir / f'{batch}.txt', 'a').close()
+        with open(output_dir / f'{batch}.txt', 'w') as f:
+            f.write(str(value_counts.loc[batch]))

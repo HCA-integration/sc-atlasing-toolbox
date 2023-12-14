@@ -11,15 +11,15 @@ from utils.io import read_anndata
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
 batch_key = snakemake.params.get('batch_key')
-batch = snakemake.wildcards.batch
+batch = str(snakemake.wildcards.batch)
 threads = snakemake.threads
 
 logger.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, backed=True, X='X', obs='obs')
+adata = read_anndata(input_zarr, backed=True, X='X', obs='obs', var='var')
 
 logger.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key] == batch, :]
+    adata = adata[adata.obs[batch_key].astype(str) == batch, :]
 else:
     adata = adata
 
