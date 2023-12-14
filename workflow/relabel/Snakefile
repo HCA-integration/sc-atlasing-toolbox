@@ -1,9 +1,6 @@
 from pathlib import Path
 import pandas as pd
 
-from utils.config import get_datasets_for_module, get_for_dataset, get_resource, get_wildcards_from_config, set_defaults
-from utils.wildcards import get_params, get_wildcards
-from utils.misc import unlist_dict, unpack_dict_in_df
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
@@ -13,7 +10,6 @@ mcfg = ModuleConfig(
     config=config,
     # config_params=['new_columns', 'merge_columns'],
 )
-
 paramspace = mcfg.get_paramspace()
 
 
@@ -45,21 +41,16 @@ rule relabel:
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
-        partition=lambda w: get_resource(config,resource_key='partition'),
-        qos=lambda w: get_resource(config,resource_key='qos'),
-        mem_mb=lambda w: get_resource(config,resource_key='mem_mb'),
+        partition=lambda w: mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=lambda w: mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=lambda w: mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
     script:
         'script.py'
 
 
-rule relabel_all:
-    input:
-        expand(rules.relabel.output, zip, **mcfg.get_input_file_wildcards())
-
-
 rule all:
     input:
-        rules.relabel_all.input
+        mcfg.get_output_files(rules.relabel.output)
     default_target: True
 
 
