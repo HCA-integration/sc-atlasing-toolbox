@@ -55,7 +55,8 @@ rule harmonize_metadata:
     params:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
-        )
+        ),
+        backed=True,
     output:
         zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
         plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
@@ -86,6 +87,7 @@ use rule merge from load_data as load_data_merge_study with:
         dataset=lambda wildcards: wildcards.study,
         merge_strategy='inner',
         keep_all_columns=True,
+        backed=False,
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,

@@ -8,7 +8,8 @@ use rule merge from load_data as load_data_merge_organ with:
         zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer'
+        # merge_strategy='outer'
+        backed=False, # breaks when var are not the same
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -26,7 +27,7 @@ use rule merge from load_data as load_data_merge_organ_filter with:
         zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer'
+        # merge_strategy='outer'
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
@@ -44,7 +45,8 @@ use rule merge from load_data as load_data_merge_subset with:
         zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
         dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
-        merge_strategy='outer'
+        # merge_strategy='outer',
+        backed=False,
     resources:
         mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
         disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
