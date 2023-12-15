@@ -24,7 +24,7 @@ adata = adata[:, adata.var['highly_variable']].copy()
 # adata = scib.ig.scvi(adata, batch=wildcards.batch, **params['hyperparams'])
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
+train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label', 'batch_size']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
@@ -38,11 +38,12 @@ model = scvi.model.SCVI(
     adata,
     **model_params
 )
-model.train(**train_params)
+model.train(**train_params, early_stopping=True)
 model.save(output_model, overwrite=True)
 
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
+adata.uns["model"] = model
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
