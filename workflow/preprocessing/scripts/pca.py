@@ -55,7 +55,7 @@ if scale:
 
 logging.info('PCA...')
 # args['n_comps'] = np.min([adata.n_obs-1, adata.n_vars-1, args.get('n_comps', 30)])
-sc.pp.pca(adata, use_highly_variable=True, n_comps=50, **args)
+sc.pp.pca(adata, use_highly_variable=True, **args)
 
 logging.info(f'Write to "{output_file}"...')
 del adata.X
