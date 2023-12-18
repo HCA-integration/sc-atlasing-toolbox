@@ -19,7 +19,6 @@ restart-times: 1
 max-jobs-per-second: 5
 max-status-checks-per-second: 1
 local-cores: 1
-latency-wait: 30
 jobs: 40
 keep-going: True
 rerun-incomplete: True
