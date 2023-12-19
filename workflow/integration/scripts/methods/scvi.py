@@ -1,11 +1,12 @@
 import scvi
 import logging
+import pickle
+import os
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
-
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -41,9 +42,13 @@ model = scvi.model.SCVI(
 model.train(**train_params, early_stopping=True)
 model.save(output_model, overwrite=True)
 
+# epochs error convergence history is not saved with standard model saving
+model_history = model.history
+with open(os.path.join(output_model, 'model_history.pkl'), 'wb') as file:
+    pickle.dump(model_history, file)
+
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
-adata.uns["model"] = model
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
