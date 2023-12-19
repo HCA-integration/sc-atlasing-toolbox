@@ -14,7 +14,14 @@ from utils.io import read_anndata
 from utils.misc import ensure_dense, remove_outliers
 
 
-sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
+sc.set_figure_params(
+    frameon=False,
+    vector_friendly=True,
+    fontsize=9,
+    figsize=(6,6),
+    dpi=100,
+    dpi_save=200
+)
 
 input_file = snakemake.input[0]
 output_dir = Path(snakemake.output.plots)
@@ -65,19 +72,28 @@ adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 
 for color in colors:
     logging.info(f'Plot color "{color}"...')
+    if color in adata.obs.columns and is_numeric_dtype(adata.obs[color]):
+        adata.obs[color] = adata.obs[color].astype('float32')
     try:
-        sc.pl.embedding(
+        fig = sc.pl.embedding(
             adata[adata.obs.sample(adata.n_obs).index],
             color=color,
             show=False,
+            return_fig=True,
             **params
         )
+        fig.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
+        legend = fig.get_axes()[0].get_legend()
+        if legend:
+            legend_bbox = legend.get_window_extent()
+            fig_width, fig_height = fig.get_size_inches()
+            fig_width = fig_width + (legend_bbox.width / fig.dpi)
+            fig.set_size_inches((fig_width, fig_height))
+        fig.tight_layout()
     except Exception as e:
         logging.error(f'Failed to plot {color}: {e}')
         traceback.print_exc()
         plt.plot([])
-    plt.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
-    plt.tight_layout()
     
     out_path = output_dir / f'{color}.png'
-    plt.savefig(out_path, bbox_inches='tight', dpi=200)
+    plt.savefig(out_path, bbox_inches='tight')
