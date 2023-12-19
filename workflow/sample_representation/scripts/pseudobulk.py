@@ -5,6 +5,8 @@ import pandas as pd
 import scanpy as sc
 import warnings
 warnings.simplefilter("ignore", UserWarning)
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 
@@ -28,17 +30,18 @@ def get_pseudobulks(adata, group_key, agg='mean'):
 
 sc.set_figure_params(dpi=100, frameon=False)
 input_zarr = snakemake.input.zarr
-output_zarr = snakemake.output.zarr
+output_h5ad = snakemake.output.h5ad
 bulk_by = snakemake.params.get('bulk_by')
 dataset = snakemake.wildcards.file_id
 
-adata = read_anndata(input_zarr)
+logging.info(f'Read "{input_zarr}"...')
+adata = read_anndata(input_zarr, X='X', obs='obs', var='var')
 
 # normalize counts
 # sc.pp.normalize_total(adata)
 
 # make sure all columns are present for bulk
-print("Number of pseudobulks:", adata.obs[bulk_by].nunique())
+logging.info(f"Number of pseudobulks: {adata.obs[bulk_by].nunique()}")
 
 pbulks_df = get_pseudobulks(adata, group_key=bulk_by)
 
@@ -47,6 +50,10 @@ obs = pd.DataFrame(pbulks_df.columns, columns=[bulk_by]).merge(
     on=bulk_by,
     how='right'
 )
+logging.info('Reset categories...')
+for col in obs.columns:
+    if obs[col].dtype.name == 'category':
+        obs[col] = obs[col].astype(str).astype('category')
 
 adata_bulk = anndata.AnnData(
     pbulks_df.transpose().reset_index(drop=True),
@@ -54,7 +61,8 @@ adata_bulk = anndata.AnnData(
     dtype='float32'
 )
 
-adata_bulk.write(output_zarr)
+logging.info(f'Write "{output_h5ad}"...')
+adata_bulk.write(output_h5ad)
 
 # # process pseudobulk adata
 # sc.pp.log1p(adata_bulk)

@@ -27,7 +27,7 @@ rule pseudobulk:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        zarr=mcfg.out_dir / paramspace.wildcard_pattern / 'pseudobulk.h5ad',
+        h5ad=mcfg.out_dir / paramspace.wildcard_pattern / 'pseudobulk.h5ad',
     params:
         bulk_by=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample')
     conda:

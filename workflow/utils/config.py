@@ -176,7 +176,6 @@ def _get_or_default_from_config(
         #if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
             # don't update lists or nested dictionaries
         #    entry.update(defaults[value])
-
         return entry
 
     try:

@@ -3,15 +3,14 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.9
-  - scanpy=1.9
-  - numpy<1.24
-  - matplotlib<3.7
-  - pandas<2.0.0
+  - python=3.10
+  - anndata=0.10
   - zarr
-  - muon
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - pip
   - pip:
     - scikit-learn-intelex
     - git+https://github.com/theislab/scib.git
-    - git+https://github.com/mumichae/mudata.git@mumichae-patch-1
+    - git+https://github.com/scverse/scanpy.git@master
