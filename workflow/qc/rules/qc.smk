@@ -3,8 +3,10 @@ rule metrics:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
         zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr')
+    params:
+        gauss_threshold=0.07,
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'qc')
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
@@ -16,8 +18,9 @@ rule metrics_plot:
         zarr=rules.metrics.output.zarr
     output:
         joint=directory(mcfg.image_dir / params.wildcard_pattern / 'joint_plots'),
-        violin=mcfg.image_dir / params.wildcard_pattern / 'violin.png',
-        average_jitter=mcfg.image_dir / params.wildcard_pattern / 'average_jitter.png',
+        density=mcfg.image_dir / params.wildcard_pattern / 'genes_vs_mito_frac_kde.png',
+        # violin=mcfg.image_dir / params.wildcard_pattern / 'violin.png',
+        # average_jitter=mcfg.image_dir / params.wildcard_pattern / 'average_jitter.png',
     params:
         dataset=lambda wildcards: wildcards.file_id,
         hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=mcfg.get_from_parameters(wildcards, 'donor')),

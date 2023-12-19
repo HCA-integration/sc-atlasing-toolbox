@@ -1,6 +1,8 @@
+import numpy as np
 import pandas as pd
-import scanpy as sc
 import anndata as ad
+import scanpy as sc
+import sctk
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -8,6 +10,7 @@ from utils.io import read_anndata, link_zarr_partial
 
 input_zarr = snakemake.input.zarr
 output_zarr = snakemake.output.zarr
+gauss_threshold = snakemake.params.get('gauss_threshold', 0.1)
 
 adata = read_anndata(snakemake.input[0], X='X', obs='obs', var='var')
 
@@ -23,8 +26,21 @@ else:
     var_names = adata.var_names
 
 adata.var["mito"] = var_names.str.startswith("MT-")
-sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)
+# sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)
+
+logging.info('Calculate QC metrics...')
+sctk.calculate_qc(adata)
+metrics = sctk.default_metric_params_df.loc[["n_counts", "n_genes", "percent_mito", "percent_ribo", "percent_hb"], :]
+
+logging.info('Calculate cell-wise QC...')
+print(metrics)
+sctk.cellwise_qc(adata, metrics=metrics, threshold=gauss_threshold)
+adata.uns['scautoqc_ranges'] = adata.uns['scautoqc_ranges'].astype('float32')
+logging.info(f"\n{adata.uns['scautoqc_ranges']}")
+
+# sctk.generate_qc_clusters(adata, metrics=["log1p_n_counts", "log1p_n_genes", "percent_mito"])
+# adata.obs['qc_cell'] = np.where(adata.obs['consensus_passed_qc'], 'pass', 'fail')
 
 logging.info(f'Write zarr file to {output_zarr}...')
-ad.AnnData(obs=adata.obs).write_zarr(output_zarr)
-link_zarr_partial(input_zarr, output_zarr, files_to_keep=['obs'])
+ad.AnnData(obs=adata.obs, uns=adata.uns).write_zarr(output_zarr)
+link_zarr_partial(input_zarr, output_zarr, files_to_keep=['obs', 'uns'])
