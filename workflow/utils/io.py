@@ -28,6 +28,13 @@ def check_slot_exists(file, slot):
     return exists
 
 
+def to_memory(matrix):
+    if isinstance(matrix, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
+        print('Convert to memory...')
+        return matrix.to_memory()
+    return matrix
+
+
 def read_anndata(
     file: str,
     dask: bool = False,
@@ -86,6 +93,9 @@ def read_partial(
     elif isinstance(force_sparse_types, str):
         force_sparse_types = [force_sparse_types]
     slots = {}
+    if backed:
+        print('Read as backed sparse matrix...')
+    
     for slot_name, slot in kwargs.items():
         print(f'Read slot "{slot}", store as "{slot_name}"...')
         if slot not in group:

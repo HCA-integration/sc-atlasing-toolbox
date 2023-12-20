@@ -39,17 +39,14 @@ for file in merged_outputs:
     uns = read_elem(z["uns"])
     var = read_elem(z["var"])
     print('Check that CELLxGENES mandatory columns present')
-    try:
-        for col in SCHEMAS['CELLxGENE_OBS'] + SCHEMAS['EXTRA_COLUMNS']:
-            assert col in obs.columns
-            assert not obs[col].isna().all()
+    for col in SCHEMAS['CELLxGENE_OBS'] + SCHEMAS['EXTRA_COLUMNS']:
+        assert col in obs.columns, f'"{col}" not in obs for "{file}"'
+        assert not obs[col].isna().all(), f'"{col}" is all NA in obs for "{file}"'
 
-        for col in SCHEMAS['CELLxGENE_VARS']:
-            assert col in var.columns
-            assert not var[col].isna().all()
+    for col in SCHEMAS['CELLxGENE_VARS']:
+        assert col in var.columns, f'"{col}" not in var for "{file}"'
+        assert not var[col].isna().all(), f'"{col}" is all NA in var for "{file}"'
 
-        for col in ['organ', 'dataset']:
-            assert col in uns
-    except AssertionError:
-        raise AssertionError(f'Merged dataset: column "{col}" not in "{file}"')
+    for col in ['organ', 'dataset']:
+        assert col in uns, f'"{col}" not in uns for "{file}"'
 
