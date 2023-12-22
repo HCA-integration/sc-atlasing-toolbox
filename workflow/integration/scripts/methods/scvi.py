@@ -4,9 +4,9 @@ import pickle
 import os
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
-from utils_pipeline.accessors import select_layer
+from utils import add_metadata, remove_slots, set_model_history_dtypes
+from utils_pipeline.io import read_anndata, write_zarr_linked
+from utils_pipeline.accessors import select_layer, subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -50,3 +50,7 @@ add_metadata(
     # history is not saved with standard model saving
     model_history=set_model_history_dtypes(model.history)
 )
+
+logging.info(adata.__str__())
+logging.info(f'Write {output_file}...')
+write_zarr_linked(adata, input_file, output_file, files_to_keep=['obsm', 'uns'])
