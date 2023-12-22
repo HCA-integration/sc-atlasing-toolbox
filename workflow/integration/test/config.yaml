@@ -2,7 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
-env_mode: from_yaml
+env_mode: local
 
 resources:
   cpu:
@@ -23,9 +23,6 @@ defaults:
     methods:
       bbknn:
       combat:
-      harmony:
-      harmony_rapids:
-      harmonypy:
       scanorama:
       scanvi:
         n_hidden: 128
@@ -34,31 +31,14 @@ defaults:
         use_observed_lib_size: true
       scgen:
         n_epochs: 10
-      scpoli:
-        supervised:
-          - true
-          - false
-        model:
-          embedding_dims: 5
-          recon_loss: nb
-        train:
-          n_epochs: 50
-      scvi:
-        n_hidden: 128
-        dispersion:
-          - gene
-          - gene-batch
-          - gene-label
-          - gene-cell
-        max_epochs: 10
-        use_observed_lib_size: true
       unintegrated:
   datasets:
     - test
     - test2
     - test3
-    # - harmony_comparison
-    # - scpoli
+    - harmony_comparison
+    - scpoli
+    - scvi
 
 
 DATASETS:
@@ -113,7 +93,6 @@ DATASETS:
         - bulk_labels
         - phase
 
-
   scpoli:
     input:
       integration: test/input/pbmc68k.h5ad
@@ -132,4 +111,27 @@ DATASETS:
             n_epochs: 50
       umap_colors:
         - bulk_labels
+        - phase
+
+  scvi:
+    input:
+      integration:
+        orig: test/input/pbmc68k.h5ad
+        prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+    integration:
+      raw_counts: raw
+      norm_counts: X
+      label: bulk_labels
+      batch: batch
+      methods:
+        scvi:
+          n_hidden: 128
+          dispersion:
+            - gene
+            - gene-batch
+            - gene-label
+            - gene-cell
+          max_epochs: 10
+          use_observed_lib_size: true
+      umap_colors:
         - phase
