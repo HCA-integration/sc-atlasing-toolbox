@@ -10,7 +10,7 @@ def ensure_sparse(adata):
         adata.X = csr_matrix(adata.X)
 
 
-def add_metadata(adata, wildcards, params):
+def add_metadata(adata, wildcards, params, **kwargs):
     """
     Add integration metatdata to integratd output
     :param adata:
@@ -33,6 +33,7 @@ def add_metadata(adata, wildcards, params):
         'batch_key': wildcards.batch,
         'output_type': params['output_type'],
         'hyperparams': params['hyperparams'],
+        **kwargs
     }
 
 
@@ -57,6 +58,19 @@ def remove_slots(adata, output_type):
     else:
         raise ValueError(f'Invalid output type {output_type}')
     return adata
+
+
+def set_model_history_dtypes(model_history, dtype='float32'):
+    """
+    Quickfix to change encoding of the model history for saving in zarr file
+    
+    :param model_history: model.history from pytorch model (dictionary of pandas DataFrames)
+    :param dtype: dtype to convert to
+    """
+    return {
+        key: value.astype(dtype)
+        for key, value in model_history.items()
+    }
 
 
 def check_output(adata, output_type):

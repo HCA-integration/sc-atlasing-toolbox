@@ -16,14 +16,12 @@ params = snakemake.params
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw')
-adata.X = select_layer(adata, params['raw_counts'])
+adata.X = select_layer(adata, params['raw_counts']) # TODO select layer before reading
 
 # subset to HVGs
-adata = adata[:, adata.var['highly_variable']].copy()
+adata = subset_hvg(adata)
 
 # run method
-# adata = scib.ig.scvi(adata, batch=wildcards.batch, **params['hyperparams'])
-
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label', 'batch_size']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
@@ -42,15 +40,13 @@ model = scvi.model.SCVI(
 model.train(**train_params, early_stopping=True)
 model.save(output_model, overwrite=True)
 
-# epochs error convergence history is not saved with standard model saving
-model_history = model.history
-with open(os.path.join(output_model, 'model_history.pkl'), 'wb') as file:
-    pickle.dump(model_history, file)
-
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
 adata = remove_slots(adata=adata, output_type=params['output_type'])
-add_metadata(adata, wildcards, params)
-
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])
+add_metadata(
+    adata,
+    wildcards,
+    params,
+    # history is not saved with standard model saving
+    model_history=set_model_history_dtypes(model.history)
+)
