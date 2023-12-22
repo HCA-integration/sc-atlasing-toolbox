@@ -1,7 +1,6 @@
 import scvi
 import logging
 import pickle
-import os
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots, set_model_history_dtypes
@@ -42,7 +41,7 @@ model.save(output_model, overwrite=True)
 
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
-adata = remove_slots(adata=adata, output_type=params['output_type'])
+adata = remove_slots(adata=adata, output_type=params['output_type'], keep_X=True)
 add_metadata(
     adata,
     wildcards,
@@ -53,4 +52,9 @@ add_metadata(
 
 logging.info(adata.__str__())
 logging.info(f'Write {output_file}...')
-write_zarr_linked(adata, input_file, output_file, files_to_keep=['obsm', 'uns'])
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['X', 'obsm', 'uns']  # TODO: link to correct .X slot?
+)

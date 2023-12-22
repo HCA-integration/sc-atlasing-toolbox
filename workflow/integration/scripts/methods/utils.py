@@ -37,7 +37,7 @@ def add_metadata(adata, wildcards, params, **kwargs):
     }
 
 
-def remove_slots(adata, output_type):
+def remove_slots(adata, output_type, keep_X=False):
     """
     Remove slots that are redundant to integration output
     """
@@ -51,7 +51,11 @@ def remove_slots(adata, output_type):
     if 'full' in output_type:
         ensure_sparse(adata)
     elif 'embed' in output_type:
-        del adata.X
+        if keep_X:
+            assert adata.X is not None
+            ensure_sparse(adata)
+        else:
+            del adata.X
     elif 'knn' in output_type:
         # del adata.X
         pass
