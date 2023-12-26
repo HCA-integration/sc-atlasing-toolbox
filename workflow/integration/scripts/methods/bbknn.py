@@ -13,7 +13,7 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 
-files_to_keep = ['obsp', 'uns']
+files_to_keep = ['obsm', 'obsp', 'uns']
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', var='var', obsm='obsm', uns='uns')
@@ -23,8 +23,8 @@ assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 # quickfix: remove batches with fewer than 3 cells
 min_batches = adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index
 if min_batches.nunique() < adata.n_obs:
-    files_to_keep.extend(['obs', 'obsm', 'layers'])
-    adata.layers = read_anndata(input_file, layers='layers').layers
+    files_to_keep.extend(['obs'])
+    # adata.layers = read_anndata(input_file, layers='layers').layers
     adata = adata[min_batches]
 
 # run method

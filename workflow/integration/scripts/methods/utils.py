@@ -45,8 +45,8 @@ def remove_slots(adata, output_type, keep_X=False):
         output_type = [output_type]
     
     del adata.layers
-    if 'X_pca' in adata.obsm:
-        del adata.obsm['X_pca']
+    #if 'X_pca' in adata.obsm:
+    #    del adata.obsm['X_pca']
     
     if 'full' in output_type:
         ensure_sparse(adata)
