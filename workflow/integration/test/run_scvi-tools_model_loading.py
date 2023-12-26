@@ -30,11 +30,10 @@ for adata_file, model_file in zip(adata_files, model_files):
         )
 
     try:
-        assert 'model_history' in adata.uns
+        assert 'model_history' in adata.uns['integration']
         model = scvi.model.SCVI.load(model_file, adata)
         logging.info(pformat(model))
-        model = pytorch.load(f'{model_file}/model.pt')
-        logging.info(pformat(model))
+        model = torch.load(f'{model_file}/model.pt')
     except AssertionError as e:
         logging.info('AssertionError for:', adata_file)
         logging.info(pformat(adata.uns))
