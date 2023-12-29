@@ -46,7 +46,7 @@ def read_anndata(
     :param file: path to anndata file in zarr or h5ad format
     :param kwargs: AnnData parameter to zarr group mapping
     """
-    assert Path(file).exists(), f'File not found: {file}'
+    # assert Path(file).exists(), f'File not found: {file}'
     
     if dask:
         read_func = read_dask
