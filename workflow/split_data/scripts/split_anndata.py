@@ -21,7 +21,17 @@ if not out_dir.exists():
     out_dir.mkdir()
 
 logging.info(f'Read anndata file {input_file}...')
-adata = read_anndata(input_file, backed=True)
+adata = read_anndata(
+    input_file,
+    backed=True,
+    X='X',
+    obs='obs',
+    var='var',
+    uns='uns',
+    obsm='obsm',
+    varm='varm',
+    layers='layers'
+)
 
 for layer in ['X']+list(adata.layers.keys()):
     ensure_sparse(adata, layer=layer)

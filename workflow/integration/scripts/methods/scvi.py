@@ -1,11 +1,11 @@
 import scvi
 import logging
-import pickle
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots, set_model_history_dtypes
 from utils_pipeline.io import read_anndata, write_zarr_linked
 from utils_pipeline.accessors import select_layer, subset_hvg
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -22,7 +22,7 @@ adata = subset_hvg(adata)
 
 # run method
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label', 'batch_size']
+train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
@@ -36,7 +36,7 @@ model = scvi.model.SCVI(
     adata,
     **model_params
 )
-model.train(**train_params, early_stopping=True)
+model.train(**train_params)
 model.save(output_model, overwrite=True)
 
 # prepare output adata
