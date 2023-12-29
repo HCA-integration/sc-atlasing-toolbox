@@ -1,11 +1,12 @@
 import scvi
 import logging
+import pickle
+import os
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
-
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -24,7 +25,7 @@ adata = adata[:, adata.var['highly_variable']].copy()
 # adata = scib.ig.scvi(adata, batch=wildcards.batch, **params['hyperparams'])
 
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
+train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label', 'batch_size']
 model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
 train_params = {k: v for k, v in hyperparams.items() if k in train_params}
 
@@ -38,8 +39,13 @@ model = scvi.model.SCVI(
     adata,
     **model_params
 )
-model.train(**train_params)
+model.train(**train_params, early_stopping=True)
 model.save(output_model, overwrite=True)
+
+# epochs error convergence history is not saved with standard model saving
+model_history = model.history
+with open(os.path.join(output_model, 'model_history.pkl'), 'wb') as file:
+    pickle.dump(model_history, file)
 
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
