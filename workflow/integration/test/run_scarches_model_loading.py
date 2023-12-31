@@ -14,9 +14,10 @@ def get_files_from_pattern(patterns, suffix):
     list_of_lists = [glob.glob(f'{pattern}/{suffix}') for pattern in patterns]
     return list(chain(*list_of_lists))
 
+
 patterns = [
     f'test/out/integration/dataset~*/file_id~*/batch~*/{pattern}'
-    for pattern in ['method~sc*vi*']
+    for pattern in ['method~scpoli*', 'method~scgen*']
 ]
 adata_files = get_files_from_pattern(patterns, 'adata.zarr')
 model_files = get_files_from_pattern(patterns, 'model')
@@ -25,7 +26,6 @@ if len(adata_files) == 0:
     warnings.warn('No integration outputs found')
     exit()
 
-import scvi
 import torch
 
 for adata_file, model_file in zip(adata_files, model_files):
@@ -44,17 +44,8 @@ for adata_file, model_file in zip(adata_files, model_files):
         logging.info(pformat(adata.uns['integration']['model_history']))
         
         # check that torch loading works
-        model = torch.load(f'{model_file}/model.pt')
-        
-        # check that scVI loading works
-        method = adata.uns['integration']['method']
-        if method == 'scvi':
-            model = scvi.model.SCVI.load(model_file, adata)
-        elif method == 'scanvi':
-            model = scvi.model.SCANVI.load(model_file, adata)
-        else:
-            raise ValueError(f'Unknown model for {adata_file}')
-        logging.info(pformat(model))
+        model = torch.load(f'{model_file}/model_params.pt')
+        logging.info(pformat(list(model.keys())))
     
     except AssertionError as e:
         logging.info('AssertionError for:', adata_file)
