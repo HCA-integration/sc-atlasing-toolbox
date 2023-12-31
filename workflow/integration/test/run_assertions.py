@@ -13,8 +13,10 @@ outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~*/a
 if len(outputs) == 0:
     warnings.warn('No integration outputs found')
 
+logging.info('Checking file outputs...')
+
 for file in outputs:
-    logging.info(f'Checking {file}...')
+    # logging.info(f'Checking {file}...')
     z = zarr.open(file)
     uns = read_elem(z["uns"])
 

@@ -9,9 +9,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-# direct integration outputs
-adata_files = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~scvi*/adata.zarr')
-model_files = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~scvi*/model')
+# direct integration output
+pattern = 'test/out/integration/dataset~*/file_id~*/batch~*/method~sc*vi*'
+adata_files = glob.glob(f'{pattern}/adata.zarr')
+model_files = glob.glob(f'{pattern}/model')
 if len(adata_files) == 0:
     warnings.warn('No integration outputs found')
     exit()
