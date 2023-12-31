@@ -35,7 +35,7 @@ logging.info(
 logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', uns='uns')
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
 adata.X = select_layer(adata, params['norm_counts'], force_sparse=True).astype('float32')
 
 # prepare data for model

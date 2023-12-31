@@ -4,7 +4,6 @@ logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
-from utils_pipeline.accessors import select_layer
 
 
 input_file = snakemake.input[0]

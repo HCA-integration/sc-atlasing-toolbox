@@ -29,7 +29,7 @@ logging.info(
 )
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw')
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
 adata.X = select_layer(adata, params['raw_counts']) # TODO select layer before reading
 
 # subset to HVGs
