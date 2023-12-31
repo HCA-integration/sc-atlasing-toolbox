@@ -11,7 +11,7 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', uns='uns')
+adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
 adata.X = select_layer(adata, params['norm_counts'])
 
 # subset to HVGs

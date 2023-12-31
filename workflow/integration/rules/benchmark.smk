@@ -75,9 +75,17 @@ use rule barplot from plots as integration_barplot_per_dataset with:
 
 rule benchmark_all:
     input:
-        expand(rules.integration_barplot.output,metric=['s', 'max_uss', 'mean_load']),
         expand(
-            rules.integration_barplot_per_dataset.output,
+            mcfg.get_output_files(
+                rules.integration_barplot.output,
+                allow_missing=True,
+            ),
+            metric=['s', 'max_uss', 'mean_load']
+        ),
+        expand(
+            mcfg.get_output_files(
+                rules.integration_barplot_per_dataset.output,
+                allow_missing=True,
+            ),
             metric=['s', 'max_uss', 'mean_load'],
-            dataset=mcfg.datasets.keys()
         )

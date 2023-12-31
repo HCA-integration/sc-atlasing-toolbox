@@ -10,7 +10,7 @@ def ensure_sparse(adata):
         adata.X = csr_matrix(adata.X)
 
 
-def add_metadata(adata, wildcards, params):
+def add_metadata(adata, wildcards, params, **kwargs):
     """
     Add integration metatdata to integratd output
     :param adata:
@@ -33,10 +33,11 @@ def add_metadata(adata, wildcards, params):
         'batch_key': wildcards.batch,
         'output_type': params['output_type'],
         'hyperparams': params['hyperparams'],
+        **kwargs
     }
 
 
-def remove_slots(adata, output_type):
+def remove_slots(adata, output_type, keep_X=False):
     """
     Remove slots that are redundant to integration output
     """
@@ -44,19 +45,36 @@ def remove_slots(adata, output_type):
         output_type = [output_type]
     
     del adata.layers
-    if 'X_pca' in adata.obsm:
-        del adata.obsm['X_pca']
+    #if 'X_pca' in adata.obsm:
+    #    del adata.obsm['X_pca']
     
     if 'full' in output_type:
         ensure_sparse(adata)
     elif 'embed' in output_type:
-        del adata.X
+        if keep_X:
+            assert adata.X is not None
+            ensure_sparse(adata)
+        else:
+            del adata.X
     elif 'knn' in output_type:
         # del adata.X
         pass
     else:
         raise ValueError(f'Invalid output type {output_type}')
     return adata
+
+
+def set_model_history_dtypes(model_history, dtype='float32'):
+    """
+    Quickfix to change encoding of the model history for saving in zarr file
+    
+    :param model_history: model.history from pytorch model (dictionary of pandas DataFrames)
+    :param dtype: dtype to convert to
+    """
+    return {
+        key: value.astype(dtype)
+        for key, value in model_history.items()
+    }
 
 
 def check_output(adata, output_type):
@@ -80,3 +98,17 @@ def check_output(adata, output_type):
         assert 'distances' in adata.obsp
     else:
         raise ValueError(f'Invalid output type {output_type}')
+
+
+def get_hyperparams(hyperparams: dict, train_params: list = None):
+    """
+    Get hyperparameters and training parameters from hyperparameter dictionary
+    :param hyperparams: dictionary of hyperparameters
+    :param train_params: list of training parameters
+    :return: hyperparams, train_params
+    """
+    if train_params is None:
+        train_params = ['max_epochs', 'batch_size', 'early_stopping']
+    model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
+    train_params = {k: v for k, v in hyperparams.items() if k in train_params}
+    return model_params, train_params

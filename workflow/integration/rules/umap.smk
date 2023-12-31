@@ -38,9 +38,3 @@ use rule plots from preprocessing as integration_plot_umap with:
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-
-
-rule plots_all:
-    input:
-        rules.benchmark_all.input,
-        mcfg.get_output_files(rules.integration_plot_umap.output),

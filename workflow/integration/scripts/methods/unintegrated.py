@@ -6,6 +6,7 @@ logging.basicConfig(level=logging.INFO)
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
 from utils_pipeline.accessors import select_layer
+from utils_pipeline.processing import assert_neighbors
 
 
 input_file = snakemake.input[0]
@@ -25,15 +26,15 @@ if 'X_pca' not in adata.obsm:
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 
 logging.info(adata.__str__())
-logging.info(adata.uns)
-if 'connectivities' not in adata.obsp \
-    or 'distances' not in adata.obsp \
-    or 'neighbors' not in adata.uns:
-    sc.pp.neighbors(adata)
-else:
-    logging.info(adata.uns['neighbors'])
-    logging.info(adata.obsp.keys())
+logging.info(adata.uns.keys())
+try:
+    assert_neighbors(adata)
+    logging.info(adata.uns['neighbors'].keys())
     files_to_keep.extend(['obsp', 'uns'])
+except AssertionError:
+    logging.info('Compute neighbors...')
+    sc.pp.neighbors(adata)
+    print(adata.uns['neighbors'])
 
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)

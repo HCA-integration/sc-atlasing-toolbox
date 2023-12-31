@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 
@@ -41,3 +42,12 @@ def select_neighbors(adata, output_type):
     adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
     adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
     return adata
+
+
+def subset_hvg(adata):
+    if 'highly_variable' not in adata.var.columns:
+        raise ValueError('No highly_variable column in adata.var')
+    if adata.var['highly_variable'].all():
+        warnings.warn('All genes are highly variable, skipping subset_hvg')
+        return adata
+    return adata[:, adata.var['highly_variable']].copy()

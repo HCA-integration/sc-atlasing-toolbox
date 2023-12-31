@@ -2,6 +2,7 @@ from pathlib import Path
 from scipy.sparse import csr_matrix
 import numpy as np
 import scanpy as sc
+from anndata import AnnData
 
 adata = sc.datasets.pbmc68k_reduced()
 adata.X = adata.raw.X.copy().todense()
@@ -15,11 +16,16 @@ for i in range(n_batch):
 adata.obs['batch'] = adata.obs['batch'].astype(str)
 adata.obs['batch_2'] = adata.obs['phase']
 
-adata.layers['counts'] = csr_matrix(np.exp(adata.X) - 1)
+adata.layers['counts'] = csr_matrix(np.exp(adata.X).astype(int) - 1)
 adata.X = csr_matrix(adata.X)
 adata.layers['normcounts'] = adata.X.copy()
-del adata.raw
-del adata.uns
+
+# add raw
+adata.raw = AnnData(
+    X=adata.layers['counts'],
+    obs=adata.obs,
+    var=adata.var,
+)
 
 print(adata)
 

@@ -211,8 +211,8 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=T
     if not out_dir.exists():
         out_dir.mkdir()
     for f in in_dir.iterdir():
-        if f.name == '.snakemake_timestamp':
-            continue  # skip snakemake timestamp
+        if f.name in ('.snakemake_timestamp', '.zattrs', '.zgroup'):
+            continue  # skip hidden files
         if f.name not in file_names:
             continue
         new_file = out_dir / f.name
@@ -249,5 +249,42 @@ def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relat
         out_dir=out_dir,
         file_names=files_to_link,
         overwrite=overwrite,
+        relative_path=relative_path,
+    )
+
+
+def write_zarr_linked(
+    adata: ad.AnnData,
+    in_dir: [str, Path],
+    out_dir: [str, Path],
+    files_to_keep: list = None,
+    relative_path: bool = True
+):
+    if not in_dir.endswith('.zarr'):
+        adata.write_zarr(out_dir)
+        return
+    
+    if files_to_keep is None:
+        files_to_keep = []
+    
+    # determine slots to link
+    in_dirs = [f.name for f in Path(in_dir).iterdir()]
+    files_to_link = [f for f in in_dirs if f not in files_to_keep]
+    
+    # remove slots that will be overwritten anyway
+    for slot in files_to_link:
+        if slot in adata.__dict__:
+            print(f'remove {slot}...')
+            delattr(adata, slot)
+    
+    # write zarr file
+    adata.write_zarr(out_dir)
+    
+    # link files
+    link_zarr(
+        in_dir=in_dir,
+        out_dir=out_dir,
+        file_names=files_to_link,
+        overwrite=True,
         relative_path=relative_path,
     )
