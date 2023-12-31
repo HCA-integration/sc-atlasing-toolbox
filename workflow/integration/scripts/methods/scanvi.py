@@ -46,20 +46,24 @@ scvi.model.SCVI.setup_anndata(
     batch_key=batch_key,
 )
 
-logging.info(f'Train scVI with training paramters:\n{pformat(train_params)}')
+logging.info(f'Set up scVI with parameters:\n{pformat(model_params)}')
 model = scvi.model.SCVI(
     adata,
     **model_params
 )
+
+logging.info(f'Train scVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
-logging.info('Train scANVI on top of scVI with training paramters:\n{pformat(train_params)}')
+logging.info(f'Set up scANVI on top of scVI with parameters:\n{pformat(model_params)}')
 model = scvi.model.SCANVI.from_scvi_model(
     model,
     labels_key=label_key,
     unlabeled_category='nan',
     **model_params
 )
+
+logging.info(f'Train scANVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
 logging.info('Save model...')

@@ -41,11 +41,13 @@ scvi.model.SCVI.setup_anndata(
     batch_key=wildcards.batch,
 )
 
-logging.info(f'Train scVI with training parameters:\n{pformat(train_params)}')
+logging.info(f'Set up scVI with model parameters:\n{pformat(model_params)}')
 model = scvi.model.SCVI(
     adata,
     **model_params
 )
+
+logging.info(f'Train scVI with training parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
 logging.info('Save model...')
