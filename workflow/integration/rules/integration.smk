@@ -1,7 +1,7 @@
 use rule run_method from integration as integration_run_method with:
     message:
        """
-       Integration: Run {wildcards.method} on {wildcards.dataset}
+       Integration: Run integration method {wildcards.method} on {wildcards.dataset}
        input: {input}
        output: {output}
        wildcards: {wildcards}
@@ -46,7 +46,7 @@ use rule neighbors from preprocessing as integration_postprocess with:
     input:
         zarr=rules.integration_run_method.output.zarr,
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'postprocessed.zarr'),
+        zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         args=update_neighbors_args,
         extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
