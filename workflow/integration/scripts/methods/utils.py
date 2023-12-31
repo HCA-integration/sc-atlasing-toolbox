@@ -98,3 +98,17 @@ def check_output(adata, output_type):
         assert 'distances' in adata.obsp
     else:
         raise ValueError(f'Invalid output type {output_type}')
+
+
+def get_hyperparams(hyperparams: dict, train_params: list = None):
+    """
+    Get hyperparameters and training parameters from hyperparameter dictionary
+    :param hyperparams: dictionary of hyperparameters
+    :param train_params: list of training parameters
+    :return: hyperparams, train_params
+    """
+    if train_params is None:
+        train_params = ['max_epochs', 'batch_size', 'early_stopping']
+    model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
+    train_params = {k: v for k, v in hyperparams.items() if k in train_params}
+    return model_params, train_params
