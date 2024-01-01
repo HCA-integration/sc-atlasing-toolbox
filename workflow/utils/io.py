@@ -204,7 +204,14 @@ def write_zarr(adata, file):
     adata.write_zarr(file) # doesn't seem to work with dask array
 
 
-def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=True):
+def link_zarr(
+    in_dir: [str, Path],
+    out_dir: [str, Path],
+    file_names: list = None,
+    overwrite: bool = False,
+    relative_path: bool = True,
+    **kwargs
+):
     """
     Link to existing zarr file
     :param in_dir: path to existing zarr file
@@ -212,42 +219,45 @@ def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=T
     :param file_names: list of files to link, if None, link all files
     :param overwrite: overwrite existing output files
     :param relative_path: use relative path for link
-    :param kwargs: custom mapping of input file path to output paths, 
+    :param kwargs: custom mapping of output slot to input slot,
         will update default mapping of same input and output naming
     """
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     
     if not in_dir.exists():
         return
     
     if file_names is None:
         file_names = [f.name for f in in_dir.iterdir()]
+    file_names = [
+        file for file in file_names
+        if file not in ('.snakemake_timestamp')
+    ]
+    slot_map = {file: file for file in file_names}
+    slot_map |= kwargs
 
-    if not out_dir.exists():
-        out_dir.mkdir()
-    for f in in_dir.iterdir():
-        if f.name in ('.snakemake_timestamp', '.zattrs', '.zgroup'):
-            continue  # skip hidden files
-        if f.name not in file_names:
-            continue
-        new_file = out_dir / f.name
-        if overwrite and new_file.exists():
-            print(f'Replace {new_file} with link')
-            if new_file.is_dir() and not new_file.is_symlink():
-                shutil.rmtree(new_file)
-            else:
-                new_file.unlink()
+    for out_slot, in_slot in slot_map.items():
+        in_file = in_dir / in_slot
+        out_file = out_dir / out_slot
         
-        path_to_link_to = f.resolve()
+        if overwrite and out_file.exists():
+            print(f'Link {out_slot} -> {in_file}')
+            if out_file.is_dir() and not out_file.is_symlink():
+                shutil.rmtree(out_file)
+            else:
+                out_file.unlink()
+        
+        path_to_link_to = in_file.resolve()
         if relative_path:
             path_to_link_to = Path(
                 os.path.relpath(
                     path_to_link_to,
-                    new_file.parent.resolve()
+                    out_file.parent.resolve()
                 )
             )
-        new_file.symlink_to(path_to_link_to)
+        out_file.symlink_to(path_to_link_to)
 
 
 def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
@@ -274,9 +284,21 @@ def write_zarr_linked(
     in_dir: [str, Path],
     out_dir: [str, Path],
     files_to_keep: list = None,
-    relative_path: bool = True
+    relative_path: bool = True,
+    **kwargs,
 ):
-    if not in_dir.endswith('.zarr'):
+    """
+    Write adata to linked zarr file
+    :param adata: AnnData object
+    :param in_dir: path to existing zarr file
+    :param out_dir: path to output zarr file
+    :param files_to_keep: list of files to keep and not overwrite
+    :param relative_path: use relative path for link
+    :param kwargs: custom mapping of output slot to input slot, for slots that are not in files_to_keep
+    """
+    in_dir = Path(in_dir)
+    
+    if not in_dir.name.endswith('.zarr'):
         adata.write_zarr(out_dir)
         return
     
@@ -284,11 +306,18 @@ def write_zarr_linked(
         files_to_keep = []
     
     # determine slots to link
-    in_dirs = [f.name for f in Path(in_dir).iterdir()]
+    in_dirs = [f.name for f in in_dir.iterdir()]
     files_to_link = [f for f in in_dirs if f not in files_to_keep]
+    extra_slots_to_link = list(kwargs.keys())
+    # keep only kwargs that are not explicitly in files_to_keep
+    kwargs = {
+        in_slot: out_slot 
+        for in_slot, out_slot in kwargs.items()
+        if in_slot not in files_to_keep
+    }
     
     # remove slots that will be overwritten anyway
-    for slot in files_to_link:
+    for slot in files_to_link+extra_slots_to_link:
         if slot in adata.__dict__:
             print(f'remove {slot}...')
             delattr(adata, slot)
@@ -303,4 +332,5 @@ def write_zarr_linked(
         file_names=files_to_link,
         overwrite=True,
         relative_path=relative_path,
+        **kwargs,
     )
