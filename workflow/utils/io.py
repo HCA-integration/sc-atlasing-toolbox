@@ -8,6 +8,8 @@ import h5py
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
 
+zarr.default_compressor = zarr.Blosc(shuffle=zarr.Blosc.SHUFFLE)
+
 
 def get_file_reader(file):
     if file.endswith(('.zarr', '.zarr/')):
@@ -56,20 +58,27 @@ def read_anndata(
         read_func = read_partial
     
     func, file_type = get_file_reader(file)
+    store = func(file, 'r')
     
-    f = func(file, 'r')
-    kwargs = {x: x for x in f} if not kwargs else kwargs
-    if len(f.keys()) == 0:
+    # set default kwargs
+    kwargs = {x: x for x in store} if not kwargs else kwargs
+    # set key == value if value is None
+    kwargs |= {k: k for k, v in kwargs.items() if v is None}
+    
+    # return an empty AnnData object if no keys are available
+    if len(store.keys()) == 0:
         return ad.AnnData()
+    
     # check if keys are available
     for name, slot in kwargs.items():
-        if slot not in f:
+        if slot not in store:
             warnings.warn(
-                f'Cannot find "{slot}" for AnnData parameter `{name}` from "{file}"'
+                f'Cannot find "{slot}" for AnnData parameter `{name}`'
+                ' from "{file}", will be skipped'
             )
-    adata = read_func(f, backed=backed, **kwargs)
+    adata = read_func(store, backed=backed, **kwargs)
     if not backed and file_type == 'h5py':
-        f.close()
+        store.close()
     
     return adata
 
@@ -198,6 +207,13 @@ def write_zarr(adata, file):
 def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=True):
     """
     Link to existing zarr file
+    :param in_dir: path to existing zarr file
+    :param out_dir: path to output zarr file
+    :param file_names: list of files to link, if None, link all files
+    :param overwrite: overwrite existing output files
+    :param relative_path: use relative path for link
+    :param kwargs: custom mapping of input file path to output paths, 
+        will update default mapping of same input and output naming
     """
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
