@@ -1,5 +1,6 @@
 import warnings
 import numpy as np
+import anndata as ad
 
 
 def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float32'):
@@ -44,10 +45,15 @@ def select_neighbors(adata, output_type):
     return adata
 
 
-def subset_hvg(adata):
+def subset_hvg(adata) -> (ad.AnnData, bool):
+    """
+    Subset to highly variable genes
+    :param adata: anndata object
+    :return: subsetted anndata object, bool indicating whether subset was performed
+    """
     if 'highly_variable' not in adata.var.columns:
         raise ValueError('No highly_variable column in adata.var')
     if adata.var['highly_variable'].all():
         warnings.warn('All genes are highly variable, skipping subset_hvg')
-        return adata
-    return adata[:, adata.var['highly_variable']].copy()
+        return adata, False
+    return adata[:, adata.var['highly_variable']].copy(), True
