@@ -6,7 +6,6 @@ logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
 from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils_pipeline.accessors import select_layer, subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -41,12 +40,16 @@ logging.info(
 logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
-adata.X = select_layer(adata, params['raw_counts'], force_sparse=True).astype('float32')
+adata = read_anndata(
+    input_file,
+    X='layers/raw_counts',
+    obs='obs',
+    var='var',
+    uns='uns'
+)
 
-# subset to HVGs
-adata = subset_hvg(adata)
-
+# prepare data for model
+adata.X = adata.X.astype('float32')
 if label_key in adata.obs.columns:
     adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
 

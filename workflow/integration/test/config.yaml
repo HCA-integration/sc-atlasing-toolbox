@@ -18,17 +18,17 @@ resources:
 
 defaults:
   integration:
-    raw_counts: raw
-    norm_counts: X
+    raw_counts: layers/counts
+    norm_counts: layers/normcounts
     methods:
       bbknn:
       combat:
       scanorama:
       unintegrated:
   datasets:
-    # - test
-    # - multi_wildcards
-    # - preprocessed
+    - test
+    - multi_wildcards
+    - preprocessed
     - harmony
     - scarches
     - scvi_tools

@@ -5,7 +5,6 @@ logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
 from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils_pipeline.accessors import select_layer, subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -31,11 +30,13 @@ logging.info(
 )
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
-adata.X = select_layer(adata, params['raw_counts'])
-
-# subset to HVGs
-adata = subset_hvg(adata)
+adata = read_anndata(
+    input_file,
+    X='layers/raw_counts',
+    var='var',
+    obs='obs',
+    uns='uns',
+)
 
 # prepare data for model
 adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
@@ -79,11 +80,11 @@ add_metadata(
     model_history=set_model_history_dtypes(model.history)
 )
 
-logging.info(adata.__str__())
 logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
 write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'obsm', 'var', 'varm', 'varp', 'uns']  # TODO: link to correct .X slot?
+    files_to_keep=['obsm', 'uns'],
 )

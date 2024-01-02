@@ -15,7 +15,13 @@ batch_key = wildcards.batch
 files_to_keep = ['obsm', 'obsp', 'uns']
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', var='var', obsm='obsm', uns='uns')
+adata = read_anndata(
+    input_file,
+    obs='obs',
+    var='var',
+    obsm='obsm',
+    uns='uns'
+)
 
 assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 
