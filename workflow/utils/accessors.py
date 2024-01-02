@@ -2,7 +2,10 @@ import warnings
 import numpy as np
 import anndata as ad
 
+from .io import to_memory
 
+
+# deprecated
 def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float32'):
     from scipy.sparse import csr_matrix, issparse
     from dask.array import Array as DaskArray
@@ -45,15 +48,34 @@ def select_neighbors(adata, output_type):
     return adata
 
 
-def subset_hvg(adata) -> (ad.AnnData, bool):
+def subset_hvg(adata, to_memory: [str, list] = 'X') -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
     :param adata: anndata object
+    :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
     if 'highly_variable' not in adata.var.columns:
         raise ValueError('No highly_variable column in adata.var')
     if adata.var['highly_variable'].all():
-        warnings.warn('All genes are highly variable, skipping subset_hvg')
-        return adata, False
-    return adata[:, adata.var['highly_variable']].copy(), True
+        warnings.warn('All genes are highly variable, not subsetting')
+        subsetted = False
+    else:
+        subsetted = True
+        adata = adata[:, adata.var['highly_variable']].copy()
+    adata = adata_to_memory(adata, layers=to_memory)
+    return adata, subsetted
+
+
+def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData:
+    if layers is None:
+        layers = []
+    elif isinstance(layers, str):
+        layers = [layers]
+    
+    for layer in layers:
+        if layer in adata.layers:
+            adata.layers[layer] = to_memory(adata.layers[layer])
+        elif layer == 'X':
+            adata.X = to_memory(adata.X)
+    return adata

@@ -210,7 +210,7 @@ def link_zarr(
     file_names: list = None,
     overwrite: bool = False,
     relative_path: bool = True,
-    **kwargs
+    slot_map: dict = None,
 ):
     """
     Link to existing zarr file
@@ -235,8 +235,10 @@ def link_zarr(
         file for file in file_names
         if file not in ('.snakemake_timestamp')
     ]
-    slot_map = {file: file for file in file_names}
-    slot_map |= kwargs
+    
+    if slot_map is None:
+        slot_map = {}
+    slot_map = {file: file for file in file_names} | slot_map
 
     for out_slot, in_slot in slot_map.items():
         in_file = in_dir / in_slot
@@ -249,15 +251,15 @@ def link_zarr(
             else:
                 out_file.unlink()
         
-        path_to_link_to = in_file.resolve()
+        in_file = in_file.resolve()
         if relative_path:
-            path_to_link_to = Path(
+            in_file = Path(
                 os.path.relpath(
-                    path_to_link_to,
+                    in_file,
                     out_file.parent.resolve()
                 )
             )
-        out_file.symlink_to(path_to_link_to)
+        out_file.symlink_to(in_file)
 
 
 def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
@@ -283,9 +285,9 @@ def write_zarr_linked(
     adata: ad.AnnData,
     in_dir: [str, Path],
     out_dir: [str, Path],
-    files_to_keep: list = None,
     relative_path: bool = True,
-    **kwargs,
+    files_to_keep: list = None,
+    slot_map: dict = None,
 ):
     """
     Write adata to linked zarr file
@@ -294,7 +296,7 @@ def write_zarr_linked(
     :param out_dir: path to output zarr file
     :param files_to_keep: list of files to keep and not overwrite
     :param relative_path: use relative path for link
-    :param kwargs: custom mapping of output slot to input slot, for slots that are not in files_to_keep
+    :param slot_map: custom mapping of output slot to input slot, for slots that are not in files_to_keep
     """
     in_dir = Path(in_dir)
     
@@ -304,15 +306,17 @@ def write_zarr_linked(
     
     if files_to_keep is None:
         files_to_keep = []
-    
-    # determine slots to link
     in_dirs = [f.name for f in in_dir.iterdir()]
     files_to_link = [f for f in in_dirs if f not in files_to_keep]
-    extra_slots_to_link = list(kwargs.keys())
-    # keep only kwargs that are not explicitly in files_to_keep
-    kwargs = {
+    
+    if slot_map is None:
+        slot_map = {}
+    extra_slots_to_link = list(slot_map.keys())
+    
+    # keep only slots that are not explicitly in files_to_keep
+    slot_map = {
         in_slot: out_slot 
-        for in_slot, out_slot in kwargs.items()
+        for in_slot, out_slot in slot_map.items()
         if in_slot not in files_to_keep
     }
     
@@ -332,5 +336,5 @@ def write_zarr_linked(
         file_names=files_to_link,
         overwrite=True,
         relative_path=relative_path,
-        **kwargs,
+        slot_map=slot_map,
     )

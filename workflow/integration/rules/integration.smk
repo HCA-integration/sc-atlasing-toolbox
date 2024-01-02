@@ -1,3 +1,22 @@
+rule prepare:
+    input:
+        anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
+    output:
+        zarr=directory(out_dir / 'prepare' / 'dataset={dataset}--file_id={file_id}.zarr'),
+    params:
+        norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
+        raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
+    conda:
+        get_env(config, 'scanpy')
+    resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+    script:
+        '../scripts/prepare.py'
+
+
 use rule run_method from integration as integration_run_method with:
     message:
        """
@@ -8,7 +27,7 @@ use rule run_method from integration as integration_run_method with:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb} partition={resources.partition} qos={resources.qos}
        """
     input:
-        h5ad=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
+        zarr=rules.prepare.output.zarr,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'adata.zarr'),
         model=touch(directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'model'))
