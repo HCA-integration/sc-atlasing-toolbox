@@ -18,7 +18,7 @@ except ImportError:
     logging.info('Importing rapids failed, using scanpy...')
     rapids = False
 
-from utils.io import read_anndata, write_zarr_linked
+from utils.io import read_anndata, write_zarr_linked, to_memory
 
 
 input_file = snakemake.input[0]
@@ -33,10 +33,11 @@ subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-kwargs = dict(X='X', obs='obs', var='var', uns='uns')
+kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=True)
 if subset_to_hvg:
     kwargs |= dict(layers='layers')
 adata = read_anndata(input_file, **kwargs)
+adata.X = to_memory(adata.X)
 var = adata.var
 
 # add metadata
@@ -69,8 +70,10 @@ else:
     logging.info('Filter genes...')
     gene_subset, _ = scanpy.pp.filter_genes(adata, min_cells=1, inplace=False)
     if any(gene_subset == False):
-        logging.info('Subset to filtered genes...')
-        adata = adata[:, gene_subset]
+        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
+        adata.X = read_anndata(input_file, X='X').X
+        adata = adata[:, gene_subset].copy()
+        adata.X = to_memory(adata.X)
     
     # make sure data is on GPU for rapids_singlecell
     if rapids:
