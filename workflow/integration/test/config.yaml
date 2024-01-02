@@ -18,21 +18,20 @@ resources:
 
 defaults:
   integration:
-    raw_counts: raw
-    norm_counts: X
+    raw_counts: layers/counts
+    norm_counts: layers/normcounts
     methods:
       bbknn:
       combat:
       scanorama:
       unintegrated:
   datasets:
-    # - test
-    # - multi_wildcards
-    # - preprocessed
+    - test
+    - multi_wildcards
+    - preprocessed
     - harmony
-    - scpoli
+    - scarches
     - scvi_tools
-    - scgen
 
 
 DATASETS:
@@ -84,13 +83,15 @@ DATASETS:
       umap_colors:
         - phase
 
-  scpoli:
+  scarches:
     input:
       integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
       methods:
+        scgen:
+          n_epochs: 10
         scpoli:
           supervised:
             - true
@@ -131,13 +132,3 @@ DATASETS:
           early_stopping: true
       umap_colors:
         - phase
-
-  scgen:
-    input:
-      integration: test/input/pbmc68k.h5ad
-    integration:
-      label: bulk_labels
-      batch: batch
-      methods:
-        scgen:
-          n_epochs: 10

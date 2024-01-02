@@ -13,7 +13,15 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', var='var', obsm='obsm', uns='uns')
+adata = read_anndata(
+    input_file,
+    obs='obs',
+    var='var',
+    obsm='obsm',
+    uns='uns'
+)
+
+assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 
 # run method
 logging.info('Run harmonypy...')

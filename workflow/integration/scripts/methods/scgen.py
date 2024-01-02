@@ -7,7 +7,6 @@ from scarches.dataset.trvae.data_handling import remove_sparsity
 
 from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
 from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils_pipeline.accessors import select_layer, subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -35,12 +34,17 @@ logging.info(
 logging.info(f'GPU available: {torch.cuda.is_available()}')
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
-adata.X = select_layer(adata, params['norm_counts'], force_sparse=True).astype('float32')
+adata = read_anndata(
+    input_file,
+    X='layers/norm_counts',
+    obs='obs',
+    var='var',
+    uns='uns'
+)
 
 # prepare data for model
-adata = subset_hvg(adata)
-adata = remove_sparsity(adata) # remove sparsity
+adata.X = adata.X.astype('float32')
+adata = remove_sparsity(adata)
 
 logging.info(f'Set up scGEN with parameters:\n{pformat(model_params)}')
 model = sca.models.scgen(

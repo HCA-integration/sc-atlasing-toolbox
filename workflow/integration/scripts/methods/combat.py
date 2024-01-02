@@ -3,19 +3,19 @@ import scanpy as sc
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
-from utils_pipeline.accessors import select_layer
-
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw', uns='uns')
-adata.X = select_layer(adata, params['norm_counts'])
-
-# subset to HVGs
-adata = adata[:, adata.var['highly_variable']]
+adata = read_anndata(
+    input_file,
+    X='layers/norm_counts',
+    obs='obs',
+    var='var',
+    uns='uns'
+)
 
 # run method
 adata = scib.ig.combat(adata, batch=wildcards.batch)

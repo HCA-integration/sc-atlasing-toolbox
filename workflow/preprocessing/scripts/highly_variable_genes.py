@@ -13,12 +13,12 @@ try:
     import cupy as cp
     logging.info('Using rapids_singlecell...')
     rapids = True
-except ImportError as e:
+except ImportError:
     sc = scanpy
     logging.info('Importing rapids failed, using scanpy...')
     rapids = False
 
-from utils.io import read_anndata, link_zarr
+from utils.io import read_anndata, write_zarr_linked, to_memory
 
 
 input_file = snakemake.input[0]
@@ -33,7 +33,12 @@ subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', uns='uns')
+kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=True)
+if subset_to_hvg:
+    kwargs |= dict(layers='layers')
+adata = read_anndata(input_file, **kwargs)
+adata.X = to_memory(adata.X)
+var = adata.var
 
 # add metadata
 if 'preprocessing' not in adata.uns:
@@ -62,19 +67,23 @@ else:
             adata.obs['hvg_batch'] = adata.obs[lineage_key]
         batch_key = 'hvg_batch'
 
-    logging.info('Select features...')
-    adata_hvg = adata.copy()
-    scanpy.pp.filter_genes(adata_hvg, min_cells=1)
-    
-    if 'subset' in args:
-        del args['subset']
+    logging.info('Filter genes...')
+    gene_subset, _ = scanpy.pp.filter_genes(adata, min_cells=1, inplace=False)
+    if any(gene_subset == False):
+        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
+        adata.X = read_anndata(input_file, X='X').X
+        adata = adata[:, gene_subset].copy()
+        adata.X = to_memory(adata.X)
     
     # make sure data is on GPU for rapids_singlecell
     if rapids:
-        sc.utils.anndata_to_GPU(adata_hvg)
+        sc.utils.anndata_to_GPU(adata)
     
+    logging.info('Select features...')
+    if 'subset' in args:
+        del args['subset']
     sc.pp.highly_variable_genes(
-        adata_hvg,
+        adata,
         batch_key=batch_key,
         **args
     )
@@ -91,30 +100,26 @@ else:
     hvg_columns = [
         column
         for column in hvg_column_map
-        if column in adata_hvg.var.columns
+        if column in adata.var.columns
     ]
-    adata.var[hvg_columns] = adata_hvg.var[hvg_columns]
-    adata.var = adata.var.fillna(hvg_column_map)
-
-    # subset to HVGs
-    if subset_to_hvg:
-        adata = adata[:, adata.var['highly_variable']]
+    var[hvg_columns] = adata.var[hvg_columns]
+    var = var.fillna(hvg_column_map)
 
 logging.info(f'Write to {output_file}...')
-del adata.raw
-del adata.layers
-adata.write_zarr(output_file)
+files_to_keep = ['uns', 'var']
+if subset_to_hvg:
+    logging.info('Subset to highly variable genes...')
+    adata = adata[:, adata.var['highly_variable']].copy()
+    files_to_keep.extend(['X', 'layers', 'varm', 'varp'])
+else:
+    del adata.X
+    adata.var = var
 
-if input_file.endswith('.zarr'):
-    files_to_keep = ['uns', 'var']
-    if subset_to_hvg:
-        logging.info('Data subsetted to highly variable genes, keep matrices, varm and varp...')
-        files_to_keep.extend(['X', 'varm', 'varp'])
+logging.info(adata.__str__())
 
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=[f for f in input_files if f not in files_to_keep],
-        overwrite=True,
+write_zarr_linked(
+    adata,
+    in_dir=input_file,
+    out_dir=output_file,
+    files_to_keep=files_to_keep
 )

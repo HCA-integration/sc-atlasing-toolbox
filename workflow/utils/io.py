@@ -8,6 +8,8 @@ import h5py
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
 
+zarr.default_compressor = zarr.Blosc(shuffle=zarr.Blosc.SHUFFLE)
+
 
 def get_file_reader(file):
     if file.endswith(('.zarr', '.zarr/')):
@@ -56,20 +58,27 @@ def read_anndata(
         read_func = read_partial
     
     func, file_type = get_file_reader(file)
+    store = func(file, 'r')
     
-    f = func(file, 'r')
-    kwargs = {x: x for x in f} if not kwargs else kwargs
-    if len(f.keys()) == 0:
+    # set default kwargs
+    kwargs = {x: x for x in store} if not kwargs else kwargs
+    # set key == value if value is None
+    kwargs |= {k: k for k, v in kwargs.items() if v is None}
+    
+    # return an empty AnnData object if no keys are available
+    if len(store.keys()) == 0:
         return ad.AnnData()
+    
     # check if keys are available
     for name, slot in kwargs.items():
-        if slot not in f:
+        if slot not in store:
             warnings.warn(
-                f'Cannot find "{slot}" for AnnData parameter `{name}` from "{file}"'
+                f'Cannot find "{slot}" for AnnData parameter `{name}`'
+                ' from "{file}", will be skipped'
             )
-    adata = read_func(f, backed=backed, **kwargs)
+    adata = read_func(store, backed=backed, **kwargs)
     if not backed and file_type == 'h5py':
-        f.close()
+        store.close()
     
     return adata
 
@@ -195,43 +204,62 @@ def write_zarr(adata, file):
     adata.write_zarr(file) # doesn't seem to work with dask array
 
 
-def link_zarr(in_dir, out_dir, file_names=None, overwrite=False, relative_path=True):
+def link_zarr(
+    in_dir: [str, Path],
+    out_dir: [str, Path],
+    file_names: list = None,
+    overwrite: bool = False,
+    relative_path: bool = True,
+    slot_map: dict = None,
+):
     """
     Link to existing zarr file
+    :param in_dir: path to existing zarr file
+    :param out_dir: path to output zarr file
+    :param file_names: list of files to link, if None, link all files
+    :param overwrite: overwrite existing output files
+    :param relative_path: use relative path for link
+    :param kwargs: custom mapping of output slot to input slot,
+        will update default mapping of same input and output naming
     """
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     
     if not in_dir.exists():
         return
     
     if file_names is None:
         file_names = [f.name for f in in_dir.iterdir()]
+    file_names = [
+        file for file in file_names
+        if file not in ('.snakemake_timestamp')
+    ]
+    
+    if slot_map is None:
+        slot_map = {}
+    slot_map = {file: file for file in file_names} | slot_map
 
-    if not out_dir.exists():
-        out_dir.mkdir()
-    for f in in_dir.iterdir():
-        if f.name in ('.snakemake_timestamp', '.zattrs', '.zgroup'):
-            continue  # skip hidden files
-        if f.name not in file_names:
-            continue
-        new_file = out_dir / f.name
-        if overwrite and new_file.exists():
-            print(f'Replace {new_file} with link')
-            if new_file.is_dir() and not new_file.is_symlink():
-                shutil.rmtree(new_file)
-            else:
-                new_file.unlink()
+    for out_slot, in_slot in slot_map.items():
+        in_file = in_dir / in_slot
+        out_file = out_dir / out_slot
         
-        path_to_link_to = f.resolve()
+        if overwrite and out_file.exists():
+            print(f'Link {out_slot} -> {in_file}')
+            if out_file.is_dir() and not out_file.is_symlink():
+                shutil.rmtree(out_file)
+            else:
+                out_file.unlink()
+        
+        in_file = in_file.resolve()
         if relative_path:
-            path_to_link_to = Path(
+            in_file = Path(
                 os.path.relpath(
-                    path_to_link_to,
-                    new_file.parent.resolve()
+                    in_file,
+                    out_file.parent.resolve()
                 )
             )
-        new_file.symlink_to(path_to_link_to)
+        out_file.symlink_to(in_file)
 
 
 def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
@@ -257,22 +285,43 @@ def write_zarr_linked(
     adata: ad.AnnData,
     in_dir: [str, Path],
     out_dir: [str, Path],
+    relative_path: bool = True,
     files_to_keep: list = None,
-    relative_path: bool = True
+    slot_map: dict = None,
 ):
-    if not in_dir.endswith('.zarr'):
+    """
+    Write adata to linked zarr file
+    :param adata: AnnData object
+    :param in_dir: path to existing zarr file
+    :param out_dir: path to output zarr file
+    :param files_to_keep: list of files to keep and not overwrite
+    :param relative_path: use relative path for link
+    :param slot_map: custom mapping of output slot to input slot, for slots that are not in files_to_keep
+    """
+    in_dir = Path(in_dir)
+    
+    if not in_dir.name.endswith('.zarr'):
         adata.write_zarr(out_dir)
         return
     
     if files_to_keep is None:
         files_to_keep = []
-    
-    # determine slots to link
-    in_dirs = [f.name for f in Path(in_dir).iterdir()]
+    in_dirs = [f.name for f in in_dir.iterdir()]
     files_to_link = [f for f in in_dirs if f not in files_to_keep]
     
+    if slot_map is None:
+        slot_map = {}
+    extra_slots_to_link = list(slot_map.keys())
+    
+    # keep only slots that are not explicitly in files_to_keep
+    slot_map = {
+        in_slot: out_slot 
+        for in_slot, out_slot in slot_map.items()
+        if in_slot not in files_to_keep
+    }
+    
     # remove slots that will be overwritten anyway
-    for slot in files_to_link:
+    for slot in files_to_link+extra_slots_to_link:
         if slot in adata.__dict__:
             print(f'remove {slot}...')
             delattr(adata, slot)
@@ -287,4 +336,5 @@ def write_zarr_linked(
         file_names=files_to_link,
         overwrite=True,
         relative_path=relative_path,
+        slot_map=slot_map,
     )
