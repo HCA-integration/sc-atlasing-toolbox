@@ -222,12 +222,50 @@ def link_zarr(
     :param kwargs: custom mapping of output slot to input slot,
         will update default mapping of same input and output naming
     """
+    def resolved_nested_links(d):
+        # determine equivalent classes of slots (top hierarchy)
+        eq_classes = {}
+        for out_slot in d:
+            if '/' not in out_slot:
+                continue
+            eq = out_slot.rsplit('/', 1)[0]
+            if eq not in d:
+                continue
+            eq_classes.setdefault(eq, []).append(out_slot)
+
+        for out_slot in eq_classes.keys():
+            in_slot = d[out_slot]
+            for f in (in_dir / in_slot).iterdir():
+                new_out_slot = f'{out_slot}/{f.name}'
+                if new_out_slot in d or f.name == '.snakemake_timestamp':
+                    continue
+                d[new_out_slot] = f'{in_slot}/{f.name}'
+            del d[out_slot]
+        return d
+    
+    def link_file(in_file, out_file, relative_path=True):
+        in_file = in_file.resolve()
+        out_dir = out_file.parent.resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        
+        if relative_path:
+            in_file = Path(os.path.relpath(in_file, out_dir))
+        
+        if overwrite and out_file.exists():
+            print('remove', out_file)
+            if out_file.is_dir() and not out_file.is_symlink():
+                shutil.rmtree(out_file)
+            else:
+                out_file.unlink()
+        
+        print(f'Link {out_file} -> {in_file}')
+        out_file.symlink_to(in_file)
+
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     
     if not in_dir.exists():
-        return
+        raise ValueError(f'Input directory {in_dir} does not exist')
     
     if file_names is None:
         file_names = [f.name for f in in_dir.iterdir()]
@@ -239,27 +277,15 @@ def link_zarr(
     if slot_map is None:
         slot_map = {}
     slot_map = {file: file for file in file_names} | slot_map
+    # deal with nested mapping
+    slot_map = resolved_nested_links(slot_map)
 
     for out_slot, in_slot in slot_map.items():
-        in_file = in_dir / in_slot
-        out_file = out_dir / out_slot
-        
-        if overwrite and out_file.exists():
-            print(f'Link {out_slot} -> {in_file}')
-            if out_file.is_dir() and not out_file.is_symlink():
-                shutil.rmtree(out_file)
-            else:
-                out_file.unlink()
-        
-        in_file = in_file.resolve()
-        if relative_path:
-            in_file = Path(
-                os.path.relpath(
-                    in_file,
-                    out_file.parent.resolve()
-                )
-            )
-        out_file.symlink_to(in_file)
+        link_file(
+            in_file=in_dir / in_slot,
+            out_file=out_dir / out_slot,
+            relative_path=False
+        )
 
 
 def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
