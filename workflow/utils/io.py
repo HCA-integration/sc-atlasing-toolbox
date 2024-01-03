@@ -246,7 +246,7 @@ def link_zarr(
         return d
     
     def link_file(in_file, out_file, relative_path=True):
-        in_file = in_file.resolve()
+        in_file = in_file.resolve(True)
         out_dir = out_file.parent.resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
         
@@ -255,11 +255,13 @@ def link_zarr(
         
         if overwrite and out_file.exists():
             if out_file.is_dir() and not out_file.is_symlink():
+                print(f'replace {out_file}...')
                 shutil.rmtree(out_file)
             else:
                 out_file.unlink()
         
         out_file.symlink_to(in_file)
+        assert out_file.exists(), f'Linking failed for {out_file.resolve()} -> {in_file}'
 
     in_dir = Path(in_dir)
     out_dir = Path(out_dir)
