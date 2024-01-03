@@ -57,7 +57,6 @@ class ModuleConfig:
         self.set_datasets(warn=False)
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
-        self.out_dir.mkdir(parents=True, exist_ok=True)
         self.image_dir = Path(self.config['images']) / self.module_name
 
         self.input_files = InputFiles(
