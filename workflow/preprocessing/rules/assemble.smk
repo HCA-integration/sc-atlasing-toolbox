@@ -7,6 +7,7 @@ use rule normalize from preprocessing as preprocessing_normalize with:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'normalized.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'normalized.done'),
     params:
         raw_counts=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'raw_counts']),
     resources:
@@ -20,7 +21,8 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
     input:
         zarr=rules.preprocessing_normalize.output.zarr
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.done'),
     params:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'highly_variable_genes'], default={}),
         batch=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'batch']),
@@ -37,7 +39,8 @@ use rule pca from preprocessing as preprocessing_pca with:
         zarr=rules.preprocessing_highly_variable_genes.output.zarr,
         counts=rules.preprocessing_normalize.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.done'),
     params:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'pca'], default={}),
         scale=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'scale']),
@@ -52,7 +55,8 @@ use rule neighbors from preprocessing as preprocessing_neighbors with:
     input:
         zarr=rules.preprocessing_pca.output.zarr
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.done'),
     params:
         args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'neighbors'], default={}),
     resources:
@@ -67,7 +71,8 @@ use rule umap from preprocessing as preprocessing_umap with:
         zarr=rules.preprocessing_neighbors.output.zarr,
         rep=rules.preprocessing_pca.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.done'),
     params:
         neighbors_key='neighbors',
     resources:
@@ -79,7 +84,7 @@ use rule umap from preprocessing as preprocessing_umap with:
 
 def collect_files(wildcards):
     file_dict = {
-        'counts': mcfg.get_input_file(**wildcards),
+        # 'counts': mcfg.get_input_file(**wildcards),
         'normalize': rules.preprocessing_normalize.output.zarr,
         'highly_variable_genes': rules.preprocessing_highly_variable_genes.output.zarr,
         'pca': rules.preprocessing_pca.output.zarr,
@@ -100,5 +105,6 @@ use rule assemble from preprocessing as preprocessing_assemble with:
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
+    retries: 1
     conda:
         get_env(config, 'scanpy')

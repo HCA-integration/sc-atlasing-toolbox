@@ -66,6 +66,7 @@ use rule neighbors from preprocessing as integration_postprocess with:
         zarr=rules.integration_run_method.output.zarr,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        done=touch(out_dir / f'{paramspace.wildcard_pattern}.done'),
     params:
         args=update_neighbors_args,
         extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
