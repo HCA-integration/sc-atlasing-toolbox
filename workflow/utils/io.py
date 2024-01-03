@@ -59,7 +59,10 @@ def read_anndata(
         read_func = read_partial
     
     func, file_type = get_file_reader(file)
-    store = func(file, 'r')
+    try:
+        store = func(file, 'r')
+    except PathNotFoundError as e:
+        raise PathNotFoundError(f'Cannot read file {file}') from e
     
     # set default kwargs
     kwargs = {x: x for x in store} if not kwargs else kwargs
