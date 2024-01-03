@@ -22,11 +22,12 @@ from utils.misc import ensure_sparse
 
 input_dir = snakemake.input[0]
 output_dir = snakemake.output[0]
+layer = snakemake.params.get('raw_counts', 'X')
 
 logging.info(f'Read {input_dir}...')
 adata = read_anndata(
     input_dir,
-    X=snakemake.params.get('raw_counts', 'X'),
+    X=layer,
     obs='obs',
     var='var',
     uns='uns'
@@ -40,6 +41,7 @@ if adata.n_obs == 0:
 
 if input_dir.endswith('.h5ad'):
     adata.layers['counts'] = adata.X
+    adata.raw = adata
 
 # make sure data is on GPU for rapids_singlecell
 if rapids:
@@ -74,8 +76,9 @@ write_zarr_linked(
     output_dir,
     files_to_keep=['X', 'uns'],
     slot_map={
-        'raw': '',
-        'layers/counts': 'X',
+        'layers/counts': layer,
+        'raw/X': layer,
+        'raw/var': 'var',
     }
 )
 

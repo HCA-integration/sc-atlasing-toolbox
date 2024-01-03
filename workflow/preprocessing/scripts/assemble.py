@@ -25,12 +25,7 @@ def assemble_adata(file, file_type, adata, backed=True):
     if adata.n_obs == 0 or adata.n_vars == 0:
         return adata
 
-    if file_type == 'counts':
-        logging.info('add raw counts')
-        adata_pp = read_anndata(file, X='X', var='var', varm='varm', varp='varp', backed=backed)
-        adata.layers['counts'] = adata_pp[:, adata.var_names].X
-        adata.raw = adata_pp
-    elif file_type == 'normalize':
+    if file_type == 'normalize':
         logging.info('add normalised counts')
         adata_pp = read_anndata(file, X='X', backed=backed)
         adata.layers['normcounts'] = adata_pp[:, adata.var_names].X
@@ -82,15 +77,10 @@ def assemble_adata(file, file_type, adata, backed=True):
 def assemble_zarr(file, file_type, files_to_link):
     file = Path(file)
 
-    if file_type == 'counts':
-        logging.info('add raw counts')
-        files_to_link.append((file / 'X', output_file / 'raw' / 'X'))
-        files_to_link.append((file / 'X', output_file / 'layers' / 'counts'))
-        files_to_link.append((file / 'obs', output_file / 'obs'))
-        files_to_link.append((file / 'var', output_file / 'raw' / 'var'))
-    elif file_type == 'normalize':
+    if file_type == 'normalize':
         logging.info('add normalised counts')
         files_to_link.append((file / 'layers', output_file / 'layers'))
+        files_to_link.append((file / 'raw', output_file / 'raw'))
         files_to_link.append((file / 'X', output_file / 'X'))
         files_to_link.append((file / 'uns' / 'log1p', output_file / 'uns' / 'log1p'))
         files_to_link.append((file / 'uns' / 'preprocessing' / 'log-transformed', output_file / 'uns' / 'preprocessing' / 'log-transformed'))
@@ -131,13 +121,26 @@ for file_type, file in snakemake.input.items():
         adata = read_anndata(file, obs='obs', var='var')
         if adata.X is None:
             adata.X = sparse.csr_matrix(np.zeros((adata.n_obs, adata.n_vars)))
+        if adata.n_obs == 0:
+            logging.info('No data, write empty file...')
+            adata.write_zarr(output_file)
+            exit(0)
 
     if file.endswith('.h5ad'):
-        adata = assemble_adata(file, file_type, adata, backed=backed)
+        adata = assemble_adata(
+            file=file,
+            file_type=file_type,
+            adata=adata,
+            backed=backed
+        )
     elif file.endswith('.zarr'):
         # if file_type in ['counts']: #, 'highly_variable_genes']:
         #     adata = assemble_adata(file, file_type, adata, backed=backed)
-        files_to_link = assemble_zarr(file, file_type, files_to_link)
+        files_to_link = assemble_zarr(
+            file=file,
+            file_type=file_type,
+            files_to_link=files_to_link,
+        )
     else:
         ValueError(f'Unknown file type {file}')
 
