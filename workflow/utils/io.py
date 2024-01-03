@@ -252,13 +252,11 @@ def link_zarr(
             in_file = Path(os.path.relpath(in_file, out_dir))
         
         if overwrite and out_file.exists():
-            print('remove', out_file)
             if out_file.is_dir() and not out_file.is_symlink():
                 shutil.rmtree(out_file)
             else:
                 out_file.unlink()
         
-        print(f'Link {out_file} -> {in_file}')
         out_file.symlink_to(in_file)
 
     in_dir = Path(in_dir)
@@ -277,14 +275,18 @@ def link_zarr(
     if slot_map is None:
         slot_map = {}
     slot_map = {file: file for file in file_names} | slot_map
+    slot_map |= {k: k for k, v in slot_map.items() if v is None}
     # deal with nested mapping
     slot_map = resolved_nested_links(slot_map)
 
     for out_slot, in_slot in slot_map.items():
+        in_file_name = str(in_dir).split('.zarr/')[-1] + '/' + in_slot
+        out_file_name = str(out_dir).split('.zarr/')[-1] + '/' + out_slot
+        print(f'Link {out_file_name} -> {in_file_name}')
         link_file(
             in_file=in_dir / in_slot,
             out_file=out_dir / out_slot,
-            relative_path=False
+            relative_path=relative_path
         )
 
 
