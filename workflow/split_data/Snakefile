@@ -28,7 +28,8 @@ wildcard_constraints:
     key=r"[^/]+",
     value=r"[^/]+",
 
-checkpoint split:
+
+rule split:
     input:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
@@ -45,13 +46,14 @@ checkpoint split:
 
 rule link:
     input:
-        lambda wildcards: checkpoints.split.get(**wildcards).output[0] + '/value~{value}.zarr',
+        lambda wildcards: mcfg.get_output_files(rules.split.output, subset_dict=wildcards)
     output:
         directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
         'scripts/link_zarr.py'
+
 
 rule all:
     input:
