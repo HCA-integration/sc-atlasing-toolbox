@@ -1,6 +1,7 @@
 import warnings
 import os
 from pathlib import Path
+from typing import MutableMapping
 import shutil
 import anndata as ad
 import zarr
@@ -215,11 +216,12 @@ def link_zarr(
     file_names: list = None,
     overwrite: bool = False,
     relative_path: bool = True,
-    slot_map: dict = None,
+    slot_map: MutableMapping = None,
+    in_dir_map: MutableMapping = None,
 ):
     """
     Link to existing zarr file
-    :param in_dir: path to existing zarr file
+    :param in_dir: path to existing zarr file or mapping of input slot in slot_map to input path
     :param out_dir: path to output zarr file
     :param file_names: list of files to link, if None, link all files
     :param overwrite: overwrite existing output files
@@ -227,26 +229,33 @@ def link_zarr(
     :param kwargs: custom mapping of output slot to input slot,
         will update default mapping of same input and output naming
     """
-    def resolved_nested_links(d):
+    def prune_nested_links(slot_map, in_dir_map):
         # determine equivalent classes of slots (top hierarchy)
         eq_classes = {}
-        for out_slot in d:
+        for out_slot in slot_map:
             if '/' not in out_slot:
                 continue
             eq = out_slot.rsplit('/', 1)[0]
-            if eq not in d:
+            if eq not in slot_map:
                 continue
             eq_classes.setdefault(eq, []).append(out_slot)
 
         for out_slot in eq_classes.keys():
-            in_slot = d[out_slot]
-            for f in (in_dir / in_slot).iterdir():
+            in_slot = slot_map[out_slot]
+            # link all files of the equivalence class
+            for f in (in_dir_map[in_slot] / in_slot).iterdir():
                 new_out_slot = f'{out_slot}/{f.name}'
-                if new_out_slot in d or f.name == '.snakemake_timestamp':
+                new_in_slot = f'{in_slot}/{f.name}'
+                # skip if already specified or .snakefile_timestamp
+                if new_out_slot in slot_map or f.name == '.snakemake_timestamp':
                     continue
-                d[new_out_slot] = f'{in_slot}/{f.name}'
-            del d[out_slot]
-        return d
+                # inherit in_dir
+                in_dir_map[new_in_slot] = in_dir_map[in_slot]
+                # update slot_map
+                slot_map[new_out_slot] = new_in_slot
+            # remove equivalence class once done to avoid overwriting
+            del slot_map[out_slot]
+        return slot_map, in_dir_map
     
     def link_file(in_file, out_file, relative_path=True):
         in_file = in_file.resolve(True)
@@ -265,15 +274,9 @@ def link_zarr(
         
         out_file.symlink_to(in_file)
         assert out_file.exists(), f'Linking failed for {out_file.resolve()} -> {in_file}'
-
-    in_dir = Path(in_dir)
-    out_dir = Path(out_dir)
-    
-    if not in_dir.exists():
-        raise ValueError(f'Input directory {in_dir} does not exist')
     
     if file_names is None:
-        file_names = [f.name for f in in_dir.iterdir()]
+        file_names = [] if in_dir is None else [f.name for f in Path(in_dir).iterdir()]
     file_names = [
         file for file in file_names
         if file not in ('.snakemake_timestamp')
@@ -281,12 +284,25 @@ def link_zarr(
     
     if slot_map is None:
         slot_map = {}
+    
     slot_map = {file: file for file in file_names} | slot_map
     slot_map |= {k: k for k, v in slot_map.items() if v is None}
+    
+    if in_dir_map is None:
+        in_dir_map = {}
+    
+    in_dir_map = {slot: in_dir for slot in slot_map.values()} | in_dir_map
+    in_dir_map = {slot: Path(path) for slot, path in in_dir_map.items()}
+    for _dir in in_dir_map.values():
+        assert _dir.exists(), f'Input directory {_dir} does not exist'
+    
     # deal with nested mapping
-    slot_map = resolved_nested_links(slot_map)
+    slot_map, in_dir_map = prune_nested_links(slot_map, in_dir_map)
 
+    # link all files
+    out_dir = Path(out_dir)
     for out_slot, in_slot in slot_map.items():
+        in_dir = in_dir_map[in_slot]
         in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
         out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
         print(f'Link {out_file_name} -> {in_file_name}')
@@ -297,6 +313,7 @@ def link_zarr(
         )
 
 
+# TODO: deprecate
 def link_zarr_partial(in_dir, out_dir, files_to_keep=None, overwrite=True, relative_path=True):
     """
     Link zarr files excluding defined slots
@@ -322,7 +339,8 @@ def write_zarr_linked(
     out_dir: [str, Path],
     relative_path: bool = True,
     files_to_keep: list = None,
-    slot_map: dict = None,
+    slot_map: MutableMapping = None,
+    in_dir_map: MutableMapping = None,
 ):
     """
     Write adata to linked zarr file
@@ -333,15 +351,17 @@ def write_zarr_linked(
     :param relative_path: use relative path for link
     :param slot_map: custom mapping of output slot to input slot, for slots that are not in files_to_keep
     """
-    in_dir = Path(in_dir)
-    
-    if not in_dir.name.endswith('.zarr'):
-        adata.write_zarr(out_dir)
-        return
+    if in_dir is None:
+        in_dirs = []
+    else:
+        in_dir = Path(in_dir)
+        if not in_dir.name.endswith('.zarr'):
+            adata.write_zarr(out_dir)
+            return
+        in_dirs = [f.name for f in in_dir.iterdir()]
     
     if files_to_keep is None:
         files_to_keep = []
-    in_dirs = [f.name for f in in_dir.iterdir()]
     files_to_link = [f for f in in_dirs if not any(k.startswith(f) for k in files_to_keep)]
     
     if slot_map is None:
@@ -372,4 +392,5 @@ def write_zarr_linked(
         overwrite=True,
         relative_path=relative_path,
         slot_map=slot_map,
+        in_dir_map=in_dir_map,
     )
