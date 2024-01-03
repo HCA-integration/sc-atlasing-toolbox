@@ -17,6 +17,7 @@ DATASETS:
       preprocessing:
         blood: test/input/load_data/merged/organ/blood.zarr
     preprocessing:
+      raw_counts: X
       batch: dataset
       lineage: cell_type
       scale: false
