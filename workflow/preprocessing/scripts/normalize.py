@@ -76,17 +76,12 @@ write_zarr_linked(
     output_dir,
     files_to_keep=['X', 'uns'],
     slot_map={
-        'layers/counts': layer,
         'raw/X': layer,
         'raw/var': 'var',
-    }
+        'layers/counts': layer,
+        'layers/normcounts': 'X',
+    },
+    in_dir_map={
+        'X': output_dir,
+    },
 )
-
-if input_dir.endswith('.zarr'):
-    logging.info('Linking layers...')
-    output_dir = Path(output_dir)
-    link_zarr(
-        in_dir=output_dir / 'X',
-        out_dir=output_dir / 'layers' / 'normcounts',
-        overwrite=True
-    )
