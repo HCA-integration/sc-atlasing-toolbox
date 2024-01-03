@@ -41,6 +41,7 @@ def read_anndata(
     file: str,
     dask: bool = False,
     backed: bool = False,
+    fail_on_missing: bool = True,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -72,10 +73,11 @@ def read_anndata(
     # check if keys are available
     for name, slot in kwargs.items():
         if slot not in store:
-            warnings.warn(
-                f'Cannot find "{slot}" for AnnData parameter `{name}`'
-                ' from "{file}", will be skipped'
-            )
+            message = f'Cannot find "{slot}" for AnnData parameter `{name}`'
+            message += f'\nfile: {file}\navailable slots: {list(store)}'
+            if fail_on_missing:
+                raise ValueError(message)
+            warnings.warn(f'{message}, will be skipped')
     adata = read_func(store, backed=backed, **kwargs)
     if not backed and file_type == 'h5py':
         store.close()
@@ -280,8 +282,8 @@ def link_zarr(
     slot_map = resolved_nested_links(slot_map)
 
     for out_slot, in_slot in slot_map.items():
-        in_file_name = str(in_dir).split('.zarr/')[-1] + '/' + in_slot
-        out_file_name = str(out_dir).split('.zarr/')[-1] + '/' + out_slot
+        in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
+        out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
         print(f'Link {out_file_name} -> {in_file_name}')
         link_file(
             in_file=in_dir / in_slot,
@@ -335,7 +337,7 @@ def write_zarr_linked(
     if files_to_keep is None:
         files_to_keep = []
     in_dirs = [f.name for f in in_dir.iterdir()]
-    files_to_link = [f for f in in_dirs if f not in files_to_keep]
+    files_to_link = [f for f in in_dirs if not any(k.startswith(f) for k in files_to_keep)]
     
     if slot_map is None:
         slot_map = {}
