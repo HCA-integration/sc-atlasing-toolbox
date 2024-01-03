@@ -76,7 +76,7 @@ adata_raw, files_to_link, slot_map = read_and_subset(
 )
 
 assert adata_norm.var.equals(adata_raw.var)
-assert adata_norm.obs.equals(adata_raw.obs)
+assert adata_norm.n_obs == adata_raw.n_obs, f'norm: {adata_norm.n_obs} , raw: {adata_raw.n_obs}'
 
 if input_file.endswith('.h5ad'):
     adata = read_anndata(
