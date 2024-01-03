@@ -48,21 +48,23 @@ def select_neighbors(adata, output_type):
     return adata
 
 
-def subset_hvg(adata, to_memory: [str, list] = 'X') -> (ad.AnnData, bool):
+def subset_hvg(adata, to_memory: [str, list] = 'X', hvgs: list = None) -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
     :param adata: anndata object
     :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
-    if 'highly_variable' not in adata.var.columns:
-        raise ValueError('No highly_variable column in adata.var')
-    if adata.var['highly_variable'].all():
+    if hvgs is None:
+        if 'highly_variable' not in adata.var.columns:
+            raise ValueError('No highly_variable column in adata.var')
+        hvgs = adata.var_names[adata.var['highly_variable']]
+    if adata.var_names.isin(hvgs).all():
         warnings.warn('All genes are highly variable, not subsetting')
         subsetted = False
     else:
         subsetted = True
-        adata = adata[:, adata.var['highly_variable']].copy()
+        adata = adata[:, hvgs].copy()
     adata = adata_to_memory(adata, layers=to_memory)
     return adata, subsetted
 

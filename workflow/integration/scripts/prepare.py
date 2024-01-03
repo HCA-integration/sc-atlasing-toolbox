@@ -39,6 +39,7 @@ def read_and_subset(
     layer_key: str,
     files_to_keep: list,
     slot_map: dict,
+    hvgs: list = None,
 ):
     in_layer = params.get(layer_key, 'X')
     out_layer = f'layers/{layer_key}'
@@ -54,11 +55,11 @@ def read_and_subset(
     )
     
     logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(adata)
+    adata, subsetted = subset_hvg(adata, hvgs=hvgs)
     
     # determine output
     if subsetted:
-        files_to_keep.append(out_layer)
+        files_to_keep.extend(['X', out_layer, 'var', 'varm', 'varp'])
     else:
         slot_map |= {out_layer: in_layer}
     
@@ -69,14 +70,21 @@ files_to_keep = []
 slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
-    input_file, 'norm_counts', files_to_keep, slot_map
+    input_file=input_file,
+    layer_key='norm_counts',
+    files_to_keep=files_to_keep,
+    slot_map=slot_map,
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
-    input_file, 'raw_counts', files_to_keep, slot_map
+    input_file=input_file,
+    layer_key='raw_counts',
+    files_to_keep=files_to_keep,
+    slot_map=slot_map,
+    hvgs=adata_norm.var_names,
 )
 
-assert adata_norm.var.equals(adata_raw.var)
-assert adata_norm.n_obs == adata_raw.n_obs, f'norm: {adata_norm.n_obs} , raw: {adata_raw.n_obs}'
+assert adata_norm.var_names.equals(adata_raw.var_names), f'\nnorm:\n{adata_norm.var}\nraw:\n{adata_raw.var}'
+assert adata_norm.n_obs == adata_raw.n_obs, f'\nnorm:\n{adata_norm.obs}\nraw:\n{adata_raw.obs}'
 
 if input_file.endswith('.h5ad'):
     adata = read_anndata(
