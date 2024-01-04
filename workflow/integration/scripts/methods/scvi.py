@@ -65,6 +65,15 @@ add_metadata(
     model_history=set_model_history_dtypes(model.history)
 )
 
+# plot model history
+from utils import plot_model_history
+plot_model_history(
+    train=model.history['reconstruction_loss_train']['reconstruction_loss_train'],
+    validation=model.history['reconstruction_loss_validation']['reconstruction_loss_validation'],
+    output_path=f'{output_model}/train_loss.png'
+)
+
+
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())
 write_zarr_linked(

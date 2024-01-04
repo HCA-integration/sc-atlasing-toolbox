@@ -84,6 +84,14 @@ add_metadata(
     model_history=dict(model.trainer.logs)
 )
 
+# plot model history
+from utils import plot_model_history
+plot_model_history(
+    train=model.trainer.logs['epoch_loss'],
+    validation=model.trainer.logs['val_loss'],
+    output_path=f'{output_model}/train_loss.png'
+)
+
 logging.info(adata.__str__())
 logging.info(f'Write {output_file}...')
 write_zarr_linked(
