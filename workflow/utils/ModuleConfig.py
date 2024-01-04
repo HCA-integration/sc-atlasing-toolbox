@@ -57,7 +57,6 @@ class ModuleConfig:
         self.set_datasets(warn=False)
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
-        self.out_dir.mkdir(parents=True, exist_ok=True)
         self.image_dir = Path(self.config['images']) / self.module_name
 
         self.input_files = InputFiles(
@@ -215,6 +214,7 @@ class ModuleConfig:
         pattern: [str, Rule] = None,
         allow_missing: bool=False,
         as_dict: bool=False,
+        verbose: bool=False,
         **kwargs
     ) -> list:
         """
@@ -251,6 +251,8 @@ class ModuleConfig:
             ]
             task_names = [shorten_name(name) for name in task_names]
             targets = dict(zip(task_names, targets))
+        if verbose:
+            print(targets)
         return targets
 
 

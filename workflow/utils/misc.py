@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import typing
 import hashlib
+import warnings
 
 
 def get_use_gpu(config):
@@ -112,12 +113,18 @@ def ifelse(statement, _if, _else):
 
 
 def check_sparse(matrix):
-    import anndata as ad
-    from scipy.sparse import csr_matrix, issparse
-    
-    return issparse(matrix) or isinstance(
-        matrix, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)
-    )
+    from anndata.experimental import CSRDataset, CSCDataset
+    from scipy.sparse import issparse
+    return issparse(matrix) or isinstance(matrix, (CSRDataset, CSCDataset))
+
+
+def check_sparse_equal(a, b):
+    from scipy.sparse import csr_matrix
+    a = a if check_sparse(a) else csr_matrix(a)
+    b = b if check_sparse(b) else csr_matrix(b)
+    if a.shape != b.shape:
+        warnings.warn(f'Shape mismatch: {a.shape} != {b.shape}')
+    return a.shape == b.shape and (a != b).nnz == 0
 
 
 def ensure_sparse(adata, layer='X'):

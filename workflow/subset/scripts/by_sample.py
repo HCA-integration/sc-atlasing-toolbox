@@ -2,7 +2,7 @@ import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import read_anndata
+from utils.io import read_anndata
 
 
 input_file = snakemake.input[0]
@@ -15,7 +15,7 @@ sample_key = snakemake.params.get('sample_key')
 
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, backed=True)
 logging.info(f'Shape before filtering: {adata.shape}')
 
 try:
@@ -36,7 +36,7 @@ for sample, count in shuffled_samples.items():
     n_cells += count
     logging.info(f'sample: {sample}')
     logging.info(f'count: {count}')
-    if n_cells > n_cell_max:
+    if len(samples) > 0 and n_cells > n_cell_max:
         break
     samples.append(sample)
 

@@ -46,13 +46,17 @@ for file in outputs:
                 raise ValueError(f'Invalid output type {ot}')
 
         if 'knn' in output_types:
+            assert 'obsp' in z, f'No obsp for output type knn\nfile: {file}'
             obsp = read_elem(z["obsp"])
             assert 'connectivities' in obsp
             assert 'distances' in obsp
         if 'embed' in output_types:
+            assert 'obsm' in z, f'No obsm for output type embed\nfile: {file}'
             obsm = read_elem(z["obsm"])
+
             assert 'X_emb' in obsm
         if 'full' in output_types:
+            assert 'X' in z, f'No X for output type full\nfile: {file}'
             X = read_elem(z['X'])
             assert X is not None
             # assert 'corrected_counts' in layers

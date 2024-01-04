@@ -2,13 +2,13 @@
 Assemble multiple preprocessing outputs into single file
 """
 from pathlib import Path
-from pprint import pformat
+from pprint import pformat, pprint
 import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy import sparse
 
-from utils.io import read_anndata, link_zarr
+from utils.io import read_anndata, write_zarr_linked
 
 
 def assemble_adata(file, file_type, adata, backed=True):
@@ -25,12 +25,7 @@ def assemble_adata(file, file_type, adata, backed=True):
     if adata.n_obs == 0 or adata.n_vars == 0:
         return adata
 
-    if file_type == 'counts':
-        logging.info('add raw counts')
-        adata_pp = read_anndata(file, X='X', var='var', varm='varm', varp='varp', backed=backed)
-        adata.layers['counts'] = adata_pp[:, adata.var_names].X
-        adata.raw = adata_pp
-    elif file_type == 'normalize':
+    if file_type == 'normalize':
         logging.info('add normalised counts')
         adata_pp = read_anndata(file, X='X', backed=backed)
         adata.layers['normcounts'] = adata_pp[:, adata.var_names].X
@@ -79,50 +74,57 @@ def assemble_adata(file, file_type, adata, backed=True):
     return adata
 
 
-def assemble_zarr(file, file_type, files_to_link):
+def assemble_zarr(file, file_type, slot_map, in_dir_map):
     file = Path(file)
 
-    if file_type == 'counts':
-        logging.info('add raw counts')
-        files_to_link.append((file / 'X', output_file / 'raw' / 'X'))
-        files_to_link.append((file / 'X', output_file / 'layers' / 'counts'))
-        files_to_link.append((file / 'obs', output_file / 'obs'))
-        files_to_link.append((file / 'var', output_file / 'raw' / 'var'))
-    elif file_type == 'normalize':
+    if file_type == 'normalize':
         logging.info('add normalised counts')
-        files_to_link.append((file / 'layers', output_file / 'layers'))
-        files_to_link.append((file / 'X', output_file / 'X'))
-        files_to_link.append((file / 'uns' / 'log1p', output_file / 'uns' / 'log1p'))
-        files_to_link.append((file / 'uns' / 'preprocessing' / 'log-transformed', output_file / 'uns' / 'preprocessing' / 'log-transformed'))
-        files_to_link.append((file / 'uns' / 'preprocessing' / 'normalization', output_file / 'uns' / 'preprocessing' / 'normalization'))
+        slot_map |= {
+            'X': 'X',
+            'layers': 'layers',
+            'raw': 'raw',
+            'uns/log1p': 'uns/log1p',
+            'uns/preprocessing/log-transformed': 'uns/preprocessing/log-transformed',
+            'uns/preprocessing/normalization': 'uns/preprocessing/normalization',
+        }
     elif file_type == 'highly_variable_genes':
         logging.info('add highly variable genes')
-        files_to_link.append((file / 'X', output_file / 'X'))
-        files_to_link.append((file / 'layers', output_file / 'layers'))
-        files_to_link.append((file / 'var', output_file / 'var'))
-        files_to_link.append((file / 'uns' / 'preprocessing' / 'highly_variable_genes', output_file / 'uns' / 'preprocessing' / 'highly_variable_genes'))
+        slot_map |= {
+            'X': 'X',
+            'layers': 'layers',
+            'var': 'var',
+            'uns/preprocessing/highly_variable_genes': 'uns/preprocessing/highly_variable_genes',
+        }
     elif file_type == 'pca':
         logging.info('add PCA')
-        files_to_link.append((file / 'obsm' / 'X_pca', output_file / 'obsm' / 'X_pca'))
-        files_to_link.append((file / 'uns' / 'pca', output_file / 'uns' / 'pca'))
-        files_to_link.append((file / 'varm' / 'PCs', output_file / 'varm' / 'PCs'))
+        slot_map |= {
+            'obsm/X_pca': 'obsm/X_pca',
+            'uns/pca': 'uns/pca',
+            'varm/PCs': 'varm/PCs',
+        }
     elif file_type == 'neighbors':
         logging.info('add neighbors')
-        files_to_link.append((file / 'obsp' / 'connectivities', output_file / 'obsp' / 'connectivities'))
-        files_to_link.append((file / 'obsp' / 'distances', output_file / 'obsp' / 'distances'))
-        files_to_link.append((file / 'uns' / 'neighbors', output_file / 'uns' / 'neighbors'))
+        slot_map |= {
+            'obsp/connectivities': 'obsp/connectivities',
+            'obsp/distances': 'obsp/distances',
+            'uns/neighbors': 'uns/neighbors',
+        }
     elif file_type == 'umap':
         logging.info('add UMAP')
-        files_to_link.append((file / 'obsm' / 'X_umap', output_file / 'obsm' / 'X_umap'))
+        slot_map |= {
+            'obsm/X_umap': 'obsm/X_umap'
+        } 
     else:
         ValueError(f'Unknown file type {file_type}')
-    return files_to_link
+    in_dir_map |= {slot: file for slot in slot_map.values()}
+    return slot_map, in_dir_map
 
 
 output_file = Path(snakemake.output[0])
 
 adata = None
-files_to_link = []
+slot_map = {}
+in_dir_map = {}
 backed=True
 
 for file_type, file in snakemake.input.items():
@@ -131,26 +133,36 @@ for file_type, file in snakemake.input.items():
         adata = read_anndata(file, obs='obs', var='var')
         if adata.X is None:
             adata.X = sparse.csr_matrix(np.zeros((adata.n_obs, adata.n_vars)))
+        if adata.n_obs == 0:
+            logging.info('No data, write empty file...')
+            adata.write_zarr(output_file)
+            exit(0)
 
     if file.endswith('.h5ad'):
-        adata = assemble_adata(file, file_type, adata, backed=backed)
+        adata = assemble_adata(
+            file=file,
+            file_type=file_type,
+            adata=adata,
+            backed=backed
+        )
     elif file.endswith('.zarr'):
         # if file_type in ['counts']: #, 'highly_variable_genes']:
         #     adata = assemble_adata(file, file_type, adata, backed=backed)
-        files_to_link = assemble_zarr(file, file_type, files_to_link)
+        slot_map, in_dir_map = assemble_zarr(
+            file=file,
+            file_type=file_type,
+            slot_map=slot_map,
+            in_dir_map=in_dir_map,
+        )
     else:
         ValueError(f'Unknown file type {file}')
 
 
 logging.info(f'Write to {output_file}...')
-adata.write_zarr(output_file)
-
-for input_dir, output_dir in files_to_link:
-    if not output_dir.exists():
-        logging.info(f'Directory {output_dir} does not yet exist, create it...')
-        output_dir.mkdir(parents=True)
-    link_zarr(
-        in_dir=input_dir,
-        out_dir=output_dir,
-        overwrite=True,
-    )
+write_zarr_linked(
+    adata=adata,
+    in_dir=None,
+    out_dir=output_file,
+    slot_map=slot_map,
+    in_dir_map=in_dir_map,
+)
