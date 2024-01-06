@@ -30,8 +30,9 @@ file_value_map = {
     s.replace(' ', '_').replace('/', '_'): s
     for s in adata.obs[split_key].astype(str).unique()
 }
-split_files = list(file_value_map.keys())
-split_files = set(split_files + values)
+# split_files = list(file_value_map.keys())
+# split_files = set(split_files + values)
+split_files = values
 logging.info(f'splits: {split_files}')
 
 for split_file in split_files:
