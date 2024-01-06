@@ -86,6 +86,7 @@ def plot_model_history(train, validation, output_path):
     plt.ylabel('Loss')
     plt.legend()
     plt.savefig(output_path)
+    plt.close()
 
 
 def check_output(adata, output_type):
