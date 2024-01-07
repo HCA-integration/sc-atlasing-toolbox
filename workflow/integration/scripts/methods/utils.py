@@ -77,11 +77,11 @@ def set_model_history_dtypes(model_history, dtype='float32'):
     }
 
 
-def plot_model_history(train, validation, output_path):
+def plot_model_history(title, train, validation, output_path):
     from matplotlib import pyplot as plt
     plt.plot(train, label='train')
     plt.plot(validation, label='validation')
-    plt.title('Training loss')
+    plt.title(f'Training loss: {title}')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()

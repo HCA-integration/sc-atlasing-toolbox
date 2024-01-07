@@ -94,6 +94,7 @@ add_metadata(
 from utils import plot_model_history
 
 plot_model_history(
+    title='loss',
     train=model.trainer.logs['epoch_loss'],
     validation=model.trainer.logs['val_loss'],
     output_path=f'{output_plot_dir}/loss.png'

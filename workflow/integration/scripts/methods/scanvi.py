@@ -89,6 +89,7 @@ from utils import plot_model_history
 
 for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
     plot_model_history(
+        title=loss,
         train=model.history[f'{loss}_train'][f'{loss}_train'],
         validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
         output_path=f'{output_plot_dir}/{loss}.png'
