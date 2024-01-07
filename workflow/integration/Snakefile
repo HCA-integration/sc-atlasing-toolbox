@@ -71,6 +71,7 @@ include: 'rules/umap.smk'
 
 rule plots_all:
     input:
+        rules.run_all.input,
         rules.benchmark_all.input,
         mcfg.get_output_files(rules.integration_plot_umap.output),
 

@@ -16,6 +16,7 @@ rule prepare:
     script:
         '../scripts/prepare.py'
 
+integration_run_pattern = paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
 
 use rule run_method from integration as integration_run_method with:
     message:
@@ -29,10 +30,11 @@ use rule run_method from integration as integration_run_method with:
     input:
         zarr=rules.prepare.output.zarr,
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'adata.zarr'),
-        model=touch(directory(out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'model'))
+        zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
+        model=touch(directory(out_dir / integration_run_pattern / 'model')),
+        plots=touch(directory(image_dir / integration_run_pattern / 'training')),
     benchmark:
-        out_dir / paramspace.wildcard_pattern.replace('--output_type~{output_type}', '') / 'benchmark.tsv'
+        out_dir /integration_run_pattern / 'benchmark.tsv'
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
@@ -66,7 +68,7 @@ use rule neighbors from preprocessing as integration_postprocess with:
         zarr=rules.integration_run_method.output.zarr,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
-        done=touch(out_dir / f'{paramspace.wildcard_pattern}.done'),
+        done=touch(directory(out_dir / f'{paramspace.wildcard_pattern}.zarr/obs')),
     params:
         args=update_neighbors_args,
         extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
@@ -79,4 +81,5 @@ use rule neighbors from preprocessing as integration_postprocess with:
 
 rule run_all:
     input:
-        mcfg.get_output_files(rules.integration_postprocess.output)
+        mcfg.get_output_files(rules.integration_run_method.output),
+        mcfg.get_output_files(rules.integration_postprocess.output),

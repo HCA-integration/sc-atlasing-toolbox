@@ -62,8 +62,8 @@ def read_anndata(
     func, file_type = get_file_reader(file)
     try:
         store = func(file, 'r')
-    except PathNotFoundError as e:
-        raise PathNotFoundError(f'Cannot read file {file}') from e
+    except zarr.errors.PathNotFoundError as e:
+        raise FileNotFoundError(f'Cannot read file {file}') from e
     
     # set default kwargs
     kwargs = {x: x for x in store} if not kwargs else kwargs

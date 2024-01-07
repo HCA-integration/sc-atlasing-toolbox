@@ -1,4 +1,5 @@
 import scvi
+from pathlib import Path
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -9,6 +10,9 @@ from utils_pipeline.io import read_anndata, write_zarr_linked, to_memory
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 output_model = snakemake.output.model
+output_plot_dir = snakemake.output.plots
+Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
+
 wildcards = snakemake.wildcards
 params = snakemake.params
 
@@ -64,6 +68,18 @@ add_metadata(
     # history is not saved with standard model saving
     model_history=set_model_history_dtypes(model.history)
 )
+
+# plot model history
+from utils import plot_model_history
+
+for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    plot_model_history(
+        title=loss,
+        train=model.history[f'{loss}_train'][f'{loss}_train'],
+        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        output_path=f'{output_plot_dir}/{loss}.png'
+    )
+
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())

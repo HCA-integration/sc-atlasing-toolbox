@@ -1,6 +1,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 from pprint import pformat
+from pathlib import Path
 import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
@@ -11,6 +12,9 @@ from utils_pipeline.io import read_anndata, write_zarr_linked
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 output_model = snakemake.output.model
+output_plot_dir = snakemake.output.plots
+Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
+
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
 label_key = wildcards.label
@@ -25,6 +29,15 @@ model_params, train_params = get_hyperparams(
         'n_samples_per_label'
     ],
 )
+early_stopping_kwargs = {
+    "early_stopping_metric": "val_loss",
+    "patience": 20,
+    "threshold": 0,
+    "reduce_lr": True,
+    "lr_patience": 13,
+    "lr_factor": 0.1,
+}
+train_params['early_stopping_kwargs'] = early_stopping_kwargs
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
@@ -53,17 +66,7 @@ model = sca.models.scgen(
 )
 
 logging.info(f'Train scGEN with parameters:\n{pformat(train_params)}')
-model.train(
-    **train_params,
-    early_stopping_kwargs={
-        "early_stopping_metric": "val_loss",
-        "patience": 20,
-        "threshold": 0,
-        "reduce_lr": True,
-        "lr_patience": 13,
-        "lr_factor": 0.1,
-    },
-)
+model.train(**train_params)
 
 logging.info('Save model...')
 model.save(output_model, overwrite=True)
@@ -85,6 +88,16 @@ add_metadata(
     wildcards,
     params,
     model_history=dict(model.trainer.logs)
+)
+
+# plot model history
+from utils import plot_model_history
+
+plot_model_history(
+    title='loss',
+    train=model.trainer.logs['epoch_loss'],
+    validation=model.trainer.logs['val_loss'],
+    output_path=f'{output_plot_dir}/loss.png'
 )
 
 logging.info(adata.__str__())
