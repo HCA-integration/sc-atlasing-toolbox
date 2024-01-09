@@ -3,6 +3,11 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
 
+from utils.accessors import adata_to_memory
+from utils.assertions import assert_pca
+
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+
 
 def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     import scib
@@ -10,11 +15,53 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     if output_type == 'knn':
         return np.nan
 
-    return scib.me.pcr_comparison(
+    assert_pca(adata_raw)
+    embed = 'X_emb' if output_type == 'embed' else 'X_pca'
+    assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+    
+    def pcr_comparison(
+        adata_pre,
+        adata_post,
+        covariate,
+        embed=None,
+        n_comps=50,
+        scale=True,
+        verbose=False,
+    ):
+        pcr_before = scib.me.pcr(
+            adata_pre,
+            covariate=covariate,
+            recompute_pca=False,
+            n_comps=n_comps,
+            verbose=verbose,
+        )
+
+        pcr_after = scib.me.pcr(
+            adata_post,
+            covariate=covariate,
+            embed=embed,
+            recompute_pca=True,
+            n_comps=n_comps,
+            verbose=verbose,
+        )
+
+        if scale:
+            score = (pcr_before - pcr_after) / pcr_before
+            if score < 0:
+                print(
+                    "Warning: Variance contribution increased after integration!\n"
+                    "Setting PCR comparison score to 0."
+                )
+                score = 0
+            return score
+        else:
+            return pcr_after - pcr_before
+    
+    return pcr_comparison(
         adata_pre=adata_raw,
         adata_post=adata,
         covariate=batch_key,
-        embed='X_emb' if output_type == 'embed' else 'X_pca',
+        embed=embed,
     )
 
 
@@ -23,9 +70,9 @@ def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
 
     if output_type == 'knn':
         return np.nan
-
+    
+    adata_raw = adata_to_memory(adata_raw)
     X_pre = adata_raw.X
-
     X_post = adata.obsm['X_emb'] if output_type == 'embed' else adata.X
     X_pre, X_post = [X if isinstance(X, np.ndarray) else X.todense() for X in [X_pre, X_post]]
 
