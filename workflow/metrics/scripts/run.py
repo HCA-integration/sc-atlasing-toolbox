@@ -52,7 +52,7 @@ if comparison:
     adata_raw = read_anndata(
         input_file,
         varm='varm',
-        # backed=True,
+        backed=True,
         **kwargs
     )
 
