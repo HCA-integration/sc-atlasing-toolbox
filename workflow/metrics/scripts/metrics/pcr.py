@@ -90,11 +90,19 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     if output_type == 'knn':
         return np.nan
 
+    # get correct feature names
     if 'feature_name' in adata_raw.var.columns:
         adata_raw.var_names = adata_raw.var['feature_name']
-    upper_case_genes = sum(adata.var_names.str.isupper())
-    organism = 'mouse' if upper_case_genes <= 0.1 * adata.n_vars else 'human'
 
+    # get organism
+    upper_case_genes = sum(adata_raw.var_names.str.isupper())
+    organism = 'mouse' if upper_case_genes <= 0.1 * adata_raw.n_vars else 'human'
+    
+    embed = 'X_emb' if output_type == 'embed' else 'X_pca'
+    assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+
+    adata_raw = adata_to_memory(adata_raw)
+    
     try:
         # compute cell cycle score per batch
         batch_key = batch_key
@@ -103,19 +111,22 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
                 adata_raw[adata_raw.obs[batch_key] == batch],
                 organism=organism
             )
-        
+    except Exception as e:
+        raise ValueError(f'Error in score_cell_cycle: {e}') from e
+    
+    try:
         # compute score
         score = scib.me.cell_cycle(
             adata_pre=adata_raw,
             adata_post=adata,
             batch_key=batch_key,
-            embed='X_emb' if output_type == 'embed' else 'X_pca',
+            embed=embed,
             recompute_cc=False,
             organism=organism,
             verbose=False,
         )
     except ValueError as e:
-        warnings.warn(f'ValueError in cell cycle score: {e}')
+        print(f'Warning: caught error in cell cycle score: {e}')
         score = np.nan
 
     return score
