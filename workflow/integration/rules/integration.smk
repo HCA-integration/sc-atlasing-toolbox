@@ -31,6 +31,7 @@ use rule run_method from integration as integration_run_method with:
         zarr=rules.prepare.output.zarr,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
+        done=directory(out_dir / integration_run_pattern/ 'adata.zarr/layers'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
         plots=touch(directory(image_dir / integration_run_pattern / 'training')),
     benchmark:

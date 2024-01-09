@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 from utils_pipeline.processing import assert_neighbors
 
 
@@ -45,5 +45,12 @@ adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 # write file
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=files_to_keep)
+
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=files_to_keep,
+)

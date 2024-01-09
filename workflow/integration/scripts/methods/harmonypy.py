@@ -4,7 +4,7 @@ from scipy.sparse import issparse
 import harmonypy as hm
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
 input_file = snakemake.input[0]
@@ -36,5 +36,11 @@ adata.obsm['X_emb'] = harmony_out.Z_corr.T
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obsm', 'uns'],
+)
