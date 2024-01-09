@@ -49,13 +49,13 @@ DATASETS:
   test_integration:
     input:
       metrics:
-        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~full/postprocessed.zarr
-        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
-        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~knn/postprocessed.zarr
-        bbknn: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~bbknn--hyperparams~None--label~None--output_type~knn/postprocessed.zarr
-        harmony: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~harmony--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
-        scanorama_full: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~full/postprocessed.zarr
-        scanorama_embed: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+        bbknn: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~bbknn--hyperparams~None--label~None--output_type~knn.zarr
+        harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/method~harmony--hyperparams~None--label~None--output_type~embed.zarr
+        scanorama_full: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~scanorama--hyperparams~None--label~None--output_type~full.zarr
+        scanorama_embed: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~scanorama--hyperparams~None--label~None--output_type~embed.zarr
     metrics:
       unintegrated: X
       label:

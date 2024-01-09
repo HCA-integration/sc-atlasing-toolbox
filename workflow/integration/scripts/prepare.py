@@ -67,7 +67,8 @@ def read_and_subset(
 
 
 files_to_keep = []
-slot_map = {}
+slot_map = {'X': 'layers/norm_counts'}
+in_dir_map = {'layers/norm_counts': output_file}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
@@ -95,6 +96,7 @@ if input_file.endswith('.h5ad'):
         uns='uns',
     )
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata.obs,
         var=adata_norm.var,
         obsm=adata.obsm,
@@ -124,4 +126,5 @@ write_zarr_linked(
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    in_dir_map=in_dir_map,
 )
