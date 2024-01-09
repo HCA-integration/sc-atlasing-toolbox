@@ -7,7 +7,7 @@ import anndata as ad
 import zarr
 import h5py
 from scipy.sparse import csr_matrix
-from anndata.experimental import read_elem, sparse_dataset
+from anndata.experimental import read_elem, sparse_dataset, CSRDataset, CSCDataset
 
 zarr.default_compressor = zarr.Blosc(shuffle=zarr.Blosc.SHUFFLE)
 
@@ -32,7 +32,7 @@ def check_slot_exists(file, slot):
 
 
 def to_memory(matrix):
-    if isinstance(matrix, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
+    if isinstance(matrix, (CSRDataset, CSCDataset)):
         print('Convert to memory...')
         return matrix.to_memory()
     return matrix

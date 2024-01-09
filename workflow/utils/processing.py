@@ -11,17 +11,8 @@ except ImportError as e:
     logging.info('Importing rapids failed, using scanpy...')
 
 
-def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities', dist_key='distances', check_params=True):
-    assert neighbors_key in adata.uns, f'neighbors key "{neighbors_key}" not on .uns'
-    assert 'connectivities_key' in adata.uns[neighbors_key]
-    assert 'distances_key' in adata.uns[neighbors_key]
-    assert adata.uns[neighbors_key]['connectivities_key'] == conn_key, f'"{conn_key} is not saved as conectivities_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
-    assert adata.uns[neighbors_key]['distances_key'] == dist_key, f'"{dist_key} is not saved as distances_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
-    assert conn_key in adata.obsp, f'"{conn_key}" not in .obsp {adata.obsp.keys()}'
-    assert dist_key in adata.obsp, f'"{dist_key}" not in .obsp {adata.obsp.keys()}'
-    if check_params:
-        assert 'params' in adata.uns[neighbors_key]
-        assert 'use_rep' in adata.uns[neighbors_key]['params']
+from .assertions import assert_neighbors
+from .io import to_memory
 
 
 def compute_neighbors(adata, output_type=None, force=False, **kwargs):
@@ -57,8 +48,9 @@ def compute_neighbors(adata, output_type=None, force=False, **kwargs):
         kwargs |= dict(use_rep='X_emb')
         sc.pp.neighbors(adata, **kwargs)
     elif output_type == 'full':
+        adata.X = to_memory(adata.X)
         assert isinstance(adata.X, (np.ndarray, sparse.csr_matrix, sparse.csc_matrix))
-        kwargs |= dict(use_rep='X_pca')
+        kwargs |= dict(use_rep='X')
         sc.pp.pca(adata, use_highly_variable=True)
         sc.pp.neighbors(adata, **kwargs)
     else:
