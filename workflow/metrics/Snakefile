@@ -54,6 +54,8 @@ include: 'rules/plots.smk'
 
 rule all:
     input:
+        rules.preprocess.output,
+        rules.run_all.output,
         rules.merge.output,
         rules.plots_all.input
     default_target: True

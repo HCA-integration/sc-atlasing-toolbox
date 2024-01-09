@@ -68,6 +68,7 @@ DATASETS:
         - nmi
         - pcr
         - asw_batch
+        - graph_connectivity
         - cell_cycle
   
   scib_metrics:

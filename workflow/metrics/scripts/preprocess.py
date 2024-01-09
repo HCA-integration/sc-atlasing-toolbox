@@ -36,6 +36,9 @@ adata = read_anndata(
 # default output type is 'full'
 output_type = adata.uns.get('output_type', 'full')
 
+if output_type == 'full':
+    adata.layers['corrected'] = read_anndata(input_file, X='X', backed=True).X
+
 try:
     assert_pca(adata)
 except AssertionError as e:
@@ -56,6 +59,12 @@ force_neighbors = n_obs > adata.n_obs
 
 logging.info(f'Computing neighbors for output type {output_type}...')
 compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
+
+# TODO: compute for unintegrated
+# if output_type == 'full':
+#     adata.X = adata.layers['corrected']
+# neighbor_args['use_rep'] = 'X'
+# compute_neighbors(adata, 'full', force=force_neighbors, **neighbor_args)
 
 # write to file
 logging.info(adata.__str__())
