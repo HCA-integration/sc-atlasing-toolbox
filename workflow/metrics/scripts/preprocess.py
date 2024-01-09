@@ -2,24 +2,48 @@ from pathlib import Path
 import logging
 logger = logging.getLogger('Preprocess for metrics')
 logger.setLevel(logging.INFO)
+import scanpy as sc
 
+from utils.assertions import assert_pca
+from utils.accessors import adata_to_memory
+from utils.io import read_anndata, write_zarr_linked
 from utils.processing import compute_neighbors
-from utils.io import read_anndata, link_zarr
 
 
-input_adata = snakemake.input[0]
+input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-label_key = snakemake.params.label_key
-neighbor_args = snakemake.params.neighbor_args
+params = snakemake.params
+label_key = params.get('label_key')
+neighbor_args = params.get('neighbor_args', {})
+unintegrated_layer = params.get('unintegrated_layer')
 
-files_to_overwrite = ['obsp', 'var', 'uns']
+files_to_keep = ['obsp', 'var', 'uns']
 
 logging.info('Read file...')
-adata = read_anndata(input_adata)  # TODO: read only necessary slots
+adata = read_anndata(
+    input_file,
+    X=unintegrated_layer,
+    obs='obs',
+    var='var',
+    obsm='obsm',
+    obsp='obsp',
+    varm='varm',
+    uns='uns',
+    backed=True,
+)
 
 # determine output types
 # default output type is 'full'
 output_type = adata.uns.get('output_type', 'full')
+
+try:
+    assert_pca(adata)
+except AssertionError as e:
+    logging.info(f'PCA not found: {e}\nrecomputing PCA...')
+    adata = adata_to_memory(adata)
+    sc.pp.pca(adata, mask='highly_variable')
+    files_to_keep.extend(['obsm', 'varm'])
+
 
 n_obs = adata.n_obs
 # logger.info('Filtering out cells without labels')
@@ -32,20 +56,13 @@ force_neighbors = n_obs > adata.n_obs
 
 logging.info(f'Computing neighbors for output type {output_type}...')
 compute_neighbors(adata, output_type, force=force_neighbors, **neighbor_args)
-if output_type == 'full':
-    files_to_overwrite.extend(['obsm', 'varm'])
 
 # write to file
 logging.info(adata.__str__())
-adata.write_zarr(output_file)
-
-if input_adata.endswith('.zarr'):
-    input_file = Path(input_adata)
-    input_zarr_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_link = [f for f in input_zarr_files if f not in files_to_overwrite]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=Path(output_file),
-        file_names=files_to_link,
-        overwrite=True,
+logging.info(f'Write to {output_file}...')
+write_zarr_linked(
+    adata,
+    in_dir=input_file,
+    out_dir=output_file,
+    files_to_keep=files_to_keep,
 )

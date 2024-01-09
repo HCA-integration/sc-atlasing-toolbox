@@ -29,6 +29,7 @@ defaults:
       - isolated_label_asw
       - isolated_label_f1
       - pcr
+      # - pcr_y  # broken function
   datasets:
     - test_metrics
     - test_integration
@@ -56,7 +57,7 @@ DATASETS:
         scanorama_full: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~full/postprocessed.zarr
         scanorama_embed: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~scanorama--hyperparams~None--label~None--output_type~embed/postprocessed.zarr
     metrics:
-      unintegrated: test/input/integration/dataset~test/file_id~pbmc/batch~batch_2/method~unintegrated--hyperparams~None--label~None--output_type~full/postprocessed.zarr
+      unintegrated: X
       label:
         - bulk_labels
         - louvain
