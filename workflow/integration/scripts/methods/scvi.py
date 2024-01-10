@@ -1,32 +1,44 @@
 import scvi
+from pathlib import Path
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
-from utils_pipeline.accessors import select_layer
-
+from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
+from utils_pipeline.io import read_anndata, write_zarr_linked, to_memory
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 output_model = snakemake.output.model
+output_plot_dir = snakemake.output.plots
+Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
+
 wildcards = snakemake.wildcards
 params = snakemake.params
 
+model_params, train_params = get_hyperparams(
+    hyperparams=params.get('hyperparams', {}),
+    train_params=[
+        'max_epochs',
+        'observed_lib_size',
+        'n_samples_per_label',
+        'batch_size',
+        'early_stopping'
+    ],
+)
+logging.info(
+    f'model parameters:\n{pformat(model_params)}\n'
+    f'training parameters:\n{pformat(train_params)}'
+)
+
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', obs='obs', var='var', layers='layers', raw='raw')
-adata.X = select_layer(adata, params['raw_counts'])
-
-# subset to HVGs
-adata = adata[:, adata.var['highly_variable']].copy()
-
-# run method
-# adata = scib.ig.scvi(adata, batch=wildcards.batch, **params['hyperparams'])
-
-hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
-train_params = ['max_epochs', 'observed_lib_size', 'n_samples_per_label']
-model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
-train_params = {k: v for k, v in hyperparams.items() if k in train_params}
+adata = read_anndata(
+    input_file,
+    X='layers/raw_counts',
+    var='var',
+    obs='obs',
+    uns='uns',
+)
 
 scvi.model.SCVI.setup_anndata(
     adata,
@@ -34,17 +46,46 @@ scvi.model.SCVI.setup_anndata(
     batch_key=wildcards.batch,
 )
 
+logging.info(f'Set up scVI with parameters:\n{pformat(model_params)}')
 model = scvi.model.SCVI(
     adata,
     **model_params
 )
+
+logging.info(f'Train scVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
+
+logging.info('Save model...')
 model.save(output_model, overwrite=True)
 
 # prepare output adata
 adata.obsm["X_emb"] = model.get_latent_representation()
-adata = remove_slots(adata=adata, output_type=params['output_type'])
-add_metadata(adata, wildcards, params)
+adata = remove_slots(adata=adata, output_type=params['output_type'], keep_X=True)
+add_metadata(
+    adata,
+    wildcards,
+    params,
+    # history is not saved with standard model saving
+    model_history=set_model_history_dtypes(model.history)
+)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])
+# plot model history
+from utils import plot_model_history
+
+for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    plot_model_history(
+        title=loss,
+        train=model.history[f'{loss}_train'][f'{loss}_train'],
+        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        output_path=f'{output_plot_dir}/{loss}.png'
+    )
+
+
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obsm', 'uns'],
+)

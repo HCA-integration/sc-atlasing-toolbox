@@ -8,7 +8,7 @@ rule benchmark_per_dataset:
             subset_dict=dict(wildcards)
         ),
     output:
-        benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
+        benchmark=out_dir / 'dataset={dataset}' / 'integration.benchmark.tsv'
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, as_df=True)
     group:
@@ -59,7 +59,7 @@ use rule barplot from plots as integration_barplot_per_dataset with:
     input:
         tsv=rules.benchmark_per_dataset.output.benchmark
     output:
-        png=image_dir / 'benchmark' / '{dataset}' / '{metric}.png'
+        png=image_dir / 'benchmark' / 'dataset={dataset}' / 'metric={metric}.png'
     group:
         'integration'
     params:
@@ -75,9 +75,17 @@ use rule barplot from plots as integration_barplot_per_dataset with:
 
 rule benchmark_all:
     input:
-        expand(rules.integration_barplot.output,metric=['s', 'max_uss', 'mean_load']),
         expand(
-            rules.integration_barplot_per_dataset.output,
+            mcfg.get_output_files(
+                rules.integration_barplot.output,
+                allow_missing=True,
+            ),
+            metric=['s', 'max_uss', 'mean_load']
+        ),
+        expand(
+            mcfg.get_output_files(
+                rules.integration_barplot_per_dataset.output,
+                allow_missing=True,
+            ),
             metric=['s', 'max_uss', 'mean_load'],
-            dataset=mcfg.datasets.keys()
         )

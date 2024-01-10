@@ -5,7 +5,6 @@ import harmonypy as hm
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
-from utils_pipeline.accessors import select_layer
 
 
 input_file = snakemake.input[0]
@@ -14,7 +13,15 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', var='var', obsm='obsm', uns='uns')
+adata = read_anndata(
+    input_file,
+    obs='obs',
+    var='var',
+    obsm='obsm',
+    uns='uns'
+)
+
+assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 
 # run method
 logging.info('Run harmonypy...')

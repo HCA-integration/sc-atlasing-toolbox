@@ -3,8 +3,8 @@ defaults:
     # - test
     - test2
   integration:
-    raw_counts: raw
-    norm_counts: normcounts
+    raw_counts: raw/X
+    norm_counts: layers/normcounts
     methods:
       unintegrated:
       bbknn:

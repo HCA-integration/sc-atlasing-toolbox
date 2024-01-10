@@ -1,4 +1,3 @@
-import warnings
 from pprint import pprint
 from typing import Union
 from pathlib import Path
@@ -6,24 +5,25 @@ import pandas as pd
 from snakemake.exceptions import WildcardError
 from snakemake.io import expand, Wildcards
 from snakemake.rules import Rule
+import logging
 
 from .WildcardParameters import WildcardParameters
 from .InputFiles import InputFiles
 from .config import get_from_config, _get_or_default_from_config
 from .misc import create_hash, get_use_gpu
 
+# set up logger
+logger = logging.getLogger('ModuleConfig')
+logger.setLevel(logging.WARNING)
+
+# Create a handler with the same formatter as basicConfig
+formatter = logging.Formatter('%(levelname)s:%(name)s: %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 class ModuleConfig:
-
-    # module_name = ''
-    # config = {}
-    # datasets = {}
-    # wildcard_names = []
-    # parameters = WildcardParameters()
-    # input_files = InputFiles()
-    # default_target = None
-    # out_dir = Path()
-    # image_dir = Path()
 
 
     def __init__(
@@ -57,7 +57,6 @@ class ModuleConfig:
         self.set_datasets(warn=False)
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
-        self.out_dir.mkdir(parents=True, exist_ok=True)
         self.image_dir = Path(self.config['images']) / self.module_name
 
         self.input_files = InputFiles(
@@ -143,7 +142,10 @@ class ModuleConfig:
             wildcard_pattern = self.parameters.get_paramspace().wildcard_pattern
             default_target = self.out_dir / f'{wildcard_pattern}.zarr'
             if warn:
-                warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
+                logger.warn(
+                    f'No default target specified for module "{self.module_name}",'
+                    f' using default:\n"{default_target}..."'
+                )
             self.default_target = default_target
 
 
@@ -215,6 +217,7 @@ class ModuleConfig:
         pattern: [str, Rule] = None,
         allow_missing: bool=False,
         as_dict: bool=False,
+        verbose: bool=False,
         **kwargs
     ) -> list:
         """
@@ -251,6 +254,8 @@ class ModuleConfig:
             ]
             task_names = [shorten_name(name) for name in task_names]
             targets = dict(zip(task_names, targets))
+        if verbose:
+            print(targets)
         return targets
 
 

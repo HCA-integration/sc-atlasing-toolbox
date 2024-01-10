@@ -17,8 +17,9 @@ DATASETS:
       preprocessing:
         blood: test/input/load_data/merged/organ/blood.zarr
     preprocessing:
-      batch: donor
-      lineage: development_stage
+      raw_counts: X
+      batch: dataset
+      lineage: cell_type
       scale: false
       highly_variable_genes:
         n_top_genes: 2000
@@ -43,7 +44,7 @@ DATASETS:
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: false
+        subset: true
       assemble:
         - counts
         - normalize

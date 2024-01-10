@@ -16,30 +16,36 @@ except ImportError as e:
     logging.info('Importing rapids failed, using scanpy...')
     rapids = False
 
-from utils.io import read_anndata, link_zarr_partial
+from utils.io import read_anndata, write_zarr_linked, link_zarr
 from utils.misc import ensure_sparse
 
 
-input_file = snakemake.input[0]
-output_file = snakemake.output[0]
-
-# select counts layer
-logging.info('Select layer...')
+input_dir = snakemake.input[0]
+output_dir = snakemake.output[0]
 layer = snakemake.params.get('raw_counts', 'X')
-if layer is None:
-    layer = 'X'
 
-logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X=layer, obs='obs', var='var', uns='uns')
+logging.info(f'Read {input_dir}...')
+adata = read_anndata(
+    input_dir,
+    X=layer,
+    obs='obs',
+    var='var',
+    uns='uns'
+)
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
     adata.X = np.zeros(adata.shape)
-    adata.write_zarr(output_file)
+    adata.write_zarr(output_dir)
     exit(0)
+
+if input_dir.endswith('.h5ad'):
+    adata.layers['counts'] = adata.X
+    adata.raw = adata
 
 # make sure data is on GPU for rapids_singlecell
 if rapids:
+    adata.X = adata.X.astype('float32')
     sc.utils.anndata_to_GPU(adata)
 
 logging.info('normalize_total...')
@@ -59,6 +65,23 @@ if 'preprocessing' not in adata.uns:
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
 
-logging.info(f'Write to {output_file}...')
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['X', 'uns'])
+logging.info(f'Write to {output_dir}...')
+if input_dir.endswith('.h5ad'):
+    adata.layers['normcounts'] = adata.X
+
+logging.info(f'Write to {output_dir}...')
+write_zarr_linked(
+    adata,
+    input_dir,
+    output_dir,
+    files_to_keep=['X', 'uns'],
+    slot_map={
+        'raw/X': layer,
+        'raw/var': 'var',
+        'layers/counts': layer,
+        'layers/normcounts': 'X',
+    },
+    in_dir_map={
+        'X': output_dir,
+    },
+)

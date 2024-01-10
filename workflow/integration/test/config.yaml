@@ -2,7 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
-env_mode: from_yaml
+env_mode: local
 
 resources:
   cpu:
@@ -18,55 +18,40 @@ resources:
 
 defaults:
   integration:
-    raw_counts: counts
-    norm_counts: X
+    raw_counts: layers/counts
+    norm_counts: layers/normcounts
     methods:
       bbknn:
       combat:
-      harmony:
-      harmony_rapids:
-      harmonypy:
       scanorama:
-      scanvi:
-        n_hidden: 128
-        dispersion: gene
-        max_epochs: 10
-        use_observed_lib_size: true
-      scgen:
-        n_epochs: 10
-      scpoli:
-        supervised:
-          - true
-          - false
-        model:
-          embedding_dims: 5
-          recon_loss: nb
-        train:
-          n_epochs: 50
-      scvi:
-        n_hidden: 128
-        dispersion:
-          - gene
-          - gene-batch
-          - gene-label
-          - gene-cell
-        max_epochs: 10
-        use_observed_lib_size: true
       unintegrated:
   datasets:
     - test
-    - test2
-    - test3
-    # - harmony_comparison
-    # - scpoli
+    - multi_wildcards
+    - preprocessed
+    - harmony
+    - scarches
+    - scvi_tools
 
 
 DATASETS:
   test:
     input:
+      integration: test/input/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      umap_colors:
+        - bulk_labels
+        - phase
+
+  multi_wildcards:
+    input:
       integration:
         pbmc: test/input/pbmc68k.h5ad
     integration:
+      methods:
+        unintegrated:
       label:
         - bulk_labels
         - louvain
@@ -74,24 +59,10 @@ DATASETS:
         - phase
         - batch_2
 
-  test2:
-    input:
-      integration: test/input/pbmc68k.h5ad
-    integration:
-      label: bulk_labels
-      batch: batch
-      methods:
-        unintegrated:
-      umap_colors:
-        - bulk_labels
-        - phase
-
-  test3:
+  preprocessed:
     input:
       integration: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
-      raw_counts: raw
-      norm_counts: X
       label: bulk_labels
       batch: batch
       methods:
@@ -99,7 +70,7 @@ DATASETS:
         scgen:
           n_epochs: 10
 
-  harmony_comparison:
+  harmony:
     input:
       integration: test/input/pbmc68k.h5ad
     integration:
@@ -110,17 +81,17 @@ DATASETS:
         harmonypy:
         harmony:
       umap_colors:
-        - bulk_labels
         - phase
 
-
-  scpoli:
+  scarches:
     input:
       integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
       methods:
+        scgen:
+          n_epochs: 10
         scpoli:
           supervised:
             - true
@@ -132,4 +103,32 @@ DATASETS:
             n_epochs: 50
       umap_colors:
         - bulk_labels
+        - phase
+
+  scvi_tools:
+    input:
+      integration:
+        orig: test/input/pbmc68k.h5ad
+        prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        scvi:
+          n_hidden: 128
+          dispersion:
+            - gene
+            - gene-batch
+            - gene-label
+            - gene-cell
+          use_observed_lib_size: true
+          max_epochs: 10
+          early_stopping: true
+        scanvi:
+          n_hidden: 128
+          dispersion: gene
+          use_observed_lib_size: true
+          max_epochs: 10
+          early_stopping: true
+      umap_colors:
         - phase

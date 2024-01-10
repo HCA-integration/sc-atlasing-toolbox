@@ -3,7 +3,7 @@ logging.basicConfig(level=logging.INFO)
 import numpy as np
 import scanpy as sc
 
-from utils import read_anndata
+from utils.io import read_anndata
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
