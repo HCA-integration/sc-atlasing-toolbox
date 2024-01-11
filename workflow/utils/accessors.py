@@ -71,7 +71,7 @@ def subset_hvg(adata, to_memory: [str, list] = 'X', hvgs: list = None) -> (ad.An
 
 def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData:
     if layers is None:
-        layers = []
+        layers = ['X', 'raw'] + list(adata.layers.keys())
     elif isinstance(layers, str):
         layers = [layers]
     
@@ -80,4 +80,10 @@ def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData
             adata.layers[layer] = to_memory(adata.layers[layer])
         elif layer == 'X':
             adata.X = to_memory(adata.X)
+        elif layer == 'raw':
+            if adata.raw is None:
+                continue
+            adata_raw = adata.raw.to_adata()
+            adata_raw.X = to_memory(adata.raw.X)
+            adata.raw = adata_raw
     return adata
