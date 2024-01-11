@@ -10,7 +10,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='split_data',
     config=config,
-    config_params=['key', 'values'],
+    config_params=['key', 'values', 'backed'],
     wildcard_names=['key', 'value'],
     rename_config_params={'values': 'value'},
     explode_by=['value'],
@@ -48,7 +48,10 @@ rule link:
     input:
         lambda wildcards: mcfg.get_output_files(rules.split.output, subset_dict=wildcards)
     output:
-        directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
+        directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
+    params:
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:

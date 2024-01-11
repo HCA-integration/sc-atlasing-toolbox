@@ -80,6 +80,7 @@ def plot_qc_joint(
         hue=hue,
         **kwargs,
     )
+    
     # marginal hist plot
     if marginal_hue in df.columns:
         marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
@@ -115,8 +116,9 @@ def plot_qc_joint(
 
 input_zarr = snakemake.input.zarr
 output_joint = snakemake.output.joint
-output_violin = snakemake.output.violin
-output_avg = snakemake.output.average_jitter
+output_density = snakemake.output.density
+# output_violin = snakemake.output.violin
+# output_avg = snakemake.output.average_jitter
 
 output_joint = Path(output_joint)
 output_joint.mkdir(parents=True, exist_ok=True)
@@ -127,9 +129,29 @@ hues = snakemake.params.hue
 sample = snakemake.params.sample
 dataset = snakemake.params.dataset
 
+logging.info(f'Read {input_zarr}...')
+adata = read_anndata(input_zarr, obs='obs', uns='uns')
+
+# if no cells filtered out, save empty plots
+if adata.obs.shape[0] == 0:
+    logging.info('Save empty plot...')
+    plt.savefig(output_density)
+    exit()
+
 # set default thresholds
-threshold_keys = ['total_counts', 'n_genes_by_counts', 'pct_counts_mito']
+threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
 thresholds = {f'{key}_min': 0 for key in threshold_keys} | {f'{key}_max': np.inf for key in threshold_keys}
+
+# get autoqc thresholds
+autoqc_thresholds = adata.uns['scautoqc_ranges']
+thresholds |= {
+    f'{key}_min': autoqc_thresholds.loc[key, 'low']
+    for key in autoqc_thresholds.index
+}
+thresholds |={
+    f'{key}_max': autoqc_thresholds.loc[key, 'high']
+    for key in autoqc_thresholds.index
+}
 
 # update to user thresholds
 user_thresholds = snakemake.params.get('thresholds')
@@ -146,22 +168,10 @@ thresholds |= user_thresholds.get(file_id, {})
 
 # transform to shape expected by plot_qc_joint
 thresholds = {
-    key: (thresholds[f'{key}_min'], thresholds[f'{key}_max']) for key in threshold_keys
+    key: (thresholds[f'{key}_min'], thresholds[f'{key}_max'])
+    for key in threshold_keys
 }
 logging.info(thresholds)
-
-
-logging.info(f'Read obs from{input_zarr}...')
-adata = read_anndata(input_zarr, obs='obs')
-obs = adata.obs
-
-# if no cells filtered out, save empty plots
-if obs.shape[0] == 0:
-    logging.info('Save empty plots...')
-    plt.savefig(output_violin)
-    plt.savefig(output_avg)
-    exit()
-
 
 sns.set_theme(style='white')
 sc.set_figure_params(frameon=False, fontsize=10, dpi_save=300)
@@ -173,8 +183,8 @@ if len(split_datasets) > 1:
 
 if isinstance(hues, str):
     hues = [hues]
-hues = [hue for hue in hues if hue in obs.columns]
-hues = [hue for hue in hues if obs[hue].nunique() > 1]
+hues = [hue for hue in hues if hue in adata.obs.columns]
+hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
 if len(hues) == 0:
     hues = [None]
 
@@ -187,20 +197,20 @@ logging.info('Joint QC plots...')
 # color by disease
 
 # n_counts vs n_features
-x = 'total_counts'
-y = 'n_genes_by_counts'
+x = 'n_counts'
+y = 'n_genes'
 
-for hue in hues+['pct_counts_mito']:
+for hue in hues+['percent_mito']:
     joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
-    if is_numeric_dtype(obs[hue]):
+    if is_numeric_dtype(adata.obs[hue]):
         palette = 'plasma'
         legend = 'brief'
     else:
-        palette = None # if obs[hue].nunique() > 100 else 'plasma'
-        legend = obs[hue].nunique() <= 20
+        palette = None # if adata.obs[hue].nunique() > 100 else 'plasma'
+        legend = adata.obs[hue].nunique() <= 20
 
     plot_qc_joint(
-        obs,
+        adata.obs,
         x=x,
         y=y,
         hue=hue,
@@ -208,16 +218,17 @@ for hue in hues+['pct_counts_mito']:
         x_threshold=thresholds[x],
         y_threshold=thresholds[y],
         title=joint_title,
-        s=2,
+        s=5,
         alpha=.6,
+        linewidth=0,
         palette=palette,
         legend=legend,
     )
     plt.tight_layout()
     plt.savefig(output_joint / f'counts_vs_genes_hue={hue}.png')
 
-    _, obs = plot_qc_joint(
-        obs,
+    _, adata.obs = plot_qc_joint(
+        adata.obs,
         x=x,
         y=y,
         log_x=10,
@@ -228,8 +239,9 @@ for hue in hues+['pct_counts_mito']:
         y_threshold=thresholds[y],
         title=joint_title,
         return_df=True,
-        s=2,
+        s=5,
         alpha=.6,
+        linewidth=0,
         palette=palette,
         legend=legend,
     )
@@ -238,19 +250,19 @@ for hue in hues+['pct_counts_mito']:
 
 
 # n_feature x mito frac
-x = 'n_genes_by_counts'
-y = 'pct_counts_mito'
+x = 'n_genes'
+y = 'percent_mito'
 
 for hue in hues:
     joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
-    if is_numeric_dtype(obs[hue]):
+    if is_numeric_dtype(adata.obs[hue]):
         palette = 'plasma'
         legend = 'brief'
     else:
-        palette = None # if obs[hue].nunique() > 100 else 'plasma'
-        legend = obs[hue].nunique() <= 20
+        palette = None # if adata.obs[hue].nunique() > 100 else 'plasma'
+        legend = adata.obs[hue].nunique() <= 20
     plot_qc_joint(
-        obs,
+        adata.obs,
         x=x,
         y=y,
         # log_x=10,
@@ -259,8 +271,9 @@ for hue in hues:
         x_threshold=thresholds[x],
         y_threshold=thresholds[y],
         title=joint_title,
-        s=2,
+        s=5,
         alpha=.6,
+        linewidth=0,
         palette=palette,
         legend=legend,
     )
@@ -268,7 +281,7 @@ for hue in hues:
     plt.savefig(output_joint / f'genes_vs_mito_frac_hue={hue}.png')
 
 plot_qc_joint(
-    obs.sample(n=int(min(1e5, obs.shape[0])), random_state=42),
+    adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42),
     x=x,
     y=y,
     # main_plot_function=Axes.hexbin,
@@ -283,84 +296,84 @@ plot_qc_joint(
     alpha=.8,
 )
 plt.tight_layout()
-plt.savefig(output_joint / f'genes_vs_mito_frac_kde.png')
+plt.savefig(output_density)
 
 
-logging.info('Violin plots...')
-fig, axes = plt.subplots(nrows=2, ncols=1)
-hue = hues[0]
-obs[hue] = obs[hue].astype('category')
+# logging.info('Violin plots...')
+# fig, axes = plt.subplots(nrows=2, ncols=1)
+# hue = hues[0]
+# adata.obs[hue] = adata.obs[hue].astype('category')
 
-sc.pl.violin(
-    adata,
-    keys='log10 total_counts',
-    groupby=hue,
-    rotation=90,
-    show=False,
-    fill=False,
-    ax=axes[0],
-)
+# sc.pl.violin(
+#     adata,
+#     keys='log10 n_counts',
+#     groupby=hue,
+#     rotation=90,
+#     show=False,
+#     fill=False,
+#     ax=axes[0],
+# )
 
-sc.pl.violin(
-    adata,
-    keys='pct_counts_mito',
-    groupby=hue,
-    rotation=90,
-    show=False,
-    fill=False,
-    ax=axes[1],
-)
-fig.suptitle(dataset)
+# sc.pl.violin(
+#     adata,
+#     keys='percent_mito',
+#     groupby=hue,
+#     rotation=90,
+#     show=False,
+#     fill=False,
+#     ax=axes[1],
+# )
+# fig.suptitle(dataset)
 
-# g = sns.violinplot(x="donor", y="total_counts", data=obs)
-# g.set_xticklabels(g.get_xticklabels(), rotation=90)
-# g.get_figure().savefig(output_violin)
+# # g = sns.violinplot(x="donor", y="n_counts", data=adata.obs)
+# # g.set_xticklabels(g.get_xticklabels(), rotation=90)
+# # g.get_figure().savefig(output_violin)
 
-plt.tight_layout()
-plt.savefig(output_violin)
+# plt.tight_layout()
+# plt.savefig(output_violin)
 
-logging.info('Average scatter plots...')
-fig, axes = plt.subplots(nrows=3, ncols=1)
+# logging.info('Average scatter plots...')
+# fig, axes = plt.subplots(nrows=3, ncols=1)
 
-df = (
-    obs[['log10 n_genes_by_counts', 'pct_counts_mito', 'log10 total_counts', hue, sample]]
-    .groupby([hue, sample])
-    .median()
-    .reset_index(hue)
-    .dropna()
-)
+# df = (
+#     adata.obs[['log10 n_genes', 'percent_mito', 'log10 n_counts', hue, sample]]
+#     .groupby([hue, sample])
+#     .median()
+#     .reset_index(hue)
+#     .dropna()
+# )
 
-sns.stripplot(
-    data=df,
-    x='log10 total_counts',
-    hue=hue,
-    legend=False,
-    ax=axes[0],
-)
-axes[0].set_title('Mean counts per cell, median over sample')
-axes[0].set_xlim(0, None)
+# sns.stripplot(
+#     data=df,
+#     x='log10 n_counts',
+#     hue=hue,
+#     legend=False,
+#     ax=axes[0],
+# )
+# axes[0].set_title('Mean counts per cell, median over sample')
+# axes[0].set_xlim(0, None)
 
-sns.stripplot(
-    data=df,
-    x='log10 n_genes_by_counts',
-    hue=hue,
-    legend=False,
-    ax=axes[1],
-)
-axes[1].set_title('Mean genes per cell, median over sample')
-axes[1].set_xlim(0, None)
+# sns.stripplot(
+#     data=df,
+#     x='log10 n_genes',
+#     hue=hue,
+#     legend=False,
+#     ax=axes[1],
+# )
+# axes[1].set_title('Mean genes per cell, median over sample')
+# axes[1].set_xlim(0, None)
 
-sns.stripplot(
-    data=df,
-    x='pct_counts_mito',
-    hue=hue,
-    legend=False,
-    ax=axes[2],
-)
-axes[2].set_title('Percent of mitochondrial genes per cell, median over sample')
-axes[2].set_xlim(0, 100)
+# sns.stripplot(
+#     data=df,
+#     x='percent_mito',
+#     hue=hue,
+#     legend=False,
+#     ax=axes[2],
+# )
+# axes[2].set_title('Percent of mitochondrial genes per cell, median over sample')
+# axes[2].set_xlim(0, 100)
 
-fig.suptitle(dataset)
+# fig.suptitle(dataset)
 
-plt.tight_layout()
-plt.savefig(output_avg)
+# plt.tight_layout()
+# plt.savefig(output_avg)

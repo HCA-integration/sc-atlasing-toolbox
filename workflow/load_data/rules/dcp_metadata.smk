@@ -61,6 +61,8 @@ rule add_dcp_metadata:
         ]
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs/')
+    resources:
+        mem_mb='10GB'
     script:
         '../scripts/add_dcp_metadata.py'
 
