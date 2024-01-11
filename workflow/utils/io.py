@@ -8,6 +8,10 @@ import zarr
 import h5py
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
+from functools import partial
+
+print_flushed = partial(print, flush=True)
+
 
 zarr.default_compressor = zarr.Blosc(shuffle=zarr.Blosc.SHUFFLE)
 
@@ -33,7 +37,7 @@ def check_slot_exists(file, slot):
 
 def to_memory(matrix):
     if isinstance(matrix, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-        print('Convert to memory...')
+        print_flushed('Convert to memory...')
         return matrix.to_memory()
     return matrix
 
@@ -109,10 +113,10 @@ def read_partial(
         force_sparse_types = [force_sparse_types]
     slots = {}
     if backed:
-        print('Read as backed sparse matrix...')
+        print_flushed('Read matrices in backed mode...')
     
     for slot_name, slot in kwargs.items():
-        print(f'Read slot "{slot}", store as "{slot_name}"...')
+        print_flushed(f'Read slot "{slot}", store as "{slot_name}"...')
         if slot not in group:
             warnings.warn(f'Slot "{slot}" not found, skip...')
             slots[slot_name] = None
@@ -120,10 +124,12 @@ def read_partial(
             elem = group[slot]
             iospec = ad._io.specs.get_spec(elem)
             if iospec.encoding_type in ("csr_matrix", "csc_matrix") and backed:
+                print_flushed(f'Read {slot_name} as sparse backed matrix...')
                 slots[slot_name] = sparse_dataset(elem)
             elif iospec.encoding_type in force_sparse_types:
                 slots[slot_name] = csr_matrix(read_elem(elem))
                 if backed:
+                    print_flushed(f'Convert {slot_name} to sparse backed matrix...')
                     slots[slot_name] = sparse_dataset(slots[slot_name])
             else:
                 slots[slot_name] = read_elem(elem)
@@ -155,13 +161,13 @@ def read_dask(
             for e in kwargs.values()
         ]
         if elem_name != '/' and all(elem_matches):
-            print('skip reading', elem_name)
+            print_flushed('skip reading', elem_name)
             return None
         else:
-            print('read', elem_name)
+            print_flushed('read', elem_name)
         
         if elem_name != '/' and all(elem_matches):
-            print('skip reading', elem_name)
+            print_flushed('skip reading', elem_name)
             return None
         elif iospec.encoding_type in (
             "dataframe",
@@ -184,14 +190,14 @@ def read_dask(
 def read_anndata_or_mudata(file):
     if file.endswith('.h5mu'):
         import mudata as mu
-        print('Read as mudata...')
+        print_flushed('Read as mudata...')
         return mu.read(file)
     elif file.endswith('.h5mu.zarr'):
         import mudata as mu
-        print('Read as mudata from zarr...')
+        print_flushed('Read as mudata from zarr...')
         return mu.read_zarr(file)
     else:
-        print('Read as anndata...')
+        print_flushed('Read as anndata...')
         return read_anndata(file)
 
 
@@ -267,7 +273,7 @@ def link_zarr(
         
         if overwrite and out_file.exists():
             if out_file.is_dir() and not out_file.is_symlink():
-                print(f'replace {out_file}...')
+                print_flushed(f'replace {out_file}...')
                 shutil.rmtree(out_file)
             else:
                 out_file.unlink()
@@ -305,7 +311,7 @@ def link_zarr(
         in_dir = in_dir_map[in_slot]
         in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
         out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
-        print(f'Link {out_file_name} -> {in_file_name}')
+        print_flushed(f'Link {out_file_name} -> {in_file_name}')
         link_file(
             in_file=in_dir / in_slot,
             out_file=out_dir / out_slot,
@@ -378,7 +384,7 @@ def write_zarr_linked(
     # remove slots that will be overwritten anyway
     for slot in files_to_link+extra_slots_to_link:
         if slot in adata.__dict__:
-            print(f'remove {slot}...')
+            print_flushed(f'remove {slot}...')
             delattr(adata, slot)
     
     # write zarr file
