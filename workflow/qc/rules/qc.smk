@@ -4,7 +4,7 @@ rule metrics:
     output:
         zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr')
     params:
-        gauss_threshold=0.07,
+        gauss_threshold=0.05,
     conda:
         get_env(config, 'qc')
     resources:
