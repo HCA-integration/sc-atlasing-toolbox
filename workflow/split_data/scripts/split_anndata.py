@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import numpy as np
 import scanpy as sc
 from scipy import sparse
 import warnings
@@ -9,19 +10,22 @@ logging.basicConfig(level=logging.INFO)
 import anndata as ad
 
 from utils.io import read_anndata
+from utils.accessors import adata_to_memory
 # from utils.misc import ensure_sparse
 
 input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 split_key = snakemake.wildcards.key
 values = snakemake.params.get('values', [])
+backed = snakemake.params.get('backed', False)
 
 out_dir = Path(output_dir)
 if not out_dir.exists():
     out_dir.mkdir()
 
 logging.info(f'Read anndata file {input_file}...')
-adata = read_anndata(input_file, backed=True)
+adata = read_anndata(input_file, backed=backed)
+logging.info(adata.__str__())
 
 # for layer in ['X']+list(adata.layers.keys()):
 #     ensure_sparse(adata, layer=layer)
@@ -42,12 +46,24 @@ for split_file in split_files:
     # split anndata
     logging.info(f'Split by {split_key}={split}')
     adata_sub = adata[adata.obs[split_key] == split]
+    logging.info(adata_sub.__str__())
+    
     if adata_sub.n_obs == 0:
-        adata_sub = ad.AnnData(obs=adata_sub.obs, var=adata_sub.var)
+        adata_sub = ad.AnnData(
+            X=np.zeros(adata_sub.shape),
+            obs=adata_sub.obs,
+            obsm=adata_sub.obsm,
+            obsp=adata_sub.obsp,
+            var=adata_sub.var,
+            varm=adata_sub.varm,
+            varp=adata_sub.varp,
+            layers=adata_sub.layers,
+            uns=adata_sub.uns,
+        )
     else:
-        adata_sub = adata_sub.copy()
+        adata_sub = adata_to_memory(adata_sub.copy())
     
     # write to file
-    logging.info(f'write to {out_file}...')
+    logging.info(f'Write to {out_file}...')
     adata_sub.write_zarr(out_file)
     del adata_sub
