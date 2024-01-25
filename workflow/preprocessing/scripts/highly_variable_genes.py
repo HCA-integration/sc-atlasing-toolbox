@@ -71,9 +71,7 @@ else:
     gene_subset, _ = scanpy.pp.filter_genes(adata, min_cells=1, inplace=False)
     if any(gene_subset == False):
         logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
-        adata.X = read_anndata(input_file, X='X').X
         adata = adata[:, gene_subset].copy()
-        adata.X = to_memory(adata.X)
     
     # make sure data is on GPU for rapids_singlecell
     if rapids:
