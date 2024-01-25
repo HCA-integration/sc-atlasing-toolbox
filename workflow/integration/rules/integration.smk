@@ -16,7 +16,7 @@ rule prepare:
     script:
         '../scripts/prepare.py'
 
-integration_run_pattern = paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
+integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
 
 use rule run_method from integration as integration_run_method with:
     message:
@@ -34,7 +34,7 @@ use rule run_method from integration as integration_run_method with:
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
         plots=touch(directory(image_dir / integration_run_pattern / 'training')),
     benchmark:
-        out_dir /integration_run_pattern / 'benchmark.tsv'
+        out_dir / integration_run_pattern / 'benchmark.tsv'
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
@@ -50,7 +50,11 @@ use rule run_method from integration as integration_run_method with:
 
 
 def update_neighbors_args(wildcards):
-    args = mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={})
+    args = mcfg.get_for_dataset(
+        dataset=wildcards.dataset,
+        query=['preprocessing', 'neighbors'],
+        default={}
+    ).copy()
     output_type = wildcards.output_type
     if output_type == 'full':
         args |= {'use_rep': 'X_pca'}

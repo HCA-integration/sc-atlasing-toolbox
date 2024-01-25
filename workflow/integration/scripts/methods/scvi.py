@@ -4,7 +4,8 @@ from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
+from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
+    SCVI_MODEL_PARAMS
 from utils_pipeline.io import read_anndata, write_zarr_linked, to_memory
 
 input_file = snakemake.input[0]
@@ -18,13 +19,7 @@ params = snakemake.params
 
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
-    train_params=[
-        'max_epochs',
-        'observed_lib_size',
-        'n_samples_per_label',
-        'batch_size',
-        'early_stopping'
-    ],
+    model_params=SCVI_MODEL_PARAMS,
 )
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
