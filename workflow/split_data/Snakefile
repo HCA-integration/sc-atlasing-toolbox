@@ -10,7 +10,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='split_data',
     config=config,
-    config_params=['key', 'values', 'backed'],
+    config_params=['key', 'values', 'backed', 'dask', 'exclude_slots'],
     wildcard_names=['key', 'value'],
     rename_config_params={'values': 'value'},
     explode_by=['value'],
@@ -35,7 +35,10 @@ rule split:
     output:
         directory(mcfg.out_dir / 'splits' / paramspace.wildcard_pattern.replace('/value~{value}', ''))
     params:
-        values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False)
+        values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False, as_type=bool),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=False, as_type=bool),
+        exclude_slots=lambda wildcards: mcfg.get_from_parameters(wildcards, 'exclude_slots', default=[]),
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
     conda:
@@ -50,8 +53,6 @@ rule link:
     output:
         directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
         directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
-    params:
-        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
