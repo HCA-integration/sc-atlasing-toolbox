@@ -1,4 +1,3 @@
-import scib
 import scanpy as sc
 
 from utils import add_metadata, remove_slots
@@ -18,7 +17,7 @@ adata = read_anndata(
 )
 
 # run method
-adata = scib.ig.combat(adata, batch=wildcards.batch)
+sc.pp.combat(adata, key=wildcards.batch)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
