@@ -29,6 +29,7 @@ if not out_dir.exists():
     out_dir.mkdir()
 
 logging.info(f'Read anndata file {input_file}...')
+
 adata = read_anndata(
     input_file,
     backed=backed,
@@ -78,6 +79,7 @@ for split_file in split_files:
             lambda x: x.rechunk({0: 1000}) if isinstance(x, da.Array) else x
         )
         adata_sub = adata_to_memory(adata_sub)
+
     
     # write to file
     logging.info(f'Write to {out_file}...')
