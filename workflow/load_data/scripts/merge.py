@@ -11,9 +11,9 @@ from utils import SCHEMAS, get_union
 from utils_pipeline.io import read_anndata, link_zarr
 
 
-def read_adata(file, keep_columns, backed=True):
+def read_adata(file, keep_columns, backed=True, dask=True):
     logging.info(f'Read {file}...')
-    ad = read_anndata(file, backed=backed, X='X', obs='obs', var='var', uns='uns')
+    ad = read_anndata(file, backed=backed, dask=dask, X='X', obs='obs', var='var', uns='uns')
     if not keep_columns:
         logging.info(f'Keep only mandatory columns for {file}...')
         ad.obs = ad.obs[get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])]
@@ -25,16 +25,16 @@ dataset = snakemake.params.dataset
 files = snakemake.input
 out_file = snakemake.output.zarr
 
-# merge_strategy = snakemake.params.get('merge_strategy', 'inner')
+merge_strategy = snakemake.params.get('merge_strategy', 'inner')
 keep_all_columns = snakemake.params.get('keep_all_columns', False)
 backed = snakemake.params.get('backed', True)
+dask = snakemake.params.get('dask', False)
 
 if len(files) == 1:
     link_zarr(in_dir=files[0], out_dir=out_file)
     exit(0)
 
-adatas = [read_adata(file, keep_all_columns, backed) for file in files]
-print(adatas)
+adatas = [read_adata(file, keep_all_columns, backed, dask) for file in files]
 adatas = [adata for adata in adatas if adata.n_obs > 0]
 
 if len(adatas) == 0:
@@ -42,18 +42,21 @@ if len(adatas) == 0:
     AnnData().write_zarr(out_file)
     exit(0)
 
-dc = AnnCollection(
-    adatas,
-    join_obs='outer',
-    join_obsm=None,
-    join_vars='inner',
-    indices_strict=not backed,
-)
-logging.info(dc.__str__())
+if backed and not dask:
+    dc = AnnCollection(
+        adatas,
+        join_obs='outer',
+        join_obsm=None,
+        join_vars=merge_strategy,
+        indices_strict=not backed,
+    )
+    logging.info(dc.__str__())
 
-logging.info('Subset AnnDataCollection, returning a View...')
-adata = dc[:].to_adata()
-assert adata.X is not None
+    logging.info('Subset AnnDataCollection, returning a View...')
+    adata = dc[:].to_adata()
+    assert adata.X is not None
+else:
+    adata = sc.concat(adatas, join=merge_strategy)
 
 # set new indices
 adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(str)
@@ -72,7 +75,7 @@ for _adata in adatas[1:]:
     var_map = pd.merge(
         var_map,
         _adata.var,
-        how='inner',
+        how=merge_strategy,
         on=['feature_id'] + SCHEMAS['CELLxGENE_VARS']
     )
     var_map = var_map[~var_map.index.duplicated()]

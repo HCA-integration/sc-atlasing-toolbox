@@ -9,15 +9,16 @@ import anndata as ad
 import scanpy as sc
 import numpy as np
 from utils import SCHEMAS, get_union
-from utils_pipeline.io import read_anndata
+from utils_pipeline.io import read_anndata, to_memory
 
 in_file = snakemake.input.h5ad
 schema_file = snakemake.input.schema
 annotation_file = snakemake.input.get('annotation_file')
 out_file = snakemake.output.zarr
-out_plot = snakemake.output.plot
+# out_plot = snakemake.output.plot
 
-backed = snakemake.params.get('backed', True)
+backed = snakemake.params.get('backed', False)
+dask = snakemake.params.get('dask', False)
 meta = snakemake.params.get('meta', {})
 logging.info(f'meta:\n{pformat(meta)}')
 
@@ -25,7 +26,7 @@ logging.info(f'meta:\n{pformat(meta)}')
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
-    adata = read_anndata(in_file, backed=backed)
+    adata = read_anndata(in_file, backed=backed, dask=dask)
 except Exception as e:
     print(e)
     adata = sc.read_loom(in_file, sparse=True)
@@ -36,13 +37,11 @@ if 'final' not in adata.layers:
     adata.layers['final'] = adata.X
 adata.X = adata.raw.X if isinstance(adata.raw, ad._core.raw.Raw) else adata.X
 
-# plot count distribution -> save to file
-x = adata.X
-if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-    x = x.to_memory()
-plt.hist(x.data, bins=60)
-plt.savefig(out_plot)
-del x
+# # plot count distribution -> save to file
+# x = to_memory(adata.X)
+# plt.hist(x.data, bins=60)
+# plt.savefig(out_plot)
+# del x
 
 # Adding general dataset info to uns and obs
 adata.uns['meta'] = meta

@@ -2,12 +2,19 @@
 Copied and adapted from https://gist.github.com/ivirshup/c29c9fb0b5b21a9c290cf621e4e68b18
 """
 import h5py
+import numpy as np
 from scipy import sparse
 import dask.array as da
 from dask import delayed
 import zarr
 import anndata as ad
 from anndata.experimental import read_elem, sparse_dataset
+
+
+def read_as_dask_array(elem):
+    if isinstance(elem, zarr.storage.BaseStore):
+        return da.from_zarr(elem)
+    return da.from_array(read_elem(elem))
 
 
 def csr_callable(shape: tuple[int, int], dtype) -> sparse.csr_matrix:
@@ -19,7 +26,10 @@ def csr_callable(shape: tuple[int, int], dtype) -> sparse.csr_matrix:
         pass
     else:
         raise ValueError(shape)
-    return sparse.csr_matrix(shape, dtype=dtype)
+    sparse_matrix = sparse.csr_matrix(shape, dtype=dtype)
+    sparse_matrix.indptr = sparse_matrix.indptr.astype(np.int64)
+    sparse_matrix.indices = sparse_matrix.indices.astype(np.int64)
+    return sparse_matrix
 
 
 class CSRCallable:
@@ -30,7 +40,12 @@ class CSRCallable:
 
 def make_dask_chunk(x: "SparseDataset", start: int, end: int) -> da.Array:
     def take_slice(x, idx):
-        return x[idx]
+        try:
+            sliced = x[idx]
+        except ValueError as e:
+            print(f"Error slicing {x} with {idx}")
+            raise e
+        return sliced
 
     return da.from_delayed(
         delayed(take_slice)(x, slice(start, end)),
@@ -40,7 +55,9 @@ def make_dask_chunk(x: "SparseDataset", start: int, end: int) -> da.Array:
     )
 
 
-def sparse_dataset_as_dask(x, stride: int):
+def sparse_dataset_as_dask(x, stride: int = 1000):
+    if not isinstance(x, (ad.experimental.CSRDataset, ad.experimental.CSCDataset, da.Array)):
+        return x
     n_chunks, rem = divmod(x.shape[0], stride)
 
     chunks = []

@@ -8,6 +8,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils_pipeline.io import read_anndata, link_zarr, to_memory
+from utils_pipeline.misc import apply_layers
+from utils_pipeline.sparse_dask import sparse_dataset_as_dask
 
 
 def save_empty(input_zarr, output_zarr, output_removed):
@@ -35,7 +37,8 @@ if len(params) == 0:
     save_empty(input_zarr, output_zarr, output_removed)
 
 backed = params.get('backed', True)
-adata = read_anndata(input_zarr, backed=backed)
+dask = params.get('dask', True)
+adata = read_anndata(input_zarr, backed=backed, dask=dask)
 logging.info(adata.__str__())
 
 keep_indices = []
@@ -57,16 +60,16 @@ if 'remove_by_colum' in params:
         )
 
 # implicit filters
-# mito filter
-if 'mito_pct' in params:
-    mito_threshold = params['mito_pct']
-    logging.info(f'remove by mitochondrial percentage of {mito_threshold}%...')
-    adata.var["mito"] = adata.var['feature_name'].str.startswith("MT-")
-    adata.X = to_memory(adata.X)
-    sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)
-    keep_indices.extend(
-        adata[adata.obs['pct_counts_mito'] < mito_threshold].obs_names
-    )
+# # mito filter
+# if 'mito_pct' in params:
+#     mito_threshold = params['mito_pct']
+#     logging.info(f'remove by mitochondrial percentage of {mito_threshold}%...')
+#     adata.var["mito"] = adata.var['feature_name'].str.startswith("MT-")
+#     adata.X = to_memory(adata.X)
+#     sc.pp.calculate_qc_metrics(adata, qc_vars=["mito"], inplace=True)
+#     keep_indices.extend(
+#         adata[adata.obs['pct_counts_mito'] < mito_threshold].obs_names
+#     )
 
 # remove sample with different number of cells per sample
 if 'cells_per_sample' in params.keys():
@@ -88,8 +91,15 @@ logging.info(f'removed {adata_removed} cells')
 if adata_removed == 0:
     save_empty(input_zarr, output_zarr, output_removed)
 
+
+def rechunk(x):
+    x.rechunk({0: 1000}) if isinstance(x, da.Array) else x
+
+
 logging.info('Save filtered...')
-adata[adata.obs_names.isin(keep_indices)].write_zarr(output_zarr)
+adata_filtered = apply_layers(adata[adata.obs_names.isin(keep_indices)], func=rechunk)
+adata_filtered.write_zarr(output_zarr)
 
 logging.info('Save removed...')
-adata[~adata.obs_names.isin(keep_indices)].write_zarr(output_removed)
+adata_removed = apply_layers(adata[~adata.obs_names.isin(keep_indices)], func=rechunk)
+adata_removed.write_zarr(output_removed)
