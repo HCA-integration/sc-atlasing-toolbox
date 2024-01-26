@@ -1,11 +1,20 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy.sparse import issparse
-import harmonypy as hm
+try:
+    import subprocess
+    if subprocess.run('nvidia-smi', shell=True).returncode != 0:
+        logging.info('No GPU found...')
+        raise ImportError()
+    from rapids_singlecell.pp import harmony_integrate
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    from scanpy.external.pp import harmony_integrate
+    logging.info('Importing rapids failed, using scanpy...')
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
-
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -24,17 +33,23 @@ adata = read_anndata(
 assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
 
 # run method
-logging.info('Run harmonypy...')
-harmony_out = hm.run_harmony(
-    data_mat=adata.obsm['X_pca'],
-    meta_data=adata.obs,
-    vars_use=[wildcards.batch]
+logging.info('Run rapids_singlecell harmony...')
+harmony_integrate(
+    adata,
+    key=wildcards.batch,
+    basis='X_pca',
+    adjusted_basis='X_emb'
 )
-adata.obsm['X_emb'] = harmony_out.Z_corr.T
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obsm', 'uns'],
+)
