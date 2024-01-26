@@ -58,6 +58,9 @@ DATASETS:
       batch:
         - phase
         - batch_2
+      output_types:
+        - embed
+        - knn
 
   preprocessed:
     input:
@@ -77,7 +80,6 @@ DATASETS:
       label: bulk_labels
       batch: batch
       methods:
-        harmony_rapids:
         harmonypy:
         harmony:
       umap_colors:

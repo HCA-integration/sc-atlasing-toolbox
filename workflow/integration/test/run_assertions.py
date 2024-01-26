@@ -66,5 +66,5 @@ for file in outputs:
 
     except AssertionError as e:
         print('AssertionError for:', file)
-        pprint(uns)
+        pprint(uns.keys())
         raise e
