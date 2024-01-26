@@ -77,7 +77,6 @@ DATASETS:
       label: bulk_labels
       batch: batch
       methods:
-        harmony_rapids:
         harmonypy:
         harmony:
       umap_colors:
