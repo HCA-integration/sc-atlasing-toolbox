@@ -58,6 +58,9 @@ DATASETS:
       batch:
         - phase
         - batch_2
+      output_types:
+        - embed
+        - knn
 
   preprocessed:
     input:
