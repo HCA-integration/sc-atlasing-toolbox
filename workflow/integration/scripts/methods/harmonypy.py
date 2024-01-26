@@ -1,3 +1,4 @@
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy.sparse import issparse
@@ -20,6 +21,9 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -30,15 +34,17 @@ adata = read_anndata(
     uns='uns'
 )
 
-assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
+use_rep = hyperparams.pop('use_rep', 'X_pca')
+assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # run method
-logging.info('Run rapids_singlecell harmony...')
+logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
 harmony_integrate(
     adata,
     key=wildcards.batch,
-    basis='X_pca',
-    adjusted_basis='X_emb'
+    use_rep=use_rep,
+    adjusted_basis='X_emb',
+    **hyperparams
 )
 
 # prepare output adata

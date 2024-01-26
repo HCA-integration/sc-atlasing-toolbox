@@ -1,3 +1,6 @@
+from pprint import pformat
+import logging
+logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 
 from utils import add_metadata, remove_slots
@@ -7,6 +10,13 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
+if 'covariates' in hyperparams:
+    covariates = hyperparams['covariates']
+    if isinstance(covariates, str):
+        hyperparams['covariates'] = [covariates]
 
 adata = read_anndata(
     input_file,
@@ -17,7 +27,12 @@ adata = read_anndata(
 )
 
 # run method
-sc.pp.combat(adata, key=wildcards.batch)
+logging.info(f'Run Combat with parameters {pformat(hyperparams)}...')
+sc.pp.combat(
+    adata,
+    key=wildcards.batch,
+    **hyperparams
+)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])

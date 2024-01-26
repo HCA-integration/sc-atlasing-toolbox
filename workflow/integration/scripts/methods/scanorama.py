@@ -1,13 +1,47 @@
-import scib
+from pprint import pformat
+import logging
+logging.basicConfig(level=logging.INFO)
+import scanpy as sc
+import scanorama
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
 
 
+# TODO: use scanpy/anndata directly
+def merge_adata(adata_list, **kwargs):
+    """Merge adatas from list while remove duplicated ``obs`` and ``var`` columns
+
+    :param adata_list: ``anndata`` objects to be concatenated
+    :param kwargs: arguments to be passed to ``anndata.AnnData.concatenate``
+    """
+    import anndata
+    
+    if len(adata_list) == 1:
+        return adata_list[0]
+
+    # Make sure that adatas do not contain duplicate columns
+    for _adata in adata_list:
+        for attr in ("obs", "var"):
+            df = getattr(_adata, attr)
+            dup_mask = df.columns.duplicated()
+            if dup_mask.any():
+                print(
+                    f"Deleting duplicated keys `{list(df.columns[dup_mask].unique())}` from `adata.{attr}`."
+                )
+                setattr(_adata, attr, df.loc[:, ~dup_mask])
+
+    return anndata.concat(adata_list, **kwargs)
+
+
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
+batch_key = wildcards.batch
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
 
 adata = read_anndata(
     input_file,
@@ -17,8 +51,27 @@ adata = read_anndata(
     uns='uns'
 )
 
+batch_categories = adata.obs[batch_key].unique().tolist()
+adatas = [
+    adata[adata.obs[batch_key] == batch].copy()
+    for batch in batch_categories
+]
+
 # run method
-adata = scib.ig.scanorama(adata, batch=wildcards.batch)
+logging.info(f'Run Scanorama with parameters {pformat(hyperparams)}...')
+corrected = scanorama.correct_scanpy(
+    adatas,
+    return_dimred=True,
+    **hyperparams
+)
+adata = merge_adata(
+    corrected,
+    label=batch_key,
+    keys=batch_categories,
+    index_unique=None
+)
+adata.obsm["X_emb"] = adata.obsm["X_scanorama"]
+del adata.obsm["X_scanorama"]
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])

@@ -1,6 +1,7 @@
-import scanpy as sc
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
+import scanpy as sc
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, link_zarr_partial
@@ -11,6 +12,9 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
 
 files_to_keep = ['obsm', 'obsp', 'uns']
 
@@ -23,7 +27,8 @@ adata = read_anndata(
     uns='uns'
 )
 
-assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
+use_rep = hyperparams.pop('use_rep', 'X_pca')
+assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # quickfix: remove batches with fewer than 3 cells
 min_batches = adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index
@@ -33,7 +38,14 @@ if min_batches.nunique() < adata.n_obs:
     adata = adata[min_batches]
 
 # run method
-adata = sc.external.pp.bbknn(adata, batch_key=batch_key, use_rep='X_pca', copy=True)
+logging.info(f'Run BBKNN with parameters {pformat(hyperparams)}...')
+sc.external.pp.bbknn(
+    adata,
+    batch_key=batch_key,
+    use_rep=use_rep,
+    copy=False,
+    **hyperparams,
+)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
