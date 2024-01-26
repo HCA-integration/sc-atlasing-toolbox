@@ -2,7 +2,7 @@ rule prepare:
     input:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
-        zarr=directory(out_dir / 'prepare' / 'dataset={dataset}--file_id={file_id}.zarr'),
+        zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}--file_id~{file_id}.zarr'),
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
