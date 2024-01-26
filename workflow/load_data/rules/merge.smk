@@ -4,15 +4,21 @@ use rule merge from load_data as load_data_merge_organ with:
             rules.load_data_filter_study.output.zarr,
             **get_wildcards(dataset_df,['study'],wildcards),
         ),
+        # lambda wildcards: mcfg.get_output_files(
+        #     rules.load_data_filter_study.output.zarr,
+        #     subset_dict=wildcards,
+        #     all_params=True
+        # ),
     output:
         zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        # merge_strategy='outer'
+        merge_strategy='outer',
         backed=False, # breaks when var are not the same
+        dask=False,
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
 
@@ -27,10 +33,12 @@ use rule merge from load_data as load_data_merge_organ_filter with:
         zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        # merge_strategy='outer'
+        merge_strategy='outer',
+        backed=False,
+        dask=False,
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
 
@@ -45,11 +53,12 @@ use rule merge from load_data as load_data_merge_subset with:
         zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
         dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
-        # merge_strategy='outer',
+        merge_strategy='outer',
         backed=False,
+        dask=False,
     resources:
-        mem_mb=get_resource(config,profile='cpu_merged',resource_key='mem_mb'),
-        disk_mb=get_resource(config,profile='cpu_merged',resource_key='disk_mb'),
+        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
 
