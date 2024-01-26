@@ -52,7 +52,7 @@ class ModuleConfig:
         :param dtypes: dictionary of dtypes for parameters DataFrame
         """
         self.module_name = module_name
-        self.config = config
+        self.config = config.copy()
         self.set_defaults()
         self.set_datasets(warn=False)
 
