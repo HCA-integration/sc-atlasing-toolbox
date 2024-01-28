@@ -7,6 +7,7 @@ logging.basicConfig(level=logging.INFO)
 from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
     SCVI_MODEL_PARAMS
 from utils_pipeline.io import read_anndata, write_zarr_linked
+from utils import plot_model_history
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -55,6 +56,15 @@ model = scvi.model.SCVI(
 logging.info(f'Train scVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
+for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    title = f'scVI {loss}'
+    plot_model_history(
+        title=title,
+        train=model.history[f'{loss}_train'][f'{loss}_train'],
+        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        output_path=f'{output_plot_dir}/{title}.png'
+    )
+
 logging.info(f'Set up scANVI on top of scVI with parameters:\n{pformat(model_params)}')
 model = scvi.model.SCANVI.from_scvi_model(
     model,
@@ -65,6 +75,15 @@ model = scvi.model.SCANVI.from_scvi_model(
 
 logging.info(f'Train scANVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
+
+for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    title = f'scANVI {loss}'
+    plot_model_history(
+        title=title,
+        train=model.history[f'{loss}_train'][f'{loss}_train'],
+        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        output_path=f'{output_plot_dir}/{title}.png'
+    )
 
 logging.info('Save model...')
 model.save(output_model, overwrite=True)
@@ -78,17 +97,6 @@ add_metadata(
     params,
     model_history=set_model_history_dtypes(model.history)
 )
-
-# plot model history
-from utils import plot_model_history
-
-for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
-    plot_model_history(
-        title=loss,
-        train=model.history[f'{loss}_train'][f'{loss}_train'],
-        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
-        output_path=f'{output_plot_dir}/{loss}.png'
-    )
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())

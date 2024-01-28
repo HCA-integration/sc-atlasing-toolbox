@@ -22,8 +22,12 @@ defaults:
     norm_counts: layers/normcounts
     methods:
       bbknn:
+        neighbors_within_batch: 3
       combat:
+        covariates:
+          - bulk_labels
       scanorama:
+        batch_size: 100
       unintegrated:
   datasets:
     - test
@@ -81,7 +85,9 @@ DATASETS:
       batch: batch
       methods:
         harmonypy:
+          sigma: 0.1
         harmony:
+          sigma: 0.1
       umap_colors:
         - phase
 

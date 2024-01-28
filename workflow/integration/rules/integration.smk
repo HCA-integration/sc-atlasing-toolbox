@@ -32,7 +32,7 @@ use rule run_method from integration as integration_run_method with:
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
-        plots=touch(directory(image_dir / integration_run_pattern / 'training')),
+        plots=touch(directory(image_dir / integration_run_pattern)),
     benchmark:
         out_dir / integration_run_pattern / 'benchmark.tsv'
     params:

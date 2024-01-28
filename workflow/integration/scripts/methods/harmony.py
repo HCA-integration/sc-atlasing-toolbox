@@ -1,3 +1,4 @@
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 import torch
@@ -11,6 +12,9 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
 
 # check GPU
 logging.info(f'GPU available: {torch.cuda.is_available()}')
@@ -24,11 +28,19 @@ adata = read_anndata(
     uns='uns'
 )
 
-assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
+use_rep = hyperparams.pop('use_rep', 'X_pca')
+assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # run method
-logging.info('Run harmony...')
-adata.obsm["X_emb"] = harmonize(adata.obsm["X_pca"], adata.obs, batch_key=wildcards.batch)
+logging.info(f'Run Harmony pytorch with parameters {pformat(hyperparams)}...')
+adata.obsm['X_emb'] = harmonize(
+    X=adata.obsm[use_rep],
+    batch_mat=adata.obs,
+    batch_key=wildcards.batch,
+    use_gpu=True,
+    n_jobs=snakemake.threads,
+    **hyperparams
+)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
