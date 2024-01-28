@@ -42,7 +42,7 @@ logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
 harmony_integrate(
     adata,
     key=wildcards.batch,
-    use_rep=use_rep,
+    basis=use_rep,
     adjusted_basis='X_emb',
     **hyperparams
 )
