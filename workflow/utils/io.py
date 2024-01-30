@@ -6,6 +6,7 @@ import shutil
 import anndata as ad
 import zarr
 import h5py
+import numpy as np
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
 from functools import partial
@@ -49,6 +50,7 @@ def read_anndata(
     backed: bool = False,
     fail_on_missing: bool = True,
     exclude_slots: list = None,
+    obs_chunk: int = 1000,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -111,39 +113,6 @@ def read_partial(
     :params **kwargs: dict of to_slot: slot, by default use all available slot for the zarr file
     :return: AnnData object
     """
-    def read_slot(group, slot, force_sparse_types, force_slot_sparse):
-        if slot not in group:
-            warnings.warn(f'Slot "{slot}" not found, skip...')
-            return None
-        
-        elem = group[slot]
-        iospec = ad._io.specs.get_spec(elem)
-        
-        if dask:
-            from .sparse_dask import sparse_dataset_as_dask, read_as_dask_array
-            if iospec.encoding_type in ("csr_matrix", "csc_matrix") and backed:
-                print_flushed(f'Read {slot} as backed sparse dask array...')
-                return sparse_dataset_as_dask(sparse_dataset(elem), obs_chunk)
-            elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
-                print_flushed(f'Read {slot} as dask arrayy and convert blocks to csr_matrix...')
-                return read_as_dask_array(elem).map_blocks(csr_matrix)
-            elif iospec.encoding_type == "array":
-                print_flushed(f'Read {slot} as dask array...')
-                return read_as_dask_array(elem)
-            return read_elem(elem)
-        
-        # non-dask reading
-        if iospec.encoding_type in ("csr_matrix", "csc_matrix"):
-            if backed:
-                print_flushed(f'Read {slot} as backed sparse matrix...')
-                return sparse_dataset(elem)
-            return read_elem(elem)
-        elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
-            print_flushed(f'Read {slot} and convert to csr matrix...')
-            return csr_matrix(read_elem(elem))
-        else:
-            return read_elem(elem)
-    
     if force_sparse_types is None:
         force_sparse_types = []
     elif isinstance(force_sparse_types, str):
@@ -161,13 +130,16 @@ def read_partial(
     for to_slot, from_slot in kwargs.items():
         print_flushed(f'Read slot "{from_slot}", store as "{to_slot}"...')
         force_slot_sparse = any(from_slot.startswith((x, f'/{x}')) for x in force_sparse_slots)
-        if from_slot in ['layers', 'raw']:
+        if from_slot in ['layers', '/layers', 'raw', '/raw']:
             slots[to_slot] = {
                 sub_slot: read_slot(
                     group,
                     f'{from_slot}/{sub_slot}',
                     force_sparse_types,
                     force_slot_sparse,
+                    backed=backed,
+                    dask=dask,
+                    obs_chunk=obs_chunk,
                 )
                 for sub_slot in group[from_slot]
             }
@@ -176,12 +148,99 @@ def read_partial(
                 group,
                 from_slot,
                 force_sparse_types,
-                force_slot_sparse
+                force_slot_sparse,
+                backed=backed,
+                dask=dask,
+                obs_chunk=obs_chunk,
             )
-    
+
     return ad.AnnData(**slots)
 
 
+def read_slot(
+    group: [h5py.Group, zarr.Group],
+    slot: str,
+    force_sparse_types: list,
+    force_slot_sparse: bool,
+    backed: bool,
+    dask: bool,
+    obs_chunk: int,
+):
+    if slot not in group:
+        warnings.warn(f'Slot "{slot}" not found, skip...')
+        return None
+    
+    if dask:
+        return _read_slot_dask(
+            group,
+            slot,
+            force_sparse_types,
+            force_slot_sparse,
+            obs_chunk,
+            backed
+        )
+    return _read_slot_default(
+        group,
+        slot,
+        force_sparse_types,
+        force_slot_sparse,
+        backed
+    )
+
+
+def _read_slot_dask(
+    group,
+    slot,
+    force_sparse_types,
+    force_slot_sparse,
+    obs_chunk,
+    backed
+):
+    from .sparse_dask import sparse_dataset_as_dask, read_as_dask_array
+    
+    elem = group[slot]
+    iospec = ad._io.specs.get_spec(elem)
+    
+    if iospec.encoding_type in ("csr_matrix", "csc_matrix"):
+        if backed:
+            print_flushed(f'Read {slot} as backed sparse dask array...')
+            elem = sparse_dataset(elem)
+            return sparse_dataset_as_dask(elem, stride=obs_chunk)
+        print_flushed(f'Read {slot} as sparse dask array...')
+        return read_as_dask_array(elem)
+    elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
+        print_flushed(f'Read {slot} as dask array and convert blocks to csr_matrix...')
+        elem = read_as_dask_array(elem)
+        return elem.map_blocks(csr_matrix, dtype=elem.dtype)
+    elif iospec.encoding_type == "array":
+        print_flushed(f'Read {slot} as dask array...')
+        return read_as_dask_array(elem)
+    return read_elem(elem)
+
+
+def _read_slot_default(group, slot, force_sparse_types, force_slot_sparse, backed):
+    elem = group[slot]
+    iospec = ad._io.specs.get_spec(elem)
+    
+    if iospec.encoding_type in ("csr_matrix", "csc_matrix"):
+        if backed:
+            print_flushed(f'Read {slot} as backed sparse matrix...')
+            return sparse_dataset(elem)
+        return read_elem(elem)
+    elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
+        print_flushed(f'Read {slot} and convert to csr matrix...')
+        return csr_matrix(read_elem(elem))
+    else:
+        return read_elem(elem)
+
+
+def csr_matrix_int64_indptr(x):
+    x = csr_matrix(x)
+    x.indptr = x.indptr.astype(np.int64)
+    return x
+
+
+# deprecated
 def read_dask(
     group: [h5py.Group, zarr.Group],
     backed: bool = False,
@@ -249,11 +308,11 @@ def read_anndata_or_mudata(file):
 
 def write_zarr(adata, file):
     def sparse_coo_to_csr(matrix):
-        from dask.array import Array as DaskArray
+        from dask import array as da
         import sparse
         
-        if isinstance(matrix, DaskArray) and isinstance(matrix._meta, sparse.COO):
-            matrix = matrix.map_blocks(csr_matrix, dtype='float32')
+        if isinstance(matrix, da.Array) and isinstance(matrix._meta, sparse.COO):
+            matrix = matrix.map_blocks(lambda x: x.tocsr(), dtype='float32')
         return matrix
     
     adata.X = sparse_coo_to_csr(adata.X)
