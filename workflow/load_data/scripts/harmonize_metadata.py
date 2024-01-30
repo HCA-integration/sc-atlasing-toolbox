@@ -145,8 +145,9 @@ for column in SCHEMAS["CELLxGENE_VARS"]:
         adata.var[column] = np.nan
 adata.var = adata.var[SCHEMAS["CELLxGENE_VARS"]]
 
-if 'feature_id' not in adata.var.columns:
-    adata.var['feature_id'] = adata.var_names
+if 'feature_id' in adata.var.columns:
+    adata.var_names = adata.var['feature_id']
+    del adata.var['feature_id']
 adata.var.index.set_names('feature_id', inplace=True)
 
 logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
