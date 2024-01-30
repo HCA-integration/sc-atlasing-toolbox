@@ -13,14 +13,14 @@ use rule merge from load_data as load_data_merge_organ with:
         zarr=directory(out_dir / 'merged' / 'organ' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer',
-        backed=False, # breaks when var are not the same
-        dask=False,
+        merge_strategy='inner',
+        backed=True, # when backed only, code breaks when var are not the same
+        dask=True,
     resources:
-        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
+        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt, factor=1.7),
         disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
-        dataset_df['dataset'].nunique()
+        dataset_df['dataset'].nunique() * 3
 
 
 use rule merge from load_data as load_data_merge_organ_filter with:
@@ -33,7 +33,7 @@ use rule merge from load_data as load_data_merge_organ_filter with:
         zarr=directory(out_dir / 'merged' / 'organ' / 'filtered' / '{organ}.zarr')
     params:
         dataset=lambda wildcards: wildcards.organ,
-        merge_strategy='outer',
+        merge_strategy='inner',
         backed=False,
         dask=False,
     resources:
@@ -53,7 +53,7 @@ use rule merge from load_data as load_data_merge_subset with:
         zarr=directory(out_dir / 'merged' / 'subset' / '{organ}-{subset}.zarr')
     params:
         dataset=lambda wildcards: f'{wildcards.organ}-{wildcards.subset}',
-        merge_strategy='outer',
+        merge_strategy='inner',
         backed=False,
         dask=False,
     resources:

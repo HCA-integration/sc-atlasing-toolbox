@@ -1,7 +1,7 @@
 def get_annotated_study(wildcards):
     if wildcards.study in dcp_studies:
-        return dict(zarr=rules.add_dcp_metadata.output.zarr)
-    return dict(zarr=rules.load_data_merge_study.output.zarr)
+        return dict(rules.add_dcp_metadata.output)
+    return dict(rules.load_data_merge_study.output)
 
 
 use rule filter from load_data as load_data_filter_study with:
