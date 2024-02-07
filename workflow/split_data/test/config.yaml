@@ -45,9 +45,23 @@ DATASETS:
         - SchulteSchrepping2020
         - Lee2020
         - dummy
+  test_dask_backed:
+    input:
+      split_data:
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    split_data:
+      backed: true
+      dask: true
+      key: dataset
+      values:
+        - SchulteSchrepping2020
+        - Lee2020
+        - dummy
 
 defaults:
   datasets:
+    - test
     - test_dask
     - test_backed
+    - test_dask_backed
 
