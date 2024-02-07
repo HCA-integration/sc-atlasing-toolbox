@@ -1,7 +1,8 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 import gc
-
+import faulthandler
+faulthandler.enable()
 import pandas as pd
 import scanpy as sc
 from anndata.experimental import AnnCollection
@@ -27,14 +28,6 @@ def read_adata(file, keep_columns, backed=False, dask=False):
         logging.info(f'Keep only mandatory columns for {file}...')
         adata.obs = adata.obs[get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])]
     adata.var = adata.var[SCHEMAS['CELLxGENE_VARS']]
-    
-    if dask:
-        logging.info(f'Convert layers of shape {adata.shape} to pydata sparse.GCXS...')
-        adata = apply_layers(
-            adata,
-            lambda x: x.rechunk(('auto', -1), block_size_limit=1e10).map_blocks(sparse.GCXS, dtype=x.dtype)
-                if isinstance(x, da.Array) else x
-        )
     return adata
 
 
@@ -60,30 +53,23 @@ if len(adatas) == 0:
     exit(0)
 
 if dask:
-    import sparse
     from dask import array as da
     from dask import config as da_config
 
     da_config.set(
         **{
             'num_workers': snakemake.threads,
-            'array.slicing.split_large_chunks': False
+            'array.slicing.split_large_chunks': True
         }
     )
     logging.info('Read all files with dask...')
     logging.info(f'n_threads: {snakemake.threads}')
     adatas = [read_adata(file, keep_all_columns, backed, dask) for file in files]
     adatas = [adata for adata in adatas if adata.n_obs > 0]
+    
+    # concatenate
     adata = sc.concat(adatas, join=merge_strategy)
     
-    if adata.n_obs > 1e6:
-        # workaround for large matrices where csr_matrix int32-forced index fails
-        convert_to_csr = lambda x: x.compute().to_scipy_sparse()
-    else:
-        convert_to_csr = lambda x: x.map_blocks(lambda y: y.to_scipy_sparse(), dtype=x.dtype)
-    logging.info('Convert to csr_matrix...')
-    adata = apply_layers(adata, lambda x: convert_to_csr(x) if isinstance(x, da.Array) else x)
-
 elif backed:
     logging.info('Read all files in backed mode...')
     adatas = [read_adata(file, keep_all_columns, backed, dask) for file in files]

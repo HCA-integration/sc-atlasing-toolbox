@@ -56,16 +56,16 @@ rule harmonize_metadata:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
         ),
-        backed=True,
+        backed=False,
         dask=True,
     output:
         zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
         # plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
+    threads: 5
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
-        disk_mb=20000,
     # shadow: 'shallow'
     script:
         '../scripts/harmonize_metadata.py'
@@ -84,13 +84,12 @@ use rule merge from load_data as load_data_merge_study with:
         )
     output:
         zarr=directory(out_dir / 'merged' / 'study' / '{study}.zarr'),
-        X=directory(out_dir / 'merged' / 'study' / '{study}.zarr' / 'X'),
     params:
         dataset=lambda wildcards: wildcards.study,
         merge_strategy='inner',
         keep_all_columns=True,
-        backed=True,
-        dask=True,
+        backed=False,
+        dask=False,
     threads: 5
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),

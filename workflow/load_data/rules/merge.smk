@@ -14,10 +14,10 @@ use rule merge from load_data as load_data_merge_organ with:
     params:
         dataset=lambda wildcards: wildcards.organ,
         merge_strategy='inner',
-        backed=True, # when backed only, code breaks when var are not the same
-        dask=True,
+        backed=False, # when backed only, code breaks when var are not the same
+        dask=False,
     resources:
-        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt, factor=1.7),
+        mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt, factor=3),
         disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique() * 3

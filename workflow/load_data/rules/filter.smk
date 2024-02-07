@@ -9,11 +9,10 @@ use rule filter from load_data as load_data_filter_study with:
         unpack(get_annotated_study)
     output:
         zarr=directory(out_dir / 'filtered' / '{study}.zarr'),
-        X=directory(out_dir / 'filtered' / '{study}.zarr' / 'X'),
         removed=directory(out_dir / 'filtered' / 'removed' / '{study}.zarr'),
     params:
         filter=lambda wildcards: config['filter_per_study'][wildcards.study],
-        backed=True,
+        backed=False,
         dask=True,
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
