@@ -78,39 +78,40 @@ intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_t
 intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
 intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
 
-metadata_columns  = set([id_col] + metadata_columns)
-metadata_columns = [c for c in dcp_tsv.columns if sum([c.startswith(mc) for mc in metadata_columns]) > 0]
-logging.info('DCP metadata columns:')
-logging.info(pformat(metadata_columns))
+if intersect_max['intersection'] > 0:
+    metadata_columns  = set([id_col] + metadata_columns)
+    metadata_columns = [c for c in dcp_tsv.columns if sum([c.startswith(mc) for mc in metadata_columns]) > 0]
+    logging.info('DCP metadata columns:')
+    logging.info(pformat(metadata_columns))
 
-# explode columns
-dcp_tsv = explode_table(dcp_tsv, id_col).dropna(subset=[id_col])
-dcp_tsv = dcp_tsv[metadata_columns].drop_duplicates()
-logging.info(dcp_tsv)
+    # explode columns
+    dcp_tsv = explode_table(dcp_tsv, id_col).dropna(subset=[id_col])
+    dcp_tsv = dcp_tsv[metadata_columns].drop_duplicates()
+    logging.info(dcp_tsv)
 
-# deal with columns that cause error when writing zarr file
-for col in metadata_columns:
-    if dcp_tsv[col].apply(isinstance, args=((str, bool, np.bool_),)).any():
-        dcp_tsv[col] = dcp_tsv[col].astype(str)
-    elif dcp_tsv[col].isnull().all():
-        # remove columns that are all null
-        del dcp_tsv[col]
+    # deal with columns that cause error when writing zarr file
+    for col in metadata_columns:
+        if dcp_tsv[col].apply(isinstance, args=((str, bool, np.bool_),)).any():
+            dcp_tsv[col] = dcp_tsv[col].astype(str)
+        elif dcp_tsv[col].isnull().all():
+            # remove columns that are all null
+            del dcp_tsv[col]
 
-# rename columns
-obs_df['index'] = obs_df.reset_index().index
+    # rename columns
+    obs_df['index'] = obs_df.reset_index().index
 
-# merge on ID column
-obs_df = obs_df.merge(
-    dcp_tsv,
-    left_on=cxg_col,
-    right_on=id_col,
-    how='left'
-)
+    # merge on ID column
+    obs_df = obs_df.merge(
+        dcp_tsv,
+        left_on=cxg_col,
+        right_on=id_col,
+        how='left'
+    )
 
-# make unique per barcode
-obs_df = obs_df.drop_duplicates(subset=["index"])
-del obs_df['index']
-assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
+    # make unique per barcode
+    obs_df = obs_df.drop_duplicates(subset=["index"])
+    del obs_df['index']
+    assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
 
 # save obs
 logging.info(obs_df.shape)

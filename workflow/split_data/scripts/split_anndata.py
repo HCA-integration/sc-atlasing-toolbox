@@ -1,4 +1,6 @@
 import sys
+import faulthandler
+faulthandler.enable()
 from pathlib import Path
 import numpy as np
 import scanpy as sc
@@ -8,12 +10,15 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import anndata as ad
 from pprint import pformat
+from scipy.sparse import csr_matrix, coo_matrix
+import sparse
 from dask import array as da
+from dask import config as da_config
+da_config.set(num_workers=snakemake.threads)
 
 from utils.io import read_anndata
 from utils.accessors import adata_to_memory
 from utils.misc import apply_layers
-from utils.sparse_dask import sparse_dataset_as_dask
 
 input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
@@ -22,7 +27,6 @@ values = snakemake.params.get('values', [])
 backed = snakemake.params.get('backed', False)
 dask = snakemake.params.get('dask', False)
 exclude_slots = snakemake.params.get('exclude_slots', [])
-n_threads = snakemake.threads
 
 out_dir = Path(output_dir)
 if not out_dir.exists():
@@ -37,6 +41,19 @@ adata = read_anndata(
     exclude_slots=exclude_slots,
 )
 logging.info(adata.__str__())
+
+# logging.info('Convert dtypes...')
+# def convert_to_dtype(x, func):
+#     if isinstance(x, da.Array):
+#         return x.map_blocks(lambda x: func(x), dtype=x.dtype)
+#     # if isinstance(x, csr_matrix):
+#     #     return func(x)
+#     return x
+
+# adata = apply_layers(
+#     adata,
+#     lambda x: convert_to_dtype(x, sparse.GCXS)
+# )
 
 file_value_map = {
     s.replace(' ', '_').replace('/', '_'): s
@@ -74,12 +91,19 @@ for split_file in split_files:
         )
     else:
         logging.info('Copy subset...')
-        adata_sub = apply_layers(
-            adata_sub.copy(),
-            lambda x: x.rechunk({0: 1000}) if isinstance(x, da.Array) else x
-        )
-        adata_sub = adata_to_memory(adata_sub)
-
+        adata_sub = adata_sub.copy()
+        
+        if backed:
+            logging.info('Load backed arrays to memory...')
+            adata_sub = adata_to_memory(adata_sub)
+        # if dask:
+            # logging.info('Compute dask arrays and convert to csr_matrix...')
+            # adata_sub = apply_layers(
+            #     adata_sub,
+            #     # lambda x: convert_to_dtype(x, lambda y: y.to_scipy_sparse())
+            #     lambda x: x.compute().to_scipy_sparse() if isinstance(x, da.Array) else x
+            #     # lambda x: csr_matrix(x.compute()) if isinstance(x, da.Array) else x
+            # )
     
     # write to file
     logging.info(f'Write to {out_file}...')

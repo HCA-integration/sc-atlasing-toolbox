@@ -11,10 +11,12 @@ import anndata as ad
 from anndata.experimental import read_elem, sparse_dataset
 
 
-def read_as_dask_array(elem):
+def read_as_dask_array(elem, chunks=('auto', -1)):
     if isinstance(elem, zarr.storage.BaseStore):
-        return da.from_zarr(elem)
-    return da.from_array(read_elem(elem))
+        print('Read dask array from zarr directly', flush=True)
+        return da.from_zarr(elem, chunks=chunks)
+    print('Read and convert to dask array', flush=True)
+    return da.from_array(read_elem(elem), chunks=chunks)
 
 
 def csr_callable(shape: tuple[int, int], dtype) -> sparse.csr_matrix:
@@ -28,7 +30,6 @@ def csr_callable(shape: tuple[int, int], dtype) -> sparse.csr_matrix:
         raise ValueError(shape)
     sparse_matrix = sparse.csr_matrix(shape, dtype=dtype)
     sparse_matrix.indptr = sparse_matrix.indptr.astype(np.int64)
-    sparse_matrix.indices = sparse_matrix.indices.astype(np.int64)
     return sparse_matrix
 
 

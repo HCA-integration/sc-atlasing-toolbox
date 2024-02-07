@@ -14,6 +14,10 @@ mcfg = ModuleConfig(
     wildcard_names=['key', 'value'],
     rename_config_params={'values': 'value'},
     explode_by=['value'],
+    dtypes={
+        'backed': 'bool',
+        'dask': 'bool',
+    }
 )
 paramspace = mcfg.get_paramspace()
 
@@ -36,11 +40,12 @@ rule split:
         directory(mcfg.out_dir / 'splits' / paramspace.wildcard_pattern.replace('/value~{value}', ''))
     params:
         values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False),
-        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False, as_type=bool),
-        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=False, as_type=bool),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
         exclude_slots=lambda wildcards: mcfg.get_from_parameters(wildcards, 'exclude_slots', default=[]),
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt, factor=1),
+    threads: 5
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:

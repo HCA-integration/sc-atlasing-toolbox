@@ -355,5 +355,5 @@ class ModuleConfig:
             )
             return ''
         if resource_key == 'mem_mb':
-            return int(res + (attempt - 1) * factor * res)
+            return int(res * (1 + factor * (attempt - 1)))
         return res
