@@ -115,6 +115,7 @@ class WildcardParameters:
         
         if verbose:
             print(df.transpose())
+            print(df.dtypes)
         
         # subset by columns
         return unique_dataframe(df[columns]).reset_index(drop=True)
@@ -180,10 +181,18 @@ class WildcardParameters:
         columns = [*['dataset']+config_params]
         df = pd.DataFrame.from_records(records, columns=columns)
         df = df.convert_dtypes()
-        
-        default_dtypes = {col: 'object' for col in columns}
+        default_dtypes = df.dtypes.to_dict()
+        # default_dtypes = {col: 'object' for col in columns}
         dtypes = default_dtypes | dtypes
-        df = df.astype(dtypes)
+        def get_default_value(x):
+            if pd.api.types.is_bool_dtype(x):
+                return False
+            if pd.api.types.is_numeric_dtype(x):
+                return 0
+            return None
+        na_map = {col: get_default_value(df[col]) for col in default_dtypes}
+        na_map = {k: v for k, v in na_map.items() if v is not None}
+        df = df.fillna(value=na_map).astype(dtypes)
         
         # rename columns
         if rename_config_params is None:
@@ -201,12 +210,11 @@ class WildcardParameters:
         
         # set dtypes
         df = df.replace({np.nan: None})
-        for i, v in df.items():
-            if isinstance(v[0], (list, dict)):
-                continue
-            else:
-                df[i] = df[i].astype(str)
-        
+        # for i, v in df.items():
+        #     if isinstance(v[0], (list, dict)):
+        #         continue
+        #     else:
+        #         df[i] = df[i].astype(str)
         self.wildcards_df = df.reset_index(drop=True)
 
 
@@ -350,6 +358,7 @@ class WildcardParameters:
             params_sub = self.subset_by_query(
                 query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
                 columns=[parameter_key],
+                verbose=verbose,
             )
             assert params_sub.shape[0] > 0, 'No wildcard combination found'
             if single_value:
