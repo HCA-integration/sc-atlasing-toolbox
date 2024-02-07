@@ -9,6 +9,10 @@ import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
 import scanpy
 try:
+    import subprocess
+    if subprocess.run('nvidia-smi', shell=True).returncode != 0:
+        logging.info('No GPU found...')
+        raise ImportError()
     import rapids_singlecell as sc
     import cupy as cp
     logging.info('Using rapids_singlecell...')
