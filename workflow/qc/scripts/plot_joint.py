@@ -4,30 +4,30 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 import seaborn as sns
 import scanpy as sc
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
-from qc_utils import get_thresholds, plot_qc_joint
+from qc_utils import parse_parameters, get_thresholds, plot_qc_joint
 
 
 input_zarr = snakemake.input.zarr
 output_joint = snakemake.output.joint
 output_density = snakemake.output.density
+output_density_log = snakemake.output.log_density
 # output_violin = snakemake.output.violin
 # output_avg = snakemake.output.average_jitter
 
 output_joint = Path(output_joint)
 output_joint.mkdir(parents=True, exist_ok=True)
 
-
-file_id = snakemake.wildcards.file_id
-hues = snakemake.params.hue
-sample = snakemake.params.sample
-dataset = snakemake.params.dataset
-
 logging.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, obs='obs', uns='uns')
+
+# get parameters
+file_id = snakemake.wildcards.file_id
+sample, dataset, hues = parse_parameters(adata, snakemake.params)
 
 # if no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
@@ -41,30 +41,21 @@ thresholds = get_thresholds(
     user_thresholds=snakemake.params.get('thresholds'),
     user_key=file_id,
 )
-logging.info(thresholds)
+logging.info(f'\n{pformat(thresholds)}')
 
 sns.set_theme(style='white')
 sc.set_figure_params(frameon=False, fontsize=10, dpi_save=300)
 plt.rcParams['figure.figsize'] = 12, 12
 
-split_datasets = dataset.split('--')
-if len(split_datasets) > 1:
-    dataset = ' '.join([split_datasets[0], split_datasets[-1]])
 
-if isinstance(hues, str):
-    hues = [hues]
-hues = [hue for hue in hues if hue in adata.obs.columns]
-hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
-if len(hues) == 0:
-    hues = [None]
 
 logging.info('Joint QC plots...')
 
 # TODO
-# density plot
-# log scale n_genes
-# color by donor
-# color by disease
+# density plot - done
+# log scale n_genes - done
+# color by donor - done
+# color by disease - done
 
 # n_counts vs n_features
 x = 'n_counts'
@@ -131,15 +122,16 @@ for hue in hues:
     else:
         palette = None # if adata.obs[hue].nunique() > 100 else 'plasma'
         legend = adata.obs[hue].nunique() <= 20
+    
     plot_qc_joint(
         adata.obs,
         x=x,
         y=y,
         # log_x=10,
-        hue=hue,
-        marginal_hue=hue,
         x_threshold=thresholds[x],
         y_threshold=thresholds[y],
+        hue=hue,
+        marginal_hue=hue,
         title=joint_title,
         s=5,
         alpha=.6,
@@ -148,10 +140,31 @@ for hue in hues:
         legend=legend,
     )
     plt.tight_layout()
-    plt.savefig(output_joint / f'genes_vs_mito_frac_hue={hue}.png')
+    plt.savefig(output_joint / f'genes_vs_mito_hue={hue}.png')
+    
+    # log n_genes
+    plot_qc_joint(
+        adata.obs,
+        x=x,
+        y=y,
+        log_x=10,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        hue=hue,
+        marginal_hue=hue,
+        title=joint_title,
+        s=5,
+        alpha=.6,
+        linewidth=0,
+        palette=palette,
+        legend=legend,
+    )
+    plt.tight_layout()
+    plt.savefig(output_joint / f'log_genes_vs_mito_hue={hue}.png')
 
+density_data = adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42)
 plot_qc_joint(
-    adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42),
+    density_data,
     x=x,
     y=y,
     # main_plot_function=Axes.hexbin,
@@ -167,6 +180,23 @@ plot_qc_joint(
 )
 plt.tight_layout()
 plt.savefig(output_density)
+
+plot_qc_joint(
+    density_data,
+    x=x,
+    y=y,
+    main_plot_function=sns.kdeplot,
+    log_x=10,
+    x_threshold=thresholds[x],
+    y_threshold=thresholds[y],
+    marginal_hue=sample,
+    title=joint_title,
+    fill=True,
+    cmap='plasma',
+    alpha=.8,
+)
+plt.tight_layout()
+plt.savefig(output_density_log)
 
 
 # logging.info('Violin plots...')

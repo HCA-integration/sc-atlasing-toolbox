@@ -13,6 +13,7 @@ DATASETS:
       hue:
         - donor
         - development_stage
+        - cell_type
   test:
     input:
       qc:
@@ -23,6 +24,7 @@ DATASETS:
       donor: phase
       hue:
         - phase
+        - bulk_labels
       thresholds:
         test:
           total_counts_min: 100

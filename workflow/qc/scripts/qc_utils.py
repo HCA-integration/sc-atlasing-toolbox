@@ -4,6 +4,25 @@ import seaborn as sns
 import pandas as pd
 
 
+def parse_parameters(adata, params):
+    sample = params.get('sample')
+    dataset = params.get('dataset', 'None')
+    hues = params.get('hue', [])
+    
+    split_datasets = dataset.split('--')
+    if len(split_datasets) > 1:
+        dataset = ' '.join([split_datasets[0], split_datasets[-1]])
+
+    if isinstance(hues, str):
+        hues = [hues]
+    hues = [hue for hue in hues if hue in adata.obs.columns]
+    hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
+    if len(hues) == 0:
+        hues = [None]
+
+    return sample, dataset, hues
+
+
 def get_thresholds(
     threshold_keys: list = None,
     autoqc_thresholds: pd.DataFrame = None,
