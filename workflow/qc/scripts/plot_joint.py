@@ -33,6 +33,7 @@ sample, dataset, hues = parse_parameters(adata, snakemake.params)
 if adata.obs.shape[0] == 0:
     logging.info('Save empty plot...')
     plt.savefig(output_density)
+    plt.savefig(output_density_log)
     exit()
 
 thresholds = get_thresholds(

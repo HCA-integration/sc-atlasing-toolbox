@@ -21,8 +21,7 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 
 # If no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
-    logging.info('Save empty plot...')
-    plt.savefig(output_density)
+    logging.info('Empty data, skipping plots...')
     exit()
 
 # get parameters
