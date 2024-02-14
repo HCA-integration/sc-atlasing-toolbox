@@ -20,6 +20,10 @@ adata.layers['counts'] = csr_matrix(np.exp(adata.X).astype(int) - 1)
 adata.X = csr_matrix(adata.X)
 adata.layers['normcounts'] = adata.X.copy()
 
+# add column with NA columns
+adata.obs['na_column'] = adata.obs['bulk_labels'].astype(str)
+adata.obs.loc[adata.obs['na_column'] == 'Dendritic', 'na_column'] = np.nan
+
 # add raw
 adata.raw = AnnData(
     X=adata.layers['counts'],
