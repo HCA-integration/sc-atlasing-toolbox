@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
 import scanpy
+import anndata as ad
 try:
     import subprocess
     if subprocess.run('nvidia-smi', shell=True).returncode != 0:
@@ -104,7 +105,7 @@ else:
         for column in hvg_column_map
         if column in adata.var.columns
     ]
-    var[hvg_columns] = adata.var[hvg_columns]
+    var.loc[adata.var_names, hvg_columns] = adata.var[hvg_columns]
     var = var.fillna(hvg_column_map)
 
 logging.info(f'Write to {output_file}...')
@@ -115,7 +116,7 @@ if subset_to_hvg:
     files_to_keep.extend(['X', 'layers', 'varm', 'varp'])
 else:
     del adata.X
-    adata.var = var
+    adata = ad.AnnData(var=var, uns=adata.uns)
 
 logging.info(adata.__str__())
 
