@@ -10,6 +10,13 @@ from utils.io import read_anndata
 from qc_utils import parse_parameters, get_thresholds
 
 
+def get_fraction_removed(df, group, key='passed_qc'):
+    grouped_counts = df.groupby([group, key], observed=False).size().reset_index(name='Counts')
+    grouped_frac = grouped_counts.pivot(index=group, columns=key, values='Counts')
+    grouped_frac['fraction_removed'] = (grouped_frac[False] / grouped_frac.sum(axis=1)).round(2)
+    return grouped_frac
+
+
 input_zarr = snakemake.input.zarr
 output_plots = snakemake.output.plots
 
@@ -26,9 +33,8 @@ if adata.obs.shape[0] == 0:
 
 # get parameters
 file_id = snakemake.wildcards.file_id
-sample, dataset, groups = parse_parameters(adata, snakemake.params)
-threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
- 
+sample, dataset, groups = parse_parameters(adata, snakemake.params, filter_hues=True)
+threshold_keys = ['n_counts', 'n_genes', 'percent_mito'] 
 thresholds = get_thresholds(
     threshold_keys=threshold_keys,
     autoqc_thresholds=adata.uns['scautoqc_ranges'],
@@ -54,7 +60,7 @@ sns.countplot(
     palette='Set2'
 )
 for pos in ['right', 'top']: 
-    plt.gca().spines[pos].set_visible(False) 
+    plt.gca().spines[pos].set_visible(False)
 plt.xlabel('Cell QC Status')
 plt.ylabel('Count')
 plt.title(f'Counts of cells QC\'d\n{dataset}')
@@ -65,14 +71,16 @@ plt.close()
 
 # Plot composition of removed cells
 for group in groups:
-    # Fraction removed per group
-    grouped_counts = adata.obs.groupby([group, 'passed_qc'], observed=False).size().reset_index(name='Counts')
-    grouped_frac = grouped_counts.pivot(index=group, columns='passed_qc', values='Counts')
-    grouped_frac['fraction_removed'] = (grouped_frac[False] / grouped_frac.sum(axis=1)).round(2)
+    n_groups = adata.obs[group].nunique()
+    if n_groups > 100:
+        logging.info(f'Group {group} has too many unique values, skipping...')
+        continue
+    
+    grouped_frac = get_fraction_removed(adata.obs, group=group, key='passed_qc')
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
     # order = adata.obs[group].value_counts().index
 
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 5))
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10 * (1 + n_groups/100), 5))
     sns.countplot(
         data=adata.obs,
         y=group,
@@ -83,8 +91,9 @@ for group in groups:
         dodge=False,
         ax=ax1,
     )
-    for container in ax1.containers:
-        ax1.bar_label(container)
+    if n_groups < 50:
+        for container in ax1.containers:
+            ax1.bar_label(container)
 
     sns.barplot(
         data=grouped_frac,
@@ -93,8 +102,9 @@ for group in groups:
         order=order,
         ax=ax2,
     )
-    for container in ax2.containers:
-        ax2.bar_label(container)
+    if n_groups < 50:
+        for container in ax2.containers:
+            ax2.bar_label(container)
     
     for pos in ['right', 'top']: 
         ax1.spines[pos].set_visible(False)

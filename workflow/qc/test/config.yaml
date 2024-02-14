@@ -27,7 +27,6 @@ DATASETS:
         - bulk_labels
       thresholds:
         test:
-          total_counts_min: 100
-          total_counts_max: 1000
-          n_genes_by_counts_max: 500
+          total_counts_max: 500
+          n_genes_by_counts_min: 200
           pct_counts_mito_max: 0.1

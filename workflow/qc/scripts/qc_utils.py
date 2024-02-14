@@ -4,7 +4,7 @@ import seaborn as sns
 import pandas as pd
 
 
-def parse_parameters(adata, params):
+def parse_parameters(adata, params, filter_hues=False):
     sample = params.get('sample')
     dataset = params.get('dataset', 'None')
     hues = params.get('hue', [])
@@ -16,7 +16,8 @@ def parse_parameters(adata, params):
     if isinstance(hues, str):
         hues = [hues]
     hues = [hue for hue in hues if hue in adata.obs.columns]
-    hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
+    if filter_hues:
+        hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
     if len(hues) == 0:
         hues = [None]
 
@@ -28,6 +29,7 @@ def get_thresholds(
     autoqc_thresholds: pd.DataFrame = None,
     user_thresholds: [str, dict] = None,
     user_key: str = None,
+    transform: bool = True,
 ):
     """
     :param threshold_keys: keys in mappings that define different QC paramters
@@ -65,11 +67,17 @@ def get_thresholds(
     else:
         ValueError('thresholds must be a dict or string')
     thresholds |= user_thresholds.get(user_key, {})
-
-    # transform to shape expected by plot_qc_joint
+    
+    if transform:
+        # transform to shape expected by plot_qc_joint
+        return {
+            key: (thresholds[f'{key}_min'], thresholds[f'{key}_max'])
+            for key in threshold_keys
+        }
     return {
-        key: (thresholds[f'{key}_min'], thresholds[f'{key}_max'])
-        for key in threshold_keys
+        key: value
+        for key, value in thresholds.items()
+        if any([key.startswith(x) for x in threshold_keys])
     }
 
 

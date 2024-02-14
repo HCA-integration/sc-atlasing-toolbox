@@ -13,6 +13,11 @@ rule metrics:
         '../scripts/metrics.py'
 
 
+rule metrics_all:
+    input:
+        mcfg.get_output_files(rules.metrics.output),
+
+
 rule plot_joint:
     input:
         zarr=rules.metrics.output.zarr
@@ -49,8 +54,7 @@ rule plot_removed:
         '../scripts/plot_removed.py'
 
 
-rule metrics_all:
+rule plots_all:
     input:
-        mcfg.get_output_files(rules.metrics.output),
         mcfg.get_output_files(rules.plot_joint.output),
         mcfg.get_output_files(rules.plot_removed.output),

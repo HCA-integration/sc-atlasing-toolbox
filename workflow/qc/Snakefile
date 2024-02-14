@@ -27,11 +27,14 @@ module common:
 use rule * from common as common_ *
 
 include: 'rules/qc.smk'
+include: 'rules/thresholds.smk'
 
 
 rule all:
     input:
         rules.metrics_all.input,
+        rules.thresholds_all.input,
+        rules.plots_all.input,
     default_target: True
 
 
