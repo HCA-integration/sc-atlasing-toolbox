@@ -17,7 +17,7 @@ def parse_parameters(adata, params, filter_hues=False):
         hues = [hues]
     hues = [hue for hue in hues if hue in adata.obs.columns]
     if filter_hues:
-        hues = [hue for hue in hues if adata.obs[hue].nunique() > 1]
+        hues = [hue for hue in hues if adata.obs[hue].nunique() > 0]
     if len(hues) == 0:
         hues = [None]
 
