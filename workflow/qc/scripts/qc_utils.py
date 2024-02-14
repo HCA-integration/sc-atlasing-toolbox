@@ -133,6 +133,10 @@ def plot_qc_joint(
         df[y_log] = log1p_base(df[y], log_y)
         y_threshold = log1p_base(y_threshold, log_y)
         y = y_log
+        
+    if marginal_hue in df.columns:
+        marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
+    use_marg_hue = marginal_hue is not None
 
     g = sns.JointGrid(
         data=df,
@@ -141,18 +145,16 @@ def plot_qc_joint(
         xlim=(0, df[x].max()),
         ylim=(0, df[y].max()),
     )
+    
     # main plot
     g.plot_joint(
         main_plot_function,
-        data=df,
+        data=df.sample(frac=1),
         hue=hue,
         **kwargs,
     )
     
     # marginal hist plot
-    if marginal_hue in df.columns:
-        marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
-    use_marg_hue = marginal_hue is not None
     g.plot_marginals(
         sns.histplot,
         data=df,
@@ -164,6 +166,8 @@ def plot_qc_joint(
     )
 
     g.fig.suptitle(title, fontsize=12)
+    # workaround for patchworklib
+    g._figsize = g.fig.get_size_inches()
 
     # x threshold
     for t, t_def in zip(x_threshold, (0, np.inf)):
