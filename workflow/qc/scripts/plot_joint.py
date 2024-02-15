@@ -9,7 +9,7 @@ from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 sns.set_theme(style='white')
-sc.set_figure_params(frameon=False, fontsize=10, dpi_save=300, vector_friendly=True)
+sc.set_figure_params(frameon=False, fontsize=10, dpi_save=200, vector_friendly=True)
 
 from utils.io import read_anndata
 from qc_utils import parse_parameters, get_thresholds, plot_qc_joint
@@ -32,8 +32,6 @@ hues = hues+['percent_mito']
 # if no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
     logging.info('No data, skip plotting...')
-    # plt.savefig(output_density)
-    # plt.savefig(output_density_log)
     exit()
 
 thresholds = get_thresholds(
@@ -68,7 +66,7 @@ for x, y, log_x, log_y in coordinates:
     logging.info(f'Joint QC plots per {x} vs {y}...')
     
     density_png = output_joint / f'{x}_vs_{y}_density.png'
-    density_log_png = output_joint / f'log_{x}_vs_log_{y}_density.png'
+    density_log_png = output_joint / f'log_{x}_vs_{y}_density.png'
     
     plot_qc_joint(
         density_data,
@@ -82,7 +80,7 @@ for x, y, log_x, log_y in coordinates:
         **kde_plot_kwargs,
     )
     plt.tight_layout()
-    plt.savefig(density_png)
+    plt.savefig(density_png, bbox_inches='tight')
     
     plot_qc_joint(
         density_data,
@@ -97,7 +95,7 @@ for x, y, log_x, log_y in coordinates:
         **kde_plot_kwargs,
     )
     plt.tight_layout()
-    plt.savefig(density_log_png)
+    plt.savefig(density_log_png, bbox_inches='tight')
 
     for hue in hues:
         logging.info(f'Joint QC plots for hue={hue}...')
@@ -126,7 +124,8 @@ for x, y, log_x, log_y in coordinates:
             **scatter_plot_kwargs,
         )
         plt.tight_layout()
-        plt.savefig(png_file)
+        plt.savefig(png_file, bbox_inches='tight')
+        plt.close()
         
         # assemble figure
         f, axes = plt.subplots(1, 2, figsize=(20, 10))
@@ -136,10 +135,13 @@ for x, y, log_x, log_y in coordinates:
             ax.set_axis_off()
         plt.suptitle(joint_title, fontsize=16)
         plt.tight_layout()
-        plt.savefig(png_file)
+        plt.savefig(png_file, bbox_inches='tight')
+        plt.close()
 
         # plot in log scale 
-        png_file = output_joint / f'log_{x}_vs_log_{y}_hue={hue}.png'
+        log_x_prefix = f'log_{log_x}_' if log_x > 1 else ''
+        log_y_prefix = f'log_{log_y}_' if log_y > 1 else ''
+        png_file = output_joint / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}_hue={hue}.png'
         g_scatter = plot_qc_joint(
             adata.obs,
             x=x,
@@ -154,7 +156,8 @@ for x, y, log_x, log_y in coordinates:
             **scatter_plot_kwargs,
         )
         plt.tight_layout()
-        plt.savefig(png_file)
+        plt.savefig(png_file, bbox_inches='tight')
+        plt.close('all')
         
         # assemble figure
         f, axes = plt.subplots(1, 2, figsize=(20, 10))
@@ -164,9 +167,9 @@ for x, y, log_x, log_y in coordinates:
             ax.set_axis_off()
         plt.suptitle(joint_title, fontsize=16)
         plt.tight_layout()
-        plt.savefig(png_file)
+        plt.savefig(png_file, bbox_inches='tight')
+        plt.close('all')
     
     # remove redundant plots
     density_png.unlink()
     density_log_png.unlink()
-    plt.close('all')

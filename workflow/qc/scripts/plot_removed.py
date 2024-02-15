@@ -49,7 +49,7 @@ for key in threshold_keys:
     adata.obs['passed_qc'] = adata.obs['passed_qc'] & adata.obs[key].between(*thresholds[key])
 
 logging.info('Plot removed cells...')
-plt.figure(figsize=(4, 4))  # Adjust the figure size as needed
+plt.figure(figsize=(4, 5))
 plt.grid(False)
 sns.countplot(
     x='passed_qc',
@@ -59,8 +59,11 @@ sns.countplot(
     hue_order=[True, False],
     palette='Set2'
 )
+ax = plt.gca()
 for pos in ['right', 'top']: 
-    plt.gca().spines[pos].set_visible(False)
+    ax.spines[pos].set_visible(False)
+for container in ax.containers:
+    ax.bar_label(container)
 plt.xlabel('Cell QC Status')
 plt.ylabel('Count')
 plt.title(f'Counts of cells QC\'d\n{dataset}')
@@ -80,7 +83,7 @@ for group in groups:
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
     # order = adata.obs[group].value_counts().index
 
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10 * (1 + n_groups/100), 5))
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(11 * (1 + n_groups/100), 6))
     sns.countplot(
         data=adata.obs,
         y=group,
