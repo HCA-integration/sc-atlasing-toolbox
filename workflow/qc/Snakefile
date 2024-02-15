@@ -26,7 +26,8 @@ module common:
 
 use rule * from common as common_ *
 
-include: 'rules/qc.smk'
+include: 'rules/calculate_metrics.smk'
+include: 'rules/plots.smk'
 include: 'rules/thresholds.smk'
 
 
