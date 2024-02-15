@@ -8,8 +8,6 @@ DATASETS:
       qc: 
         Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
     qc:
-      sample: sample
-      donor: donor
       hue:
         - donor
         - development_stage
@@ -20,8 +18,6 @@ DATASETS:
         test: test/input/pbmc68k.h5ad
         test2: test/input/pbmc68k.h5ad
     qc:
-      sample: batch
-      donor: phase
       hue:
         - phase
         - bulk_labels

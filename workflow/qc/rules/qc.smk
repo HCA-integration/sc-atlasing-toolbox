@@ -25,8 +25,7 @@ rule plot_joint:
         joint=directory(mcfg.image_dir / params.wildcard_pattern / 'joint_plots'),
     params:
         dataset=lambda wildcards: wildcards.file_id,
-        hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=mcfg.get_from_parameters(wildcards, 'donor')),
-        sample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample'),
+        hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=[]),
         thresholds=lambda wildcards: mcfg.get_from_parameters(wildcards, 'thresholds', default={}),
     conda:
         get_env(config, 'plots')
@@ -41,8 +40,7 @@ rule plot_removed:
         plots=directory(mcfg.image_dir / params.wildcard_pattern / 'removed'),
     params:
         dataset=lambda wildcards: wildcards.file_id,
-        hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=mcfg.get_from_parameters(wildcards, 'donor')),
-        sample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample'),
+        hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=[]),
         thresholds=lambda wildcards: mcfg.get_from_parameters(wildcards, 'thresholds', default={}),
     conda:
         get_env(config, 'plots')

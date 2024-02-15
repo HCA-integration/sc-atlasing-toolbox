@@ -33,7 +33,7 @@ if adata.obs.shape[0] == 0:
 
 # get parameters
 file_id = snakemake.wildcards.file_id
-sample, dataset, groups = parse_parameters(adata, snakemake.params, filter_hues=True)
+dataset, groups = parse_parameters(adata, snakemake.params, filter_hues=True)
 threshold_keys = ['n_counts', 'n_genes', 'percent_mito'] 
 thresholds = get_thresholds(
     threshold_keys=threshold_keys,

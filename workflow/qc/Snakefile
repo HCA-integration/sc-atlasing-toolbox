@@ -11,8 +11,8 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['sample', 'donor', 'hue', 'thresholds'],
-    dtypes={'thresholds': str},
+    config_params=['hue', 'thresholds'],
+    # dtypes={'thresholds': str},
 )
 params = mcfg.get_paramspace()
 

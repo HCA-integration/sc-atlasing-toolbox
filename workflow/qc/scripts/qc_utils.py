@@ -5,7 +5,6 @@ import pandas as pd
 
 
 def parse_parameters(adata, params, filter_hues=False):
-    sample = params.get('sample')
     dataset = params.get('dataset', 'None')
     hues = params.get('hue', [])
     
@@ -21,7 +20,7 @@ def parse_parameters(adata, params, filter_hues=False):
     if len(hues) == 0:
         hues = [None]
 
-    return sample, dataset, hues
+    return dataset, hues
 
 
 def get_thresholds(
