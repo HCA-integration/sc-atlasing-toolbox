@@ -17,7 +17,8 @@ if hyperparams is None:
     hyperparams = {}
 
 # check GPU
-logging.info(f'GPU available: {torch.cuda.is_available()}')
+use_gpu = torch.cuda.is_available()
+logging.info(f'GPU available: {use_gpu}')
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -37,7 +38,7 @@ adata.obsm['X_emb'] = harmonize(
     X=adata.obsm[use_rep],
     batch_mat=adata.obs,
     batch_key=wildcards.batch,
-    use_gpu=True,
+    use_gpu=use_gpu,
     n_jobs=snakemake.threads,
     **hyperparams
 )
