@@ -33,11 +33,14 @@ wildcard_constraints:
     value=r"[^/]+",
 
 
+split_pattern = paramspace.wildcard_pattern.replace('/value~{value}', '')
+
 rule split:
     input:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
-        directory(mcfg.out_dir / 'splits' / paramspace.wildcard_pattern.replace('/value~{value}', ''))
+        splits=directory(mcfg.out_dir / 'splits' / split_pattern),
+        done=touch(mcfg.out_dir / 'splits' / f'{split_pattern}.done'),
     params:
         values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False),
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
@@ -54,10 +57,11 @@ rule split:
 
 rule link:
     input:
-        lambda wildcards: mcfg.get_output_files(rules.split.output, subset_dict=wildcards)
+        splits=lambda wildcards: mcfg.get_output_files(rules.split.output.splits, subset_dict=wildcards),
+        done=lambda wildcards: mcfg.get_output_files(rules.split.output.done, subset_dict=wildcards),
     output:
-        directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
-        directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        X=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
