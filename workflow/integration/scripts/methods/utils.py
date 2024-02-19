@@ -148,13 +148,19 @@ def check_output(adata, output_type):
         raise ValueError(f'Invalid output type {output_type}')
 
 
-def get_hyperparams(hyperparams: dict, model_params: list = None, train_params: list = None):
+def get_hyperparams(
+    hyperparams: dict,
+    model_params: list = None,
+    train_params: list = None
+):
     """
     Get hyperparameters and training parameters from hyperparameter dictionary
     :param hyperparams: dictionary of hyperparameters
     :param train_params: list of training parameters
     :return: hyperparams, train_params
     """
+    if hyperparams is None:
+        return {}, {}
     if model_params is None:
         model_params = []
         if train_params is not None:

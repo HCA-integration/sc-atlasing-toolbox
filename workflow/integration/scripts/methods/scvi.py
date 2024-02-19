@@ -68,10 +68,14 @@ add_metadata(
 from utils import plot_model_history
 
 for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    train_key = f'{loss}_train'
+    validation_key = f'{loss}_validation'
+    if train_key not in model.history or validation_key not in model.history:
+        continue
     plot_model_history(
         title=loss,
-        train=model.history[f'{loss}_train'][f'{loss}_train'],
-        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        train=model.history[train_key][train_key],
+        validation=model.history[validation_key][validation_key],
         output_path=f'{output_plot_dir}/{loss}.png'
     )
 

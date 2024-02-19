@@ -144,10 +144,5 @@ DATASETS:
           max_epochs: 10
           early_stopping: true
         scanvi:
-          n_hidden: 128
-          dispersion: gene
-          use_observed_lib_size: true
-          max_epochs: 10
-          early_stopping: true
       umap_colors:
         - phase
