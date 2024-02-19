@@ -33,6 +33,7 @@ defaults:
     - test
     - multi_wildcards
     - preprocessed
+    - unintegrated
     - harmony
     - scarches
     - scvi_tools
@@ -41,7 +42,8 @@ defaults:
 DATASETS:
   test:
     input:
-      integration: test/input/pbmc68k.h5ad
+      integration:
+        pbmc68k: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
@@ -76,6 +78,15 @@ DATASETS:
         unintegrated:
         scgen:
           n_epochs: 10
+
+  unintegrated:
+    input:
+      integration:
+        unprocessed: test/input/pbmc68k_unprocessed.h5ad
+    integration:
+      batch: batch
+      methods:
+        unintegrated:
 
   harmony:
     input:
