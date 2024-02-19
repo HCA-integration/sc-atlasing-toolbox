@@ -50,7 +50,8 @@ def read_anndata(
     backed: bool = False,
     fail_on_missing: bool = True,
     exclude_slots: list = None,
-    obs_chunk: int = 1000,
+    chunks: [int, tuple] = ('auto', -1),
+    stride: int = 1000,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -87,7 +88,14 @@ def read_anndata(
             if fail_on_missing:
                 raise ValueError(message)
             warnings.warn(f'{message}, will be skipped')
-    adata = read_partial(store, dask=dask, backed=backed, **kwargs)
+    adata = read_partial(
+        store,
+        dask=dask,
+        backed=backed,
+        chunks=chunks,
+        stride=stride,
+        **kwargs
+    )
     if not backed and file_type == 'h5py':
         store.close()
     
@@ -98,7 +106,8 @@ def read_partial(
     group: [h5py.Group, zarr.Group],
     backed: bool = False,
     dask: bool = False,
-    obs_chunk: int = 1000,
+    chunks: [int, tuple] = ('auto', -1),
+    stride: int = 1000,
     force_sparse_types: [str, list] = None,
     force_sparse_slots: [str, list] = None,
     **kwargs
@@ -109,7 +118,8 @@ def read_partial(
     :params force_sparse_types: encoding types to convert to sparse_dataset via csr_matrix
     :params backed: read sparse matrix as sparse_dataset
     :params dask: read any matrix as dask array
-    :params obs_chunk: chunk size for dask array
+    :params chunks: chunks parameter for creating dask array
+    :params stride: stride parameter for creating backed dask array
     :params **kwargs: dict of to_slot: slot, by default use all available slot for the zarr file
     :return: AnnData object
     """
@@ -125,6 +135,8 @@ def read_partial(
     force_sparse_slots.extend(['X', 'layers/', 'raw/X'])
     
     print_flushed(f'dask: {dask}, backed: {backed}')
+    if dask:
+        print_flushed('chunks:', chunks)
     
     slots = {}
     for to_slot, from_slot in kwargs.items():
@@ -139,7 +151,8 @@ def read_partial(
                     force_slot_sparse,
                     backed=backed,
                     dask=dask,
-                    obs_chunk=obs_chunk,
+                    chunks=chunks,
+                    stride=stride,
                 )
                 for sub_slot in group[from_slot]
             }
@@ -151,7 +164,8 @@ def read_partial(
                 force_slot_sparse,
                 backed=backed,
                 dask=dask,
-                obs_chunk=obs_chunk,
+                chunks=chunks,
+                stride=stride,
             )
 
     return ad.AnnData(**slots)
@@ -164,7 +178,8 @@ def read_slot(
     force_slot_sparse: bool,
     backed: bool,
     dask: bool,
-    obs_chunk: int,
+    chunks: [int, tuple],
+    stride: int,
 ):
     if slot not in group:
         warnings.warn(f'Slot "{slot}" not found, skip...')
@@ -176,8 +191,9 @@ def read_slot(
             slot,
             force_sparse_types,
             force_slot_sparse,
-            obs_chunk,
-            backed
+            stride=stride,
+            chunks=chunks,
+            backed=backed,
         )
     return _read_slot_default(
         group,
@@ -193,7 +209,8 @@ def _read_slot_dask(
     slot,
     force_sparse_types,
     force_slot_sparse,
-    obs_chunk,
+    stride,
+    chunks,
     backed
 ):
     from .sparse_dask import sparse_dataset_as_dask, read_as_dask_array
@@ -205,17 +222,17 @@ def _read_slot_dask(
         if backed:
             print_flushed(f'Read {slot} as backed sparse dask array...')
             elem = sparse_dataset(elem)
-            return sparse_dataset_as_dask(elem, stride=obs_chunk)
+            return sparse_dataset_as_dask(elem, stride=stride)
         print_flushed(f'Read {slot} as sparse dask array...')
-        elem = read_as_dask_array(elem)
+        elem = read_as_dask_array(elem, chunks=chunks)
         return elem.map_blocks(csr_matrix_int64_indptr, dtype=elem.dtype)
     elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
         print_flushed(f'Read {slot} as dask array and convert blocks to csr_matrix...')
-        elem = read_as_dask_array(elem)
+        elem = read_as_dask_array(elem, chunks=chunks)
         return elem.map_blocks(csr_matrix_int64_indptr, dtype=elem.dtype)
     elif iospec.encoding_type == "array":
         print_flushed(f'Read {slot} as dask array...')
-        return read_as_dask_array(elem)
+        return read_as_dask_array(elem, chunks=chunks)
     return read_elem(elem)
 
 

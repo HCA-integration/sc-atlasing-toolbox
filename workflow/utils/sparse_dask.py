@@ -16,7 +16,10 @@ def read_as_dask_array(elem, chunks=('auto', -1)):
         print('Read dask array from zarr directly', flush=True)
         return da.from_zarr(elem, chunks=chunks)
     print('Read and convert to dask array', flush=True)
-    return da.from_array(read_elem(elem), chunks=chunks)
+    elem = read_elem(elem)
+    if np.min(elem.shape) == 0:
+        chunks = 'auto'
+    return da.from_array(elem, chunks=chunks)
 
 
 def csr_callable(shape: tuple[int, int], dtype) -> sparse.csr_matrix:
