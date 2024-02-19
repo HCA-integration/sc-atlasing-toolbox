@@ -113,6 +113,7 @@ def ifelse(statement, _if, _else):
 
 
 def check_sparse(matrix, sparse_type=None):
+    import types
     from anndata.experimental import CSRDataset, CSCDataset
     from scipy.sparse import csr_matrix, csc_matrix
     from sparse import COO
@@ -122,6 +123,10 @@ def check_sparse(matrix, sparse_type=None):
         sparse_type = (csr_matrix, csc_matrix, CSRDataset, CSCDataset, COO)
     elif not isinstance(sparse_type, tuple):
         sparse_type = (sparse_type,)
+    
+    # convert to type for functions
+    sparse_type = [type(x(0)) if isinstance(x, types.FunctionType) else x for x in sparse_type]
+    sparse_type = tuple(sparse_type)
     
     if isinstance(matrix, da.Array):
         return isinstance(matrix._meta, sparse_type)
@@ -149,7 +154,7 @@ def ensure_sparse(adata, layers: [str, list] = None, **kwargs):
         if check_sparse(matrix, sparse_type):
             return matrix
         elif isinstance(matrix, da.Array):
-            return matrix.map_blocks(sparse_type)
+            return matrix.map_blocks(sparse_type, dtype=matrix.dtype)
         return sparse_type(matrix)
 
     return apply_layers(adata, func=to_sparse, layers=layers, **kwargs)

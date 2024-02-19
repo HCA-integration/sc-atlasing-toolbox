@@ -4,14 +4,28 @@ Preprocessing
 from pathlib import Path
 import pandas as pd
 
-# from utils.config import get_for_dataset, get_datasets_for_module, get_resource, set_defaults, \
-#     get_input_file, get_input_file_wildcards
-# from utils.misc import ifelse
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 
-mcfg = ModuleConfig('preprocessing', config)
+mcfg = ModuleConfig(
+    module_name='preprocessing',
+    config=config,
+    config_params=[
+        'assemble',
+        'batch',
+        'colors',
+        'highly_variable_genes',
+        'lineage',
+        'neighbors',
+        'pca',
+        'raw_counts',
+        'scale',
+        'umap',
+        'backed',
+        'dask',
+    ]
+)
 paramspace = mcfg.get_paramspace()
 
 
@@ -29,7 +43,6 @@ module preprocessing:
     snakefile: "rules.smk"
     config: config
 
-# include: 'rules/preprocessing.smk'
 include: 'rules/assemble.smk'
 include: 'rules/plots.smk'
 

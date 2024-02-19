@@ -1,9 +1,7 @@
-import sys
 import faulthandler
 faulthandler.enable()
 from pathlib import Path
 import numpy as np
-import scanpy as sc
 import warnings
 warnings.filterwarnings("ignore")
 import logging
@@ -16,7 +14,7 @@ from dask import array as da
 from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
 
-from utils.io import read_anndata
+from utils.io import read_anndata, csr_matrix_int64_indptr
 from utils.accessors import adata_to_memory
 from utils.misc import apply_layers
 
@@ -41,6 +39,10 @@ adata = read_anndata(
     exclude_slots=exclude_slots,
 )
 logging.info(adata.__str__())
+
+# convert split_key column to string
+adata.obs[split_key] = adata.obs[split_key].astype(str)
+logging.info(adata.obs[split_key].value_counts())
 
 # logging.info('Convert dtypes...')
 # def convert_to_dtype(x, func):
@@ -96,14 +98,15 @@ for split_file in split_files:
         if backed:
             logging.info('Load backed arrays to memory...')
             adata_sub = adata_to_memory(adata_sub)
-        # if dask:
-            # logging.info('Compute dask arrays and convert to csr_matrix...')
-            # adata_sub = apply_layers(
-            #     adata_sub,
-            #     # lambda x: convert_to_dtype(x, lambda y: y.to_scipy_sparse())
-            #     lambda x: x.compute().to_scipy_sparse() if isinstance(x, da.Array) else x
-            #     # lambda x: csr_matrix(x.compute()) if isinstance(x, da.Array) else x
-            # )
+        if dask:
+            logging.info('Convert to csr_matrix with int64 indptr...')
+            adata_sub = apply_layers(
+                adata_sub,
+                # lambda x: convert_to_dtype(x, lambda y: y.to_scipy_sparse())
+                # lambda x: x.compute().to_scipy_sparse() if isinstance(x, da.Array) else x
+                # lambda x: csr_matrix(x.compute()) if isinstance(x, da.Array) else x
+                lambda x: x.map_blocks(csr_matrix_int64_indptr, dtype=x.dtype)
+            )
     
     # write to file
     logging.info(f'Write to {out_file}...')
