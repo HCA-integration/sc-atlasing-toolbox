@@ -57,6 +57,17 @@ DATASETS:
         - SchulteSchrepping2020
         - Lee2020
         - dummy
+  test_na:
+    input:
+      split_data:
+        pbmc: test/input/pbmc68k.h5ad
+    split_data:
+      key: na_column
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - CD14+_Monocyte
+        - CD19+_B
+        - nan
 
 defaults:
   datasets:
@@ -64,4 +75,5 @@ defaults:
     - test_dask
     - test_backed
     - test_dask_backed
+    - test_na
 
