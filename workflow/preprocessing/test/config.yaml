@@ -12,12 +12,12 @@ defaults:
       n_pcs: 50
   datasets:
     - large
-    # - all
-    # - no_hvg
-    # - empty
-    # - test_backed
-    # - test_dask
-    # - test_dask_backed
+    - all
+    - no_hvg
+    - empty
+    - test_backed
+    - test_dask
+    - test_dask_backed
 
 DATASETS:
   large:
