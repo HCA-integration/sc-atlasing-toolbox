@@ -475,7 +475,7 @@ def write_zarr_linked(
     
     if files_to_keep is None:
         files_to_keep = []
-    files_to_link = [f for f in in_dirs if not any(k.startswith(f) for k in files_to_keep)]
+    files_to_link = [f for f in in_dirs if not any(f in [k, f'/{k}'] for k in files_to_keep)]
     
     if slot_map is None:
         slot_map = {}
