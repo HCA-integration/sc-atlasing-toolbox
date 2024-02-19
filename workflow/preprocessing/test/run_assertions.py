@@ -29,7 +29,11 @@ for file in single_outputs:
     logging.info(pformat(preprocessing_config))
     
     z = zarr.open(file)
-    X = read_elem(z['X'])
+    try:
+        X = read_elem(z['X'])
+    except KeyError:
+        logging.info(f'No X in {file}, skipping...')
+        continue
 
     if 'normcounts' in preprocessing_config['assemble']:
         assert 'raw' in z, list(z)
