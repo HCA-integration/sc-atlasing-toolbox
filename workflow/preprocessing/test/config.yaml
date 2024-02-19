@@ -25,7 +25,8 @@ DATASETS:
       preprocessing:
         blood: test/input/load_data/merged/organ/blood.zarr
     preprocessing:
-      dask: true
+      dask: false
+      backed: false
       raw_counts: X
       batch: dataset
       lineage: cell_type
