@@ -1,4 +1,6 @@
-import scib
+from pprint import pformat
+import logging
+logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -10,6 +12,13 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
+if 'covariates' in hyperparams:
+    covariates = hyperparams['covariates']
+    if isinstance(covariates, str):
+        hyperparams['covariates'] = [covariates]
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -21,7 +30,12 @@ adata = read_anndata(
 )
 
 # run method
-adata = scib.ig.combat(adata, batch=wildcards.batch)
+logging.info(f'Run Combat with parameters {pformat(hyperparams)}...')
+sc.pp.combat(
+    adata,
+    key=wildcards.batch,
+    **hyperparams
+)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])

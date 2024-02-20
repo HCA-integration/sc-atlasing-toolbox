@@ -8,6 +8,9 @@ DATASETS:
         pbmc: test/input/pbmc68k.h5ad
         zarr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     split_data:
+      exclude_slots:
+        - raw
+        - layers
       key: bulk_labels
       values:
         - CD4+_CD45RA+_CD25-_Naive_T
@@ -20,3 +23,57 @@ DATASETS:
         # - Dendritic
         # - CD14+ Monocyte
         # - CD19+ B
+  test_backed:
+    input:
+      split_data:
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    split_data:
+      backed: true
+      key: dataset
+      values:
+        - SchulteSchrepping2020
+        - Lee2020
+        - dummy
+  test_dask:
+    input:
+      split_data:
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    split_data:
+      dask: true
+      key: dataset
+      values:
+        - SchulteSchrepping2020
+        - Lee2020
+        - dummy
+  test_dask_backed:
+    input:
+      split_data:
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    split_data:
+      backed: true
+      dask: true
+      key: dataset
+      values:
+        - SchulteSchrepping2020
+        - Lee2020
+        - dummy
+  test_na:
+    input:
+      split_data:
+        pbmc: test/input/pbmc68k.h5ad
+    split_data:
+      key: na_column
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - CD14+_Monocyte
+        - CD19+_B
+        - nan
+
+defaults:
+  datasets:
+    - test
+    - test_dask
+    - test_backed
+    - test_dask_backed
+    - test_na
+

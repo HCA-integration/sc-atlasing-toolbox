@@ -1,7 +1,18 @@
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy.sparse import issparse
-import harmonypy as hm
+try:
+    import subprocess
+    if subprocess.run('nvidia-smi', shell=True).returncode != 0:
+        logging.info('No GPU found...')
+        raise ImportError()
+    from rapids_singlecell.pp import harmony_integrate
+    import cupy as cp
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    from scanpy.external.pp import harmony_integrate
+    logging.info('Importing rapids failed, using scanpy...')
 
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, write_zarr_linked
@@ -11,6 +22,9 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -21,16 +35,18 @@ adata = read_anndata(
     uns='uns'
 )
 
-assert 'X_pca' in adata.obsm.keys(), 'PCA is missing'
+use_rep = hyperparams.pop('use_rep', 'X_pca')
+assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # run method
-logging.info('Run harmonypy...')
-harmony_out = hm.run_harmony(
-    data_mat=adata.obsm['X_pca'],
-    meta_data=adata.obs,
-    vars_use=[wildcards.batch]
+logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
+harmony_integrate(
+    adata,
+    key=wildcards.batch,
+    basis=use_rep,
+    adjusted_basis='X_emb',
+    **hyperparams
 )
-adata.obsm['X_emb'] = harmony_out.Z_corr.T
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])

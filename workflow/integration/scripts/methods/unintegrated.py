@@ -19,6 +19,8 @@ adata = read_anndata(
     obs='obs',
     var='var',
     obsp='obsp',
+    obsm='obsm',
+    varm='varm',
     uns='uns'
 )
 
@@ -26,7 +28,8 @@ adata = read_anndata(
 files_to_keep = ['obsm', 'uns']
 
 if 'X_pca' not in adata.obsm:
-    sc.pp.pca(adata, use_highly_variable=True)
+    logging.info('Compute PCA...')
+    sc.pp.pca(adata)
     files_to_keep.extend(['varm'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 
@@ -35,17 +38,16 @@ logging.info(adata.uns.keys())
 try:
     assert_neighbors(adata)
     logging.info(adata.uns['neighbors'].keys())
-    files_to_keep.extend(['obsp', 'uns'])
 except AssertionError:
     logging.info('Compute neighbors...')
     sc.pp.neighbors(adata)
     print(adata.uns['neighbors'])
+    files_to_keep.extend(['obsp', 'uns'])
 
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
 # write file
-
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())
 write_zarr_linked(
@@ -53,4 +55,5 @@ write_zarr_linked(
     input_file,
     output_file,
     files_to_keep=files_to_keep,
+    slot_map={'X': 'layers/norm_counts'},
 )

@@ -7,7 +7,12 @@ from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 module_name = 'subset'
-mcfg = ModuleConfig(module_name, config)
+mcfg = ModuleConfig(
+    module_name,
+    config,
+    config_params=['n_cells', 'sample', 'label', 'backed', 'dask'],
+    # wildcard_names=['strategy'], # TODO manage wildcards in ModuleConfig
+)
 paramspace = mcfg.get_paramspace()
 
 module common:
@@ -25,9 +30,11 @@ rule subset:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     params:
-        n_cells=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'n_cells']),
-        sample_key=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'sample']),
-        label_key=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[module_name, 'label']),
+        n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells', as_type=int, check_query_keys=False),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
+        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', check_query_keys=False),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=True, as_type=bool, check_query_keys=False),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=True, as_type=bool, check_query_keys=False),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:

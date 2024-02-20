@@ -52,7 +52,7 @@ class ModuleConfig:
         :param dtypes: dictionary of dtypes for parameters DataFrame
         """
         self.module_name = module_name
-        self.config = config
+        self.config = config.copy()
         self.set_defaults()
         self.set_datasets(warn=False)
 
@@ -355,5 +355,5 @@ class ModuleConfig:
             )
             return ''
         if resource_key == 'mem_mb':
-            return int(res + (attempt - 1) * factor * res)
+            return int(res * (1 + factor * (attempt - 1)))
         return res

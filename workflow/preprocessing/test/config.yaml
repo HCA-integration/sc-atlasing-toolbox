@@ -2,7 +2,7 @@ output_dir: test/out
 dataset_meta: test/datasets.tsv
 images: test/images
 
-env_mode: from_yaml
+# env_mode: from_yaml
 use_gpu: true
 
 defaults:
@@ -10,6 +10,14 @@ defaults:
     neighbors:
       n_neighbors: 15
       n_pcs: 50
+  datasets:
+    - large
+    - all
+    - no_hvg
+    - empty
+    - test_backed
+    - test_dask
+    - test_dask_backed
 
 DATASETS:
   large:
@@ -17,6 +25,8 @@ DATASETS:
       preprocessing:
         blood: test/input/load_data/merged/organ/blood.zarr
     preprocessing:
+      dask: false
+      backed: false
       raw_counts: X
       batch: dataset
       lineage: cell_type
@@ -71,3 +81,34 @@ DATASETS:
     input:
       preprocessing:
         pbmc: test/input/empty.zarr
+
+  test_backed: # should just go with in-memory reading
+    input:
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
+    preprocessing:
+      backed: true
+      raw_counts: layers/counts
+      assemble:
+        - umap
+
+  test_dask:
+    input:
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
+    preprocessing:
+      dask: true
+      raw_counts: layers/counts
+      assemble:
+        - umap
+
+  test_dask_backed:
+    input:
+      preprocessing:
+        pbmc: test/input/pbmc68k.h5ad
+    preprocessing:
+      dask: true
+      backed: true
+      raw_counts: layers/counts
+      assemble:
+        - umap

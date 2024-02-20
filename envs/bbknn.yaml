@@ -9,6 +9,8 @@ dependencies:
   - hdf5=1.14.2
   - dask
   - sparse
+  - pytorch
+  - faiss-cpu
   - pip
   - pip:
     - bbknn

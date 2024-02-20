@@ -2,6 +2,42 @@
 import numpy as np
 from scipy import sparse
 
+SCVI_MODEL_PARAMS = [
+    'n_hidden',
+    'n_latent',
+    'n_layers',
+    'dropout_rate',
+    'dispersion',
+    'gene_likelihood',
+    'latent_distribution',
+    # VAE parameters
+    'n_batch',
+    'n_labels',
+    'n_hidden',
+    'n_latent',
+    'n_layers',
+    'n_continuous_cov',
+    'n_cats_per_cov',
+    'dropout_rate',
+    'dispersion',
+    'log_variational',
+    'gene_likelihood',
+    'latent_distribution',
+    'encode_covariates',
+    'deeply_inject_covariates',
+    'use_batch_norm',
+    'use_layer_norm',
+    'use_size_factor_key',
+    'use_observed_lib_size',
+    'library_log_means',
+    'library_log_vars',
+    'var_activation',
+    'extra_encoder_kwargs',
+    'extra_decoder_kwargs',
+]
+
+SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']
+
 
 def ensure_sparse(adata):
     from scipy.sparse import csr_matrix, issparse
@@ -112,15 +148,23 @@ def check_output(adata, output_type):
         raise ValueError(f'Invalid output type {output_type}')
 
 
-def get_hyperparams(hyperparams: dict, train_params: list = None):
+def get_hyperparams(
+    hyperparams: dict,
+    model_params: list = None,
+    train_params: list = None
+):
     """
     Get hyperparameters and training parameters from hyperparameter dictionary
     :param hyperparams: dictionary of hyperparameters
     :param train_params: list of training parameters
     :return: hyperparams, train_params
     """
-    if train_params is None:
-        train_params = ['max_epochs', 'batch_size', 'early_stopping']
-    model_params = {k: v for k, v in hyperparams.items() if k not in train_params}
-    train_params = {k: v for k, v in hyperparams.items() if k in train_params}
+    if hyperparams is None:
+        return {}, {}
+    if model_params is None:
+        model_params = []
+        if train_params is not None:
+            model_params = [x for x in hyperparams if x not in train_params]
+    model_params = {k: v for k, v in hyperparams.items() if k in model_params}
+    train_params = {k: v for k, v in hyperparams.items() if k not in model_params}
     return model_params, train_params

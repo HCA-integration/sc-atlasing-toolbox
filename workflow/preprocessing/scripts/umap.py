@@ -92,6 +92,8 @@ if adata.n_obs == 0:
 
 neighbors_key = params.get('neighbors_key', 'neighbors')
 adata = check_and_update_neighbors_info(adata, neighbors_key)
+
+logging.info('Compute UMAP...')
 sc.tl.umap(adata, **params)
 
 logging.info(f'Write to {output_file}...')

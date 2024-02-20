@@ -2,7 +2,7 @@ checkpoint split_batches:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        batches=directory(mcfg.out_dir / params.wildcard_pattern / '_batches'),
+        batches=directory(mcfg.out_dir / 'scatter' /  params.wildcard_pattern / '_batches'),
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key'),
     conda:
@@ -33,7 +33,7 @@ rule scrublet:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         batch=get_checkpoint_output,
     output:
-        tsv=mcfg.out_dir / params.wildcard_pattern / 'scrublet' / '{batch}.tsv',
+        tsv=mcfg.out_dir / 'scatter' / params.wildcard_pattern / 'scrublet' / '{batch}.tsv',
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
@@ -52,7 +52,7 @@ rule doubletdetection:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         batch=get_checkpoint_output
     output:
-        tsv=mcfg.out_dir / params.wildcard_pattern / 'doubletdetection' / '{batch}.tsv',
+        tsv=mcfg.out_dir / 'scatter' / params.wildcard_pattern / 'doubletdetection' / '{batch}.tsv',
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:

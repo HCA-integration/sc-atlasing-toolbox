@@ -2,12 +2,13 @@ rule prepare:
     input:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
-        zarr=directory(out_dir / 'prepare' / 'dataset={dataset}--file_id={file_id}.zarr'),
+        zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}--file_id~{file_id}.zarr'),
+        done=touch(out_dir / 'prepare' / '.dataset~{dataset}--file_id~{file_id}.done'),
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -16,7 +17,7 @@ rule prepare:
     script:
         '../scripts/prepare.py'
 
-integration_run_pattern = paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
+integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
 
 use rule run_method from integration as integration_run_method with:
     message:
@@ -29,13 +30,14 @@ use rule run_method from integration as integration_run_method with:
        """
     input:
         zarr=rules.prepare.output.zarr,
+        done=rules.prepare.output.done,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
         done=directory(out_dir / integration_run_pattern/ 'adata.zarr/layers'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
-        plots=touch(directory(image_dir / integration_run_pattern / 'training')),
+        plots=touch(directory(image_dir / integration_run_pattern)),
     benchmark:
-        out_dir /integration_run_pattern / 'benchmark.tsv'
+        out_dir / integration_run_pattern / 'benchmark.tsv'
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
@@ -51,7 +53,11 @@ use rule run_method from integration as integration_run_method with:
 
 
 def update_neighbors_args(wildcards):
-    args = mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={})
+    args = mcfg.get_for_dataset(
+        dataset=wildcards.dataset,
+        query=['preprocessing', 'neighbors'],
+        default={}
+    ).copy()
     output_type = wildcards.output_type
     if output_type == 'full':
         args |= {'use_rep': 'X_pca'}

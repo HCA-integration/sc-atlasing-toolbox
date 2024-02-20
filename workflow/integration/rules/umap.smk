@@ -5,8 +5,8 @@ use rule umap from preprocessing as integration_compute_umap with:
         anndata=rules.integration_postprocess.output.zarr,
         rep=rules.integration_postprocess.output.zarr,
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
-        done=touch(out_dir / paramspace.wildcard_pattern / 'umap.done'),
+        zarr=directory(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
+        done=touch(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.done'),
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
@@ -28,7 +28,7 @@ use rule plots from preprocessing as integration_plot_umap with:
     input:
         anndata=rules.integration_compute_umap.output.zarr,
     output:
-        plots=directory(image_dir / paramspace.wildcard_pattern.replace('--output_type', '/output_type') / 'umap'),
+        plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern.replace('--output_type', '/output_type')),
     params:
         color=get_colors,
         basis='X_umap',

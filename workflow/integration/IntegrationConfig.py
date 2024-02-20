@@ -42,6 +42,18 @@ class IntegrationConfig(ModuleConfig):
                 'None'
             )
         
+        # subset to user defined output types
+        remove_indices = []
+        for dataset in wildcards_df['dataset'].unique():
+            output_type_col = wildcards_df.query('dataset == @dataset')['output_type']
+            output_types = self.get_for_dataset(
+                dataset=dataset,
+                query=[self.module_name, 'output_types'],
+                default=output_type_col.unique()
+            )
+            remove_indices.extend(output_type_col[~output_type_col.isin(output_types)].index)
+        wildcards_df = wildcards_df.drop(remove_indices)
+        
         # set default paramspace arguments
         if kwargs.get('paramspace_kwargs') is None:
             paramspace_kwargs = dict(

@@ -11,8 +11,8 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['sample', 'donor', 'hue', 'thresholds'],
-    dtypes={'thresholds': str},
+    config_params=['hue', 'thresholds'],
+    # dtypes={'thresholds': str},
 )
 params = mcfg.get_paramspace()
 
@@ -26,12 +26,16 @@ module common:
 
 use rule * from common as common_ *
 
-include: 'rules/qc.smk'
+include: 'rules/calculate_metrics.smk'
+include: 'rules/plots.smk'
+include: 'rules/thresholds.smk'
 
 
 rule all:
     input:
         rules.metrics_all.input,
+        rules.thresholds_all.input,
+        rules.plots_all.input,
     default_target: True
 
 

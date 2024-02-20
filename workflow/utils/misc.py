@@ -112,10 +112,25 @@ def ifelse(statement, _if, _else):
         return _else
 
 
-def check_sparse(matrix):
+def check_sparse(matrix, sparse_type=None):
+    import types
     from anndata.experimental import CSRDataset, CSCDataset
-    from scipy.sparse import issparse
-    return issparse(matrix) or isinstance(matrix, (CSRDataset, CSCDataset))
+    from scipy.sparse import csr_matrix, csc_matrix
+    from sparse import COO
+    from dask import array as da
+    
+    if sparse_type is None:
+        sparse_type = (csr_matrix, csc_matrix, CSRDataset, CSCDataset, COO)
+    elif not isinstance(sparse_type, tuple):
+        sparse_type = (sparse_type,)
+    
+    # convert to type for functions
+    sparse_type = [type(x(0)) if isinstance(x, types.FunctionType) else x for x in sparse_type]
+    sparse_type = tuple(sparse_type)
+    
+    if isinstance(matrix, da.Array):
+        return isinstance(matrix._meta, sparse_type)
+    return isinstance(matrix, sparse_type)
 
 
 def check_sparse_equal(a, b):
@@ -127,38 +142,58 @@ def check_sparse_equal(a, b):
     return a.shape == b.shape and (a != b).nnz == 0
 
 
-def ensure_sparse(adata, layer='X'):
-    from scipy.sparse import csr_matrix
+def ensure_sparse(adata, layers: [str, list] = None, **kwargs):
     
-    if layer == 'X':
-        matrix = adata.X
-        if not check_sparse(matrix):
-            adata.X = csr_matrix(matrix)
-    elif layer in adata.layers:
-        matrix = adata.layers[layer]
-        if not check_sparse(matrix):
-            adata.layers[layer] = csr_matrix(matrix)
-    elif layer in adata.obsm:
-        matrix = adata.obsm[layer]
-        if not check_sparse(matrix):
-            adata.obsm[layer] = csr_matrix(matrix)
+    def to_sparse(matrix, sparse_type=None):
+        from scipy.sparse import csr_matrix
+        from dask import array as da
+        
+        if sparse_type is None:
+            sparse_type = csr_matrix
+
+        if check_sparse(matrix, sparse_type):
+            return matrix
+        elif isinstance(matrix, da.Array):
+            return matrix.map_blocks(sparse_type, dtype=matrix.dtype)
+        return sparse_type(matrix)
+
+    return apply_layers(adata, func=to_sparse, layers=layers, **kwargs)
 
 
-def ensure_dense(adata, layer='X'):
-    from scipy.sparse import csr_matrix
+def ensure_dense(adata, layers: [str, list] = None, **kwargs):
     
-    if layer == 'X':
-        matrix = adata.X
+    def to_dense(matrix):
+        from dask import array as da
+        
+        if isinstance(matrix, da.Array):
+            return matrix.map_blocks(np.array)
         if check_sparse(matrix):
-            adata.X = matrix.todense()
-    elif layer in adata.layers:
-        matrix = adata.layers[layer]
-        if check_sparse(matrix):
-            adata.layers[layer] = matrix.todense()
-    elif layer in adata.obsm:
-        matrix = adata.obsm[layer]
-        if check_sparse(matrix):
-            adata.obsm[layer] = matrix.todense()
+            return matrix.toarray()
+        return matrix
+    
+    return apply_layers(adata, func=to_dense, layers=layers, **kwargs)
+
+
+def apply_layers(adata, func, layers:[str, list] = None, **kwargs):
+    if layers is None:
+        layers = ['X', 'raw'] + list(adata.layers.keys())
+    elif isinstance(layers, str):
+        layers = [layers]
+    
+    for layer in layers:
+        if layer == 'X':
+            adata.X = func(adata.X, **kwargs)
+        elif layer in adata.layers:
+            adata.layers[layer] = func(adata.layers[layer], **kwargs)
+        elif layer in adata.obsm:
+            adata.obsm[layer] = func(adata.obsm[layer], **kwargs)
+        elif layer == 'raw':
+            if adata.raw is None:
+                continue
+            adata_raw = adata.raw.to_adata()
+            adata_raw.X = func(adata.raw.X, **kwargs)
+            adata.raw = adata_raw
+    return adata
 
 
 def merge(dfs, **kwargs):

@@ -8,7 +8,16 @@ logging.basicConfig(level=logging.INFO)
 import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
 import scanpy
+import anndata as ad
+from dask import array as da
+from dask import config as da_config
+da_config.set(num_workers=snakemake.threads)
+import sparse
 try:
+    import subprocess
+    if subprocess.run('nvidia-smi', shell=True).returncode != 0:
+        logging.info('No GPU found...')
+        raise ImportError()
     import rapids_singlecell as sc
     import cupy as cp
     logging.info('Using rapids_singlecell...')
@@ -18,7 +27,23 @@ except ImportError:
     logging.info('Importing rapids failed, using scanpy...')
     rapids = False
 
-from utils.io import read_anndata, write_zarr_linked, to_memory
+from utils.io import read_anndata, write_zarr_linked, csr_matrix_int64_indptr
+from utils.misc import apply_layers
+
+
+def filter_genes(adata):
+    logging.info('Filter genes...')
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+    gene_subset, _ = scanpy.pp.filter_genes(adata.X, min_cells=1)
+    if isinstance(gene_subset, da.Array):
+        gene_subset = gene_subset.compute()
+    if any(gene_subset == False):
+        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
+        adata = adata[:, gene_subset].copy()
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(csr_matrix_int64_indptr).compute()
+    return adata
 
 
 input_file = snakemake.input[0]
@@ -26,6 +51,8 @@ output_file = snakemake.output[0]
 args = snakemake.params.get('args', {})
 batch_key = snakemake.params.get('batch')
 lineage_key = snakemake.params.get('lineage')
+dask = snakemake.params.get('dask', False) and not rapids
+backed = snakemake.params.get('backed', False) and dask and not rapids
 
 if args is None:
     args = {}
@@ -33,12 +60,12 @@ subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=True)
+kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=backed, dask=dask)
 if subset_to_hvg:
     kwargs |= dict(layers='layers')
 adata = read_anndata(input_file, **kwargs)
-adata.X = to_memory(adata.X)
-var = adata.var
+logging.info(adata.__str__())
+var = adata.var.copy()
 
 # add metadata
 if 'preprocessing' not in adata.uns:
@@ -57,7 +84,7 @@ adata.uns["log1p"] = {"base": None}
 
 if args is False:
     logging.info('No highly variable gene parameters provided, including all genes...')
-    adata.var['highly_variable'] = True
+    var['highly_variable'] = True
 else:
     if lineage_key is not None:
         logging.info(f'lineage-specific highly variable gene selection using "{lineage_key}"')
@@ -67,19 +94,13 @@ else:
             adata.obs['hvg_batch'] = adata.obs[lineage_key]
         batch_key = 'hvg_batch'
 
-    logging.info('Filter genes...')
-    gene_subset, _ = scanpy.pp.filter_genes(adata, min_cells=1, inplace=False)
-    if any(gene_subset == False):
-        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
-        adata.X = read_anndata(input_file, X='X').X
-        adata = adata[:, gene_subset].copy()
-        adata.X = to_memory(adata.X)
+    adata = filter_genes(adata)
     
     # make sure data is on GPU for rapids_singlecell
     if rapids:
         sc.utils.anndata_to_GPU(adata)
     
-    logging.info('Select features...')
+    logging.info(f'Select features with arguments: {args}...')
     if 'subset' in args:
         del args['subset']
     sc.pp.highly_variable_genes(
@@ -97,13 +118,13 @@ else:
         'highly_variable_nbatches': 0,
         'highly_variable_intersection': False,
     }
-    hvg_columns = [
-        column
-        for column in hvg_column_map
-        if column in adata.var.columns
-    ]
-    var[hvg_columns] = adata.var[hvg_columns]
-    var = var.fillna(hvg_column_map)
+    for column, default_value in hvg_column_map.items():
+        if column not in adata.var.columns:
+            continue
+        dtype = adata.var[column].dtype
+        var[column] = default_value
+        var[column] = var[column].astype(dtype)
+        var.loc[adata.var_names, column] = adata.var[column]
 
 logging.info(f'Write to {output_file}...')
 files_to_keep = ['uns', 'var']
@@ -111,12 +132,11 @@ if subset_to_hvg:
     logging.info('Subset to highly variable genes...')
     adata = adata[:, adata.var['highly_variable']].copy()
     files_to_keep.extend(['X', 'layers', 'varm', 'varp'])
+    logging.info(adata.__str__())
 else:
-    del adata.X
-    adata.var = var
+    adata = ad.AnnData(var=var, uns=adata.uns)
 
-logging.info(adata.__str__())
-
+logging.info(f'Write to {output_file}...')
 write_zarr_linked(
     adata,
     in_dir=input_file,
