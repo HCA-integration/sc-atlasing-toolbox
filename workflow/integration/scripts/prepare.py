@@ -69,8 +69,7 @@ def read_and_subset(
 
 
 files_to_keep = []
-slot_map = {'X': 'layers/norm_counts'}
-in_dir_map = {'layers/norm_counts': output_file}
+slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
@@ -111,6 +110,7 @@ if input_file.endswith('.h5ad'):
     )
 elif input_file.endswith('.zarr'):
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata_norm.obs,
         var=adata_norm.var,
         layers={
@@ -124,9 +124,7 @@ else:
 # preprocess if missing
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
-    adata.X = adata.layers['norm_counts']
     sc.pp.pca(adata)
-    del adata.X
     files_to_keep.extend(['obsm', 'varm', 'uns'])
 
 try:
@@ -138,11 +136,15 @@ except AssertionError:
     files_to_keep.extend(['obsp', 'uns'])
 
 logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+slot_map |= {'X': 'layers/norm_counts'}
 write_zarr_linked(
     adata,
     input_file,
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    in_dir_map=in_dir_map,
+    in_dir_map={
+        'layers/norm_counts': output_file
+    },
 )
