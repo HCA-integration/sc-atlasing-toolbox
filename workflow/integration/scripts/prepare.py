@@ -1,11 +1,13 @@
 from anndata import AnnData
+import scanpy as sc
 from pathlib import Path
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils.io import read_anndata, write_zarr_linked, to_memory
+from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
+from utils.processing import assert_neighbors
 
 
 def read_layer(
@@ -116,6 +118,22 @@ elif input_file.endswith('.zarr'):
     )
 else:
     raise ValueError(f'Invalid input file {input_file}')
+
+# preprocess if missing
+if 'X_pca' not in adata.obsm:
+    logging.info('Compute PCA...')
+    adata.X = adata.layers['norm_counts']
+    sc.pp.pca(adata)
+    del adata.X
+    files_to_keep.extend(['obsm', 'varm', 'uns'])
+
+try:
+    assert_neighbors(adata)
+    logging.info(adata.uns['neighbors'].keys())
+except AssertionError:
+    logging.info('Compute neighbors...')
+    sc.pp.neighbors(adata)
+    files_to_keep.extend(['obsp', 'uns'])
 
 logging.info(f'Write {output_file}...')
 write_zarr_linked(

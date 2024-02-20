@@ -3,11 +3,12 @@ rule prepare:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
         zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}--file_id~{file_id}.zarr'),
+        done=touch(out_dir / 'prepare' / '.dataset~{dataset}--file_id~{file_id}.done'),
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -29,6 +30,7 @@ use rule run_method from integration as integration_run_method with:
        """
     input:
         zarr=rules.prepare.output.zarr,
+        done=rules.prepare.output.done,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),

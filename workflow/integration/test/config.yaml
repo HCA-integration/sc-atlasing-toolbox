@@ -20,20 +20,10 @@ defaults:
   integration:
     raw_counts: layers/counts
     norm_counts: layers/normcounts
-    methods:
-      bbknn:
-        neighbors_within_batch: 3
-      combat:
-        covariates:
-          - bulk_labels
-      scanorama:
-        batch_size: 100
-      unintegrated:
   datasets:
     - test
     - multi_wildcards
     - preprocessed
-    - unintegrated
     - harmony
     - scarches
     - scvi_tools
@@ -44,12 +34,21 @@ DATASETS:
     input:
       integration:
         pbmc68k: test/input/pbmc68k.h5ad
+        unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
-      label: bulk_labels
       batch: batch
       umap_colors:
         - bulk_labels
         - phase
+      methods:
+        bbknn:
+          neighbors_within_batch: 3
+        combat:
+          covariates:
+            - bulk_labels
+        scanorama:
+          batch_size: 100
+        unintegrated:
 
   multi_wildcards:
     input:
@@ -78,15 +77,6 @@ DATASETS:
         unintegrated:
         scgen:
           n_epochs: 10
-
-  unintegrated:
-    input:
-      integration:
-        unprocessed: test/input/pbmc68k_unprocessed.h5ad
-    integration:
-      batch: batch
-      methods:
-        unintegrated:
 
   harmony:
     input:

@@ -28,7 +28,8 @@ adata = read_anndata(
 files_to_keep = ['obsm', 'uns']
 
 if 'X_pca' not in adata.obsm:
-    sc.pp.pca(adata, use_highly_variable=True)
+    logging.info('Compute PCA...')
+    sc.pp.pca(adata)
     files_to_keep.extend(['varm'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 

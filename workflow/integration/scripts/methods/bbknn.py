@@ -31,7 +31,14 @@ use_rep = hyperparams.pop('use_rep', 'X_pca')
 assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # quickfix: remove batches with fewer than 3 cells
-min_batches = adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index
+neighbors_within_batch = hyperparams.get('neighbors_within_batch', 3)
+min_batches = adata.obs.groupby(
+    batch_key,
+    observed=False
+).filter(
+    lambda x: len(x) > neighbors_within_batch
+).index
+print(min_batches)
 if min_batches.nunique() < adata.n_obs:
     files_to_keep.extend(['obs'])
     # adata.layers = read_anndata(input_file, layers='layers').layers
