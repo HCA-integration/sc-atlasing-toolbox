@@ -33,7 +33,6 @@ use rule run_method from integration as integration_run_method with:
         done=rules.prepare.output.done,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
-        done=directory(out_dir / integration_run_pattern/ 'adata.zarr/layers'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
         plots=touch(directory(image_dir / integration_run_pattern)),
     benchmark:
@@ -73,6 +72,7 @@ def update_neighbors_args(wildcards):
 use rule neighbors from preprocessing as integration_postprocess with:
     input:
         zarr=rules.integration_run_method.output.zarr,
+        done=rules.integration_run_method.output.model,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
         done=touch(directory(out_dir / f'{paramspace.wildcard_pattern}.zarr/obs')),
