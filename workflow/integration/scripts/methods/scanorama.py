@@ -5,7 +5,7 @@ import scanpy as sc
 import scanorama
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
 # TODO: use scanpy/anndata directly
