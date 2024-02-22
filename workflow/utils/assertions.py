@@ -1,4 +1,5 @@
 import anndata as ad
+import numpy as np
 
 
 def assert_pca(adata: ad.AnnData):
@@ -9,7 +10,14 @@ def assert_pca(adata: ad.AnnData):
     assert 'variance_ratio' in adata.uns['pca'], f'variance_ratio missing from uns[pca]:\n{adata.uns}'
 
 
-def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities', dist_key='distances', check_params=True):
+def assert_neighbors(
+    adata,
+    neighbors_key='neighbors',
+    conn_key='connectivities',
+    dist_key='distances',
+    check_params=True,
+    check_n_neighbors=False,
+):
     assert neighbors_key in adata.uns, f'neighbors key "{neighbors_key}" not on .uns'
     assert 'connectivities_key' in adata.uns[neighbors_key]
     assert 'distances_key' in adata.uns[neighbors_key]
@@ -20,3 +28,9 @@ def assert_neighbors(adata, neighbors_key='neighbors', conn_key='connectivities'
     if check_params:
         assert 'params' in adata.uns[neighbors_key]
         assert 'use_rep' in adata.uns[neighbors_key]['params']
+    
+    # check that all cells have the same number of neighbors
+    if check_n_neighbors:
+        n_neighbors = np.unique(adata.obsp['distances'].nonzero()[0], return_counts=True)[1]
+        n_neighbors = np.unique(n_neighbors)
+        assert len(n_neighbors) == 1, f'Cells do not have the same number of neighbors {n_neighbors}'
