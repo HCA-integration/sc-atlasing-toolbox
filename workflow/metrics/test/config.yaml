@@ -49,15 +49,16 @@ DATASETS:
   test_integration:
     input:
       metrics:
-        unintegrated_full: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
-        unintegrated_embed: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
-        unintegrated_knn: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
-        bbknn: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~bbknn--hyperparams~None--label~None--output_type~knn.zarr
-        harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/method~harmony--hyperparams~None--label~None--output_type~embed.zarr
-        scanorama_full: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~scanorama--hyperparams~None--label~None--output_type~full.zarr
-        scanorama_embed: test/input/integration/dataset~test/file_id~3bd5f9cfa3/batch~batch/method~scanorama--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+        bbknn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~bbknn--hyperparams~25cb428a38--label~None--output_type~knn.zarr
+        harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/method~harmony--hyperparams~71ed6f69c1--label~None--output_type~embed.zarr
+        scanorama_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~full.zarr
+        scanorama_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~embed.zarr
     metrics:
-      unintegrated: X
+      unintegrated: layers/norm_counts
+      corrected: X
       label:
         - bulk_labels
         - louvain
@@ -73,14 +74,16 @@ DATASETS:
   
   scib_metrics:
     input:
-      metrics: test/input/pbmc68k.h5ad
+      metrics:
+        pbmc: test/input/pbmc68k.h5ad
+        prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     metrics:
       label: bulk_labels
       batch: batch
       methods:
         - ari
         - ari_leiden_y
-        # - ari_kmeans_y
+        - ari_kmeans_y
         - nmi
         - nmi_leiden_y
         - nmi_kmeans_y

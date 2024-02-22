@@ -1,12 +1,14 @@
-rule preprocess:
+rule prepare:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr'),
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'prepare.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / '.prepare.done'),
     params:
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
         unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
+        corrected_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'corrected', default='X'),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
@@ -17,6 +19,11 @@ rule preprocess:
         time="1-00:00:00",
     script:
         '../scripts/preprocess.py'
+
+
+rule prepare_all:
+    input:
+        mcfg.get_output_files(rules.prepare.output)
 
 
 # def get_metric_input(wildcards):
@@ -47,7 +54,8 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        zarr=rules.preprocess.output.zarr
+        zarr=rules.prepare.output.zarr,
+        done=rules.prepare.output.done,
     output:
         metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
     benchmark:
@@ -58,7 +66,6 @@ rule run:
         metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type'),
         output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_type'),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
-        unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True),
     conda:
         lambda wildcards, params: get_env(config, params.env)

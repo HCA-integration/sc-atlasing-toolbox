@@ -26,9 +26,8 @@ label_key = params.label_key
 
 # metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = params.get('metric_type')
-output_types = params.get('output_types')
+metric_output_types = params.get('output_types')
 comparison = params.get('comparison')
-unintegrated_layer = params.get('unintegrated_layer')
 metric_function = metric_map.get(metric)
 
 logger.info(f'Read {input_file} ...')
@@ -38,38 +37,29 @@ kwargs = dict(
     var='var',
     uns='uns',
 )
-if 'knn' in output_types:
-    kwargs['obsp'] = 'obsp'
-if 'embed' in output_types:
-    kwargs['obsm'] = 'obsm'
-if 'full' in output_types:
-    kwargs['X'] = 'X'
-adata = read_anndata(input_file, **kwargs)
-
-adata_raw = None
+if 'embed' in metric_output_types:
+    kwargs |= {'obsm': 'obsm'}
+if 'full' in metric_output_types:
+    kwargs |= {'X': 'X'}
 if comparison:
-    kwargs['X'] = unintegrated_layer
-    adata_raw = read_anndata(
-        input_file,
-        varm='varm',
-        backed=True,
-        **kwargs
-    )
+    kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
 
-# if 'unintegrated' in snakemake.input.keys():
-#     input_unintegrated = snakemake.input.unintegrated
-#     logger.info(f'Read unintegrated data {input_unintegrated}...')
-#     unintegrated = read_anndata(input_unintegrated)
-# else:
-#     logger.info('Skip unintegrated data...')
-#     unintegrated = adata
+adata = read_anndata(input_file, **kwargs)
+if comparison:
+    adata_raw = adata.raw.to_adata()
+    adata_raw.obs = adata.obs
+    adata_raw.var = adata.var
+    adata_raw.uns = adata.uns
+    adata_raw.varm = adata.varm
+else:
+    adata_raw = None
 
-output_type = adata.uns.get('output_type', 'full')
-logger.info(f'Run metric {metric} for {output_type}...')
+data_output_type = adata.uns.get('output_type', 'full')
+logger.info(f'Run metric {metric} for {data_output_type}...')
 adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
     adata,
-    output_type,
+    data_output_type,
     batch_key=batch_key,
     label_key=label_key,
     adata_raw=adata_raw,
@@ -77,7 +67,7 @@ score = metric_function(
 
 write_metrics(
     scores=[score],
-    output_types=[output_type],
+    output_types=[data_output_type],
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,
