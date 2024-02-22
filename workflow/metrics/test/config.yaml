@@ -91,9 +91,9 @@ DATASETS:
         - asw_label_y
         - asw_batch
         - asw_batch_y
-        # - ilisi
+        - ilisi
         - ilisi_y
-        # - clisi
+        - clisi
         - clisi_y
         - isolated_label_asw_y
         - kbet_y
