@@ -18,7 +18,7 @@ rule prepare:
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='gpu', attempt=attempt),
         time="1-00:00:00",
     script:
-        '../scripts/preprocess.py'
+        '../scripts/prepare.py'
 
 
 rule prepare_all:
