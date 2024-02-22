@@ -82,7 +82,7 @@ if adata.n_obs == 0:
 # scanpy.pp.log1p was supposed to add it but it's not saved
 adata.uns["log1p"] = {"base": None}
 
-if args is False:
+if args == False:
     logging.info('No highly variable gene parameters provided, including all genes...')
     var['highly_variable'] = True
 else:
