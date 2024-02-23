@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 import warnings
 
@@ -30,29 +31,41 @@ metrics_df = metrics_df.merge(benchmark_df).drop_duplicates()
 
 # parse any extra entries in file_id
 expanded_file_ids = metrics_df['file_id'].str.split('--', expand=True)
-ex_columns = []
-prefix = ''
+ex_columns = set()
 
-for col in expanded_file_ids.columns:
-    exp_col = expanded_file_ids[col].str.split('=', expand=True)
-    expanded_file_ids[col] = exp_col.iloc[:,-1]
-    col_name = exp_col.iloc[0,0]
-    if ':' in col_name:
-        prefix = col_name.split(':')[0]
-        col_name = col_name.replace(':', '_')
-    else:
-        col_name = f'{prefix}_{col_name}'
-    ex_columns.append(col_name)
+# for col in expanded_file_ids.columns:
+#     if expanded_file_ids[col].str.contains('=').any():
+#         exp_col = expanded_file_ids[col].str.split('=', expand=True)
+#     else:
+#         exp_col = expanded_file_ids[col].str.rsplit(':', n=1, expand=True)
+#     non_empty = exp_col[0].apply(lambda x: isinstance(x, str))
+#     col_name = exp_col[non_empty].iloc[0,0]
+#     ex_columns.append(col_name)
+#     # reassign value to column
+#     expanded_file_ids[col] = exp_col.iloc[:,-1]
+# # rename expanded columns
+# expanded_file_ids.columns = ex_columns
+# # sort columns by name
+# ex_columns.sort()
+# expanded_file_ids = expanded_file_ids[ex_columns]
+# # merge extra columns to metrics
+# if 'file_id' in expanded_file_ids.columns:
+#     del metrics_df['file_id']
+# metrics_df = pd.concat([metrics_df, expanded_file_ids], axis=1)
 
-if len(ex_columns) == 1:
-    ex_columns = ['file_id']
-
-expanded_file_ids.columns = ex_columns
-metrics_df = pd.concat([metrics_df, expanded_file_ids], axis=1)
+for row, _dict in expanded_file_ids.to_dict('index').items():
+    for _, value in _dict.items():
+        if value is None:
+            continue
+        splits = re.split(r'[:=]', value, maxsplit=1)
+        key = splits[0]
+        value = splits[-1]
+        metrics_df.loc[row, key] = value
+        ex_columns.add(key)
 
 # save files
 with open(extra_columns, 'w') as f:
-    for col in ex_columns:
+    for col in sorted(ex_columns):
         f.write(f'{col}\n')
 metrics_df.to_csv(out_tsv, sep='\t', index=False)
 
