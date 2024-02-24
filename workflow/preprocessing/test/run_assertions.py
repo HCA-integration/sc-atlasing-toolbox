@@ -9,11 +9,9 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.misc import check_sparse_equal
 
-
-# config = yaml.safe_load(open('test/config_no_gpu.yaml', 'r'))
-# single_outputs = glob.glob('test/out/preprocessing/dataset~no_gpu/file_id~*/preprocessed.zarr')
-config = yaml.safe_load(open('test/config.yaml', 'r'))
-single_outputs = glob.glob('test/out/preprocessing/dataset~*/file_id~*/preprocessed.zarr')
+config = yaml.safe_load(open('test/config.yaml', 'r')) | yaml.safe_load(open('test/config_no_gpu.yaml', 'r'))
+single_outputs = glob.glob('test/out/preprocessing/dataset~*/file_id~*/preprocessed.zarr') \
+    + glob.glob('test/out/preprocessing/dataset~no_gpu/file_id~*/preprocessed.zarr')
 assert len(single_outputs) > 0, 'No output files found'
 
 for file in single_outputs:
@@ -73,3 +71,7 @@ for file in single_outputs:
         assert 'neighbors' in z['uns']
         assert 'distances' in z['obsp']
         assert 'connectivities' in z['obsp']
+        
+    assert 'wildcards' in z['uns']
+    assert 'wildcards' in z['uns']
+    assert 'wildcards' in z['uns']

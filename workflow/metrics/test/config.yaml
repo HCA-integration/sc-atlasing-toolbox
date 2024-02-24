@@ -32,6 +32,7 @@ defaults:
       # - pcr_y  # broken function
   datasets:
     - test_metrics
+    - test_no_name
     - test_integration
     - scib_metrics
 
@@ -40,11 +41,19 @@ DATASETS:
   test_metrics:
     input:
       metrics:
-        - test/input/pbmc68k.h5ad
-        - test/input/pbmc68k_2.h5ad
+        module1:module2--mod1_param=val1--mod2_param=val2: test/input/pbmc68k.h5ad
     metrics:
       label: bulk_labels
       batch: louvain
+
+    test_no_name:
+      input:
+        metrics: test/input/pbmc68k.h5ad
+      metrics:
+        label: bulk_labels
+        batch: louvain
+        methods:
+          - nmi
   
   test_integration:
     input:

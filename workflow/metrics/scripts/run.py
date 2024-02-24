@@ -74,5 +74,6 @@ write_metrics(
     label=label_key,
     file_id=file_id,
     dataset=dataset,
-    filename=output_file
+    filename=output_file,
+    **adata.uns.get('wildcards', {}),
 )

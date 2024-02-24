@@ -10,7 +10,6 @@ def write_metrics(filename, scores, output_types, **kwargs):
     :param output_types: list of output types, order must match that of scores
     :param kwargs: additional information to add to output
     """
-
     meta_names = list(kwargs.keys())
     meta_values = [kwargs[col] for col in meta_names]
 

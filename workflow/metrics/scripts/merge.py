@@ -58,8 +58,9 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
         if value is None:
             continue
         splits = re.split(r'[:=]', value, maxsplit=1)
-        key = splits[0]
-        value = splits[-1]
+        if len(splits) == 1:
+            continue
+        key, value = splits
         metrics_df.loc[row, key] = value
         ex_columns.add(key)
 
