@@ -30,7 +30,11 @@ def assert_neighbors(
         assert 'use_rep' in adata.uns[neighbors_key]['params']
     
     # check that all cells have the same number of neighbors
-    if check_n_neighbors:
-        n_neighbors = np.unique(adata.obsp['distances'].nonzero()[0], return_counts=True)[1]
-        n_neighbors = np.unique(n_neighbors)
+    n_neighbors = np.unique(adata.obsp['distances'].nonzero()[0], return_counts=True)[1]
+    n_neighbors = np.unique(n_neighbors)
+    try:
         assert len(n_neighbors) == 1, f'Cells do not have the same number of neighbors {n_neighbors}'
+    except AssertionError as e:
+        if check_n_neighbors:
+            raise e
+        print(f'Warning: {e}')
