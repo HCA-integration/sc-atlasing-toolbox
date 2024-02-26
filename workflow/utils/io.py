@@ -492,7 +492,12 @@ def write_zarr_linked(
     
     if files_to_keep is None:
         files_to_keep = []
-    files_to_link = [f for f in in_dirs if not any(f in [k, f'/{k}'] for k in files_to_keep)]
+    
+    # Unique the list
+    files_to_keep = list(set(files_to_keep))
+
+    file_to_link_check = [k.split('/')[1] if k.startswith('/') else k.split('/')[0] for k in files_to_keep]
+    files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_check]
     
     if slot_map is None:
         slot_map = {}
