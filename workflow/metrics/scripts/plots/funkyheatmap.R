@@ -81,7 +81,8 @@ metrics_tab <- add_column(metrics_tab, "Bio conservation" = score_group_bio, .be
 # order methods by the overall score
 metrics_tab <- metrics_tab[order(metrics_tab$`Overall Score`,  decreasing = T), ]
 
-# write output summary.csv file before plotting ? Michaela to check the output dir? 
+# write output summary.csv file before plotting ? Michaela to check the output dir?
+cat('Writing output file: ', output_tsv, '\n')
 fwrite(metrics_tab, output_tsv, sep='\t')
 
 #add column info metadata for plotting using funkyheatmap

@@ -92,7 +92,7 @@ DATASETS:
       methods:
         - ari
         - ari_leiden_y
-        - ari_kmeans_y
+        # - ari_kmeans_y
         - nmi
         - nmi_leiden_y
         - nmi_kmeans_y
