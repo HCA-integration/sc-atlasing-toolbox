@@ -95,7 +95,7 @@ use rule merge as merge_per_file with:
 
 rule merge_all:
     input:
-        mcfg.get_output_files(rules.merge.output),
+        rules.merge.output,
         mcfg.get_output_files(rules.merge_per_dataset.output, wildcard_names=['dataset']),
         mcfg.get_output_files(rules.merge_per_batch.output, wildcard_names=['batch']),
         mcfg.get_output_files(rules.merge_per_label.output, wildcard_names=['label']),
