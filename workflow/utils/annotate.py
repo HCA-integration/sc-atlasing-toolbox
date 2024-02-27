@@ -10,6 +10,7 @@ def add_wildcards(
     """
     Add wildcards to adata.uns
     """
-    wildcards = {k: v for k, v in wildcards.items() if k not in exclude}
     adata.uns['wildcards'] = adata.uns.get('wildcards', {})
-    adata.uns['wildcards'] |= {f'{module_name}_{k}': v for k, v in wildcards.items()}
+    adata.uns['wildcards'] |= {
+        f'{module_name}_{k}': v for k, v in wildcards.items() if k not in exclude
+    }
