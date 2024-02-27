@@ -10,7 +10,6 @@ out_tsv = snakemake.output.tsv
 extra_columns = snakemake.output.extra_columns
 expanded_wildcards = snakemake.params['wildcards']
 # expanded_wildcards = pd.DataFrame(expanded_wildcards)
-skip_extra = snakemake.params.get('skip_extra', False)
 
 metrics_df = pd.concat(
     [pd.read_table(file) for file in input_metrics],
@@ -80,11 +79,11 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
         else:
             key = 'file_name'
 
-        if key == 'file_name':
-            if check_existing(metrics_df, row, key):
-                # collect any unassigned values to file_name
-                value = metrics_df.loc[row, key] + '--' + value
-        elif check_existing(metrics_df, row, key) or skip_extra:
+        entry_exists = check_existing(metrics_df, row, key)
+        if entry_exists and key == 'file_name':
+            # collect any unassigned values to file_name
+            value = metrics_df.loc[row, key] + '--' + value
+        elif entry_exists or metrics_df.loc[row, 'overwrite_file_id'] == False:
             # don't overwrite existing values
             continue
         
@@ -95,10 +94,13 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
 ex_columns = sorted(ex_columns)
 print(metrics_df[ex_columns].drop_duplicates(), flush=True)
 
-# save files
+# save extra columns
 with open(extra_columns, 'w') as f:
     for col in ex_columns:
         f.write(f'{col}\n')
+
+# save metrics
+del metrics_df['overwrite_file_id']
 metrics_df.to_csv(out_tsv, sep='\t', index=False)
 
 print(

@@ -45,6 +45,7 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: louvain
+      overwrite_file_id: false
 
     test_no_name:
       input:

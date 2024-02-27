@@ -1,4 +1,4 @@
-metric_wildcards = mcfg.get_wildcard_names() + ['metric']
+metric_wildcards = mcfg.get_wildcard_names() + ['metric', 'overwrite_file_id']
 
 rule merge:
     message:
@@ -39,7 +39,7 @@ use rule merge as merge_per_dataset with:
         extra_columns=mcfg.out_dir / 'results' / 'per_dataset' / '{dataset}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True, wildcard_names=metric_wildcards),
-        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True, wildcard_names=metric_wildcards).to_string(index=False)
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
 
 
 use rule merge as merge_per_batch with:
@@ -56,7 +56,7 @@ use rule merge as merge_per_batch with:
         extra_columns=mcfg.out_dir / 'results' / 'per_batch' / '{batch}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True, wildcard_names=metric_wildcards),
-        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True, wildcard_names=metric_wildcards).to_string(index=False)
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
 
 
 use rule merge as merge_per_label with:
@@ -73,7 +73,7 @@ use rule merge as merge_per_label with:
         extra_columns=mcfg.out_dir / 'results' / 'per_label' / '{label}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True, wildcard_names=metric_wildcards),
-        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True, wildcard_names=metric_wildcards).to_string(index=False)
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
 
 
 use rule merge as merge_per_file with:
@@ -90,7 +90,7 @@ use rule merge as merge_per_file with:
         extra_columns=mcfg.out_dir / 'results' / 'per_file' / '{file_id}_extra_columns.txt',
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True, wildcard_names=metric_wildcards),
-        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True, wildcard_names=metric_wildcards).to_string(index=False)
+        wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
 
 
 rule merge_all:
