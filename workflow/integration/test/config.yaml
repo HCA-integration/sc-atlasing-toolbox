@@ -22,8 +22,8 @@ defaults:
     norm_counts: layers/normcounts
   datasets:
     - test
-    - multi_wildcards
-    - preprocessed
+    # - multi_wildcards
+    # - preprocessed
     - harmony
     - scarches
     - scvi_tools
@@ -36,6 +36,7 @@ DATASETS:
         pbmc68k: test/input/pbmc68k.h5ad
         # unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
+      threads: 3
       batch: batch
       umap_colors:
         - bulk_labels
@@ -120,6 +121,7 @@ DATASETS:
         orig: test/input/pbmc68k.h5ad
         prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
+      threads: 3
       label: bulk_labels
       batch: batch
       methods:

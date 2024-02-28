@@ -20,6 +20,9 @@ batch_key = wildcards.batch
 label_key = wildcards.label
 params = snakemake.params
 
+torch.manual_seed(params.get('seed', 0))
+torch.set_num_threads(snakemake.threads)
+
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
     train_params=[

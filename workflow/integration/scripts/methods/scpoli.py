@@ -20,6 +20,9 @@ params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
 
+torch.manual_seed(params.get('seed', 0))
+torch.set_num_threads(snakemake.threads)
+
 hyperparams = {} if params['hyperparams'] is None else params['hyperparams']
 model_params = hyperparams.get('model', {})
 train_params = hyperparams.get('train', {})
