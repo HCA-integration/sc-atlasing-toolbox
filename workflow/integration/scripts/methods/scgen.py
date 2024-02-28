@@ -25,22 +25,12 @@ torch.set_num_threads(snakemake.threads)
 
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
-    train_params=[
-        'n_epochs',
-        'max_epochs',
-        'observed_lib_size',
-        'n_samples_per_label'
+    model_params=[
+        'hidden_layer_sizes',
+        'z_dimension',
+        'dr_rate',
     ],
 )
-early_stopping_kwargs = {
-    "early_stopping_metric": "val_loss",
-    "patience": 20,
-    "threshold": 0,
-    "reduce_lr": True,
-    "lr_patience": 13,
-    "lr_factor": 0.1,
-}
-train_params['early_stopping_kwargs'] = early_stopping_kwargs
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
