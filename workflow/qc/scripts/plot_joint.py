@@ -112,7 +112,7 @@ for x, y, log_x, log_y in coordinates:
         
         # plot joint QC on regular scale
         png_file = output_joint / f'{x}_vs_{y}_hue={hue}.png'
-        plot_qc_joint(
+        g = plot_qc_joint(
             adata.obs,
             x=x,
             y=y,
@@ -123,6 +123,8 @@ for x, y, log_x, log_y in coordinates:
             title='',
             **scatter_plot_kwargs,
         )
+        if legend:
+            sns.move_legend(g.ax_joint, 'right')
         plt.tight_layout()
         plt.savefig(png_file, bbox_inches='tight')
         plt.close()
@@ -142,7 +144,7 @@ for x, y, log_x, log_y in coordinates:
         log_x_prefix = f'log_{log_x}_' if log_x > 1 else ''
         log_y_prefix = f'log_{log_y}_' if log_y > 1 else ''
         png_file = output_joint / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}_hue={hue}.png'
-        g_scatter = plot_qc_joint(
+        g = plot_qc_joint(
             adata.obs,
             x=x,
             y=y,
@@ -155,6 +157,8 @@ for x, y, log_x, log_y in coordinates:
             title='',
             **scatter_plot_kwargs,
         )
+        if legend:
+           sns.move_legend(g.ax_joint, 'lower left')
         plt.tight_layout()
         plt.savefig(png_file, bbox_inches='tight')
         plt.close('all')
