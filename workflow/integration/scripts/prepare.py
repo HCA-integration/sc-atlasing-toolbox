@@ -53,6 +53,7 @@ def read_and_subset(
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
         varp='varp',
+        uns='uns',
         backed=True,
     )
     
@@ -117,6 +118,7 @@ elif input_file.endswith('.zarr'):
             'norm_counts': adata_norm.X,
             'raw_counts': adata_raw.X,
         },
+        uns=adata_norm.uns,
     )
 else:
     raise ValueError(f'Invalid input file {input_file}')
