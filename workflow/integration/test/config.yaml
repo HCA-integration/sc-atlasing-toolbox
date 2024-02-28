@@ -1,7 +1,7 @@
 output_dir: test/out
 images: test/images
 
-use_gpu: true
+use_gpu: false
 env_mode: local
 
 resources:
@@ -34,7 +34,7 @@ DATASETS:
     input:
       integration:
         pbmc68k: test/input/pbmc68k.h5ad
-        unprocessed: test/input/pbmc68k_unprocessed.h5ad
+        # unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
       batch: batch
       umap_colors:

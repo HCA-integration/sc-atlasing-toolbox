@@ -496,8 +496,15 @@ def write_zarr_linked(
     # Unique the list
     files_to_keep = list(set(files_to_keep))
 
-    file_to_link_check = [k.split('/')[1] if k.startswith('/') else k.split('/')[0] for k in files_to_keep]
-    files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_check]
+    # Make a list of existing subpaths to keep                    
+    file_to_link_clean = [
+        x.split('/')[0] if not x.startswith('/')  # take top level directory
+        else x.split('/')[1]  # take first directory after root /
+        for x in files_to_keep
+    ]
+
+    # For those not keeping, link
+    files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_clean]
     
     if slot_map is None:
         slot_map = {}
