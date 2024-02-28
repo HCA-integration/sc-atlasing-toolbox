@@ -252,6 +252,7 @@ class WildcardParameters:
         all_params: bool = False,
         as_df: bool = False,
         default_datasets: bool = True,
+        verbose: bool = False,
     ) -> [dict, pd.DataFrame]:
         """
         Retrieve wildcard instances as dictionary
@@ -272,6 +273,8 @@ class WildcardParameters:
             subset_dict = {}
         if wildcard_names is None:
             wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
+            if verbose:
+                print(f'wildcard_names: {wildcard_names}')
         
         if default_datasets:
             query_dict = {'dataset': self.default_config['datasets']}
@@ -279,10 +282,16 @@ class WildcardParameters:
             query_dict = {}
         query_dict |= subset_dict
         
+        if verbose:
+            print(f'query_dict: {query_dict}')
+        
         df = self.subset_by_query(
             query_dict=query_dict,
             columns=[w for w in wildcard_names if w not in exclude]
         )
+        
+        if verbose:
+            print(f'wildcards_df:\n{df}')
         
         return df if as_df else df.to_dict('list')
 

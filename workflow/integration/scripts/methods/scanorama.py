@@ -5,7 +5,7 @@ import scanpy as sc
 import scanorama
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
 # TODO: use scanpy/anndata directly
@@ -43,6 +43,7 @@ hyperparams = params.get('hyperparams')
 if hyperparams is None:
     hyperparams = {}
 
+logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
     X='layers/norm_counts',
@@ -77,5 +78,11 @@ del adata.obsm["X_scanorama"]
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['X', 'obsm', 'uns'])
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['X', 'obsm', 'uns'],
+)

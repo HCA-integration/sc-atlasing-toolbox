@@ -72,6 +72,7 @@ def update_neighbors_args(wildcards):
 use rule neighbors from preprocessing as integration_postprocess with:
     input:
         zarr=rules.integration_run_method.output.zarr,
+        done=rules.integration_run_method.output.model,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
         done=touch(directory(out_dir / f'{paramspace.wildcard_pattern}.zarr/obs')),

@@ -227,7 +227,10 @@ class ModuleConfig:
         """
         if pattern is None:
             pattern = self.default_target
+        kwargs['verbose'] = verbose
         wildcards = self.get_wildcards(**kwargs)
+        if verbose:
+            print(wildcards)
         try:
             targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
         except WildcardError:

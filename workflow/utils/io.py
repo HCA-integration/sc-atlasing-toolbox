@@ -356,6 +356,8 @@ def link_zarr(
     :param file_names: list of files to link, if None, link all files
     :param overwrite: overwrite existing output files
     :param relative_path: use relative path for link
+    :param slot_map: custom mapping of output slot to input slots
+    :param in_dir_map: input directory map for input slots
     :param kwargs: custom mapping of output slot to input slot,
         will update default mapping of same input and output naming
     """

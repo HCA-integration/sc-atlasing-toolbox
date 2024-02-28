@@ -53,6 +53,7 @@ def read_and_subset(
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
         varp='varp',
+        uns='uns',
         backed=True,
     )
     
@@ -97,6 +98,7 @@ if input_file.endswith('.h5ad'):
         uns='uns',
     )
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata.obs,
         var=adata_norm.var,
         obsm=adata.obsm,
@@ -109,12 +111,14 @@ if input_file.endswith('.h5ad'):
     )
 elif input_file.endswith('.zarr'):
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata_norm.obs,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,
             'raw_counts': adata_raw.X,
         },
+        uns=adata_norm.uns,
     )
 else:
     raise ValueError(f'Invalid input file {input_file}')
@@ -122,9 +126,7 @@ else:
 # preprocess if missing
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
-    adata.X = adata.layers['norm_counts']
     sc.pp.pca(adata)
-    del adata.X
     files_to_keep.extend(['obsm', 'varm', 'uns'])
 
 try:
@@ -136,10 +138,15 @@ except AssertionError:
     files_to_keep.extend(['obsp', 'uns'])
 
 logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+slot_map |= {'X': 'layers/norm_counts'}
 write_zarr_linked(
     adata,
     input_file,
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    in_dir_map={
+        'layers/norm_counts': output_file
+    },
 )

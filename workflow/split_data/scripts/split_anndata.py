@@ -14,8 +14,9 @@ from dask import array as da
 from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
 
-from utils.io import read_anndata, csr_matrix_int64_indptr
 from utils.accessors import adata_to_memory
+from utils.annotate import add_wildcards
+from utils.io import read_anndata, csr_matrix_int64_indptr
 from utils.misc import apply_layers
 
 input_file = snakemake.input[0]
@@ -68,7 +69,7 @@ split_files = values
 logging.info(f'splits: {split_files}')
 
 for split_file in split_files:
-    split = file_value_map.get(split_file)
+    split = file_value_map.get(split_file, split_file)
     out_file = out_dir / f"value~{split_file}.zarr"
     
     # split anndata
@@ -110,5 +111,6 @@ for split_file in split_files:
     
     # write to file
     logging.info(f'Write to {out_file}...')
+    add_wildcards(adata_sub, {'key': split_key, 'value': split} , 'split_data')
     adata_sub.write_zarr(out_file)
     del adata_sub

@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 # direct integration outputs
 outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~*/adata.zarr')
+outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~*--output_type~*.zarr')
 if len(outputs) == 0:
     warnings.warn('No integration outputs found')
 
@@ -22,6 +23,11 @@ for file in outputs:
 
     try:
         # Check Metadata
+        assert 'wildcards' in uns
+        assert 'integration_batch' in uns['wildcards']
+        assert 'integration_hyperparams' in uns['wildcards']
+        assert 'integration_label' in uns['wildcards']
+        assert 'integration_method' in uns['wildcards']
         assert 'dataset' in uns
         assert 'methods' in uns
         assert 'integration' in uns

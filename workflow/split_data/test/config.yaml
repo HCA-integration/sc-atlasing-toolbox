@@ -26,13 +26,15 @@ DATASETS:
   test_backed:
     input:
       split_data:
-        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+        zarr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     split_data:
       backed: true
-      key: dataset
+      key: bulk_labels
       values:
-        - SchulteSchrepping2020
-        - Lee2020
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - Dendritic
+        - CD14+_Monocyte
+        - CD19+_B
         - dummy
   test_dask:
     input:

@@ -1,4 +1,5 @@
 # from utils_pipeline.misc import ensure_sparse
+from utils_pipeline.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
 
@@ -71,6 +72,7 @@ def add_metadata(adata, wildcards, params, **kwargs):
         'hyperparams': params['hyperparams'],
         **kwargs
     }
+    add_wildcards(adata, wildcards, 'integration')
 
 
 def remove_slots(adata, output_type, keep_X=False):
