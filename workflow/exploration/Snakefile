@@ -8,7 +8,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='exploration',
     config=config,
-    config_params=['sample', 'donor', 'summary_columns', 'pca_colors', 'marker_genes']
+    config_params=['sample', 'donor', 'summary_columns', 'marker_genes']
 )
 params = mcfg.get_paramspace()
 
