@@ -101,6 +101,7 @@ DATASETS:
       batch: batch
       methods:
         scgen:
+          hidden_layer_sizes: [128, 128]
           n_epochs: 10
           early_stopping_kwargs:
             early_stopping_metric: val_loss
@@ -117,13 +118,13 @@ DATASETS:
           recon_loss: nb
           n_epochs: 50
           early_stopping_kwargs:
-              early_stopping_metric: val_prototype_loss
-              mode: min
-              threshold: 0
-              patience: 20
-              reduce_lr: true
-              lr_patience: 13
-              lr_factor: 0.1
+            early_stopping_metric: val_prototype_loss
+            mode: min
+            threshold: 0
+            patience: 20
+            reduce_lr: true
+            lr_patience: 13
+            lr_factor: 0.1
       umap_colors:
         - bulk_labels
         - phase

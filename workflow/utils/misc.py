@@ -67,7 +67,7 @@ def expand_dict(_dict):
     return zip(wildcards, dict_list)
 
 
-def expand_dict_and_serialize(_dict):
+def expand_dict_and_serialize(_dict: dict, do_not_expand: list = None):
     """
     Create a cross-product on a dictionary with literals and lists
     :param _dict: dictionary with lists and literals as values
@@ -75,8 +75,17 @@ def expand_dict_and_serialize(_dict):
     """
     import jsonpickle
     import hashlib
+    
+    if do_not_expand is None:
+        do_not_expand = []
 
-    df = pd.DataFrame({k: [v] if isinstance(v, list) else [[v]] for k, v in _dict.items()})
+    df = pd.DataFrame(
+        {
+            k: [v]
+            if isinstance(v, list) and k not in do_not_expand
+            else [[v]] for k, v in _dict.items()
+        }
+    )
     for col in df.columns:
         df = df.explode(col)
     dict_list = df.apply(lambda row: dict(zip(df.columns, row)), axis=1)
