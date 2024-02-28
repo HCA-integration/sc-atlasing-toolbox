@@ -22,11 +22,14 @@ mcfg = ModuleConfig(
     module_name='metrics',
     config=config,
     parameters=workflow.source_path('params.tsv'),
-    config_params=['label', 'batch', 'methods', 'unintegrated'],
+    config_params=['label', 'batch', 'methods', 'unintegrated', 'corrected', 'overwrite_file_id'],
     wildcard_names=['label', 'batch'],
     rename_config_params={'methods': 'metric'},
     explode_by=['metric', 'batch', 'label'],
     paramspace_kwargs=dict(filename_params=['label', 'batch'], filename_sep='--'),
+    dtypes={
+        'overwrite_file_id': bool,
+    }
 )
 paramspace = mcfg.get_paramspace()
 
@@ -54,7 +57,9 @@ include: 'rules/plots.smk'
 
 rule all:
     input:
-        rules.merge.output,
+        rules.prepare_all.input,
+        rules.run_all.input,
+        rules.merge_all.input,
         rules.plots_all.input
     default_target: True
 

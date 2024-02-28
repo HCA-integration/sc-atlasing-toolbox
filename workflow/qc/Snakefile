@@ -1,0 +1,48 @@
+"""
+QC
+"""
+from pathlib import Path
+import pandas as pd
+
+from utils.ModuleConfig import ModuleConfig
+from utils.environments import get_env
+
+
+mcfg = ModuleConfig(
+    module_name='qc',
+    config=config,
+    config_params=['hue', 'thresholds'],
+    # dtypes={'thresholds': str},
+)
+params = mcfg.get_paramspace()
+
+wildcard_constraints:
+    dataset=r'[^/]+',
+    file_id=r'[^/]+',
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+include: 'rules/calculate_metrics.smk'
+include: 'rules/plots.smk'
+include: 'rules/thresholds.smk'
+
+
+rule all:
+    input:
+        rules.metrics_all.input,
+        rules.thresholds_all.input,
+        rules.plots_all.input,
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )

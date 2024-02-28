@@ -7,7 +7,7 @@ if 'dcp_metadata' in config.keys():
 else:
     metadata_df = pd.DataFrame(columns=['study', 'filename'])
 
-studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
+dcp_studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
 
 # rule download_dcp_tsv:
 #     output:
@@ -61,20 +61,22 @@ rule add_dcp_metadata:
         ]
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs/')
+    resources:
+        mem_mb='10GB'
     script:
-        '../scripts/obs_merge_dcp.py'
+        '../scripts/add_dcp_metadata.py'
 
 
 rule add_dcp_metadata_all:
     input:
-        expand(rules.add_dcp_metadata.output,study=studies)
+        expand(rules.add_dcp_metadata.output,study=dcp_studies)
 
 
 def collect_stats(wildcards):
     return {
         study:
         expand(rules.add_dcp_metadata.output.stats,study=study)[0]
-        for study in studies
+        for study in dcp_studies
     }
 
 

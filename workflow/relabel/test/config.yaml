@@ -7,7 +7,7 @@ DATASETS:
     input:
       relabel: test/input/load_data/filtered/SchulteSchrepping2020.zarr
     relabel:
-      mapping:
+      new_columns:
         file:  test/input/mapping_blood.tsv
         order:
           - cell_type
@@ -15,11 +15,16 @@ DATASETS:
           - lineage
   test_relabel:
     input:
-      relabel: test/input/pbmc68k.h5ad
+      relabel:
+        file_1: test/input/pbmc68k.h5ad
+        file_2: test/input/pbmc68k.h5ad
+        file_3: test/input/pbmc68k.h5ad
     relabel:
-      mapping:
+      new_columns:
         file:  test/input/mapping_test.tsv
         order:
           - bulk_labels
           - lineage
-
+      merge_columns:
+        file:  test/input/merge_test.tsv
+        sep: '-'

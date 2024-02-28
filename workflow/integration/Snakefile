@@ -14,7 +14,7 @@ mcfg = IntegrationConfig(
     config=config,
     parameters=workflow.source_path('params.tsv'),
     config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
-    wildcard_names=['method', 'batch', 'label'],
+    wildcard_names=['method', 'batch', 'label', 'output_type'],
     rename_config_params={'methods': 'method'},
     explode_by=['method', 'batch', 'label'],
 )
@@ -65,8 +65,15 @@ use rule * from common as common_ *
 include: 'rules/integration.smk'
 include: 'rules/benchmark.smk'
 include: 'rules/umap.smk'
-include: 'rules/clustering.smk'
+# include: 'rules/clustering.smk'
+# include: 'rules/marker_genes.smk'
+# include: 'rules/export_files.smk'
 
+rule plots_all:
+    input:
+        rules.run_all.input,
+        rules.benchmark_all.input,
+        mcfg.get_output_files(rules.integration_plot_umap.output),
 
 rule all:
     input:

@@ -11,18 +11,10 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='batch_analysis',
     config=config,
-    config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample_key'],
-    wildcard_names=[],
+    config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample'],
 )
 
 paramspace = mcfg.get_paramspace()
-
-
-wildcard_constraints:
-    dataset='\w+',
-    study='\w+',
-    organ='\w+',
-
 
 module common:
     snakefile: "../common/Snakefile"

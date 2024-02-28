@@ -1,9 +1,10 @@
 defaults:
   datasets:
     - test
+    - test2
   integration:
-    raw_counts: raw
-    norm_counts: normcounts
+    raw_counts: raw/X
+    norm_counts: layers/normcounts
     methods:
       unintegrated:
       bbknn:
@@ -80,7 +81,6 @@ defaults:
   preprocessing:
     raw_counts: X
     batch: study
-    lineage: lineage
     assemble:
       - counts
       - normalize
@@ -104,28 +104,43 @@ DATASETS:
     preprocessing:
       label: bulk_labels
       batch: phase
-      sample: phase
-      highly_variable_genes: False
+      highly_variable_genes: false
     integration:
       label: bulk_labels
       batch: phase
     metrics:
       label: bulk_labels
       batch: phase
-      # unintegrated: preprocessing
+      unintegrated: layers/norm_counts
+      corrected: X
 
-  # test2:
-  #   input:
-  #     preprocessing: data/pbmc68k.h5ad
-  #     integration: preprocessing
-  #   preprocessing:
-  #     label: bulk_labels
-  #     batch: phase
-  #   integration:
-  #     label: bulk_labels
-  #     batch: batch
-  #     lineage: phase
-  #     umap_colors:
-  #       - bulk_labels
-  #       - phase
-
+  test2:
+    input:
+      split_data: data/pbmc68k.h5ad
+      preprocessing: split_data
+      integration: preprocessing
+      metrics: integration
+    split_data:
+      key: phase
+      values:
+        - G1
+        - S
+    preprocessing:
+      raw_counts: X
+      assemble:
+        - counts
+        - normalize
+        - highly_variable_genes
+        - pca
+        - neighbors
+    integration:
+      label: bulk_labels
+      batch: batch
+      umap_colors:
+        - bulk_labels
+        - phase
+    metrics:
+      label: bulk_labels
+      batch: phase
+      unintegrated: layers/norm_counts
+      corrected: X

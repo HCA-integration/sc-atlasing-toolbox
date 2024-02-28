@@ -1,10 +1,16 @@
+import warnings
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
+import anndata as ad
+
+from .io import to_memory
 
 
-def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float64'):
+# deprecated
+def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='float32'):
+    from scipy.sparse import csr_matrix, issparse
+    from dask.array import Array as DaskArray
+    
     # select matrix
-    # matrix = adata.X  if layer == 'X' or layer is None else adata.layers[layer]
     if layer == 'X' or layer is None:
         matrix = adata.X
     elif layer in adata.layers:
@@ -17,6 +23,9 @@ def select_layer(adata, layer, force_dense=False, force_sparse=False, dtype='flo
             raise ValueError(f'Cannot find layer "{layer}" and no counts in adata.raw') from e
     else:
         raise ValueError(f'Invalid layer {layer}')
+
+    if isinstance(matrix, DaskArray):
+        return matrix
 
     if force_dense and force_sparse:
         raise ValueError('force_dense and force_sparse cannot both be True')
@@ -36,4 +45,45 @@ def select_neighbors(adata, output_type):
     adata.uns['neighbors'] = adata.uns[neighbors_key]
     adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
     adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
+    return adata
+
+
+def subset_hvg(adata, to_memory: [str, list] = 'X', hvgs: list = None) -> (ad.AnnData, bool):
+    """
+    Subset to highly variable genes
+    :param adata: anndata object
+    :param to_memory: layers to convert to memory
+    :return: subsetted anndata object, bool indicating whether subset was performed
+    """
+    if hvgs is None:
+        if 'highly_variable' not in adata.var.columns:
+            raise ValueError('No highly_variable column in adata.var')
+        hvgs = adata.var_names[adata.var['highly_variable']]
+    if adata.var_names.isin(hvgs).all():
+        warnings.warn('All genes are highly variable, not subsetting')
+        subsetted = False
+    else:
+        subsetted = True
+        adata = adata[:, hvgs].copy()
+    adata = adata_to_memory(adata, layers=to_memory)
+    return adata, subsetted
+
+
+def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData:
+    if layers is None:
+        layers = ['X', 'raw'] + list(adata.layers.keys())
+    elif isinstance(layers, str):
+        layers = [layers]
+    
+    for layer in layers:
+        if layer in adata.layers:
+            adata.layers[layer] = to_memory(adata.layers[layer])
+        elif layer == 'X':
+            adata.X = to_memory(adata.X)
+        elif layer == 'raw':
+            if adata.raw is None:
+                continue
+            adata_raw = adata.raw.to_adata()
+            adata_raw.X = to_memory(adata.raw.X)
+            adata.raw = adata_raw
     return adata

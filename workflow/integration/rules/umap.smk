@@ -3,14 +3,10 @@
 use rule umap from preprocessing as integration_compute_umap with:
     input:
         anndata=rules.integration_postprocess.output.zarr,
-        rep=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
+        rep=rules.integration_postprocess.output.zarr,
     output:
-        zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
-    params:
-        neighbors_key=lambda w: [
-            f'neighbors_{output_type}' for output_type
-            in mcfg.get_from_parameters(w, 'output_type')
-        ],
+        zarr=directory(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
+        done=touch(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.done'),
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
@@ -28,27 +24,18 @@ def get_colors(wildcards):
     return [*labels, *batch, *umap_colors]
 
 
-use rule plot_umap from preprocessing as integration_plot_umap with:
+use rule plots from preprocessing as integration_plot_umap with:
     input:
         anndata=rules.integration_compute_umap.output.zarr,
     output:
-        plot=image_dir / 'umap' / f'{paramspace.wildcard_pattern}.png',
-        additional_plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern),
+        plots=directory(image_dir / 'umap' / paramspace.wildcard_pattern.replace('--output_type', '/output_type')),
     params:
         color=get_colors,
+        basis='X_umap',
         ncols=1,
-        neighbors_key=lambda w: [
-            f'neighbors_{output_type}' for output_type
-            in mcfg.get_from_parameters(w, 'output_type')],
         outlier_factor=10,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-
-
-rule plots_all:
-    input:
-        rules.benchmark_all.input,
-        mcfg.get_output_files(rules.integration_plot_umap.output),

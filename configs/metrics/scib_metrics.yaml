@@ -1,7 +1,5 @@
 # Note: relative paths must be relative to the project root, not the directory of the config file.
-
-output_dir: data/out/scib-metrics/
-dataset_meta: configs/datasets.tsv
+output_dir: data/out/scib-metrics
 
 defaults:
   integration:

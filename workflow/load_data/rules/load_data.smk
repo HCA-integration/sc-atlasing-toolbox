@@ -55,15 +55,17 @@ rule harmonize_metadata:
     params:
         meta=lambda wildcards: unlist_dict(
             get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
-        )
+        ),
+        backed=False,
+        dask=True,
     output:
         zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
-        plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
+        # plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',
     conda:
         get_env(config, 'scanpy', env_dir='../../../envs')
+    threads: 5
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
-        disk_mb=20000,
     # shadow: 'shallow'
     script:
         '../scripts/harmonize_metadata.py'
@@ -86,6 +88,9 @@ use rule merge from load_data as load_data_merge_study with:
         dataset=lambda wildcards: wildcards.study,
         merge_strategy='inner',
         keep_all_columns=True,
+        backed=False,
+        dask=False,
+    threads: 5
     resources:
         mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
         disk_mb=20000,
@@ -93,16 +98,3 @@ use rule merge from load_data as load_data_merge_study with:
 
 rule merge_study_all:
     input: expand(rules.load_data_merge_study.output,**get_wildcards(dataset_df,['study']))
-
-
-use rule filter from load_data as load_data_filter_study with:
-    input:
-        zarr=rules.load_data_merge_study.output.zarr
-    output:
-        zarr=directory(out_dir / 'filtered' / '{study}.zarr'),
-        removed=directory(out_dir / 'filtered' / 'removed' / '{study}.zarr'),
-    params:
-        filter=lambda wildcards: config['filter_per_study'][wildcards.study]
-    resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb'),
-        disk_mb=20000,

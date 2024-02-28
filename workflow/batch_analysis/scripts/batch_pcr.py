@@ -3,10 +3,10 @@ from scipy import sparse
 import numpy as np
 import scib
 from anndata import AnnData
-from anndata.experimental import read_elem
-import zarr
 import yaml
 from multiprocessing.pool import ThreadPool
+import logging
+logger = logging.getLogger('Batch PCR')
 
 try:
     from sklearnex import patch_sklearn
@@ -14,31 +14,28 @@ try:
 except ImportError:
     logger.error('no hardware acceleration for sklearn')
 
-import logging
-logger = logging.getLogger('Batch PCR')
+from utils.io import read_anndata
+
 
 input_file = snakemake.input.anndata
 setup_file = snakemake.input.setup
 output_file = snakemake.output.tsv
 covariate = snakemake.wildcards.covariate
-sample_key = snakemake.params.get('sample_key')
+sample_key = snakemake.params.get('sample')
 n_threads = snakemake.threads
 
 logger.error('Read anndata file...')
-z = zarr.open(input_file)
-X_pca = read_elem(z['obsm/X_pca'])
-obs = read_elem(z['obs'])
-uns = read_elem(z['uns'])
-n_covariate = obs[covariate].nunique()
+adata = read_anndata(input_file, obsm='obsm', obs='obs', uns='uns')
+n_covariate = adata.obs[covariate].nunique()
 
 # set default sample key
 if sample_key is None or sample_key == 'None':
     sample_key = 'index'
-    obs[sample_key] = obs.index
+    adata.obs[sample_key] = adata.obs.index
 
 # make sure the PCA embedding is an array
-if not isinstance(X_pca, np.ndarray):
-    X_pca = X_pca.toarray()
+if not isinstance(adata.obsm['X_pca'], np.ndarray):
+    adata.obsm['X_pca'] = adata.obsm['X_pca'].toarray()
 
 
 logger.error('Read covariate setup...')
@@ -54,7 +51,7 @@ logger.error(f'Permute covariate: "{covariate}"')
 perm_covariates = []
 for i in range(n_permute):
     covariate_perm = f'{covariate}-{i}'
-    cov_per_sample = obs.groupby(sample_key).agg({covariate: 'first'})
+    cov_per_sample = adata.obs.groupby(sample_key).agg({covariate: 'first'})
     cov_map = dict(
         zip(
             cov_per_sample.index,
@@ -62,12 +59,12 @@ for i in range(n_permute):
         )
     )
     # permute covariate
-    obs[covariate_perm] = obs[sample_key].map(cov_map)
+    adata.obs[covariate_perm] = adata.obs[sample_key].map(cov_map)
     perm_covariates.append(covariate_perm)
 
 
 # PC regression for all covariates
-adata = AnnData(obs=obs, obsm={'X_pca': X_pca}, uns=uns)
+# adata = AnnData(obs=obs, obsm={'X_pca': X_pca}, uns=uns)
 covariates = [covariate]+perm_covariates
 # adatas = [adata[obs[covariate].notna()] for covariate in covariates]
 pcr_scores = []
@@ -76,7 +73,7 @@ pcr_scores = []
 def compute_pcr(covariate):
     logger.error(f'PCR for covariate: "{covariate}"')
     pcr = scib.me.pcr(
-        adata[obs[covariate].notna()],
+        adata[adata.obs[covariate].notna()],
         covariate=covariate,
         recompute_pca=False,
         verbose=False

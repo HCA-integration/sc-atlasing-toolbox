@@ -31,7 +31,8 @@ class InputFiles:
             columns=['dataset', 'file_id', 'file_path']
         )
         
-        if self.out_dir is not None:
+        if self.out_dir is not None and self.file_map_df.shape[0] > 0:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
             # write file mapping to file
             self.file_map_df.to_csv(
                 self.out_dir / 'input_files.tsv',

@@ -28,15 +28,17 @@ from utils.environments import get_env
 
 rule barcode_matching:
     input:
-        zarr=rules.load_data_merge_study.output.zarr
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        png=images_dir / 'barcode_matching' / '{study}.png',
+        png=mcfg.image_dir / 'barcode_matching' / f'{params.wildcard_pattern}.png',
     conda:
         get_env(config, 'plots')
+    resources:
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
         '../scripts/barcode_matching.py'
 
 
 rule barcode_matching_all:
     input:
-        expand(rules.barcode_matching.output,study=dataset_df['study'])
+        mcfg.get_output_files(rules.barcode_matching.output)

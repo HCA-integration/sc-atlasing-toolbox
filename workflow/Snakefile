@@ -20,6 +20,18 @@ configfile: "configs/exploration/config.yaml"
 # config = update_module_configs(config, params)
 
 config_kwargs = {
+    'batch_analysis': dict(
+        config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample'],
+    ),
+    'sample_representation': dict(
+        config_params=['covariates', 'sample'],
+    ),
+    'split_data': dict(
+        config_params=['key', 'values'],
+        wildcard_names=['key', 'value'],
+        rename_config_params={'values': 'value'},
+        explode_by=['value'],
+    ),
     'clustering': dict(
         config_params=['neighbors_key', 'resolutions'],
         wildcard_names=['neighbors_key', 'resolution'],
@@ -29,7 +41,7 @@ config_kwargs = {
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
         config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
-        wildcard_names=['method', 'batch', 'label'],
+        wildcard_names=['method', 'batch', 'label', 'output_type'],
         rename_config_params={'methods': 'method'},
         explode_by=['method', 'batch'],
     ),
@@ -51,8 +63,6 @@ config['DATASETS'] = config.get('DATASETS', {})
 default_datasets = config.get('defaults', {}).get('datasets', config['DATASETS'].keys())
 for dataset, dataset_config in config['DATASETS'].items():
     for module_name in dataset_config.get('input', {}).keys():
-        if dataset not in default_datasets:
-            continue
         config = update_input_files_per_dataset(
             dataset=dataset,
             module_name=module_name,
@@ -92,8 +102,24 @@ module exploration:
     snakefile: "exploration/Snakefile"
     config: config
 
+module sample_representation:
+    snakefile: "sample_representation/Snakefile"
+    config: config
+
 module batch_analysis:
     snakefile: "batch_analysis/Snakefile"
+    config: config
+
+module qc:
+    snakefile: "qc/Snakefile"
+    config: config
+
+module doublets:
+    snakefile: "doublets/Snakefile"
+    config: config
+
+module split_data:
+    snakefile: "split_data/Snakefile"
     config: config
 
 module subset:
@@ -124,10 +150,6 @@ module integration:
     snakefile: "integration/Snakefile"
     config: config
 
-# module integration_per_lineage:
-#     snakefile: "integration_per_lineage/Snakefile"
-#     config: config
-
 module metrics:
     snakefile: "metrics/Snakefile"
     config: config
@@ -137,7 +159,11 @@ use rule * from load_data as load_data_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
+use rule * from sample_representation as sample_representation_ *
 use rule * from batch_analysis as batch_analysis_ *
+use rule * from doublets as doublets_ *
+use rule * from qc as qc_ *
+use rule * from split_data as split_data_ *
 use rule * from subset as subset_ *
 use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *

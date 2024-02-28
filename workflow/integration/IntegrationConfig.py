@@ -24,6 +24,8 @@ class IntegrationConfig(ModuleConfig):
             parameters = pd.read_table(parameters)
         if isinstance(parameters, pd.DataFrame):
             parameters['output_type'] = parameters['output_type'].str.split(',')
+            parameters['output_types'] = parameters['output_type']
+            parameters = parameters.explode('output_type')
             kwargs['parameters'] = parameters
         
         super().__init__(**kwargs)
@@ -40,10 +42,22 @@ class IntegrationConfig(ModuleConfig):
                 'None'
             )
         
+        # subset to user defined output types
+        remove_indices = []
+        for dataset in wildcards_df['dataset'].unique():
+            output_type_col = wildcards_df.query('dataset == @dataset')['output_type']
+            output_types = self.get_for_dataset(
+                dataset=dataset,
+                query=[self.module_name, 'output_types'],
+                default=output_type_col.unique()
+            )
+            remove_indices.extend(output_type_col[~output_type_col.isin(output_types)].index)
+        wildcards_df = wildcards_df.drop(remove_indices)
+        
         # set default paramspace arguments
         if kwargs.get('paramspace_kwargs') is None:
             paramspace_kwargs = dict(
-                filename_params=['method', 'hyperparams', 'label'],
+                filename_params=['method', 'hyperparams', 'label', 'output_type'],
                 filename_sep='--',
             )
         else:

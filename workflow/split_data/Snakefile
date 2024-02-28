@@ -1,0 +1,83 @@
+"""
+Split data by cells
+"""
+from pathlib import Path
+import os
+
+from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
+
+mcfg = ModuleConfig(
+    module_name='split_data',
+    config=config,
+    config_params=['key', 'values', 'backed', 'dask', 'exclude_slots'],
+    wildcard_names=['key', 'value'],
+    rename_config_params={'values': 'value'},
+    explode_by=['value'],
+    dtypes={
+        'backed': 'bool',
+        'dask': 'bool',
+    }
+)
+paramspace = mcfg.get_paramspace()
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+
+wildcard_constraints:
+    key=r"[^/]+",
+    value=r"[^/]+",
+
+
+split_pattern = paramspace.wildcard_pattern.replace('/value~{value}', '')
+
+rule split:
+    input:
+        lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
+    output:
+        splits=directory(mcfg.out_dir / 'splits' / split_pattern),
+        done=touch(mcfg.out_dir / 'splits' / f'{split_pattern}.done'),
+    params:
+        values=lambda wildcards: mcfg.get_from_parameters(wildcards, 'value', single_value=False),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
+        exclude_slots=lambda wildcards: mcfg.get_from_parameters(wildcards, 'exclude_slots', default=[]),
+    resources:
+        mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt, factor=1),
+    threads: 5
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    script:
+        'scripts/split_anndata.py'
+
+
+rule link:
+    input:
+        splits=lambda wildcards: mcfg.get_output_files(rules.split.output.splits, subset_dict=wildcards),
+        done=lambda wildcards: mcfg.get_output_files(rules.split.output.done, subset_dict=wildcards),
+    output:
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        X=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    script:
+        'scripts/link_zarr.py'
+
+
+rule all:
+    input:
+        mcfg.get_output_files(rules.link.output)
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )

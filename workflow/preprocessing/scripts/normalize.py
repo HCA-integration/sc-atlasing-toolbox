@@ -2,9 +2,13 @@
 Normalisation
 """
 from pathlib import Path
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
-from scipy import sparse
+from dask import array as da
+from dask import config as da_config
+da_config.set(num_workers=snakemake.threads)
+import sparse
 try:
     import rapids_singlecell as sc
     import cupy as cp
@@ -15,29 +19,48 @@ except ImportError as e:
     logging.info('Importing rapids failed, using scanpy...')
     rapids = False
 
-from utils.io import read_anndata, link_zarr
-from utils.accessors import select_layer
-from utils.misc import ensure_sparse
+from utils.io import read_anndata, write_zarr_linked, csr_matrix_int64_indptr
+from utils.misc import apply_layers, ensure_sparse
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
+layer = snakemake.params.get('raw_counts', 'X')
+dask = snakemake.params.get('dask', False) and not rapids
+backed = snakemake.params.get('backed', False) and dask and not rapids
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, X='X', layers='layers', uns='uns')
+adata = read_anndata(
+    input_file,
+    X=layer,
+    obs='obs',
+    var='var',
+    uns='uns',
+    backed=backed,
+    dask=dask,
+)
+logging.info(adata.__str__())
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.write(output_file)
+    adata.X = np.zeros(adata.shape)
+    adata.write_zarr(output_file)
     exit(0)
 
-# select counts layer
-logging.info('Select layer...')
-layer = snakemake.params.get('raw_counts', 'X')
-adata.X = select_layer(adata, layer, force_sparse=True, dtype='float32')
+if input_file.endswith('.h5ad'):
+    logging.info('Copy counts to layers...')
+    adata.layers['counts'] = adata.X
+    adata.raw = adata
+
+if isinstance(adata.X, da.Array):
+    logging.info('Convert dask chunks to sparse chunks...')
+    adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+    logging.info(adata.X)
 
 # make sure data is on GPU for rapids_singlecell
 if rapids:
+    logging.info('Transfer to GPU...')
+    # adata.X = adata.X.astype('float32')
     sc.utils.anndata_to_GPU(adata)
 
 logging.info('normalize_total...')
@@ -45,10 +68,13 @@ sc.pp.normalize_total(adata)
 logging.info('log-transform...')
 sc.pp.log1p(adata)
 
-if rapids:
-    sc.utils.anndata_to_CPU(adata)
+# make sure data is sparse
+logging.info('ensure sparse...')
+ensure_sparse(adata, sparse_type=csr_matrix_int64_indptr)
 
-ensure_sparse(adata)
+if rapids:
+    logging.info('Transfer to CPU...')
+    sc.utils.anndata_to_CPU(adata)
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
@@ -57,17 +83,23 @@ if 'preprocessing' not in adata.uns:
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
 
-logging.info(f'Write to {output_file}...')
-del adata.raw
-del adata.layers
-adata.write_zarr(output_file)
+if input_file.endswith('.h5ad'):
+    adata.layers['normcounts'] = adata.X
 
-if input_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['X', 'layers', 'uns']]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=files_to_keep,
-        overwrite=True,
-    )
+logging.info(f'Write to {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['X', 'uns'],
+    slot_map={
+        'raw/X': layer,
+        'raw/var': 'var',
+        'layers/counts': layer,
+        'layers/normcounts': 'X',
+    },
+    in_dir_map={
+        'X': output_file,
+    },
+)

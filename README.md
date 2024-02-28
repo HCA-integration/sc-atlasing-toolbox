@@ -1,6 +1,6 @@
-# HCA integration QC pipelines
+# HCA integration Toolbox
 
-Pipelines for standard analyses of HCA datasets.
+Pipelines for different analyses and benchmark for building HCA integrated atlases.
 
 ## Modules
 

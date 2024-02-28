@@ -1,24 +1,26 @@
-def get_markers(wildcards):
-    organ = dataset_df[dataset_df['study'] ==  wildcards.study]['organ'].tolist()[0]
-    return config['ORGANS'][organ]['marker_genes']
+def get_marker_gene_set(mcfg, wildcards):
+    gene_set_key = mcfg.get_from_parameters(wildcards, 'marker_genes', default='')
+    assert isinstance(gene_set_key, str), f'Expected string, got {gene_set_key}'
+    gene_set = mcfg.config.get('MARKER_GENES', {}).get(gene_set_key, {})
+    return gene_set
 
 
 rule marker_genes:
     input:
-        zarr=rules.load_data_filter_study.output.zarr
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        png=images_dir / 'marker_genes' / '{study}.png',
+        png=mcfg.image_dir / 'marker_genes' / f'{params.wildcard_pattern}.png',
     params:
-        dataset=lambda wildcards: wildcards.study,
-        markers=get_markers
+        dataset=lambda wildcards: wildcards.file_id,
+        markers=lambda wildcards: get_marker_gene_set(mcfg, wildcards),
     conda:
         get_env(config, 'scanpy')
     resources:
-        mem_mb=get_resource(config,profile='cpu',resource_key='mem_mb')
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
         '../scripts/marker_genes.py'
 
 
 rule marker_genes_all:
     input:
-        expand(rules.marker_genes.output,study=dataset_df['study'].unique())
+        mcfg.get_output_files(rules.marker_genes.output)

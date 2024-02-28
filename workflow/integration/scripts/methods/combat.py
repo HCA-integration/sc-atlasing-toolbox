@@ -1,27 +1,51 @@
-import scib
+from pprint import pformat
+import logging
+logging.basicConfig(level=logging.INFO)
 import scanpy as sc
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata
-from utils_pipeline.accessors import select_layer
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
-
-input_adata = snakemake.input[0]
-output_adata = snakemake.output[0]
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams')
+if hyperparams is None:
+    hyperparams = {}
+if 'covariates' in hyperparams:
+    covariates = hyperparams['covariates']
+    if isinstance(covariates, str):
+        hyperparams['covariates'] = [covariates]
 
-adata = read_anndata(input_adata)
-adata.X = select_layer(adata, params['norm_counts'])
-
-# subset to HVGs
-adata = adata[:, adata.var['highly_variable']]
+logging.info(f'Read {input_file}...')
+adata = read_anndata(
+    input_file,
+    X='layers/norm_counts',
+    obs='obs',
+    var='var',
+    uns='uns'
+)
 
 # run method
-adata = scib.ig.combat(adata, batch=wildcards.batch)
+logging.info(f'Run Combat with parameters {pformat(hyperparams)}...')
+sc.pp.combat(
+    adata,
+    key=wildcards.batch,
+    **hyperparams
+)
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_adata)
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['X', 'uns'],
+)

@@ -7,7 +7,7 @@ cluster:
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --job-name={rule}
-    --output=logs/%j-{rule}-{wildcards}.out
+    --output=logs/%j-{rule}.out
     --parsable
 default-resources:
   - partition=cpu_p

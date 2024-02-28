@@ -1,0 +1,5 @@
+file_id	column_name	columns
+file_1	cc_joint	S_score,G2M_score
+file_1	ct_joint	bulk_labels,louvain
+file_2	counts_joint	n_genes,n_counts
+file_2	batch	batch
