@@ -184,13 +184,17 @@ class WildcardParameters:
         default_dtypes = df.dtypes.to_dict()
         # default_dtypes = {col: 'object' for col in columns}
         dtypes = default_dtypes | dtypes
-        def get_default_value(x):
-            if pd.api.types.is_bool_dtype(x):
+        
+        def get_default_value(x, dtype):
+            if pd.api.types.is_bool_dtype(x) or dtype in (bool, np.bool_):
                 return False
-            if pd.api.types.is_numeric_dtype(x):
+            if pd.api.types.is_integer(x) or dtype in (int, np.int32, np.int64):
                 return 0
+            if pd.api.types.is_float(x) or dtype in (float, np.float32, np.float64):
+                return 0.0
             return None
-        na_map = {col: get_default_value(df[col]) for col in default_dtypes}
+
+        na_map = {col: get_default_value(df[col], dtype) for col, dtype in dtypes.items()}
         na_map = {k: v for k, v in na_map.items() if v is not None}
         df = df.fillna(value=na_map).astype(dtypes)
         
