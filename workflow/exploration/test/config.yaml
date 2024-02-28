@@ -17,13 +17,6 @@ DATASETS:
       donor: donor
       summary_columns:
         - disease
-      pca_colors:
-        - donor
-        - assay
-        - sex
-        - disease
-        - self_reported_ethnicity
-        - development_stage
 
 MARKER_GENES:
   default:
