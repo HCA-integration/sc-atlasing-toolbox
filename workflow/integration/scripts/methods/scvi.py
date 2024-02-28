@@ -17,6 +17,10 @@ Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
 wildcards = snakemake.wildcards
 params = snakemake.params
 
+scvi.settings.seed = params.get('seed', 0)
+scvi.settings.progress_bar_style = 'tqdm'
+scvi.settings.num_threads = snakemake.threads
+
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
     model_params=SCVI_MODEL_PARAMS,
