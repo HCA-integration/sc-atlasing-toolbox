@@ -36,6 +36,7 @@ DATASETS:
         pbmc68k: test/input/pbmc68k.h5ad
         # unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
+      threads: 3
       batch: batch
       umap_colors:
         - bulk_labels
@@ -100,16 +101,30 @@ DATASETS:
       batch: batch
       methods:
         scgen:
+          hidden_layer_sizes: [128, 128]
           n_epochs: 10
+          early_stopping_kwargs:
+            early_stopping_metric: val_loss
+            patience: 20
+            threshold: 0
+            reduce_lr: true
+            lr_patience: 13
+            lr_factor: 0.1
         scpoli:
-          supervised:
-            - true
-            - false
-          model:
-            embedding_dims: 5
-            recon_loss: nb
-          train:
-            n_epochs: 50
+          cell_type_keys:
+            - 
+            - bulk_labels
+          embedding_dims: 5
+          recon_loss: nb
+          n_epochs: 50
+          early_stopping_kwargs:
+            early_stopping_metric: val_prototype_loss
+            mode: min
+            threshold: 0
+            patience: 20
+            reduce_lr: true
+            lr_patience: 13
+            lr_factor: 0.1
       umap_colors:
         - bulk_labels
         - phase
@@ -120,6 +135,7 @@ DATASETS:
         orig: test/input/pbmc68k.h5ad
         prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
+      threads: 3
       label: bulk_labels
       batch: batch
       methods:

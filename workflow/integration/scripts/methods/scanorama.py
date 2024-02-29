@@ -39,7 +39,7 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
 params = snakemake.params
-hyperparams = params.get('hyperparams')
+hyperparams = {'seed': params.get('seed', 0)} | params.get('hyperparams')
 if hyperparams is None:
     hyperparams = {}
 

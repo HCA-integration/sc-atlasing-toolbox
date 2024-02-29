@@ -9,6 +9,8 @@ rule prepare:
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+    threads:
+        lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -42,7 +44,10 @@ use rule run_method from integration as integration_run_method with:
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
         output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', exclude=['output_type']),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict', exclude=['output_type']),
+        seed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'seed', exclude=['output_type'], default=0),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', exclude=['output_type']),
+    threads:
+        lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
         partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
