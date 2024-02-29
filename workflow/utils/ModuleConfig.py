@@ -38,6 +38,7 @@ class ModuleConfig:
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
         dtypes: dict = None,
+        write_output_files: bool = True,
         warn: bool = True,
     ):
         """
@@ -86,18 +87,8 @@ class ModuleConfig:
         )
 
         self.set_default_target(default_target, warn=warn)
-        
-        # write output file mapping
-        default_output_files, wildcard_names = self.get_output_files(default_datasets=False, as_records=True, return_wildcards=True)
-        output_df = pd.DataFrame.from_records(default_output_files, columns=wildcard_names+['out_file_id', 'file_path'])
-        if self.out_dir is not None and output_df.shape[0] > 0:
-            self.out_dir.mkdir(parents=True, exist_ok=True)
-            output_df.to_csv(
-                self.out_dir / 'output_files.tsv',
-                sep='\t',
-                index=False
-            )
-
+        if write_output_files:
+            self.write_output_files()
 
 
     def set_defaults(self, warn: bool = False):
@@ -245,8 +236,10 @@ class ModuleConfig:
             print(wildcards)
         try:
             targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
-        except WildcardError:
-            raise ValueError(f'Invalid wildcard "{wildcards}" for pattern "{pattern}"')
+        except WildcardError as e:
+            raise ValueError(
+                f'WildcardError: {e}\nInvalid wildcard "{wildcards}" for pattern "{pattern}"'
+            )
         
         def get_wildcard_string(wildcard_name, wildcard_value):
             if wildcard_name == 'file_id':
@@ -282,6 +275,23 @@ class ModuleConfig:
             print(targets)
         return targets
 
+
+    def write_output_files(self):
+        # write output file mapping
+        default_output_files, wildcard_names = self.get_output_files(
+            default_datasets=False, as_records=True, return_wildcards=True
+        )
+        output_df = pd.DataFrame.from_records(
+            default_output_files, columns=wildcard_names+['out_file_id', 'file_path']
+        )
+        if self.out_dir is not None and output_df.shape[0] > 0:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            output_df.to_csv(
+                self.out_dir / 'output_files.tsv',
+                sep='\t',
+                index=False
+            )
+    
 
     def get_input_file_wildcards(self):
         return self.input_files.get_wildcards()

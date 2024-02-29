@@ -28,11 +28,11 @@ class IntegrationConfig(ModuleConfig):
             parameters = parameters.explode('output_type')
             kwargs['parameters'] = parameters
         
-        super().__init__(**kwargs)
+        super().__init__(**kwargs, write_output_files=False)
         
         # set hyperparameters
         self.set_hyperparams()
-        
+
         # remove redundant label wildcards
         wildcards_df = self.parameters.wildcards_df
         if 'use_cell_type' in wildcards_df.columns:
@@ -67,6 +67,9 @@ class IntegrationConfig(ModuleConfig):
             wildcard_names=self.parameters.wildcard_names + ['hyperparams'],
             **paramspace_kwargs,
         )
+
+        # write output files
+        self.write_output_files()
 
 
     def set_hyperparams(self):
