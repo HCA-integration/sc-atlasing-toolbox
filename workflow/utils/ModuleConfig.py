@@ -64,7 +64,7 @@ class ModuleConfig:
             dataset_config=self.datasets,
             output_directory=self.out_dir,
         )
-
+        
         if wildcard_names is None:
             wildcard_names = []
 
@@ -87,7 +87,17 @@ class ModuleConfig:
 
         self.set_default_target(default_target, warn=warn)
         
-        # TODO: write output file mapping
+        # write output file mapping
+        default_output_files, wildcard_names = self.get_output_files(default_datasets=False, as_records=True, return_wildcards=True)
+        output_df = pd.DataFrame.from_records(default_output_files, columns=wildcard_names+['out_file_id', 'file_path'])
+        if self.out_dir is not None and output_df.shape[0] > 0:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            output_df.to_csv(
+                self.out_dir / 'output_files.tsv',
+                sep='\t',
+                index=False
+            )
+
 
 
     def set_defaults(self, warn: bool = False):
@@ -217,6 +227,8 @@ class ModuleConfig:
         pattern: [str, Rule] = None,
         allow_missing: bool=False,
         as_dict: bool=False,
+        as_records: bool=False,
+        return_wildcards: bool=False,
         verbose: bool=False,
         **kwargs
     ) -> list:
@@ -235,28 +247,37 @@ class ModuleConfig:
             targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
         except WildcardError:
             raise ValueError(f'Invalid wildcard "{wildcards}" for pattern "{pattern}"')
+        
+        def get_wildcard_string(wildcard_name, wildcard_value):
+            if wildcard_name == 'file_id':
+                if '/' in wildcard_value:
+                    wildcard_value = create_hash(wildcard_value)
+                else:
+                    return f'{self.module_name}:{wildcard_value}'
+            return f'{self.module_name}_{wildcard_name}={wildcard_value}'
+        
+        def shorten_name(name):
+            split_values = name.split(f'--{self.module_name}_', 1)
+            if len(split_values) > 1 and len(name) > 200:
+                name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
+            return name
+        
+        wildcard_names = list(wildcards.keys())
+        wildcard_values = list(wildcards.values())
+        task_names = [
+            '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcard_names, w) if k != 'dataset'])
+            for w in zip(*wildcard_values)
+        ]
+        task_names = [shorten_name(name) for name in task_names]
+        
         if as_dict:
-            
-            def get_wildcard_string(wildcard_name, wildcard_value):
-                if wildcard_name == 'file_id':
-                    if '/' in wildcard_value:
-                        wildcard_value = create_hash(wildcard_value)
-                    else:
-                        return f'{self.module_name}:{wildcard_value}'
-                return f'{self.module_name}_{wildcard_name}={wildcard_value}'
-            
-            def shorten_name(name):
-                split_values = name.split(f'--{self.module_name}_', 1)
-                if len(split_values) > 1 and len(name) > 200:
-                    name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
-                return name
-            
-            task_names = [
-                '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcards.keys(), w) if k != 'dataset'])
-                for w in zip(*wildcards.values())
-            ]
-            task_names = [shorten_name(name) for name in task_names]
             targets = dict(zip(task_names, targets))
+        elif as_records:
+            if return_wildcards:
+                targets = list(zip(*wildcard_values, task_names, targets)), wildcard_names
+            else:
+                targets = list(zip(task_names, targets))
+            
         if verbose:
             print(targets)
         return targets
