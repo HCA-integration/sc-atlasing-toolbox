@@ -35,7 +35,6 @@ if len(user_thresholds) > 0:
     mcfg.update_parameters(wildcards_df)
 
 params = mcfg.get_paramspace()
-print(mcfg.get_wildcards(as_df=True, all_params=True)[['file_id', 'thresholds']])
 
 wildcard_constraints:
     dataset=r'[^/]+',
