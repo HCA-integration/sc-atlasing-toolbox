@@ -205,7 +205,7 @@ def apply_layers(adata, func, layers:[str, list] = None, **kwargs):
     return adata
 
 
-def merge(dfs, **kwargs):
+def merge(dfs: list, verbose: bool = True, **kwargs):
     """
     Merge list of dataframes
     :param dfs: list of dataframes
@@ -218,7 +218,8 @@ def merge(dfs, **kwargs):
         lambda x, y: pd.merge(x, y, **kwargs),
         dfs
     )
-    print(merged_df)
+    if verbose:
+        print(merged_df)
     return merged_df
 
 

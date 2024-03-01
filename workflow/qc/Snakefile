@@ -1,20 +1,41 @@
 """
 QC
 """
+import logging
 from pathlib import Path
 import pandas as pd
 
 from utils.ModuleConfig import ModuleConfig
 from utils.environments import get_env
+from utils.misc import merge
+from scripts.qc_utils import read_threshold_file, unpack_thresholds
 
 
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['hue', 'thresholds'],
-    # dtypes={'thresholds': str},
+    config_params=['hue', 'thresholds', 'thresholds_file'],
 )
+wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
+
+# fix threshold mapping
+wildcards_df['thresholds'] = wildcards_df[['file_id', 'thresholds']].apply(unpack_thresholds, axis=1)
+
+# parse user-specified thresholds from TSV files
+user_thresholds = [
+    read_threshold_file(file)
+    for file in wildcards_df['thresholds_file'].unique()
+    if isinstance(file, str)
+]
+if len(user_thresholds) > 0:
+    parameters_df = merge(user_thresholds, how='outer', verbose=False).set_index('file_id')
+    for file_id, row in parameters_df.iterrows():
+        file_id_mask = wildcards_df['file_id'] == file_id
+        wildcards_df.loc[file_id_mask, 'thresholds'] = [row.to_dict()] * file_id_mask.sum()
+    mcfg.update_parameters(wildcards_df)
+
 params = mcfg.get_paramspace()
+print(mcfg.get_wildcards(as_df=True, all_params=True)[['file_id', 'thresholds']])
 
 wildcard_constraints:
     dataset=r'[^/]+',
