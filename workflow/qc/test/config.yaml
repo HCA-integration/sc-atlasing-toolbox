@@ -7,22 +7,26 @@ DATASETS:
     input:
       qc: 
         Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
+        Lee2020_autoqc: test/input/load_data/harmonize_metadata/Lee2020.zarr
     qc:
       hue:
         - donor
         - development_stage
         - cell_type
+      thresholds_file: test/input/user_thresholds.tsv
   test:
     input:
       qc:
         test: test/input/pbmc68k.h5ad
         test2: test/input/pbmc68k.h5ad
+        test3: test/input/pbmc68k.h5ad
     qc:
       hue:
         - phase
         - bulk_labels
       thresholds:
-        test:
+        test3:
           n_counts_max: 500
           n_genes_min: 200
           percent_mito_max: 0.5
+      thresholds_file: test/input/user_thresholds.tsv

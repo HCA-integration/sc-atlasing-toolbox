@@ -9,7 +9,6 @@ from qc_utils import get_thresholds
 def thresholds_to_df(df, wildcards, **kwargs):
     qc_type = 'None'
     if 'user_thresholds' in kwargs:
-        kwargs['user_key'] = wildcards.file_id
         qc_type = 'user'
         if 'autoqc_thresholds' in kwargs:
             qc_type = 'updated'

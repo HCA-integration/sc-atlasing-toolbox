@@ -38,7 +38,6 @@ thresholds = get_thresholds(
     threshold_keys=['n_counts', 'n_genes', 'percent_mito'],
     autoqc_thresholds=adata.uns['scautoqc_ranges'],
     user_thresholds=snakemake.params.get('thresholds'),
-    user_key=file_id,
 )
 logging.info(f'\n{pformat(thresholds)}')
 

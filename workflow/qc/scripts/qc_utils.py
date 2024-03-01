@@ -1,6 +1,5 @@
 import ast
 import numpy as np
-import seaborn as sns
 import pandas as pd
 
 
@@ -23,20 +22,41 @@ def parse_parameters(adata, params, filter_hues=False):
     return dataset, hues
 
 
+def read_threshold_file(file: str):
+    """
+    Read user threshold file in TSV format
+    """
+    df = pd.read_table(file)
+    assert 'file_id' in df.columns
+    prefixes = ['percent_mito', 'n_genes', 'n_counts']
+    if all(not col.startswith(prefix) for col in df.columns for prefix in prefixes):
+        logging.warning(f'WARNING: None of expected QC stat columns found in {file}.')
+    return df
+
+
+def unpack_thresholds(row):
+    thresholds = row.thresholds
+    if isinstance(thresholds, str):
+        thresholds = ast.literal_eval(thresholds)
+    if isinstance(thresholds, dict):
+         thresholds = thresholds.get(row.file_id, thresholds)
+    return thresholds
+
+
 def get_thresholds(
     threshold_keys: list = None,
     autoqc_thresholds: pd.DataFrame = None,
     user_thresholds: [str, dict] = None,
-    user_key: str = None,
     transform: bool = True,
 ):
     """
     :param threshold_keys: keys in mappings that define different QC paramters
     :param autoqc_thresholds: autoQC thresholds as provided by sctk under adata.uns['scautoqc_ranges']
     :param user_thresholds: user defined thresholds
-    :param user_key: key to select thresholds from user_thresholds dict
     :return: thresholds: dict of key: thresholds tuple
     """
+    import ast
+    
     # set default thresholds
     if threshold_keys is None:
         threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
@@ -65,7 +85,7 @@ def get_thresholds(
         pass
     else:
         ValueError('thresholds must be a dict or string')
-    thresholds |= user_thresholds.get(user_key, {})
+    thresholds |= user_thresholds
     
     if transform:
         # transform to shape expected by plot_qc_joint
@@ -111,6 +131,8 @@ def plot_qc_joint(
     :return:
         seaborn plot (and df dataframe with updated values, if `return_df=True`)
     """
+    import seaborn as sns
+    
     if main_plot_function is None:
         main_plot_function = sns.scatterplot
     if not x_threshold:
