@@ -12,9 +12,10 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-hyperparams = {'random_state': params.get('seed', 0)} | params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
 # check GPU
 use_gpu = torch.cuda.is_available()

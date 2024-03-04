@@ -12,9 +12,9 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-hyperparams = {'pynndescent_random_state': params.get('seed', 0)} | params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'pynndescent_random_state': params.get('seed', 0)} | hyperparams
 
 files_to_keep = ['obsm', 'obsp', 'uns']
 
