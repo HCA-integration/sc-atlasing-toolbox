@@ -12,4 +12,4 @@ dependencies:
   - sparse
   - pip
   - pip:
-    - git+https://github.com/scverse/scanpy.git@master
+    - git+https://github.com/scverse/scanpy.git@main

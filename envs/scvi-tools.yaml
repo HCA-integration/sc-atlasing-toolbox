@@ -17,4 +17,4 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - git+https://github.com/scverse/scanpy.git@master
+    - git+https://github.com/scverse/scanpy.git@main

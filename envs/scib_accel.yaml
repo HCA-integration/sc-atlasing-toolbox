@@ -14,4 +14,4 @@ dependencies:
   - pip:
     - scikit-learn-intelex
     - git+https://github.com/theislab/scib.git
-    # - git+https://github.com/scverse/scanpy.git@master
+    # - git+https://github.com/scverse/scanpy.git@main

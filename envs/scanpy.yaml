@@ -19,4 +19,4 @@ dependencies:
   - pip
   - pip:
     # - git+https://github.com/scverse/anndata.git@main
-    - git+https://github.com/scverse/scanpy.git@master
+    - git+https://github.com/scverse/scanpy.git@main
