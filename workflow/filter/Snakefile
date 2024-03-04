@@ -8,7 +8,7 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='filter',
     config=config,
-    config_params=['dask', 'backed', 'remove_by_column'],  # , 'keep_by_colum'
+    config_params=['dask', 'backed', 'subset',  'remove_by_column'],  # , 'keep_by_colum'
     rename_config_params={'batch': 'batch_key'}
 )
 params = mcfg.get_paramspace()

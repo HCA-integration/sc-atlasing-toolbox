@@ -7,6 +7,7 @@ rule filter:
         remove_by_column=lambda wildcards: mcfg.get_from_parameters(wildcards, 'remove_by_column', default={}),
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
         dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
+        subset=lambda wildcards: mcfg.get_from_parameters(wildcards, 'subset'),
     resources:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     conda:
