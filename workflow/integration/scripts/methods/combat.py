@@ -12,9 +12,10 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-hyperparams = params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+
 if 'covariates' in hyperparams:
     covariates = hyperparams['covariates']
     if isinstance(covariates, str):
