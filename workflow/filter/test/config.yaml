@@ -1,0 +1,38 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  Lee2020:
+    input:
+      filter: test/input/load_data/harmonize_metadata/Lee2020.zarr
+    filter:
+      remove_by_column:
+        sample:
+          - Schulte-Schrepping_C2P01H_d0
+          - Schulte-Schrepping_C2P05F_d0
+          - Schulte-Schrepping_C2P07H_d0
+          - Schulte-Schrepping_C2P10H_d0
+          - Schulte-Schrepping_C2P13F_d0
+          - Schulte-Schrepping_C2P15H_d0
+          - Schulte-Schrepping_C2P16H_d0
+          - Schulte-Schrepping_C2P19H_d0
+        donor:
+          - C19-CB-0008
+        disease:
+          - influenza
+  test:
+    input:
+      filter: test/input/pbmc68k.h5ad
+    filter:
+      remove_by_column:
+        phase:
+          - G1
+        is_cd14_mono:
+          - true
+
+
+defaults:
+  datasets:
+    - test
+    - Lee2020
