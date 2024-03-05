@@ -507,7 +507,7 @@ def write_zarr_linked(
 
     # For those not keeping, link
     files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_clean]
-    
+    ### something to fix
     if slot_map is None:
         slot_map = {}
     extra_slots_to_link = list(slot_map.keys())

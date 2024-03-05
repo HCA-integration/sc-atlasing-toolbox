@@ -17,10 +17,11 @@ label_key = params.get('label_key')
 neighbor_args = params.get('neighbor_args', {})
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 corrected_layer = params.get('corrected_layer', 'X')
+corrected_embeddings = params.get('corrected_embeddings')
 
 # determine output types
 # default output type is 'full'
-output_type = read_anndata(input_file, uns='uns').uns.get('output_type', 'full')
+output_type = read_anndata(input_file, uns='uns').uns.get('output_type', 'full') if corrected_embeddings is None else 'embed'
 
 logger.info(f'Read {input_file} ...')
 kwargs = dict(
@@ -34,10 +35,15 @@ kwargs = dict(
 if output_type == 'full':
     kwargs|= {'X': corrected_layer}
 adata = read_anndata(input_file, **kwargs)
+if corrected_embeddings is not None:
+    slot_key = corrected_embeddings.split('/', 1)
+    adata.obsm['X_emb'] = eval('adata.' + slot_key[0])[slot_key[1]]
+    adata.uns['output_type'] = 'embed'
 
 # remove cells without labels
 n_obs = adata.n_obs
-adata = adata[~adata.obs.duplicated(keep='first')]  # remove duplicates
+duplicated_mask = ~adata.obs.duplicated(keep='first')
+adata = adata[duplicated_mask]  # remove duplicates
 logger.info('Filtering out cells without labels')
 # TODO: only for metrics that require labels?
 # logger.info(f'Before: {adata.n_obs} cells')
@@ -55,13 +61,12 @@ compute_neighbors(
     check_n_neighbors=True,
     **neighbor_args
 )
-
 logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
 adata.raw = read_anndata(
     input_file,
     X=unintegrated_layer,
     var='var',
-)
+)[duplicated_mask] # to have consist cell numbers between adata.raw and adata
 logging.info('Run PCA on unintegrated data...')
 adata_raw = adata.raw.to_adata()
 sc.pp.pca(

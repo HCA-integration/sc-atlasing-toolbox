@@ -141,7 +141,7 @@ rule funkyheatmap:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url='http://cran.us.r-project.org' #'https://ftp.fau.de/cran/'
+        cran_url=config.get('cran_url')
     conda:
         get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
