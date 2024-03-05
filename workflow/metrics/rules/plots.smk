@@ -141,7 +141,7 @@ rule funkyheatmap:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url=config.get('cran_url', 'http://cran.us.r-project.org'), #'https://ftp.fau.de/cran/'
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'), #'https://ftp.fau.de/cran/'
     conda:
         get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
@@ -165,7 +165,7 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url=config.get('cran_url', 'http://cran.us.r-project.org'),
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_batch with:
@@ -181,7 +181,7 @@ use rule funkyheatmap as funkyheatmap_per_batch with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url=config.get('cran_url', 'http://cran.us.r-project.org'),
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_label with:
@@ -197,7 +197,7 @@ use rule funkyheatmap as funkyheatmap_per_label with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url=config.get('cran_url', 'http://cran.us.r-project.org'),
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_file with:
@@ -213,7 +213,7 @@ use rule funkyheatmap as funkyheatmap_per_file with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url=config.get('cran_url', 'http://cran.us.r-project.org'),
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 rule funkyheatmap_standalone:
