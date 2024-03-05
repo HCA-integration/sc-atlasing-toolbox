@@ -61,6 +61,7 @@ def thresholds_to_df(df, wildcards, qc_type=None, **kwargs):
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 output_tsv = snakemake.output.tsv
+output_qc_stats = snakemake.output.qc_stats
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', uns='uns')
@@ -139,15 +140,17 @@ alt_status = adata.obs['alternative_qc_status']
 adata.obs['qc_status'] = 'ambiguous'
 adata.obs.loc[user_status & alt_status, 'qc_status'] = 'passed'
 adata.obs.loc[~(user_status | alt_status), 'qc_status'] = 'failed'
-# adata.obs['qc_status'] = np.where(
-#     adata.obs['user_qc_status'] & adata.obs['alternative_qc_status'],
-#     'passed',
-#     np.where(
-#         ~(adata.obs['user_qc_status'] | adata.obs['alternative_qc_status']),
-#         'failed',
-#         'ambiguous',
-#     ),
-# )
+
+qc_status_counts = pd.Categorical(
+    adata.obs['qc_status'],
+    categories=['passed', 'failed', 'ambiguous']
+).value_counts()
+qc_status_counts = pd.DataFrame(qc_status_counts).T
+qc_status_counts['file_id'] = snakemake.wildcards.file_id
+qc_status_counts = qc_status_counts[['file_id', 'passed', 'failed', 'ambiguous']]
+
+logging.info(f'Write QC stats to {output_qc_stats}...')
+qc_status_counts.to_csv(output_qc_stats, sep='\t', index=False)
 
 logging.info(f'Write {output_file}...')
 write_zarr_linked(
