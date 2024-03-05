@@ -29,4 +29,4 @@ dependencies:
     - optax==0.1.4
     - orbax<0.1.6
     - scib-metrics
-    - git+https://github.com/scverse/scanpy.git@master
+    - git+https://github.com/scverse/scanpy.git@main

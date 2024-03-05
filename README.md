@@ -1,4 +1,4 @@
-# HCA integration Toolbox
+# HCA Integration Toolbox
 
 Pipelines for different analyses and benchmark for building HCA integrated atlases.
 
@@ -6,10 +6,10 @@ Pipelines for different analyses and benchmark for building HCA integrated atlas
 
 There are multiple standalone modules that can be run independently or combined.
 The modules are located under `workflow`.
-The `configs` directory contains files that specify inputs, output location and dataset specific parameters.
+The `configs` directory contains files that specify inputs, output location, and dataset-specific parameters.
 
-+ `config.yaml`: datasets specific parameters to be used for different modules
-+ `datsets.tsv`: annotation of datasets of interest and URL. Used for downloading datasets
++ `config.yaml`: dataset-specific parameters to be used for different modules
++ `datasets.tsv`: annotation of datasets of interest and URL. Used for downloading datasets
 + `modules.tsv`: specification of which modules and submodules are to be run
 
 ## Setting up the pipeline
@@ -89,7 +89,7 @@ This is most useful for testing or reusing the modules for other workflows.
 ### Testing a module
 Make sure a test dataset `pbmc68k.h5ad` exists in `data/`.
 This will be the default test object
-If it doesn't exists, create it by running `data/generate_data.py` in the `scanpy` environment (see `envs` for environment config files).
+If it doesn't exist, create it by running `data/generate_data.py` in the `scanpy` environment (see `envs` for environment config files).
 Check out the `test` directories of each module for an example.
 Here's an example for calling a module pipeline from the repository root:
 

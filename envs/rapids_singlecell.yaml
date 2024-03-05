@@ -22,4 +22,4 @@ dependencies:
   - pip
   - pip:
     - rapids-singlecell
-    # - git+https://github.com/scverse/scanpy.git@master
+    # - git+https://github.com/scverse/scanpy.git@main
