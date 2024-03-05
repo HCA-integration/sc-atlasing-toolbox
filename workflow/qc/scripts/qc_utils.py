@@ -91,6 +91,8 @@ def apply_thresholds(
     :param thresholds: dict of key: thresholds tuple as returned by get_thresholds
     """
     adata.obs[column_name] = True
+    if adata.n_obs == 0:
+        return
     for key in threshold_keys:
         adata.obs[column_name] = adata.obs[column_name] \
             & adata.obs[key].between(*thresholds[key])
