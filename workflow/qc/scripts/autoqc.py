@@ -48,5 +48,3 @@ write_zarr_linked(
     output_file,
     files_to_keep=['obs', 'uns']
 )
-# ad.AnnData(obs=adata.obs, uns=adata.uns).write_zarr(output_file)
-# link_zarr_partial(input_file, output_file, files_to_keep=['obs', 'uns'])
