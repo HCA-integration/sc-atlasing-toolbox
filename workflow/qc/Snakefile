@@ -8,7 +8,7 @@ import pandas as pd
 from utils.ModuleConfig import ModuleConfig
 from utils.environments import get_env
 from utils.misc import merge
-from scripts.qc_utils import read_threshold_file, unpack_thresholds
+from qc_utils import read_threshold_file, unpack_thresholds
 
 
 mcfg = ModuleConfig(
