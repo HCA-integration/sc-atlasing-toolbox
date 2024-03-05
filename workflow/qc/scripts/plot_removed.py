@@ -7,13 +7,13 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
-from qc_utils import parse_parameters, get_thresholds, apply_thresholds
+from qc_utils import parse_parameters
 
 
-def get_fraction_removed(df, group, key='passed_qc'):
+def get_fraction_removed(df, group, key='qc_status'):
     grouped_counts = df.groupby([group, key], observed=False).size().reset_index(name='Counts')
     grouped_frac = grouped_counts.pivot(index=group, columns=key, values='Counts')
-    grouped_frac['fraction_removed'] = (grouped_frac[False] / grouped_frac.sum(axis=1)).round(2)
+    grouped_frac['fraction_removed'] = (grouped_frac['failed'] / grouped_frac.sum(axis=1)).round(2)
     return grouped_frac
 
 
@@ -35,26 +35,17 @@ if adata.obs.shape[0] == 0:
 file_id = snakemake.wildcards.file_id
 dataset, groups = parse_parameters(adata, snakemake.params, filter_hues=True)
 threshold_keys = ['n_counts', 'n_genes', 'percent_mito'] 
-thresholds = get_thresholds(
-    threshold_keys=threshold_keys,
-    autoqc_thresholds=adata.uns['scautoqc_ranges'],
-    user_thresholds=snakemake.params.get('thresholds'),
-)
-logging.info(f'\n{pformat(thresholds)}')
-
-logging.info('Apply thresholds...')
-apply_thresholds(adata, thresholds, threshold_keys, column_name='passed_qc')
 
 logging.info('Plot removed cells...')
 plt.figure(figsize=(4, 5))
 plt.grid(False)
 sns.countplot(
-    x='passed_qc',
-    order=[True, False],
+    x='qc_status',
+    order=['ambiguous', 'failed', 'passed'],
     data=adata.obs,
-    hue='passed_qc',
-    hue_order=[True, False],
-    palette='Set2'
+    hue='qc_status',
+    hue_order=['ambiguous', 'failed', 'passed'],
+    palette='muted', # 'Set2'
 )
 ax = plt.gca()
 for pos in ['right', 'top']: 
@@ -76,7 +67,7 @@ for group in groups:
         logging.info(f'Group {group} has too many unique values, skipping...')
         continue
     
-    grouped_frac = get_fraction_removed(adata.obs, group=group, key='passed_qc')
+    grouped_frac = get_fraction_removed(adata.obs, group=group, key='qc_status')
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
     # order = adata.obs[group].value_counts().index
 
@@ -84,10 +75,10 @@ for group in groups:
     sns.countplot(
         data=adata.obs,
         y=group,
-        hue='passed_qc',
-        hue_order=[True, False],
+        hue='qc_status',
+        hue_order=['ambiguous', 'failed', 'passed'],
         order=order,
-        palette='Set2',
+        palette='muted', # 'Set2',
         dodge=False,
         ax=ax1,
     )
@@ -122,12 +113,12 @@ plt.grid(False)
 for i, qc_metric in enumerate(threshold_keys):
     sns.violinplot(
         data=adata.obs,
-        x='passed_qc',
-        order=[True, False],
+        x='qc_status',
+        order=['ambiguous', 'failed', 'passed'],
         y=qc_metric,
-        hue='passed_qc',
-        hue_order=[True, False],
-        palette='Set2',
+        hue='qc_status',
+        hue_order=['ambiguous', 'failed', 'passed'],
+        palette='muted', # 'Set2',
         inner='quartile',
         legend=False,
         ax=axes[i]
