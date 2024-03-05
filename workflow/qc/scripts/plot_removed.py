@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
-from qc_utils import parse_parameters, get_thresholds
+from qc_utils import parse_parameters, get_thresholds, apply_thresholds
 
 
 def get_fraction_removed(df, group, key='passed_qc'):
@@ -43,9 +43,7 @@ thresholds = get_thresholds(
 logging.info(f'\n{pformat(thresholds)}')
 
 logging.info('Apply thresholds...')
-adata.obs['passed_qc'] = True
-for key in threshold_keys:
-    adata.obs['passed_qc'] = adata.obs['passed_qc'] & adata.obs[key].between(*thresholds[key])
+apply_thresholds(adata, thresholds, threshold_keys, column_name='passed_qc')
 
 logging.info('Plot removed cells...')
 plt.figure(figsize=(4, 5))

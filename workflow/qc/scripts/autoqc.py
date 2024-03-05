@@ -6,17 +6,17 @@ import sctk
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils.io import read_anndata, link_zarr_partial
+from utils.io import read_anndata, write_zarr_linked
 
-input_zarr = snakemake.input.zarr
-output_zarr = snakemake.output.zarr
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 gauss_threshold = snakemake.params.get('gauss_threshold', 0.1)
 
-adata = read_anndata(snakemake.input[0], X='X', obs='obs', var='var')
+adata = read_anndata(input_file, X='X', obs='obs', var='var')
 
 if adata.n_obs == 0:
-    logging.info(f'Write empty zarr file to {output_zarr}...')
-    ad.AnnData(obs=adata.obs).write_zarr(output_zarr)
+    logging.info(f'Write empty zarr file to {output_file}...')
+    ad.AnnData(obs=adata.obs).write_zarr(output_file)
     exit(0)
 
 print('Calculate QC stats...')
@@ -41,6 +41,12 @@ logging.info(f"\n{adata.uns['scautoqc_ranges']}")
 # sctk.generate_qc_clusters(adata, metrics=["log1p_n_counts", "log1p_n_genes", "percent_mito"])
 # adata.obs['qc_cell'] = np.where(adata.obs['consensus_passed_qc'], 'pass', 'fail')
 
-logging.info(f'Write zarr file to {output_zarr}...')
-ad.AnnData(obs=adata.obs, uns=adata.uns).write_zarr(output_zarr)
-link_zarr_partial(input_zarr, output_zarr, files_to_keep=['obs', 'uns'])
+logging.info(f'Write zarr file to {output_file}...')
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obs', 'uns']
+)
+# ad.AnnData(obs=adata.obs, uns=adata.uns).write_zarr(output_file)
+# link_zarr_partial(input_file, output_file, files_to_keep=['obs', 'uns'])

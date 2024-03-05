@@ -14,7 +14,12 @@ from qc_utils import read_threshold_file, unpack_thresholds
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['hue', 'thresholds', 'thresholds_file'],
+    config_params=[
+        'hue',
+        'thresholds',
+        'alternative_thresholds',
+        'thresholds_file'
+    ],
 )
 wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
 
@@ -60,12 +65,11 @@ use rule * from common as common_ *
 
 include: 'rules/calculate_metrics.smk'
 include: 'rules/plots.smk'
-include: 'rules/thresholds.smk'
 
 
 rule all:
     input:
-        rules.metrics_all.input,
+        rules.autoqc_all.input,
         rules.thresholds_all.input,
         rules.plots_all.input,
     default_target: True

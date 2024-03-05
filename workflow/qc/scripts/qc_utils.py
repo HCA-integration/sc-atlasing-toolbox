@@ -1,9 +1,10 @@
 import ast
 import numpy as np
 import pandas as pd
+import anndata as ad
 
 
-def parse_parameters(adata, params, filter_hues=False):
+def parse_parameters(adata: ad.AnnData, params: dict, filter_hues: list = False):
     dataset = params.get('dataset', 'None')
     hues = params.get('hue', [])
     
@@ -20,32 +21,6 @@ def parse_parameters(adata, params, filter_hues=False):
         hues = [None]
 
     return dataset, hues
-
-
-def read_threshold_file(file: str):
-    """
-    Read user threshold file in TSV format
-    """
-    df = pd.read_table(file)
-    assert 'file_id' in df.columns
-    prefixes = ['percent_mito', 'n_genes', 'n_counts']
-    if all(not col.startswith(prefix) for col in df.columns for prefix in prefixes):
-        logging.warning(f'WARNING: None of expected QC stat columns found in {file}.')
-    columns = [col for col in df.columns if any(col.startswith(x) for x in prefixes) or col in ['file_id', 'threshold_type']]
-    if 'threshold_type' in columns:
-        df = df[df['threshold_type'].isin(['user', 'alternative'])]
-    else:
-        df['threshold_type'] = 'user'
-    return df[columns].drop_duplicates()
-
-
-def unpack_thresholds(row):
-    thresholds = row.thresholds
-    if isinstance(thresholds, str):
-        thresholds = ast.literal_eval(thresholds)
-    if isinstance(thresholds, dict):
-         thresholds = thresholds.get(row.file_id, thresholds)
-    return thresholds
 
 
 def get_thresholds(
@@ -105,13 +80,29 @@ def get_thresholds(
     }
 
 
+def apply_thresholds(
+    adata: ad.AnnData,
+    thresholds: dict,
+    threshold_keys: list,
+    column_name='passed_qc'
+):
+    """
+    :param adata: AnnData object
+    :param thresholds: dict of key: thresholds tuple as returned by get_thresholds
+    """
+    adata.obs[column_name] = True
+    for key in threshold_keys:
+        adata.obs[column_name] = adata.obs[column_name] \
+            & adata.obs[key].between(*thresholds[key])
+
+
 def plot_qc_joint(
-    df,
-    x,
-    y,
-    log_x=1,
-    log_y=1,
-    hue=None,
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    log_x: int = 1,
+    log_y: int = 1,
+    hue: str = None,
     main_plot_function=None,
     marginal_hue=None,
     marginal_legend=False,
