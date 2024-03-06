@@ -68,22 +68,24 @@ for group in groups:
     
     grouped_frac = get_fraction_removed(adata.obs, group=group, key='qc_status')
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
-    # order = adata.obs[group].value_counts().index
+    adata.obs[group] = pd.Categorical(adata.obs[group], categories=order)
 
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(11 * (1 + n_groups/100), 6))
-    sns.countplot(
+    sns.histplot(
         data=adata.obs,
         y=group,
         hue='qc_status',
-        order=order,
         palette='muted', # 'Set2',
-        dodge=False,
+        edgecolor='white',
+        linewidth=0,
+        multiple="stack",
+        shrink=.9,
         ax=ax1,
     )
     if n_groups < 50:
         for container in ax1.containers:
             ax1.bar_label(container)
-
+    
     sns.barplot(
         data=grouped_frac,
         x='fraction_removed',
