@@ -8,13 +8,18 @@ import pandas as pd
 from utils.ModuleConfig import ModuleConfig
 from utils.environments import get_env
 from utils.misc import merge
-from scripts.qc_utils import read_threshold_file, unpack_thresholds
+from qc_utils import read_threshold_file, unpack_thresholds
 
 
 mcfg = ModuleConfig(
     module_name='qc',
     config=config,
-    config_params=['hue', 'thresholds', 'thresholds_file'],
+    config_params=[
+        'hue',
+        'thresholds',
+        'alternative_thresholds',
+        'thresholds_file'
+    ],
 )
 wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
 
@@ -29,9 +34,21 @@ user_thresholds = [
 ]
 if len(user_thresholds) > 0:
     parameters_df = merge(user_thresholds, how='outer', verbose=False).set_index('file_id')
-    for file_id, row in parameters_df.iterrows():
+
+    # parse user-specified thresholds from TSV files
+    user_df = parameters_df[parameters_df['threshold_type'] == 'user'].drop(columns='threshold_type')
+    for file_id, row in user_df.iterrows():
         file_id_mask = wildcards_df['file_id'] == file_id
-        wildcards_df.loc[file_id_mask, 'thresholds'] = [row.to_dict()] * file_id_mask.sum()
+        wildcards_df.loc[file_id_mask, 'thresholds'] = [row.dropna().to_dict()] * file_id_mask.sum()
+    
+    # parse user-specified alternative thresholds from TSV files
+    alternative_df = parameters_df[parameters_df['threshold_type'] == 'alternative'].drop(columns='threshold_type')
+    for file_id, row in alternative_df.iterrows():
+        file_id_mask = wildcards_df['file_id'] == file_id
+        wildcards_df.loc[file_id_mask, 'alternative_thresholds'] = [row.dropna().to_dict()] * file_id_mask.sum()
+    wildcards_df['alternative_thresholds'] = wildcards_df['alternative_thresholds'].apply(lambda x: {} if x != x else x)
+    
+    # update wildcards_df
     mcfg.update_parameters(wildcards_df)
 
 params = mcfg.get_paramspace()
@@ -48,12 +65,11 @@ use rule * from common as common_ *
 
 include: 'rules/calculate_metrics.smk'
 include: 'rules/plots.smk'
-include: 'rules/thresholds.smk'
 
 
 rule all:
     input:
-        rules.metrics_all.input,
+        rules.autoqc_all.input,
         rules.thresholds_all.input,
         rules.plots_all.input,
     default_target: True

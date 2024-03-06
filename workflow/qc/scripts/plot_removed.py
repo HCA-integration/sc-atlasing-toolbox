@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 from pprint import pformat
@@ -7,13 +8,13 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
-from qc_utils import parse_parameters, get_thresholds
+from qc_utils import parse_parameters
 
 
-def get_fraction_removed(df, group, key='passed_qc'):
+def get_fraction_removed(df, group, key='qc_status'):
     grouped_counts = df.groupby([group, key], observed=False).size().reset_index(name='Counts')
     grouped_frac = grouped_counts.pivot(index=group, columns=key, values='Counts')
-    grouped_frac['fraction_removed'] = (grouped_frac[False] / grouped_frac.sum(axis=1)).round(2)
+    grouped_frac['fraction_removed'] = (grouped_frac['failed'] / grouped_frac.sum(axis=1)).round(2)
     return grouped_frac
 
 
@@ -29,34 +30,21 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 # If no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
     logging.info('Empty data, skipping plots...')
-    exit()
+    exit(0)
 
 # get parameters
 file_id = snakemake.wildcards.file_id
 dataset, groups = parse_parameters(adata, snakemake.params, filter_hues=True)
 threshold_keys = ['n_counts', 'n_genes', 'percent_mito'] 
-thresholds = get_thresholds(
-    threshold_keys=threshold_keys,
-    autoqc_thresholds=adata.uns['scautoqc_ranges'],
-    user_thresholds=snakemake.params.get('thresholds'),
-)
-logging.info(f'\n{pformat(thresholds)}')
-
-logging.info('Apply thresholds...')
-adata.obs['passed_qc'] = True
-for key in threshold_keys:
-    adata.obs['passed_qc'] = adata.obs['passed_qc'] & adata.obs[key].between(*thresholds[key])
 
 logging.info('Plot removed cells...')
 plt.figure(figsize=(4, 5))
 plt.grid(False)
 sns.countplot(
-    x='passed_qc',
-    order=[True, False],
+    x='qc_status',
     data=adata.obs,
-    hue='passed_qc',
-    hue_order=[True, False],
-    palette='Set2'
+    hue='qc_status',
+    palette='muted', # 'Set2'
 )
 ax = plt.gca()
 for pos in ['right', 'top']: 
@@ -78,25 +66,26 @@ for group in groups:
         logging.info(f'Group {group} has too many unique values, skipping...')
         continue
     
-    grouped_frac = get_fraction_removed(adata.obs, group=group, key='passed_qc')
+    grouped_frac = get_fraction_removed(adata.obs, group=group, key='qc_status')
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
-    # order = adata.obs[group].value_counts().index
+    adata.obs[group] = pd.Categorical(adata.obs[group], categories=order)
 
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(11 * (1 + n_groups/100), 6))
-    sns.countplot(
+    sns.histplot(
         data=adata.obs,
         y=group,
-        hue='passed_qc',
-        hue_order=[True, False],
-        order=order,
-        palette='Set2',
-        dodge=False,
+        hue='qc_status',
+        palette='muted', # 'Set2',
+        edgecolor='white',
+        linewidth=0,
+        multiple="stack",
+        shrink=.9,
         ax=ax1,
     )
     if n_groups < 50:
         for container in ax1.containers:
             ax1.bar_label(container)
-
+    
     sns.barplot(
         data=grouped_frac,
         x='fraction_removed',
@@ -124,12 +113,10 @@ plt.grid(False)
 for i, qc_metric in enumerate(threshold_keys):
     sns.violinplot(
         data=adata.obs,
-        x='passed_qc',
-        order=[True, False],
+        x='qc_status',
         y=qc_metric,
-        hue='passed_qc',
-        hue_order=[True, False],
-        palette='Set2',
+        hue='qc_status',
+        palette='muted', # 'Set2',
         inner='quartile',
         legend=False,
         ax=axes[i]

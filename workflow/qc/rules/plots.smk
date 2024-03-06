@@ -1,6 +1,6 @@
 rule plot_joint:
     input:
-        zarr=rules.metrics.output.zarr
+        zarr=rules.get_thresholds.output.zarr
     output:
         joint=directory(mcfg.image_dir / params.wildcard_pattern / 'joint_plots'),
     params:
@@ -15,7 +15,7 @@ rule plot_joint:
 
 rule plot_removed:
     input:
-        zarr=rules.metrics.output.zarr
+        zarr=rules.get_thresholds.output.zarr
     output:
         plots=directory(mcfg.image_dir / params.wildcard_pattern / 'removed'),
     params:

@@ -98,6 +98,10 @@ module load_data:
     snakefile: "load_data/Snakefile"
     config: config
 
+module filtering:
+    snakefile: "filter/Snakefile"
+    config: config
+
 module exploration:
     snakefile: "exploration/Snakefile"
     config: config
@@ -156,6 +160,7 @@ module metrics:
 
 use rule * from common as common_ *
 use rule * from load_data as load_data_ *
+use rule * from filtering as filter_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *

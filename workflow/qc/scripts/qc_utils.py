@@ -1,9 +1,10 @@
 import ast
 import numpy as np
 import pandas as pd
+import anndata as ad
 
 
-def parse_parameters(adata, params, filter_hues=False):
+def parse_parameters(adata: ad.AnnData, params: dict, filter_hues: list = False):
     dataset = params.get('dataset', 'None')
     hues = params.get('hue', [])
     
@@ -20,27 +21,6 @@ def parse_parameters(adata, params, filter_hues=False):
         hues = [None]
 
     return dataset, hues
-
-
-def read_threshold_file(file: str):
-    """
-    Read user threshold file in TSV format
-    """
-    df = pd.read_table(file)
-    assert 'file_id' in df.columns
-    prefixes = ['percent_mito', 'n_genes', 'n_counts']
-    if all(not col.startswith(prefix) for col in df.columns for prefix in prefixes):
-        logging.warning(f'WARNING: None of expected QC stat columns found in {file}.')
-    return df
-
-
-def unpack_thresholds(row):
-    thresholds = row.thresholds
-    if isinstance(thresholds, str):
-        thresholds = ast.literal_eval(thresholds)
-    if isinstance(thresholds, dict):
-         thresholds = thresholds.get(row.file_id, thresholds)
-    return thresholds
 
 
 def get_thresholds(
@@ -100,20 +80,38 @@ def get_thresholds(
     }
 
 
+def apply_thresholds(
+    adata: ad.AnnData,
+    thresholds: dict,
+    threshold_keys: list,
+    column_name='passed_qc'
+):
+    """
+    :param adata: AnnData object
+    :param thresholds: dict of key: thresholds tuple as returned by get_thresholds
+    """
+    adata.obs[column_name] = True
+    if adata.n_obs == 0:
+        return
+    for key in threshold_keys:
+        adata.obs[column_name] = adata.obs[column_name] \
+            & adata.obs[key].between(*thresholds[key])
+
+
 def plot_qc_joint(
-    df,
-    x,
-    y,
-    log_x=1,
-    log_y=1,
-    hue=None,
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    log_x: int = 1,
+    log_y: int = 1,
+    hue: str = None,
     main_plot_function=None,
     marginal_hue=None,
-    marginal_legend=False,
     x_threshold=None,
     y_threshold=None,
     title='',
     return_df=False,
+    marginal_kwargs: dict=None,
     **kwargs,
 ):
     """
@@ -155,10 +153,16 @@ def plot_qc_joint(
         y_threshold = log1p_base(y_threshold, log_y)
         y = y_log
         
+    if marginal_kwargs is None:
+        marginal_kwargs = dict(legend=False)
+    
     if marginal_hue in df.columns:
         marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
     use_marg_hue = marginal_hue is not None
-
+    
+    if not use_marg_hue:
+         marginal_kwargs.pop('palette', None)
+    
     g = sns.JointGrid(
         data=df,
         x=x,
@@ -180,10 +184,10 @@ def plot_qc_joint(
         sns.histplot,
         data=df,
         hue=marginal_hue,
-        legend=marginal_legend,
         element='step' if use_marg_hue else 'bars',
         fill=False,
-        bins=100
+        bins=100,
+        **marginal_kwargs,
     )
 
     g.fig.suptitle(title, fontsize=12)

@@ -27,7 +27,7 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 # get parameters
 file_id = snakemake.wildcards.file_id
 dataset, hues = parse_parameters(adata, snakemake.params)
-hues = hues+['percent_mito']
+hues = hues+['percent_mito', 'qc_status']
 
 # if no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
@@ -105,9 +105,13 @@ for x, y, log_x, log_y in coordinates:
             palette = 'plasma'
             legend = 'brief'
         else:
-            palette = None # if adata.obs[hue].nunique() > 100 else 'plasma'
-            legend = adata.obs[hue].nunique() <= 20
-        scatter_plot_kwargs |= dict(palette=palette, legend=legend)
+            palette = None # if adata.obs[hue].nunique() < 50 else 'plasma'
+            legend = adata.obs[hue].nunique() <= 30
+        scatter_plot_kwargs |= dict(
+            palette=palette,
+            legend=legend,
+            marginal_kwargs=dict(palette=palette, legend=False),
+        )
         
         # plot joint QC on regular scale
         png_file = output_joint / f'{x}_vs_{y}_hue={hue}.png'
