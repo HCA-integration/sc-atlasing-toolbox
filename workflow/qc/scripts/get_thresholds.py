@@ -141,10 +141,15 @@ adata.obs['qc_status'] = 'ambiguous'
 adata.obs.loc[user_status & alt_status, 'qc_status'] = 'passed'
 adata.obs.loc[~(user_status | alt_status), 'qc_status'] = 'failed'
 
-qc_status_counts = pd.Categorical(
+# convert QC status to ordered categorical
+adata.obs['qc_status'] = pd.Categorical(
     adata.obs['qc_status'],
-    categories=['passed', 'failed', 'ambiguous']
-).value_counts()
+    categories=['ambiguous', 'failed', 'passed'],
+    ordered=True
+)
+
+# calculate QC stats
+qc_status_counts = adata.obs['qc_status'].value_counts()
 qc_status_counts = pd.DataFrame(qc_status_counts).T
 qc_status_counts['file_id'] = snakemake.wildcards.file_id
 qc_status_counts = qc_status_counts[['file_id', 'passed', 'failed', 'ambiguous']]

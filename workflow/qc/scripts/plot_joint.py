@@ -27,7 +27,7 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 # get parameters
 file_id = snakemake.wildcards.file_id
 dataset, hues = parse_parameters(adata, snakemake.params)
-hues = hues+['percent_mito']
+hues = hues+['percent_mito', 'qc_status']
 
 # if no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:

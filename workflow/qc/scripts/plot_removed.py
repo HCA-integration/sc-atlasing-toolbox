@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 from pprint import pformat
@@ -29,7 +30,7 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 # If no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
     logging.info('Empty data, skipping plots...')
-    exit()
+    exit(0)
 
 # get parameters
 file_id = snakemake.wildcards.file_id
@@ -41,10 +42,8 @@ plt.figure(figsize=(4, 5))
 plt.grid(False)
 sns.countplot(
     x='qc_status',
-    order=['ambiguous', 'failed', 'passed'],
     data=adata.obs,
     hue='qc_status',
-    hue_order=['ambiguous', 'failed', 'passed'],
     palette='muted', # 'Set2'
 )
 ax = plt.gca()
@@ -76,7 +75,6 @@ for group in groups:
         data=adata.obs,
         y=group,
         hue='qc_status',
-        hue_order=['ambiguous', 'failed', 'passed'],
         order=order,
         palette='muted', # 'Set2',
         dodge=False,
@@ -114,10 +112,8 @@ for i, qc_metric in enumerate(threshold_keys):
     sns.violinplot(
         data=adata.obs,
         x='qc_status',
-        order=['ambiguous', 'failed', 'passed'],
         y=qc_metric,
         hue='qc_status',
-        hue_order=['ambiguous', 'failed', 'passed'],
         palette='muted', # 'Set2',
         inner='quartile',
         legend=False,
