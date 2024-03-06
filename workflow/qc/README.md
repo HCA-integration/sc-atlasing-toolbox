@@ -28,22 +28,62 @@ DATASETS:
       hue:  # colors for colouring joint plots and stratify removed cellls plots
         - phase
         - bulk_labels
-      thresholds:  # mapping of file -> custom thresholds to overwrite autoqc thresholds
+      thresholds:  # mapping of file_id -> custom thresholds to overwrite autoqc thresholds
         test:
           n_counts_max: 500
-          n_genes_min: 200
+          n_genes_min: 100
           percent_mito_max: 0.5
+      alternative_thresholds: # stricter thresholds to flag ambiguous cells
+        test:
+          n_counts_max: 1000
+          n_genes_min: 200
+          percent_mito_max: 0.2
+      thresholds_file: test/input/user_thresholds.tsv # path to a file with custom thresholds, will overwrite thresholds above
 ```
 
 TODO: explain sctk autoqc threshold naming
+
+
+### Defining custom thresholds
+
+You can define custom thresholds on a per file_id basis that will overwrite the autoqc thresholds. There are two ways of defining custom thresholds. You can either make use of the `thresholds` section of the configuration file or create a TSV file that allow more customisation as well as alternative thresholds. When specifying thresholds directly in the yaml, you need to provide a mapping of file_id to a dictionary of thresholds (see example above).
+
+If you wnat to define the thresholds via TSV file, these values will overwrite the user-specified in the config file. Providing a file is useful if you want to customise many file_ids. The TSV file should have the following columns:
+
+* file_id (mandatory): the file_id of the file for which the thresholds are defined
+* threshold_type: the type of user input. Internally, the table will be subset to 'user' and 'alternative', which will be passed on accordingly.
+* n_counts_max: the maximum number of counts per cell
+* n_counts_min: the minimum number of counts per cell
+* n_genes_max: the maximum number of genes per cell
+* n_genes_min: the minimum number of genes per cell
+* percent_mito_max: the maximum percentage of mitochondrial genes per cell
+* percent_mito_min: the minimum percentage of mitochondrial genes per cell
+
+
+### Alternative thresholds
+
+Alternative thresholds are used to define ambiguous cells. This is useful if you are not sure about which threshold to choose and allows you to flag cells that would have been removed by a stricter threshold. These annotations can be useful for downstream analysis.
+
+You can specify alternative thresholds the same way as user-provided thresholds under `alternattive_thresholds` in the config or via the `thresholds_file` with `threshold_type` == 'alternative'.
 
 
 ## Output
 
 The output of the QC workflow is a set of plots and tables that visualise the quality of the dataset and the thresholds used for filtering cells. The output plots are saved under the images directory from the configuration file.
 
-Outputs include:
+### Outputs include:
 
-* joint scatter plots of QC metrics stratified by `hues` and joint density plots in log scale and regular scale
-* barplots of removed cells, stratified by `hues`
-* table of thresholds used for filtering cells at the dataset and file level
+* Joint scatter plots of QC metrics stratified by `hues` and joint density plots in log scale and regular scale
+* Barplots of removed cells, stratified by `hues`
+* Table of thresholds used for filtering cells at the dataset and file level
+* Thresholds TSV containing the autoQC, user-provided, alternative and updated thresholds
+  * Updated thresholds are based on the autoQC thresholds, overwritten by the user-provided thresholds (alternative thresholds are not considered in this case)
+  * The file contains number and fraction of kept and removed cells as well as the corresponding QC metrics on a per file_id basis
+  * The combined thresholds are stored under `<images_dir>/dataset~{dataset}/thresholds.tsv`
+* QC status summary table
+  * Table that contains the number of cells of the QC status categories 'passed', 'failed', 'ambiguous' on a per file_id basis
+  * The combined summary is stored under `<images_dir>/dataset~{dataset}/qc_summary.tsv`
+* An anndata file in zarr format containing the QC metrics and status of each cell
+  * The metrics are stored under `adata.obs[['n_counts', 'n_genes', 'percent_mito']]`
+  * The QC status is stored under `adata.obs['qc_status']`
+  * The zarr file is under `<out_dir>/dataset~{dataset}/file_id~{file_id}.zarr`
