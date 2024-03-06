@@ -107,11 +107,11 @@ def plot_qc_joint(
     hue: str = None,
     main_plot_function=None,
     marginal_hue=None,
-    marginal_legend=False,
     x_threshold=None,
     y_threshold=None,
     title='',
     return_df=False,
+    marginal_kwargs: dict=None,
     **kwargs,
 ):
     """
@@ -153,10 +153,16 @@ def plot_qc_joint(
         y_threshold = log1p_base(y_threshold, log_y)
         y = y_log
         
+    if marginal_kwargs is None:
+        marginal_kwargs = dict(legend=False)
+    
     if marginal_hue in df.columns:
         marginal_hue = None if df[marginal_hue].nunique() > 100 else marginal_hue
     use_marg_hue = marginal_hue is not None
-
+    
+    if not use_marg_hue:
+         marginal_kwargs.pop('palette', None)
+    
     g = sns.JointGrid(
         data=df,
         x=x,
@@ -178,10 +184,10 @@ def plot_qc_joint(
         sns.histplot,
         data=df,
         hue=marginal_hue,
-        legend=marginal_legend,
         element='step' if use_marg_hue else 'bars',
         fill=False,
-        bins=100
+        bins=100,
+        **marginal_kwargs,
     )
 
     g.fig.suptitle(title, fontsize=12)

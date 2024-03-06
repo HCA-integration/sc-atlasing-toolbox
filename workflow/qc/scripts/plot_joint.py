@@ -105,9 +105,13 @@ for x, y, log_x, log_y in coordinates:
             palette = 'plasma'
             legend = 'brief'
         else:
-            palette = None # if adata.obs[hue].nunique() > 100 else 'plasma'
-            legend = adata.obs[hue].nunique() <= 20
-        scatter_plot_kwargs |= dict(palette=palette, legend=legend)
+            palette = None # if adata.obs[hue].nunique() < 50 else 'plasma'
+            legend = adata.obs[hue].nunique() <= 30
+        scatter_plot_kwargs |= dict(
+            palette=palette,
+            legend=legend,
+            marginal_kwargs=dict(palette=palette, legend=False),
+        )
         
         # plot joint QC on regular scale
         png_file = output_joint / f'{x}_vs_{y}_hue={hue}.png'
