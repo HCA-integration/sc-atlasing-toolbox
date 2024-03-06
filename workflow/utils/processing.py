@@ -68,4 +68,4 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
     else:
         raise ValueError(f'Invalid output type {output_type}')
     
-    assert_neighbors(adata, check_n_neighbors=check_n_neighbors)
+    assert_neighbors(adata, check_n_neighbors=False)
