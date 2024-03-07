@@ -37,7 +37,8 @@ adata = read_anndata(input_file, **kwargs)
 
 # remove cells without labels
 n_obs = adata.n_obs
-adata = adata[~adata.obs.duplicated(keep='first')]  # remove duplicates
+duplicated_mask = ~adata.obs.duplicated(keep='first')
+adata = adata[duplicated_mask]  # remove duplicates
 logger.info('Filtering out cells without labels')
 # TODO: only for metrics that require labels?
 # logger.info(f'Before: {adata.n_obs} cells')
@@ -61,7 +62,7 @@ adata.raw = read_anndata(
     input_file,
     X=unintegrated_layer,
     var='var',
-)
+)[duplicated_mask]
 logging.info('Run PCA on unintegrated data...')
 adata_raw = adata.raw.to_adata()
 sc.pp.pca(
