@@ -7,7 +7,6 @@ use rule normalize from preprocessing as preprocessing_normalize with:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'normalized.zarr'),
-        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'normalized.done'),
     params:
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts'),
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
@@ -21,10 +20,9 @@ use rule normalize from preprocessing as preprocessing_normalize with:
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
     input:
-        zarr=rules.preprocessing_normalize.output.zarr
+        zarr=rules.preprocessing_normalize.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr'),
-        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.done'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'highly_variable_genes', default={}),
         batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
@@ -44,7 +42,6 @@ use rule pca from preprocessing as preprocessing_pca with:
         counts=rules.preprocessing_normalize.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr'),
-        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.done'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'pca', default={}),
         scale=lambda wildcards: mcfg.get_from_parameters(wildcards, 'scale', default=False),
@@ -59,10 +56,9 @@ use rule pca from preprocessing as preprocessing_pca with:
 
 use rule neighbors from preprocessing as preprocessing_neighbors with:
     input:
-        zarr=rules.preprocessing_pca.output.zarr
+        zarr=rules.preprocessing_pca.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
-        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.done'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors', default={}),
     resources:
