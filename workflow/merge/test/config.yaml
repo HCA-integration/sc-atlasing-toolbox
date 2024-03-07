@@ -1,0 +1,15 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  Lee2020:
+    input:
+      merge:
+        file_1: test/input/load_data/harmonize_metadata/Lee2020.zarr
+        file_2: test/input/load_data/harmonize_metadata/SchulteSchrepping2020.zarr
+  test:
+    input:
+      merge:
+        file_1: test/input/pbmc68k.h5ad
+        file_2: test/input/pbmc68k.h5ad
