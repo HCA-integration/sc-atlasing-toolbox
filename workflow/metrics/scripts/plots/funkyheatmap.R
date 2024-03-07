@@ -99,7 +99,7 @@ dt4 <- data.table(id=bio_metrics, group="Bio conservation", geom='funkyrect', pa
 dt5 <- data.table(id="Batch Correction", group="Batch correction", geom='bar', palette='Reds')
 dt6 <- data.table(id=batch_metrics, group="Batch correction", geom='circle', palette='Reds')
 column_info <- rbind(dt1, dt2, dt3, dt4, dt5, dt6, fill=TRUE)
-column_info = column_info[column_info$id %in% colnames(metrics_tab)]
+column_info <- column_info[column_info$id %in% colnames(metrics_tab)]
 print("column_info")
 print(column_info)
 
