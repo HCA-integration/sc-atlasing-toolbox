@@ -2,7 +2,7 @@ checkpoint determine_covariates:
     input:
         anndata=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup')
+        covariate_setup=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup'),
     params:
         covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'covariates', default=[]),
         permute_covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'permute_covariates', default=None),
@@ -42,7 +42,7 @@ rule batch_pcr:
     conda:
         get_env(config, 'scib_accel')
     threads:
-        lambda wildcards: min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False, as_type=float))
+        lambda wildcards: max(1, min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False)))
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

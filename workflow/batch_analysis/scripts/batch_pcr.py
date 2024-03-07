@@ -22,7 +22,7 @@ setup_file = snakemake.input.setup
 output_file = snakemake.output.tsv
 covariate = snakemake.wildcards.covariate
 sample_key = snakemake.params.get('sample')
-n_threads = snakemake.threads
+n_threads = np.max([snakemake.threads, 1])
 
 logger.error('Read anndata file...')
 adata = read_anndata(input_file, obsm='obsm', obs='obs', uns='uns')
@@ -30,6 +30,7 @@ n_covariate = adata.obs[covariate].nunique()
 
 # set default sample key
 if sample_key is None or sample_key == 'None':
+    logger.info('Using index as sample key...')
     sample_key = 'index'
     adata.obs[sample_key] = adata.obs.index
 
@@ -41,8 +42,9 @@ if not isinstance(adata.obsm['X_pca'], np.ndarray):
 logger.error('Read covariate setup...')
 with open(setup_file, 'r') as f:
     setup = yaml.safe_load(f)
-n_permute = setup['n_permute']
+# n_permute = setup['n_permute']
 # n_permute = min(snakemake.params.get('n_permute', 0), n_permute)
+n_permute = snakemake.params.get('n_permute', 0)
 logger.error(f'n_permute: {n_permute}')
 
 
@@ -51,7 +53,7 @@ logger.error(f'Permute covariate: "{covariate}"')
 perm_covariates = []
 for i in range(n_permute):
     covariate_perm = f'{covariate}-{i}'
-    cov_per_sample = adata.obs.groupby(sample_key).agg({covariate: 'first'})
+    cov_per_sample = adata.obs.groupby(sample_key, observed=True).agg({covariate: 'first'})
     cov_map = dict(
         zip(
             cov_per_sample.index,
