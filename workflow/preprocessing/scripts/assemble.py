@@ -132,8 +132,8 @@ for file_type, file in snakemake.input.items():
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
         adata = read_anndata(file, obs='obs', var='var')
-        if adata.X is None:
-            adata.X = sparse.csr_matrix(np.zeros((adata.n_obs, adata.n_vars)))
+        # if adata.X is None:
+        #     adata.X = sparse.csr_matrix(adata.shape, dtype=np.int8)
         if adata.n_obs == 0:
             logging.info('No data, write empty file...')
             adata.write_zarr(output_file)

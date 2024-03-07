@@ -12,8 +12,10 @@ mcfg = ModuleConfig(
     module_name='batch_analysis',
     config=config,
     config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample'],
+    dtypes={
+        'n_permutations': int,
+    }
 )
-
 paramspace = mcfg.get_paramspace()
 
 module common:
