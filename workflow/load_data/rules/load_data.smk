@@ -57,7 +57,7 @@ rule harmonize_metadata:
             get_wildcards(dataset_df, columns=all_but(dataset_df.columns,'subset'), wildcards=wildcards)
         ),
         backed=False,
-        dask=True,
+        dask=False,
     output:
         zarr=directory(out_dir / 'harmonize_metadata' / '{dataset}.zarr'),
         # plot=image_dir / 'harmonize_metadata' / 'counts_sanity--{dataset}.png',

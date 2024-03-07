@@ -56,7 +56,7 @@ author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     barcode_column = meta['barcode_column']
-    annotation = pd.read_csv(annotation_file)
+    annotation = pd.read_csv(annotation_file, low_memory=False)
 
     # remove duplicates
     annotation = annotation.drop_duplicates(subset=barcode_column)
