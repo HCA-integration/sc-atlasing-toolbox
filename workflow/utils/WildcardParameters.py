@@ -408,5 +408,7 @@ class WildcardParameters:
             else:
                 parameter = default
         if as_type is not None:
-            return as_type(parameter)
+            parameter = as_type(parameter)
+        if verbose:
+            print(f'parameter: {parameter}')
         return parameter
