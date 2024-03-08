@@ -259,6 +259,10 @@ class ModuleConfig:
         
         wildcard_names = list(wildcards.keys())
         wildcard_values = list(wildcards.values())
+        
+        if len(wildcard_names) == 1:
+            wildcard_names = ['file_id']
+        
         task_names = [
             '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcard_names, w) if k != 'dataset'])
             for w in zip(*wildcard_values)
