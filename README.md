@@ -1,32 +1,220 @@
-# HCA Integration Toolbox
+# HCA Integration Toolbox :toolbox:
 
-Pipelines for different analyses and benchmark for building HCA integrated atlases.
+**Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
-## Modules
+- [Getting Started](#🚀-getting-started)
+- [Extended Configuration](#⚙️-extended-configuration)
+- [Trouble Shooting](#🛠️-troubleshooting)
 
-There are multiple standalone modules that can be run independently or combined.
-The modules are located under `workflow`.
-The `configs` directory contains files that specify inputs, output location, and dataset-specific parameters.
+This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
+This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
 
-+ `config.yaml`: dataset-specific parameters to be used for different modules
-+ `datasets.tsv`: annotation of datasets of interest and URL. Used for downloading datasets
-+ `modules.tsv`: specification of which modules and submodules are to be run
+Modules can be can be configured independently and combined into custom workflows through a YAML (or JSON) configuration file.
+You can find all the modules under `workflow/` and example configuration files under `configs/`.
+Below is an example of a configuration file for a simple workflow consisting of the `preprocessing`, `integration` and `metrics` modules:
 
-## Setting up the pipeline
+```yaml
+DATASETS:
 
-Create a conda environment for snakemake
+  my_dataset: # custom task/workflow name
+
+    # input specification as mapping of module name to map of input file name to input file path
+    input:
+      preprocessing:
+        file_1: file_1.h5ad
+        file_2: file_2.zarr
+      integration: preprocessing # all outputs of module will automatically be used as input
+      metrics: integration
+    
+    # module configuration
+    preprocessing:
+      highly_variable_genes:
+        n_top_genes: 2000
+      pca:
+        n_pcs: 50
+      assemble:
+        - normalize
+        - highly_variable_genes
+        - pca
+    
+    # integration module configuration
+    integration:
+      raw_counts: raw/X
+      norm_counts: X
+      methods:
+        unintegrated:
+        scanorama:
+          batch_size: 100
+        scvi:
+          max_epochs: 10
+          early_stopping: true
+
+    # metrics module configuration
+    metrics:
+      unintegrated: layers/norm_counts
+      methods:
+        - nmi
+        - graph_connectivity
+
+  another_dataset:
+    input:
+      integration:
+        file_1: file_1.h5ad
+      metrics: integration
+      ...
+```
+
+The details to configuration will be explained in the following sections.
+
+## :rocket: Getting started
+
+### Clone the repository
+
+Depending on whether you have set up SSH or HTTPS with PAT, you can clone the repository with
+
+SSH:
+```commandline
+git clone git@github.com:HCA-integration/hca_integration_toolbox.git
+```
+
+HTTPS:
+``` clone
+git clone git@github.com:HCA-integration/hca_integration_toolbox.git
+```
+
+### Requirements
+
+* Linux (preferred) or x86 MacOS (not rigorously tested, some bioconda dependencies might not work)
+* conda (e.g. [miniforge](https://github.com/conda-forge/miniforge), [miniconda](https://docs.anaconda.com/free/miniconda/index.html))
+
+
+> :memo: **Note** The modules are tested and developed using task-specific conda environments, which should be quick to set up when using [mamba](https://mamba.readthedocs.io).
+Please ensure that you have either the mamba or conda pacakage managers installed.
+If you use conda, but have never used mamba, consider installing the mamba package into your base environment and use it for all installation commands.
+You can still replace all mamba commands with conda commands if you don't install mamba.
+
+### Install conda environments
+
+The different parts of the workflow (modules, rules) require specific conda environments.
+The simplest way to install all environments is to run the following script:
+
+```commandline
+bash envs/install_all_envs.sh -h # help message for customization
+bash envs/install_all_envs.sh
+```
+
+> :memo: **Notes**
+> 1. The script will create new environments in the `envs` directory if they don't yet exist and update any pre-existing environments.
+> 2. If an environment creation fails, the script will skip that environment and you might need to troubleshoot the installation manually.
+> 3. The environment names correspond the theire respective file names and are documented under the `name:` directive in the `envs/<env_name>.yaml` file.
+
+If you know you only need certain environments (you can get that information from the README of the module you intend to use), you can install that environment directly.
+You will at least require the snakemake environment.
 
 ```commandline
 mamba env create -f envs/snakemake.yaml
+mamba env create -f envs/<env_name>.yaml
 ```
 
-> Note: [mamba](https://mamba.readthedocs.io/en/latest/installation.html) improves install times drastically.
-> All mamba commands can be replaced by `conda`.
+### Configure your workflow
 
-## Running the pipeline
+Configuring your workflow requires setting global variables as well as subworkflows consisting of modules.
 
-There are generally two ways to run the pipeline, either from within a module directory (for module-specific runs) or at
-the top level (for full pipeline run).
+#### Configure modules
+
+The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
+Modules include:
+
+* `load_data`: Loading datasets from URLs and converting them to AnnData objects
+* `exploration`, `batch_analysis`, `qc`, `doublets`: Exploration and quality control of datasets
+* `merge`, `filter`, `subset`, `relabel`, `split_data`: Basic data manipulation tasks
+* `preprocessing`: Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP)
+* `integration`: Running single cell batch correction methods of datasets
+* `metrics`: Calculating scIB metrics, mainly for benchmarking of integration methods
+
+You can combine these modules
+
+<details>
+  <summary>Example config YAML file</summary>
+
+```yaml
+DATASETS:
+
+  my_dataset: # custom task/workflow name
+
+    # input specification as mapping of module name to map of input file name to input file path
+    input:
+      preprocessing:
+        file_1: file_1.h5ad
+        file_2: file_2.zarr
+      integration: preprocessing # all outputs of module will automatically be used as input
+      metrics: integration
+    
+    # module configuration
+    preprocessing:
+      highly_variable_genes:
+        n_top_genes: 2000
+      pca:
+        n_pcs: 50
+      assemble:
+        - normalize
+        - highly_variable_genes
+        - pca
+    
+    # integration module configuration
+    integration:
+      raw_counts: raw/X
+      norm_counts: X
+      methods:
+        unintegrated:
+        scanorama:
+          batch_size: 100
+        scvi:
+          max_epochs: 10
+          early_stopping: true
+
+    # metrics module configuration
+    metrics:
+      unintegrated: layers/norm_counts
+      methods:
+        - nmi
+        - graph_connectivity
+
+  another_dataset:
+    input:
+      integration:
+        file_1: file_1.h5ad
+      metrics: integration
+      ...
+```
+</details>
+
+TODO
+* explain DATASETS directive
+* explain input directive
+* explain module configuration
+
+> :memo: **Note** The recommended way to manage your workflow configuration files is to save them outside of the toolbox directory in a directory dedicated to your project. That way you can guarantee the separatation of the toolbox and your own configuration.
+
+
+#### Global configuration
+
+TODO
+* input/output location
+* computational resources
+* set a Snakemake profile
+
+
+### Run the pipeline
+
+Before running the pipeline, you need to activate your snakemake environment.
+
+```commandline
+conda activate snakemake
+```
+
+<details>
+  <summary>How does Snakemake work?</summary>
 
 The general command for running a pipeline is:
 
@@ -42,15 +230,24 @@ The most relevant snakemake arguments are:
 + `--configfile`: specify a config file to use. The overall workflow already defaults to the config file
   under `configs/config.yaml`
 
-Refer to the [snakemake documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html) for more
-commandline arguments.
+> :bulb: Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
-### Run the full pipeline
+</details>
 
-First make sure that all configuration files (under `configs/`) define which datasets you want to run and which modules
-are included.
-Which modules are computed exactly can be defined in `configs/modules.tsv`.
-Then use the following commands to call the pipeline.
+#### Create a wrapper script (recommended)
+```bash
+#!/usr/bin/env bash
+set -e -x
+
+snakemake \
+  --profile .profiles/czbiohub \
+  --configfile \
+    configs/computational_resources/czbiohub.yaml \
+    configs/integration/config.yaml \
+    $@
+```
+
+#### Call the pipeline
 
 Dryrun:
 ```commandline
@@ -62,40 +259,13 @@ Run full pipelin with 10 cores:
 snakemake --use-conda -c10
 ```
 
-> Note: the full pipeline doesn't yet combine input and outputs of all modules. That is still WIP
-
-
-### Run parts of the full pipeline
-
-Check out the `workflow/Snakefile` for the exact parts of the pipeline you want to run.
-For example, if you just want the data loading workflow, the rule is called `load_data_all` and the snakemake command
-will be:
-
+#### Specify which subworkflow you want to run
 ```commandline
+snakemake -l
 snakemake load_data_all --use-conda -n
 ```
 
-### Run a single module
-
-The general command from the directory of interest is:
-
-```commandline
-snakemake --configfile <configfile> <snakemake args>
-```
-
-You need to specify a config file that is specific to the data you want to run the pipeline on.
-This is most useful for testing or reusing the modules for other workflows.
-
-### Testing a module
-Make sure a test dataset `pbmc68k.h5ad` exists in `data/`.
-This will be the default test object
-If it doesn't exist, create it by running `data/generate_data.py` in the `scanpy` environment (see `envs` for environment config files).
-Check out the `test` directories of each module for an example.
-Here's an example for calling a module pipeline from the repository root:
-
-```commandline
-bash workflow/integration/test/run_test.sh
-```
+## :gear: Extended configuration
 
 ### Use Snakemake profiles
 
@@ -108,9 +278,23 @@ To use a profile e.g. the local profile, call
 snakemake --profile .profiles/local
 ```
 
-## Working with GPUs and Conda environments
+### Cluster support
+TODO
 
-Currently, whether the GPU version of pytorch is installed depends on which node you install the environment on.
+### Automatic environment management
+Snakemake supports automatically creating conda environments for each rule.
+
+```yaml
+env_mode: from_yaml
+```
+
+
+## :hammer_and_wrench: Troubleshooting
+
+### Working with GPUs and Conda environments
+
+Some scripts can run faster if their dependencies are installed with GPU support.
+Currently, whether the GPU version of a package with GPU support is installed, depends on the architecture of the system that you install you install the environment on.
 That means that if you want to your code to reconnise GPUs when working on a cluster, please make sure you install the conda environments from a node that has access to a GPU.
 You can install all missing dependencies in advance:
 
@@ -120,3 +304,11 @@ snakemake --use-conda --conda-create-envs-only --cores 1
 
 In case you already have an environment installed that doesn't recognise the GPU on a GPU node, gather the environment name from the Snakemake log, remove it manually and then call the pipeline again with `--use-conda` or a corresponding profile.
 Snakemake should automatically reinstall that environment.
+
+### Working with CPUs only
+
+If your system doesn't have any GPUs, you can set the following flag in your config:
+
+```yaml
+use_gpu: false
+```
