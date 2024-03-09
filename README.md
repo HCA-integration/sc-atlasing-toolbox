@@ -9,62 +9,72 @@
 This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
 This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
 
-Modules can be can be configured independently and combined into custom workflows through a YAML (or JSON) configuration file.
-You can find all the modules under `workflow/` and example configuration files under `configs/`.
-Below is an example of a configuration file for a simple workflow consisting of the `preprocessing`, `integration` and `metrics` modules:
+<details>
+  <summary>How do I specify a workflow?</summary>
 
-```yaml
-DATASETS:
+  The heart of the configuration is captured in a YAML (or JSON) configuration file.
+  You can find all the modules under `workflow/` and example configuration files under `configs/`.
 
-  my_dataset: # custom task/workflow name
+  Below is an example of a configuration file for a simple workflow consisting of the `preprocessing`, `integration` and `metrics` modules:
 
-    # input specification as mapping of module name to map of input file name to input file path
-    input:
+  ```yaml
+  out_dir: /path/to/output/directory
+  images: /path/to/image/directory
+
+  DATASETS:
+
+    my_dataset: # custom task/workflow name
+
+      # input specification as mapping of module name to map of input file name to input file path
+      input:
+        preprocessing:
+          file_1: file_1.h5ad
+          file_2: file_2.zarr
+        integration: preprocessing # all outputs of module will automatically be used as input
+        metrics: integration
+      
+      # module configuration
       preprocessing:
-        file_1: file_1.h5ad
-        file_2: file_2.zarr
-      integration: preprocessing # all outputs of module will automatically be used as input
-      metrics: integration
-    
-    # module configuration
-    preprocessing:
-      highly_variable_genes:
-        n_top_genes: 2000
-      pca:
-        n_pcs: 50
-      assemble:
-        - normalize
-        - highly_variable_genes
-        - pca
-    
-    # integration module configuration
-    integration:
-      raw_counts: raw/X
-      norm_counts: X
-      methods:
-        unintegrated:
-        scanorama:
-          batch_size: 100
-        scvi:
-          max_epochs: 10
-          early_stopping: true
-
-    # metrics module configuration
-    metrics:
-      unintegrated: layers/norm_counts
-      methods:
-        - nmi
-        - graph_connectivity
-
-  another_dataset:
-    input:
+        highly_variable_genes:
+          n_top_genes: 2000
+        pca:
+          n_pcs: 50
+        assemble:
+          - normalize
+          - highly_variable_genes
+          - pca
+      
+      # integration module configuration
       integration:
-        file_1: file_1.h5ad
-      metrics: integration
-      ...
-```
+        raw_counts: raw/X
+        norm_counts: X
+        methods:
+          unintegrated:
+          scanorama:
+            batch_size: 100
+          scvi:
+            max_epochs: 10
+            early_stopping: true
 
-The details to configuration will be explained in the following sections.
+      # metrics module configuration
+      metrics:
+        unintegrated: layers/norm_counts
+        methods:
+          - nmi
+          - graph_connectivity
+
+    another_dataset:
+      input:
+        integration:
+          file_1: file_1.h5ad
+        metrics: integration
+        ...
+  ```
+
+  :sparkling_heart: Beautiful, right? [Read more](#configure-your-workflow) on how configuration works.
+
+</details>
+
 
 ## :rocket: Getting started
 
@@ -134,9 +144,6 @@ Modules include:
 
 You can combine these modules
 
-<details>
-  <summary>Example config YAML file</summary>
-
 ```yaml
 DATASETS:
 
@@ -187,7 +194,6 @@ DATASETS:
       metrics: integration
       ...
 ```
-</details>
 
 TODO
 * explain DATASETS directive
@@ -216,21 +222,20 @@ conda activate snakemake
 <details>
   <summary>How does Snakemake work?</summary>
 
-The general command for running a pipeline is:
-
-```commandline
-snakemake <snakemake args>
-```
-
-The most relevant snakemake arguments are:
-
-+ `-n`: dryrun
-+ `--use-conda`: use rule-specific conda environments to ensure all dependencies are met
-+ `-c`: maximum number of cores to be used
-+ `--configfile`: specify a config file to use. The overall workflow already defaults to the config file
-  under `configs/config.yaml`
-
-> :bulb: Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
+  > The general command for running a pipeline is:
+  >
+  > ```commandline
+  > snakemake <snakemake args>
+  > ```
+  >
+  > The most relevant snakemake arguments are:
+  > 
+  > + `-n`: dryrun
+  > + `--use-conda`: use rule-specific conda environments to ensure all dependencies are met
+  > + `-c`: maximum number of cores to be used
+  > + `--configfile`: specify a config file to use. The overall workflow already defaults to the config file under `configs/config.yaml`
+  > 
+  > :bulb: Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
 </details>
 
