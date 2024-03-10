@@ -2,7 +2,7 @@
 
 ## Installation
 
-Install the requirements as instructed in the [README](../README.md).
+Install the requirements as instructed in the [README](README.md).
 
 ## Developing a module
 
