@@ -13,6 +13,8 @@ This allows for an efficient and scalable way to run analyses on large datasets 
 <details>
   <summary>TL;DR What does a full workflow look like?</summary>
 
+  <a name="example_config"></a>
+
   The heart of the configuration is captured in a YAML (or JSON) configuration file.
   Here is an example of a workflow containing the `preprocessing`, `integration` and `metrics` modules:
 
@@ -95,7 +97,7 @@ The modules are located under `workflow/` and can be run independently or combin
 
 ### Clone the repository
 
-Depending on whether you have set up SSH or HTTPS with PAT, you can clone the repository with
+Depending on whether you have set up SSH or HTTPS with [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), you can clone the repository with
 
 SSH:
 ```commandline
@@ -129,9 +131,9 @@ bash envs/install_all_envs.sh
 ```
 
 > :memo: **Notes**
-> 1. The script will create new environments in the `envs` directory if they don't yet exist and update any pre-existing environments.
+> 1. The script will create new environments for each file in the `envs` directory if they don't yet exist and update any pre-existing environments.
 > 2. If an environment creation fails, the script will skip that environment and you might need to troubleshoot the installation manually.
-> 3. The environment names correspond the theire respective file names and are documented under the `name:` directive in the `envs/<env_name>.yaml` file.
+> 3. The environment names correspond the their respective file names and are documented under the `name:` directive in the `envs/<env_name>.yaml` file.
 
 If you know you only need certain environments (you can get that information from the README of the module you intend to use), you can install that environment directly.
 You will at least require the snakemake environment.
@@ -260,7 +262,7 @@ use_gpu: true
 
 ### Run the pipeline
 
-Before running the pipeline, you need to activate your snakemake environment.
+Before running the pipeline, you need to activate your Snakemake environment.
 
 ```commandline
 conda activate snakemake
@@ -281,41 +283,97 @@ conda activate snakemake
   > + `--use-conda`: use rule-specific conda environments to ensure all dependencies are met
   > + `-c`: maximum number of cores to be used
   > + `--configfile`: specify a config file to use. The overall workflow already defaults to the config file under `configs/config.yaml`
-  > 
-  > :bulb: Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
 </details>
 
 #### Create a wrapper script (recommended)
+
+Next, you can create a wrapper script that will call the pipeline with the correct profile and configuration file(s).
+This way, it is easier to call the pipeline and you can avoid having to remember all the flags and options.
+
+Below is an example of a wrapper script that you can use to call the pipeline.
+
 ```bash
 #!/usr/bin/env bash
 set -e -x
 
+# assuming that the toolbox is on the same level of the directory you're calling the script from
+pipeline="$(realpath ../hca_integration_toolbox)"
+
 snakemake \
-  --profile .profiles/czbiohub \
-  --configfile \
-    configs/computational_resources/czbiohub.yaml \
-    configs/integration/config.yaml \
+  --configfile <my_config_file>.yaml \
+  --snakefile $pipeline/workflow/Snakefile \
+  --use-conda \
+  --rerun-incomplete \
+  --keep-going \
+  --printshellcmds \
     $@
 ```
 
-#### Call the pipeline
+You must set the flag `--use-conda` to ensure that Snakemake uses the conda environments specified in the rules.
+If your config file becomes very big, you can split the workflows into separate config files and include them to the `configfile` in the wrapper script.
 
-Dryrun:
-```commandline
-snakemake -n
+```bash
+#!/usr/bin/env bash
+set -e -x
+
+pipeline="$(realpath ../hca_integration_toolbox)"
+
+snakemake \
+  --configfile \
+    <my_config_file>.yaml \
+    <my_config_file_2>.yaml \
+  ...
 ```
 
-Run full pipelin with 10 cores:
+:bulb: Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
+
+#### Call the pipeline
+
+When you execute the script (say, we call it `run_pipeline.sh`), you can treat it like a snakemake command and add any additional snakemake arguments you want to use.
+
+A dryrun would be:
+
 ```commandline
-snakemake --use-conda -c10
+bash run_pipeline.sh -n
+```
+
+Executing the actual workflow providing 10 cores would be:
+
+```commandline
+bash run_pipeline.sh -c10
 ```
 
 #### Specify which subworkflow you want to run
+
+The pipeline will only run the rule that you explicitly tell it to run.
+You can list all possible rules with:
+
 ```commandline
 snakemake -l
-snakemake load_data_all --use-conda -n
 ```
+
+Given the [config above](#example_config), you can run all rules related to integration.
+
+```commandline
+bash run_pipeline.sh integration_all -n
+```
+
+This will also include all the preprocessing rules that required for integration, but will leave e.g. plots generated by the preprocessing output.
+If you want to include those, you can run the `preprocessing_all` rule as well.
+
+```commandline
+bash run_pipeline.sh preprocessing_all integration_all -n
+```
+
+The same applies if you want to run the metrics
+
+```commandline
+bash run_pipeline.sh preprocessing_all integration_all metrics_all -n
+```
+
+Good luck running your pipeline! :tada:
+
 
 ## :gear: Advanced configuration
 
