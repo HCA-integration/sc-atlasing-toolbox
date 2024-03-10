@@ -9,7 +9,7 @@ mcfg = ModuleConfig(
     module_name='merge',
     config=config,
     config_params=['dask', 'backed'],
-    mandatory_wildcards=['dataset']
+    mandatory_wildcards=['dataset'],
 )
 params = mcfg.get_paramspace()
 
@@ -32,7 +32,7 @@ rule merge:
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=3),
     script:
         'merge.py'
 
