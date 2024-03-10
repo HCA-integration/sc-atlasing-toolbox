@@ -1,6 +1,7 @@
 """
 Data filtering
 """
+from pathlib import Path
 from pprint import pformat
 import numpy as np
 import scanpy as sc
@@ -29,6 +30,8 @@ if subset:
         'obsm': 'obsm',
         'obsp': 'obsp',
     }
+    # filter out slots that aren't present in the input
+    kwargs = {k: v for k, v in kwargs.items() if k in [f.name for f in Path(input_file).iterdir()]}
 
 adata = read_anndata(
     input_file,
