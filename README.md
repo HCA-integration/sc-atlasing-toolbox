@@ -2,7 +2,6 @@
 
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
-- [:jigsaw: Modules](#🧩-modules)
 - [:rocket: Getting Started](#🚀-getting-started)
 - [:gear: Advanced Configuration](#⚙️-advanced-configuration)
 - [:hammer_and_wrench: Trouble Shooting](#🛠️-troubleshooting)
@@ -69,29 +68,31 @@ This allows for an efficient and scalable way to run analyses on large datasets 
 
 </details>
 
-## :jigsaw: Modules
+<details>
+  <summary> What modules does the toolbox support? </summary>
 
-The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
+  The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
 
-| Module                 | Description                                                               |
-|------------------------|---------------------------------------------------------------------------|
-| `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
-| `exploration`          | Exploration and quality control of datasets                               |
-| `batch_analysis`       | Exploration and quality control of batches within datasets                |
-| `qc`                   | Quality control of datasets                                               |
-| `doublets`             | Identifying and handling doublets in datasets                             |
-| `merge`                | Merging datasets                                                          |
-| `filter`               | Filtering datasets based on specified criteria                            |
-| `subset`               | Creating subsets of datasets                                              |
-| `relabel`              | Relabeling data points in datasets                                        |
-| `split_data`           | Splitting datasets into training and testing sets                         |
-| `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
-| `integration`          | Running single cell batch correction methods on datasets                  |
-| `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
-| `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
-| `label_transfer`       | Work in progress                                                          |
-| `sample_representation`| Work in progress                                                          |
+  | Module                 | Description                                                               |
+  |------------------------|---------------------------------------------------------------------------|
+  | `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
+  | `exploration`          | Exploration and quality control of datasets                               |
+  | `batch_analysis`       | Exploration and quality control of batches within datasets                |
+  | `qc`                   | Quality control of datasets                                               |
+  | `doublets`             | Identifying and handling doublets in datasets                             |
+  | `merge`                | Merging datasets                                                          |
+  | `filter`               | Filtering datasets based on specified criteria                            |
+  | `subset`               | Creating subsets of datasets                                              |
+  | `relabel`              | Relabeling data points in datasets                                        |
+  | `split_data`           | Splitting datasets into training and testing sets                         |
+  | `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
+  | `integration`          | Running single cell batch correction methods on datasets                  |
+  | `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
+  | `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
+  | `label_transfer`       | Work in progress                                                          |
+  | `sample_representation`| Work in progress                                                          |
 
+</details>
 
 ## :rocket: Getting started
 
@@ -115,10 +116,10 @@ git clone git@github.com:HCA-integration/hca_integration_toolbox.git
 * conda e.g. via [miniforge](https://github.com/conda-forge/miniforge)(recommended) or [miniconda](https://docs.anaconda.com/free/miniconda/index.html)
 
 
-> :memo: **Note** The modules are tested and developed using task-specific conda environments, which should be quick to set up when using [mamba](https://mamba.readthedocs.io).
-Please ensure that you have either the mamba or conda pacakage managers installed.
-If you use conda, but have never used mamba, consider installing the mamba package into your base environment and use it for all installation commands.
-You can still replace all mamba commands with conda commands if you don't install mamba.
+The modules are tested and developed using task-specific conda environments, which should be quick to set up when using [mamba](https://mamba.readthedocs.io).
+
+> :memo: **Note** If you use conda, but have never used mamba, consider installing the mamba package into your base environment and use it for all installation commands.
+You can still replace all mamba commands with conda commands if you don't want to install mamba.
 
 ### Install conda environments
 
