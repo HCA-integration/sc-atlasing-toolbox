@@ -16,7 +16,7 @@ adata = read_anndata(input_file, X='X', obs='obs', var='var')
 
 if adata.n_obs == 0:
     logging.info(f'Write empty zarr file to {output_file}...')
-    ad.AnnData(obs=adata.obs).write_zarr(output_file)
+    write_zarr_linked(adata, input_file, output_file, files_to_keep=[])
     exit(0)
 
 print('Calculate QC stats...')
