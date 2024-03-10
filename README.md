@@ -2,6 +2,7 @@
 
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
+- [:jigsaw: Modules](#🧩-modules)
 - [:rocket: Getting Started](#🚀-getting-started)
 - [:gear: Extended Configuration](#⚙️-extended-configuration)
 - [:hammer_and_wrench: Trouble Shooting](#🛠️-troubleshooting)
@@ -9,27 +10,14 @@
 This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
 This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
 
-The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
-Modules include:
-
-* `load_data`: Loading datasets from URLs and converting them to AnnData objects
-* `exploration`, `batch_analysis`, `qc`, `doublets`: Exploration and quality control of datasets
-* `merge`, `filter`, `subset`, `relabel`, `split_data`: Basic data manipulation tasks
-* `preprocessing`: Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP)
-* `integration`: Running single cell batch correction methods of datasets
-* `metrics`: Calculating scIB metrics, mainly for benchmarking of integration methods
-* `label_harmonisation`: Provide alignment between unharmonized labels using CellHint
-
-
 <details>
-  <summary>How do I specify a workflow?</summary>
+  <summary>TL;DR What does a full workflow look like?</summary>
 
   The heart of the configuration is captured in a YAML (or JSON) configuration file.
-  You can find all the modules under `workflow/` and example configuration files under `configs/`.
-  Here is an example on a workflow containing the `preprocessing`, `integration` and `metrics` modules:
+  Here is an example of a workflow containing the `preprocessing`, `integration` and `metrics` modules:
 
   ```yaml
-  out_dir: /path/to/output/directory
+  output_dir: /path/to/output/directory
   images: /path/to/image/directory
 
   DATASETS:
@@ -78,6 +66,29 @@ Modules include:
   :sparkling_heart: Beautiful, right? [Read more](#configure-your-workflow) on how configuration works.
 
 </details>
+
+## :jigsaw: Modules
+
+The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
+
+| Module                 | Description                                                               |
+|------------------------|---------------------------------------------------------------------------|
+| `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
+| `exploration`          | Exploration and quality control of datasets                               |
+| `batch_analysis`       | Exploration and quality control of batches within datasets                |
+| `qc`                   | Quality control of datasets                                               |
+| `doublets`             | Identifying and handling doublets in datasets                             |
+| `merge`                | Merging datasets                                                          |
+| `filter`               | Filtering datasets based on specified criteria                            |
+| `subset`               | Creating subsets of datasets                                              |
+| `relabel`              | Relabeling data points in datasets                                        |
+| `split_data`           | Splitting datasets into training and testing sets                         |
+| `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
+| `integration`          | Running single cell batch correction methods on datasets                  |
+| `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
+| `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
+| `label_transfer`       | Work in progress                                                          |
+| `sample_representation`| Work in progress                                                          |
 
 
 ## :rocket: Getting started
