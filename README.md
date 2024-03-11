@@ -562,13 +562,10 @@ This will force Snakemake to use the CPU versions of an environment.
 ### FAQs
 
 Below are some scenarios that can occur when starting with the pipeline.
-
-<details>
-  <summary>I configured my pipeline and the dry run doesn't fail, but it doesn't want to run the modules I configured. What do I do?</summary>
-
-  *This likely happens when you don't specify which rule you want Snakemake to run. By default, Snakemake will try create a visualisation of the modules you configured. If you want it to run the modules themselves, you will need to add the rule name with your Snakemake command. For each rule, there is a `<module>_all`, but you can view all possible rules through `snakemake -l`*
-
-</details>
-
 If you have any additional questions or encounter any bugs, please open up a [github issue](https://github.com/HCA-integration/hca_integration_toolbox/issues).
 If you want to contribute to improving the pipeline, check out the [contribution guidelines](CONTRIBUTING.md).
+
+#### I configured my pipeline and the dry run doesn't fail, but it doesn't want to run the modules I configured. What do I do?
+
+This likely happens when you don't specify which rule you want Snakemake to run. By default, Snakemake will try create a visualisation of the modules you configured. If you want it to run the modules themselves, you will need to add the rule name with your Snakemake command. For each rule, there is a `<module>_all`, but you can view all possible rules through `snakemake -l`
+
