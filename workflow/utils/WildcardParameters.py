@@ -19,6 +19,7 @@ class WildcardParameters:
         dataset_config: dict,
         default_config: dict,
         wildcard_names: list,
+        mandatory_wildcards: list = None,
         config_params: list = None,
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
@@ -49,7 +50,8 @@ class WildcardParameters:
             rename_config_params=rename_config_params,
             dtypes=dtypes,
         )
-        mandatory_wildcards = ['dataset', 'file_id']
+        if mandatory_wildcards is None:
+            mandatory_wildcards = ['dataset', 'file_id']
         for wildcard in mandatory_wildcards:
             while wildcard in wildcard_names:
                 wildcard_names.remove(wildcard)

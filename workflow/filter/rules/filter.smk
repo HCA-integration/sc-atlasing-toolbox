@@ -11,7 +11,7 @@ rule filter:
     resources:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     conda:
-        get_env(config, 'scanpy', env_dir='../../../envs')
+        get_env(config, 'scanpy', env_dir='envs')
     script:
         '../filter.py'
 

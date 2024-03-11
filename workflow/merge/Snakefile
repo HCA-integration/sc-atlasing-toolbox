@@ -6,15 +6,16 @@ from utils.environments import get_env
 
 
 mcfg = ModuleConfig(
-    module_name='filter',
+    module_name='merge',
     config=config,
-    config_params=['dask', 'backed', 'subset',  'remove_by_column'],  # , 'keep_by_colum'
+    config_params=['dask', 'backed'],
+    mandatory_wildcards=['dataset'],
 )
 params = mcfg.get_paramspace()
 
+
 wildcard_constraints:
     dataset=r'[^/]+',
-    file_id=r'[^/]+',
 
 module common:
     snakefile: "../common/Snakefile"
@@ -22,12 +23,23 @@ module common:
 
 use rule * from common as common_ *
 
-include: 'rules/filter.smk'
+
+rule merge:
+    input:
+        unpack(lambda wildcards: mcfg.get_input_files_per_dataset(dataset=wildcards.dataset))
+    output:
+        zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=3),
+    script:
+        'merge.py'
 
 
 rule all:
     input:
-        rules.filter_all.input
+        mcfg.get_output_files(rules.merge.output)
     default_target: True
 
 
