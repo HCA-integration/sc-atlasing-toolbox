@@ -24,7 +24,11 @@ mcfg = ModuleConfig(
         'umap',
         'backed',
         'dask',
-    ]
+    ],
+    dtypes={
+        'backed': bool,
+        'dask': bool,
+    },
 )
 paramspace = mcfg.get_paramspace()
 
