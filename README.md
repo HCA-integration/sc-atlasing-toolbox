@@ -559,6 +559,42 @@ You can find detailed information on cluster execution in the [Snakemake documen
 
 ## :hammer_and_wrench: Troubleshooting
 
+### Working with GPUs
+
+Some scripts can run faster if their dependencies are installed with GPU support.
+Currently, whether the GPU version of a package with GPU support is installed, depends on the architecture of the system that you install you **install** the environment on.
+If you work on a single computer with GPU, GPU-support should work out of the box.
+However, if you want to your code to recognize GPUs when working on a cluster, you need to make sure you install the conda environments from a node that has access to a GPU.
+
+Environments that support GPU are:
+
+* `rapids_singlecell` (only installs when GPU is available)
+* `scarches`
+* `scib_metrics`
+* `scvi-tools`
+
+If you have already installed a GPU environment on CPU, you need to remove and re-install it on node with a GPU.
+
+```commandline
+conda env remove -n <env_name>
+mamba env create -f envs/<env_name>.yaml
+```
+
+In case you are working with `env_mode: from_yaml`, gather the environment name from the Snakemake log, remove the environment manually.
+The next time you call your pipeline again, Snakemake should automatically reinstall the missing environment.
+
+### Working with CPUs only
+
+If your system doesn't have any GPUs, you can set the following flag in your config.
+
+```yaml
+use_gpu: false
+```
+
+This will force Snakemake to use the CPU versions of an environment.
+
+### FAQs
+
 Below are some scenarios that can occur when starting with the pipeline.
 
 <details>
