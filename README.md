@@ -151,7 +151,7 @@ The global configuration allows you to set output locations, computational resou
 
 You can find example configuration files under `configs/`.
 
-#### Module configuration
+#### Input configuration
 
 You can select and combine modules to create a custom workflow by specifying the input and module configuration in a YAML file.
 Each instance of a workflow needs a unique task name and it can take any number of inputs consist of modules.
@@ -173,6 +173,8 @@ DATASETS: # TODO: rename to TASKS
  ```
 
 > :warning: **Warning** There can only be one instance of a module as a key in the input mapping (in the backend this is a dictionary). But you can reuse the same module output as input for multiple other modules. The order of the entries in the input mapping doesn't matter. 
+
+#### Module configuration
 
 You can configure the behaviour of each module by specifying their parameters under the same dataset name.
  ```yaml
