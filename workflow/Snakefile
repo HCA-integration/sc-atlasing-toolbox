@@ -182,16 +182,13 @@ rule all:
     default_target: True
 
 
-modules = [
-    'load_data',
-    'exploration',
-    'subset',
-    'integration',
-    'metrics',
-    'preprocessing',
-    'label_transfer',
-    'label_harmonization'
-]
+def get_modules_from_config(config):
+    modules = set()
+    for dataset in config['DATASETS']:
+        modules.update(config['DATASETS'][dataset]['input'].keys())
+    return list(modules)
+
+modules = get_modules_from_config(config)
 
 rule dependency_graph:
     input:
