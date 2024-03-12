@@ -19,7 +19,7 @@ input_file = snakemake.input.anndata
 setup_file = snakemake.input.setup
 output_file = snakemake.output.tsv
 covariate = snakemake.wildcards.covariate
-sample_key = snakemake.params.get('sample')
+sample_key = snakemake.params.get('sample_key')
 n_threads = np.max([snakemake.threads, 1])
 
 print('Read anndata file...', flush=True)
@@ -45,20 +45,20 @@ with open(setup_file, 'r') as f:
 n_permute = snakemake.params.get('n_permute', 0)
 print(f'n_permute: {n_permute}', flush=True)
 
+if sample_key == covariate:
+    print('Sample key is the same as covariate, skipping permutation...', flush=True)
+    n_permute = 0
 
 # PCR for permuted covariates
 print(f'Permutate covariate: "{covariate}"...', flush=True)
 perm_covariates = []
 for i in range(n_permute):
-    covariate_perm = f'{covariate}-{i}'
+    # aggregate and permutate covariate
     cov_per_sample = adata.obs.groupby(sample_key, observed=True).agg({covariate: 'first'})
-    cov_map = dict(
-        zip(
-            cov_per_sample.index,
-            cov_per_sample[covariate].sample(cov_per_sample.shape[0])
-        )
-    )
-    # permute covariate
+    cov_map = dict(zip(cov_per_sample.index, cov_per_sample[covariate].sample(frac=1)))
+    
+    # apply permutation
+    covariate_perm = f'{covariate}-{i}'
     adata.obs[covariate_perm] = adata.obs[sample_key].map(cov_map)
     perm_covariates.append(covariate_perm)
 
