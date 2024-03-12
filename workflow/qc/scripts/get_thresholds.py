@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from utils.io import read_anndata, write_zarr_linked
-from qc_utils import get_thresholds, apply_thresholds
+from qc_utils import get_thresholds, apply_thresholds, parse_autoqc
 
 
 def thresholds_to_df(df, wildcards, qc_type=None, **kwargs):
@@ -70,6 +70,8 @@ threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
 user_thresholds = snakemake.params.get('thresholds')
 alternative_thresholds = snakemake.params.get('alternative_thresholds')
 autoqc_thresholds = adata.uns.get('scautoqc_ranges')
+if autoqc_thresholds is None:
+    autoqc_thresholds = pd.DataFrame()
 
 # Calculate threshold stats
 df = pd.concat(
@@ -80,6 +82,7 @@ df = pd.concat(
             wildcards=snakemake.wildcards,
             threshold_keys=threshold_keys,
             autoqc_thresholds=autoqc_thresholds,
+            init_nan=True,
         ),
         # user thresholds
         thresholds_to_df(
@@ -87,6 +90,7 @@ df = pd.concat(
             wildcards=snakemake.wildcards,
             threshold_keys=threshold_keys,
             user_thresholds=user_thresholds,
+            init_nan=True,
         ), 
         # alternative thresholds
         thresholds_to_df(
@@ -95,6 +99,7 @@ df = pd.concat(
             qc_type='alternative',
             threshold_keys=threshold_keys,
             user_thresholds=alternative_thresholds,
+            init_nan=True,
         ),
         # updated thresholds
         thresholds_to_df(
@@ -103,6 +108,7 @@ df = pd.concat(
             threshold_keys=threshold_keys,
             autoqc_thresholds=autoqc_thresholds,
             user_thresholds=user_thresholds,
+            init_nan=True,
         ),
     ]
 )
@@ -123,6 +129,9 @@ apply_thresholds(
     threshold_keys=threshold_keys,
     column_name='user_qc_status',
 )
+
+# set defaults for alternative thresholds
+alternative_thresholds = parse_autoqc(autoqc_thresholds) | user_thresholds | alternative_thresholds
 apply_thresholds(
     adata,
     thresholds=get_thresholds(
