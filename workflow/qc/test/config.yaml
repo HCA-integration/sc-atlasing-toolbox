@@ -20,6 +20,7 @@ DATASETS:
         test: test/input/pbmc68k.h5ad
         test2: test/input/pbmc68k.h5ad
         test3: test/input/pbmc68k.h5ad
+        empty: test/input/empty.zarr
     qc:
       hue:
         - phase

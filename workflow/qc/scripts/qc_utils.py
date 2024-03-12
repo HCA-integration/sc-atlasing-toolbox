@@ -23,11 +23,26 @@ def parse_parameters(adata: ad.AnnData, params: dict, filter_hues: list = False)
     return dataset, hues
 
 
+def parse_autoqc(autoqc_thresholds: pd.DataFrame, thresholds: dict = None):
+    if thresholds is None:
+        thresholds = {}
+    thresholds |= {
+        f'{key}_min': autoqc_thresholds.loc[key, 'low']
+        for key in autoqc_thresholds.index
+    }
+    thresholds |={
+        f'{key}_max': autoqc_thresholds.loc[key, 'high']
+        for key in autoqc_thresholds.index
+    }
+    return thresholds
+
+
 def get_thresholds(
     threshold_keys: list = None,
     autoqc_thresholds: pd.DataFrame = None,
     user_thresholds: [str, dict] = None,
     transform: bool = True,
+    init_nan: bool = False,
 ):
     """
     :param threshold_keys: keys in mappings that define different QC paramters
@@ -42,19 +57,15 @@ def get_thresholds(
         threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
     
     # initialise thresholds
-    thresholds = {f'{key}_min': 0 for key in threshold_keys}
-    thresholds |= {f'{key}_max': np.inf for key in threshold_keys}
+    if init_nan:
+        thresholds = {f'{key}_min': np.nan for key in threshold_keys}
+        thresholds |= {f'{key}_max': np.nan for key in threshold_keys}
+    else:
+        thresholds = {f'{key}_min': 0 for key in threshold_keys}
+        thresholds |= {f'{key}_max': np.inf for key in threshold_keys}
 
-    # get autoqc thresholds
     if autoqc_thresholds is not None:
-        thresholds |= {
-            f'{key}_min': autoqc_thresholds.loc[key, 'low']
-            for key in autoqc_thresholds.index
-        }
-        thresholds |={
-            f'{key}_max': autoqc_thresholds.loc[key, 'high']
-            for key in autoqc_thresholds.index
-        }
+        thresholds = parse_autoqc(autoqc_thresholds, thresholds)
 
     # update to user thresholds
     if user_thresholds is None:
