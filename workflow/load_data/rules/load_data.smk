@@ -19,7 +19,8 @@ rule download_all:
     input:
         expand(
             rules.download.output,
-            dataset=dataset_df[dataset_df['url'].apply(lambda x: not Path(x).is_file())]['dataset']
+            dataset=dataset_df[dataset_df['url'].apply(lambda x: not Path(x).is_file())] \
+                .to_dict(orient='list').get('dataset')
         )
 
 

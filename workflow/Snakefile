@@ -76,7 +76,8 @@ for dataset, dataset_config in config['DATASETS'].items():
 
 
 # TODO move to data loader and exploration
-config['dataset_meta'] = Path(config['dataset_meta']).resolve()
+if 'dataset_meta' in config:
+    config['dataset_meta'] = Path(config['dataset_meta']).resolve()
 
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
