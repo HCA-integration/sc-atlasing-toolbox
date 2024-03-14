@@ -58,9 +58,9 @@ kwargs = dict(
     var='var',
     uns='uns',
 )
-if 'embed' in data_output_type:
+if 'embed' in metric_output_types:
     kwargs |= {'obsm': 'obsm'}
-if 'full' in data_output_type:
+if 'full' in metric_output_types:
     kwargs |= {'X': 'X'}
 if comparison:
     kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
