@@ -26,12 +26,13 @@ label_key = params.label_key
 
 # metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = params.get('metric_type')
-metric_output_types = params.get('output_types')
-comparison = params.get('comparison')
+assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
+metric_output_types = params.get('output_types', [])
+comparison = params.get('comparison', False)
 metric_function = metric_map.get(metric)
 
 uns = read_anndata(input_file, uns='uns').uns
-data_output_type = uns.get('output_type') # Same as in prepare.py
+data_output_type = uns.get('output_type', 'full') # Same as in prepare.py
 if data_output_type not in metric_output_types:
     logging.info(
         f'Skip metric={metric} for data output type={data_output_type}\nmetrics output types={metric_output_types}'
@@ -57,9 +58,9 @@ kwargs = dict(
     var='var',
     uns='uns',
 )
-if 'embed' in data_output_type:
+if 'embed' in metric_output_types:
     kwargs |= {'obsm': 'obsm'}
-if 'full' in data_output_type:
+if 'full' in metric_output_types:
     kwargs |= {'X': 'X'}
 if comparison:
     kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
