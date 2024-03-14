@@ -26,7 +26,7 @@ label_key = params.label_key
 
 # metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
 metric_type = params.get('metric_type')
-assert metric_type in ['batch_correction', 'bioconservation'], f'Unknown metric_type: {metric_type}'
+assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
 metric_output_types = params.get('output_types', [])
 comparison = params.get('comparison', False)
 metric_function = metric_map.get(metric)
