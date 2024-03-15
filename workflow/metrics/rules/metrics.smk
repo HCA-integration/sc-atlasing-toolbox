@@ -64,7 +64,8 @@ rule run:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
         metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type'),
-        output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_type'),
+        output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types'),
+        input_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'input_type'),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True),
     conda:
@@ -74,7 +75,6 @@ rule run:
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt),
         gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w)),
-        disk_mb=100,
         time="1-08:00:00",
     script:
         '../scripts/run.py'
