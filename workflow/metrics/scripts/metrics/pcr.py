@@ -46,11 +46,13 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         )
 
         if scale:
-            score = (pcr_before - pcr_after) / pcr_before
+            score = 1 - pcr_after / pcr_before # (pcr_before - pcr_after) / pcr_before
             if score < 0:
                 print(
                     "Warning: Variance contribution increased after integration!\n"
-                    "Setting PCR comparison score to 0."
+                    f"Setting PCR comparison score from {score} to 0."
+                    f"pcr_before: {pcr_before}, pcr_after: {pcr_after}",
+                    flush=True
                 )
                 score = 0
             return score

@@ -9,7 +9,7 @@ def clisi(adata, output_type, batch_key, label_key, **kwargs):
         adata,
         batch_key=batch_key,
         label_key=label_key,
-        type_=output_type,
+        type_='knn',
         subsample=0.5 * 100,
         scale=True,
     )
@@ -36,7 +36,7 @@ def ilisi(adata, output_type, batch_key, label_key, **kwargs):
     return scib.me.ilisi_graph(
         adata,
         batch_key=batch_key,
-        type_=output_type,
+        type_='knn',
         subsample=0.5 * 100,
         scale=True,
     )
