@@ -24,6 +24,7 @@ n_threads = np.max([snakemake.threads, 1])
 
 print('Read anndata file...', flush=True)
 adata = read_anndata(input_file, obsm='obsm', obs='obs', uns='uns')
+adata = adata[adata.obs[covariate].notna()].copy()
 n_covariate = adata.obs[covariate].nunique()
 
 # set default sample key
@@ -66,15 +67,13 @@ for i in range(n_permute):
 adata.obs = adata.obs.copy()
 
 # PC regression for all covariates
-# adata = AnnData(obs=obs, obsm={'X_pca': X_pca}, uns=uns)
 covariates = [covariate]+perm_covariates
-# adatas = [adata[obs[covariate].notna()] for covariate in covariates]
 
 
 def compute_pcr(adata, covariate, is_permuted):
     print(f'PCR for covariate: "{covariate}"', flush=True)
     pcr = scib.me.pcr(
-        adata[adata.obs[covariate].notna()],
+        adata,
         covariate=covariate,
         recompute_pca=False,
         verbose=False
@@ -85,7 +84,7 @@ def compute_pcr(adata, covariate, is_permuted):
 
 with ProcessPoolExecutor(max_workers=n_threads) as executor:
 # with ThreadPool(processes=n_threads) as pool:
-    chunk_size = max(1, int(n_permute / n_threads))
+    chunk_size = max(1, 2 * int(n_permute / n_threads))
     print(f'chunk_size: {chunk_size}', flush=True)
     # pcr_scores = []
     # for pcr in pool.imap_unordered(compute_pcr, covariates, chunksize=chunk_size):
