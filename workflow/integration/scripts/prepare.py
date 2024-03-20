@@ -44,6 +44,7 @@ def read_and_subset(
     hvgs: list = None,
 ):
     in_layer = params.get(layer_key, 'X')
+    assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
     out_layer = f'layers/{layer_key}'
     
     logging.info(f'Read {input_file}...')
