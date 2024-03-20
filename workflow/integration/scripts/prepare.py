@@ -1,11 +1,13 @@
 from anndata import AnnData
+import scanpy as sc
 from pathlib import Path
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils.io import read_anndata, write_zarr_linked, to_memory
+from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
+from utils.processing import assert_neighbors
 
 
 def read_layer(
@@ -42,6 +44,7 @@ def read_and_subset(
     hvgs: list = None,
 ):
     in_layer = params.get(layer_key, 'X')
+    assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
     out_layer = f'layers/{layer_key}'
     
     logging.info(f'Read {input_file}...')
@@ -51,6 +54,7 @@ def read_and_subset(
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
         varp='varp',
+        uns='uns',
         backed=True,
     )
     
@@ -95,6 +99,7 @@ if input_file.endswith('.h5ad'):
         uns='uns',
     )
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata.obs,
         var=adata_norm.var,
         obsm=adata.obsm,
@@ -107,21 +112,42 @@ if input_file.endswith('.h5ad'):
     )
 elif input_file.endswith('.zarr'):
     adata = AnnData(
+        X=adata_norm.X,
         obs=adata_norm.obs,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,
             'raw_counts': adata_raw.X,
         },
+        uns=adata_norm.uns,
     )
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
+# preprocess if missing
+if 'X_pca' not in adata.obsm:
+    logging.info('Compute PCA...')
+    sc.pp.pca(adata)
+    files_to_keep.extend(['obsm', 'varm', 'uns'])
+
+try:
+    assert_neighbors(adata)
+    logging.info(adata.uns['neighbors'].keys())
+except AssertionError:
+    logging.info('Compute neighbors...')
+    sc.pp.neighbors(adata)
+    files_to_keep.extend(['obsp', 'uns'])
+
 logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+slot_map |= {'X': 'layers/norm_counts'}
 write_zarr_linked(
     adata,
     input_file,
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    in_dir_map={
+        'layers/norm_counts': output_file
+    },
 )

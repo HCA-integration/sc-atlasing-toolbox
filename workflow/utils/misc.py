@@ -67,7 +67,7 @@ def expand_dict(_dict):
     return zip(wildcards, dict_list)
 
 
-def expand_dict_and_serialize(_dict):
+def expand_dict_and_serialize(_dict: dict, do_not_expand: list = None):
     """
     Create a cross-product on a dictionary with literals and lists
     :param _dict: dictionary with lists and literals as values
@@ -75,8 +75,17 @@ def expand_dict_and_serialize(_dict):
     """
     import jsonpickle
     import hashlib
+    
+    if do_not_expand is None:
+        do_not_expand = []
 
-    df = pd.DataFrame({k: [v] if isinstance(v, list) else [[v]] for k, v in _dict.items()})
+    df = pd.DataFrame(
+        {
+            k: [v]
+            if isinstance(v, list) and k not in do_not_expand
+            else [[v]] for k, v in _dict.items()
+        }
+    )
     for col in df.columns:
         df = df.explode(col)
     dict_list = df.apply(lambda row: dict(zip(df.columns, row)), axis=1)
@@ -113,6 +122,7 @@ def ifelse(statement, _if, _else):
 
 
 def check_sparse(matrix, sparse_type=None):
+    import types
     from anndata.experimental import CSRDataset, CSCDataset
     from scipy.sparse import csr_matrix, csc_matrix
     from sparse import COO
@@ -122,6 +132,10 @@ def check_sparse(matrix, sparse_type=None):
         sparse_type = (csr_matrix, csc_matrix, CSRDataset, CSCDataset, COO)
     elif not isinstance(sparse_type, tuple):
         sparse_type = (sparse_type,)
+    
+    # convert to type for functions
+    sparse_type = [type(x(0)) if isinstance(x, types.FunctionType) else x for x in sparse_type]
+    sparse_type = tuple(sparse_type)
     
     if isinstance(matrix, da.Array):
         return isinstance(matrix._meta, sparse_type)
@@ -149,7 +163,7 @@ def ensure_sparse(adata, layers: [str, list] = None, **kwargs):
         if check_sparse(matrix, sparse_type):
             return matrix
         elif isinstance(matrix, da.Array):
-            return matrix.map_blocks(sparse_type)
+            return matrix.map_blocks(sparse_type, dtype=matrix.dtype)
         return sparse_type(matrix)
 
     return apply_layers(adata, func=to_sparse, layers=layers, **kwargs)
@@ -191,7 +205,7 @@ def apply_layers(adata, func, layers:[str, list] = None, **kwargs):
     return adata
 
 
-def merge(dfs, **kwargs):
+def merge(dfs: list, verbose: bool = True, **kwargs):
     """
     Merge list of dataframes
     :param dfs: list of dataframes
@@ -204,7 +218,8 @@ def merge(dfs, **kwargs):
         lambda x, y: pd.merge(x, y, **kwargs),
         dfs
     )
-    print(merged_df)
+    if verbose:
+        print(merged_df)
     return merged_df
 
 

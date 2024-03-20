@@ -62,11 +62,9 @@ if 'color' in params:
     del params['color']
 
 # remove outliers
-if 'outlier_factor' in params:
-    outlier_factor = params['outlier_factor']
-    del params['outlier_factor']
-else:
-    outlier_factor = 0
+outlier_factor = params.get('outlier_factor', 0)
+params.pop('outlier_factor', None)
+
 adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 

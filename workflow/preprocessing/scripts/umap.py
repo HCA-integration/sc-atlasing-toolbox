@@ -10,6 +10,13 @@ try:
     import rapids_singlecell as sc
     import cupy as cp
     logging.info('Using rapids_singlecell...')
+    import rmm
+    from rmm.allocators.cupy import rmm_cupy_allocator
+    rmm.reinitialize(
+        managed_memory=True,
+        pool_allocator=False,
+    )
+    cp.cuda.set_allocator(rmm_cupy_allocator)
 except ImportError as e:
     import scanpy as sc
     logging.info('Importing rapids failed, using scanpy...')

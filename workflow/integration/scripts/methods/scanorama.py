@@ -5,7 +5,33 @@ import scanpy as sc
 import scanorama
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
+
+
+# TODO: use scanpy/anndata directly
+def merge_adata(adata_list, **kwargs):
+    """Merge adatas from list while remove duplicated ``obs`` and ``var`` columns
+
+    :param adata_list: ``anndata`` objects to be concatenated
+    :param kwargs: arguments to be passed to ``anndata.AnnData.concatenate``
+    """
+    import anndata
+    
+    if len(adata_list) == 1:
+        return adata_list[0]
+
+    # Make sure that adatas do not contain duplicate columns
+    for _adata in adata_list:
+        for attr in ("obs", "var"):
+            df = getattr(_adata, attr)
+            dup_mask = df.columns.duplicated()
+            if dup_mask.any():
+                print(
+                    f"Deleting duplicated keys `{list(df.columns[dup_mask].unique())}` from `adata.{attr}`."
+                )
+                setattr(_adata, attr, df.loc[:, ~dup_mask])
+
+    return anndata.concat(adata_list, **kwargs)
 
 
 # TODO: use scanpy/anndata directly
@@ -43,6 +69,11 @@ hyperparams = params.get('hyperparams')
 if hyperparams is None:
     hyperparams = {}
 
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'seed': params.get('seed', 0)} | hyperparams
+
+logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
     X='layers/norm_counts',
@@ -77,5 +108,11 @@ del adata.obsm["X_scanorama"]
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['X', 'obsm', 'uns'])
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['X', 'obsm', 'uns'],
+)

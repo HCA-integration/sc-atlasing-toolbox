@@ -1,6 +1,6 @@
 defaults:
   datasets:
-    # - test
+    - test
     - test2
   integration:
     raw_counts: raw/X
@@ -81,7 +81,6 @@ defaults:
   preprocessing:
     raw_counts: X
     batch: study
-    lineage: lineage
     assemble:
       - counts
       - normalize
@@ -105,16 +104,15 @@ DATASETS:
     preprocessing:
       label: bulk_labels
       batch: phase
-      sample: phase
-      highly_variable_genes: False
+      highly_variable_genes: false
     integration:
       label: bulk_labels
       batch: phase
     metrics:
-      unintegrated: preprocessing
       label: bulk_labels
       batch: phase
-      # unintegrated: preprocessing
+      unintegrated: layers/norm_counts
+      corrected: X
 
   test2:
     input:
@@ -142,6 +140,7 @@ DATASETS:
         - bulk_labels
         - phase
     metrics:
-      unintegrated: preprocessing
       label: bulk_labels
       batch: phase
+      unintegrated: layers/norm_counts
+      corrected: X

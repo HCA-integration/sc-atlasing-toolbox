@@ -15,8 +15,10 @@ output_file = snakemake.output.zarr
 file_id = snakemake.wildcards.file_id
 
 logging.info('Read adata...')
-adata = read_anndata(input_file, obs='obs')
-
+if input_file.endswith('.zarr'):
+    adata = read_anndata(input_file, obs='obs')
+else:
+    adata = anndata.read(input_file)
 
 # merge new columns
 if input_new_cols is not None:
@@ -36,12 +38,21 @@ if input_new_cols is not None:
                 ) from e
             label_key = mapping_label
             continue
-
+        
         logging.info(f'mapping "{label_key}" to "{mapping_label}"...')
-        df = label_mapping[[mapping_label, label_key]].drop_duplicates()
+        
+        # get unique mapping
+        df = label_mapping[[label_key, mapping_label]].drop_duplicates()
+        
+        # remove trailing whitespaces
+        remove_trailing_whitespaces = lambda x: x.strip() if isinstance(x, str) else x
+        adata.obs[label_key] = adata.obs[label_key].apply(remove_trailing_whitespaces)
+        df[label_key] = df[label_key].apply(remove_trailing_whitespaces)
+        df[mapping_label] = df[mapping_label].apply(remove_trailing_whitespaces)
+        
+        # apply mapping
         map_dict = df.set_index(label_key)[mapping_label].to_dict()
-        mapped = adata.obs[label_key].map(map_dict)
-        adata.obs[mapping_label] = pd.Series(mapped, dtype="category")
+        adata.obs[mapping_label] = pd.Series(adata.obs[label_key].map(map_dict), dtype="category")
 
         # set current mapping label as new label key
         # label_key = mapping_label

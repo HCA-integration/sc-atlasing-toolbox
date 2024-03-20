@@ -32,6 +32,8 @@ DATASETS:
          unintegrated:
          scgen:
           n_epochs: 10  # hyperparamters for the method
+      seed: 0 # random seed, default: 0
+      threads: 3 # number of CPU threads to use for preparation and running integration methods
 ```
 
 ## Output

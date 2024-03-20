@@ -5,19 +5,21 @@ import torch
 from harmony import harmonize
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-hyperparams = params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
 # check GPU
-logging.info(f'GPU available: {torch.cuda.is_available()}')
+use_gpu = torch.cuda.is_available()
+logging.info(f'GPU available: {use_gpu}')
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -37,7 +39,7 @@ adata.obsm['X_emb'] = harmonize(
     X=adata.obsm[use_rep],
     batch_mat=adata.obs,
     batch_key=wildcards.batch,
-    use_gpu=True,
+    use_gpu=use_gpu,
     n_jobs=snakemake.threads,
     **hyperparams
 )
@@ -46,5 +48,11 @@ adata.obsm['X_emb'] = harmonize(
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obsm', 'uns'])
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obsm', 'uns'],
+)

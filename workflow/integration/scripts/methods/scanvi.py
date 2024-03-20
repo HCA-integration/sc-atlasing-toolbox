@@ -20,6 +20,10 @@ params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
 
+scvi.settings.seed = params.get('seed', 0)
+scvi.settings.progress_bar_style = 'tqdm'
+scvi.settings.num_threads = snakemake.threads
+
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
     model_params=SCVI_MODEL_PARAMS,
@@ -57,11 +61,15 @@ logging.info(f'Train scVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
 for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    train_key = f'{loss}_train'
+    validation_key = f'{loss}_validation'
     title = f'scVI {loss}'
+    if train_key not in model.history or validation_key not in model.history:
+        continue
     plot_model_history(
         title=title,
-        train=model.history[f'{loss}_train'][f'{loss}_train'],
-        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        train=model.history[train_key][train_key],
+        validation=model.history[validation_key][validation_key],
         output_path=f'{output_plot_dir}/{title}.png'
     )
 
@@ -77,11 +85,15 @@ logging.info(f'Train scANVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
 
 for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+    train_key = f'{loss}_train'
+    validation_key = f'{loss}_validation'
     title = f'scANVI {loss}'
+    if train_key not in model.history or validation_key not in model.history:
+        continue
     plot_model_history(
         title=title,
-        train=model.history[f'{loss}_train'][f'{loss}_train'],
-        validation=model.history[f'{loss}_validation'][f'{loss}_validation'],
+        train=model.history[train_key][train_key],
+        validation=model.history[validation_key][validation_key],
         output_path=f'{output_plot_dir}/{title}.png'
     )
 

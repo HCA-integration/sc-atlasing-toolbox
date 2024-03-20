@@ -5,18 +5,21 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
+  - anndata=0.10
+  - scanpy=1.9
+  - pandas<2.0
   - leidenalg
   - louvain
   - zarr
   - cuda-version=11.4
   - cuda-cudart=11.4
   - cuda-nvrtc=11.4
-  - rapids=23.08
-  - anndata=0.10
+  - rapids=24.02
   - hdf5=1.14.2
   - dask
+  - dask-ml
   - sparse
   - pip
   - pip:
     - rapids-singlecell
-    - git+https://github.com/scverse/scanpy.git@master
+    # - git+https://github.com/scverse/scanpy.git@main

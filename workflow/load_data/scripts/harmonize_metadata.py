@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import anndata as ad
 import scanpy as sc
 import numpy as np
+from dask import config as da_config
+
 from utils import SCHEMAS, get_union
 from utils_pipeline.io import read_anndata, to_memory
 
@@ -54,7 +56,7 @@ author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     barcode_column = meta['barcode_column']
-    annotation = pd.read_csv(annotation_file)
+    annotation = pd.read_csv(annotation_file, low_memory=False)
 
     # remove duplicates
     annotation = annotation.drop_duplicates(subset=barcode_column)
@@ -145,9 +147,11 @@ for column in SCHEMAS["CELLxGENE_VARS"]:
         adata.var[column] = np.nan
 adata.var = adata.var[SCHEMAS["CELLxGENE_VARS"]]
 
-if 'feature_id' not in adata.var.columns:
-    adata.var['feature_id'] = adata.var_names
+if 'feature_id' in adata.var.columns:
+    adata.var_names = adata.var['feature_id']
+    del adata.var['feature_id']
 adata.var.index.set_names('feature_id', inplace=True)
 
 logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
-adata.write_zarr(out_file)
+with da_config.set(num_workers=snakemake.threads):
+    adata.write_zarr(out_file)

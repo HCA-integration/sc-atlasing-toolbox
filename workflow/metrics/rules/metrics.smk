@@ -1,11 +1,14 @@
-rule preprocess:
+rule prepare:
     input:
         lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr'),
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'prepare.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / '.prepare.done'),
     params:
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
+        unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
+        corrected_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'corrected', default='X'),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
@@ -15,25 +18,30 @@ rule preprocess:
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='gpu', attempt=attempt),
         time="1-00:00:00",
     script:
-        '../scripts/preprocess.py'
+        '../scripts/prepare.py'
 
 
-def get_metric_input(wildcards):
-    inputs = dict(
-        h5mu=rules.preprocess.output.zarr,
-        metrics_meta=workflow.source_path('../params.tsv')
-    )
-    if mcfg.get_from_parameters(wildcards, 'comparison'):
-        unintegrated_file = mcfg.get_from_parameters(query_dict=wildcards, parameter_key='unintegrated')
-        if unintegrated_file == 'None' or unintegrated_file is None:
-            wstring = ", ".join([f"{k}={v}" for k, v in wildcards.items()])
-            warnings.warn(
-                '\nUnintegrated file is not defined for metrics module. Using default input...\n'
-                f'wildcards: {wstring}'
-            )
-            unintegrated_file = rules.preprocess.output.zarr
-        inputs |= dict(unintegrated=unintegrated_file)
-    return inputs
+rule prepare_all:
+    input:
+        mcfg.get_output_files(rules.prepare.output)
+
+
+# def get_metric_input(wildcards):
+#     inputs = dict(
+#         h5mu=rules.preprocess.output.zarr,
+#         metrics_meta=workflow.source_path('../params.tsv')
+#     )
+#     if mcfg.get_from_parameters(wildcards, 'comparison'):
+#         unintegrated_file = mcfg.get_from_parameters(query_dict=wildcards, parameter_key='unintegrated')
+#         if unintegrated_file == 'None' or unintegrated_file is None:
+#             wstring = ", ".join([f"{k}={v}" for k, v in wildcards.items()])
+#             warnings.warn(
+#                 '\nUnintegrated file is not defined for metrics module. Using default input...\n'
+#                 f'wildcards: {wstring}'
+#             )
+#             unintegrated_file = rules.preprocess.output.zarr
+#         inputs |= dict(unintegrated=unintegrated_file)
+#     return inputs
 
 
 rule run:
@@ -46,7 +54,8 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        unpack(get_metric_input)
+        zarr=rules.prepare.output.zarr,
+        done=rules.prepare.output.done,
     output:
         metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
     benchmark:
@@ -54,6 +63,9 @@ rule run:
     params:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type'),
+        output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_type'),
+        comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True),
     conda:
         lambda wildcards, params: get_env(config, params.env)

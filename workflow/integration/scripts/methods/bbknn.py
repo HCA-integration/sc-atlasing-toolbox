@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, link_zarr_partial
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
 input_file = snakemake.input[0]
@@ -12,9 +12,9 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-hyperparams = params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'pynndescent_random_state': params.get('seed', 0)} | hyperparams
 
 files_to_keep = ['obsm', 'obsp', 'uns']
 
@@ -31,7 +31,14 @@ use_rep = hyperparams.pop('use_rep', 'X_pca')
 assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # quickfix: remove batches with fewer than 3 cells
-min_batches = adata.obs.groupby(batch_key).filter(lambda x: len(x) > 3).index
+neighbors_within_batch = hyperparams.get('neighbors_within_batch', 3)
+min_batches = adata.obs.groupby(
+    batch_key,
+    observed=False
+).filter(
+    lambda x: len(x) > neighbors_within_batch
+).index
+print(min_batches)
 if min_batches.nunique() < adata.n_obs:
     files_to_keep.extend(['obs'])
     # adata.layers = read_anndata(input_file, layers='layers').layers
@@ -51,5 +58,11 @@ sc.external.pp.bbknn(
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=files_to_keep)
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=files_to_keep,
+)

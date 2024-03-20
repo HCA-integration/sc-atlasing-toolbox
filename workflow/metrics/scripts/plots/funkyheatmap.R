@@ -74,14 +74,21 @@ score_group_bio <- rowMeans(scaled_metrics_tab[, bio_metrics, with=FALSE], na.rm
 
 # weighted overall score
 score_all <- (weight_batch * score_group_batch + (1 - weight_batch) * score_group_bio)
-metrics_tab <- add_column(metrics_tab, "Overall Score" = score_all, .before = batch_metrics[1])
-metrics_tab <- add_column(metrics_tab, "Batch Correction" = score_group_batch, .before = batch_metrics[1])
-metrics_tab <- add_column(metrics_tab, "Bio conservation" = score_group_bio, .before = bio_metrics[1])
-
+if(length(score_group_batch) > 0){
+  metrics_tab <- add_column(metrics_tab, "Batch Correction" = score_group_batch, .before = batch_metrics[1])
+}
+if(length(score_group_bio) > 0){
+  metrics_tab <- add_column(metrics_tab, "Bio Conservation" = score_group_bio, .before = bio_metrics[1])
+}
+if(length(score_all) > 0){
+  metrics_tab <- add_column(metrics_tab, "Overall Score" = score_all, .before = "Batch Correction")
+  metrics_tab <- metrics_tab[order(metrics_tab$`Overall Score`,  decreasing = T), ]
+}
 # order methods by the overall score
 metrics_tab <- metrics_tab[order(metrics_tab$`Overall Score`,  decreasing = T), ]
 
-# write output summary.csv file before plotting ? Michaela to check the output dir? 
+# write output summary.csv file before plotting ? Michaela to check the output dir?
+cat('Writing output file: ', output_tsv, '\n')
 fwrite(metrics_tab, output_tsv, sep='\t')
 
 #add column info metadata for plotting using funkyheatmap
@@ -92,6 +99,8 @@ dt4 <- data.table(id=bio_metrics, group="Bio conservation", geom='funkyrect', pa
 dt5 <- data.table(id="Batch Correction", group="Batch correction", geom='bar', palette='Reds')
 dt6 <- data.table(id=batch_metrics, group="Batch correction", geom='circle', palette='Reds')
 column_info <- rbind(dt1, dt2, dt3, dt4, dt5, dt6, fill=TRUE)
+column_info <- column_info[column_info$id %in% colnames(metrics_tab)]
+print("column_info")
 print(column_info)
 
 n_top <- min(n_top, nrow(metrics_tab))

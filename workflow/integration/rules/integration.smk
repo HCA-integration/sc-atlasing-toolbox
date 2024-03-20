@@ -3,11 +3,14 @@ rule prepare:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
         zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}--file_id~{file_id}.zarr'),
+        done=touch(out_dir / 'prepare' / '.dataset~{dataset}--file_id~{file_id}.done'),
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+    threads:
+        lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -29,6 +32,7 @@ use rule run_method from integration as integration_run_method with:
        """
     input:
         zarr=rules.prepare.output.zarr,
+        done=rules.prepare.output.done,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
@@ -40,7 +44,10 @@ use rule run_method from integration as integration_run_method with:
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
         output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', exclude=['output_type']),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict', exclude=['output_type']),
+        seed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'seed', exclude=['output_type'], default=0),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', exclude=['output_type']),
+    threads:
+        lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
         partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
@@ -70,6 +77,7 @@ def update_neighbors_args(wildcards):
 use rule neighbors from preprocessing as integration_postprocess with:
     input:
         zarr=rules.integration_run_method.output.zarr,
+        done=rules.integration_run_method.output.model,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
         done=touch(directory(out_dir / f'{paramspace.wildcard_pattern}.zarr/obs')),

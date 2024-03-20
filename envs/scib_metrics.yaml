@@ -28,5 +28,5 @@ dependencies:
     - ml-collections==0.1.0
     - optax==0.1.4
     - orbax<0.1.6
-    - scib-metrics
-    - git+https://github.com/scverse/scanpy.git@master
+    - scib-metrics==0.4.1
+    - git+https://github.com/scverse/scanpy.git

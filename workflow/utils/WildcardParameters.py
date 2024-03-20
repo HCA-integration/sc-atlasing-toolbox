@@ -19,6 +19,7 @@ class WildcardParameters:
         dataset_config: dict,
         default_config: dict,
         wildcard_names: list,
+        mandatory_wildcards: list = None,
         config_params: list = None,
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
@@ -49,7 +50,8 @@ class WildcardParameters:
             rename_config_params=rename_config_params,
             dtypes=dtypes,
         )
-        mandatory_wildcards = ['dataset', 'file_id']
+        if mandatory_wildcards is None:
+            mandatory_wildcards = ['dataset', 'file_id']
         for wildcard in mandatory_wildcards:
             while wildcard in wildcard_names:
                 wildcard_names.remove(wildcard)
@@ -115,6 +117,7 @@ class WildcardParameters:
         
         if verbose:
             print(df.transpose())
+            print(df.dtypes)
         
         # subset by columns
         return unique_dataframe(df[columns]).reset_index(drop=True)
@@ -180,10 +183,22 @@ class WildcardParameters:
         columns = [*['dataset']+config_params]
         df = pd.DataFrame.from_records(records, columns=columns)
         df = df.convert_dtypes()
-        
-        default_dtypes = {col: 'object' for col in columns}
+        default_dtypes = df.dtypes.to_dict()
+        # default_dtypes = {col: 'object' for col in columns}
         dtypes = default_dtypes | dtypes
-        df = df.astype(dtypes)
+        
+        def get_default_value(x, dtype):
+            if pd.api.types.is_bool_dtype(x) or dtype in (bool, np.bool_):
+                return False
+            if pd.api.types.is_integer(x) or dtype in (int, np.int32, np.int64):
+                return 0
+            if pd.api.types.is_float(x) or dtype in (float, np.float32, np.float64):
+                return 0.0
+            return None
+
+        na_map = {col: get_default_value(df[col], dtype) for col, dtype in dtypes.items()}
+        na_map = {k: v for k, v in na_map.items() if v is not None}
+        df = df.fillna(value=na_map).astype(dtypes)
         
         # rename columns
         if rename_config_params is None:
@@ -201,12 +216,11 @@ class WildcardParameters:
         
         # set dtypes
         df = df.replace({np.nan: None})
-        for i, v in df.items():
-            if isinstance(v[0], (list, dict)):
-                continue
-            else:
-                df[i] = df[i].astype(str)
-        
+        # for i, v in df.items():
+        #     if isinstance(v[0], (list, dict)):
+        #         continue
+        #     else:
+        #         df[i] = df[i].astype(str)
         self.wildcards_df = df.reset_index(drop=True)
 
 
@@ -244,6 +258,7 @@ class WildcardParameters:
         all_params: bool = False,
         as_df: bool = False,
         default_datasets: bool = True,
+        verbose: bool = False,
     ) -> [dict, pd.DataFrame]:
         """
         Retrieve wildcard instances as dictionary
@@ -264,6 +279,8 @@ class WildcardParameters:
             subset_dict = {}
         if wildcard_names is None:
             wildcard_names = self.wildcards_df.columns if all_params else self.wildcard_names
+            if verbose:
+                print(f'wildcard_names: {wildcard_names}')
         
         if default_datasets:
             query_dict = {'dataset': self.default_config['datasets']}
@@ -271,10 +288,16 @@ class WildcardParameters:
             query_dict = {}
         query_dict |= subset_dict
         
+        if verbose:
+            print(f'query_dict: {query_dict}')
+        
         df = self.subset_by_query(
             query_dict=query_dict,
             columns=[w for w in wildcard_names if w not in exclude]
         )
+        
+        if verbose:
+            print(f'wildcards_df:\n{df}')
         
         return df if as_df else df.to_dict('list')
 
@@ -350,6 +373,7 @@ class WildcardParameters:
             params_sub = self.subset_by_query(
                 query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
                 columns=[parameter_key],
+                verbose=verbose,
             )
             assert params_sub.shape[0] > 0, 'No wildcard combination found'
             if single_value:
@@ -386,5 +410,7 @@ class WildcardParameters:
             else:
                 parameter = default
         if as_type is not None:
-            return as_type(parameter)
+            parameter = as_type(parameter)
+        if verbose:
+            print(f'parameter: {parameter}')
         return parameter

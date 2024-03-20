@@ -12,7 +12,7 @@ except ImportError as e:
     import scanpy as sc
     logging.info('Importing rapids failed, using scanpy...')
 
-from utils.io import read_anndata, link_zarr
+from utils.io import read_anndata, write_zarr_linked
 from utils.processing import assert_neighbors
 from utils.misc import ensure_dense, ensure_sparse
 
@@ -54,7 +54,7 @@ else:
     if params['use_rep'] == 'X':
         adata.X = read_anndata(input_file, X='X').X
         ensure_dense(adata)
-    elif 'X_pca' not in adata.obsm and params['use_rep'] == 'X_pca':
+    elif params['use_rep'] == 'X_pca' and 'X_pca' not in adata.obsm:
         # compute PCA if PCA is missing
         adata.X = read_anndata(input_file, X='X').X
         ensure_sparse(adata)
@@ -75,15 +75,10 @@ else:
 adata.uns |= extra_uns
 
 logging.info(f'Write to {output_file}...')
-del adata.X
-adata.write_zarr(output_file)
-
-if input_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(input_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in files_to_overwrite]
-    link_zarr(
-        in_dir=input_file,
-        out_dir=output_file,
-        file_names=files_to_keep,
-        overwrite=True,
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=files_to_overwrite,
 )

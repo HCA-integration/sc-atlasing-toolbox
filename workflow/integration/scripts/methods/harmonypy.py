@@ -9,6 +9,13 @@ try:
         raise ImportError()
     from rapids_singlecell.pp import harmony_integrate
     import cupy as cp
+    import rmm
+    from rmm.allocators.cupy import rmm_cupy_allocator
+    rmm.reinitialize(
+        managed_memory=True,
+        pool_allocator=False,
+    )
+    cp.cuda.set_allocator(rmm_cupy_allocator)
     logging.info('Using rapids_singlecell...')
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
@@ -17,13 +24,14 @@ except ImportError as e:
 from utils import add_metadata, remove_slots
 from utils_pipeline.io import read_anndata, write_zarr_linked
 
+
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-hyperparams = params.get('hyperparams')
-if hyperparams is None:
-    hyperparams = {}
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(

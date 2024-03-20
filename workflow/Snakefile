@@ -53,6 +53,9 @@ config_kwargs = {
         explode_by=['metric', 'batch'],
         paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
     ),
+    'merge': dict(
+        mandatory_wildcards=['dataset'],
+    )
 }
 
 config_classes = {
@@ -70,19 +73,11 @@ for dataset, dataset_config in config['DATASETS'].items():
             config_class_map=config_classes,
             config_kwargs=config_kwargs,
         )
-        # update files for metrics
-        config = update_file_for_module_param(
-            dataset=dataset,
-            module_name=module_name,
-            config=config,
-            key='unintegrated',
-            config_class_map=config_classes,
-            config_kwargs=config_kwargs,
-        )
 
 
 # TODO move to data loader and exploration
-config['dataset_meta'] = Path(config['dataset_meta']).resolve()
+if 'dataset_meta' in config:
+    config['dataset_meta'] = Path(config['dataset_meta']).resolve()
 
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -96,6 +91,14 @@ module common:
 
 module load_data:
     snakefile: "load_data/Snakefile"
+    config: config
+
+module filtering:
+    snakefile: "filter/Snakefile"
+    config: config
+
+module merge:
+    snakefile: "merge/Snakefile"
     config: config
 
 module exploration:
@@ -156,6 +159,8 @@ module metrics:
 
 use rule * from common as common_ *
 use rule * from load_data as load_data_ *
+use rule * from filtering as filter_ *
+use rule * from merge as merge_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
@@ -178,16 +183,13 @@ rule all:
     default_target: True
 
 
-modules = [
-    'load_data',
-    'exploration',
-    'subset',
-    'integration',
-    'metrics',
-    'preprocessing',
-    'label_transfer',
-    'label_harmonization'
-]
+def get_modules_from_config(config):
+    modules = set()
+    for dataset in config['DATASETS']:
+        modules.update(config['DATASETS'][dataset]['input'].keys())
+    return list(modules)
+
+modules = get_modules_from_config(config)
 
 rule dependency_graph:
     input:

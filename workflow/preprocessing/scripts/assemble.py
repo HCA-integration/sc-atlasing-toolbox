@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 from scipy import sparse
 
 from utils.io import read_anndata, write_zarr_linked
+from utils.annotate import add_wildcards
 
 
 def assemble_adata(file, file_type, adata, backed=True):
@@ -131,8 +132,8 @@ for file_type, file in snakemake.input.items():
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
         adata = read_anndata(file, obs='obs', var='var')
-        if adata.X is None:
-            adata.X = sparse.csr_matrix(np.zeros((adata.n_obs, adata.n_vars)))
+        # if adata.X is None:
+        #     adata.X = sparse.csr_matrix(adata.shape, dtype=np.int8)
         if adata.n_obs == 0:
             logging.info('No data, write empty file...')
             adata.write_zarr(output_file)
@@ -159,10 +160,13 @@ for file_type, file in snakemake.input.items():
 
 
 logging.info(f'Write to {output_file}...')
+adata.uns = read_anndata(file, uns='uns').uns
+add_wildcards(adata, snakemake.wildcards, 'preprocessing')
 write_zarr_linked(
     adata=adata,
     in_dir=None,
     out_dir=output_file,
+    files_to_keep=['uns/wildcards'],
     slot_map=slot_map,
     in_dir_map=in_dir_map,
 )
