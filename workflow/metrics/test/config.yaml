@@ -31,6 +31,8 @@ defaults:
       - pcr
       # - pcr_y  # broken function
   datasets:
+    - lisi
+    - lisi_small
     - test_metrics
     - test_no_name
     - test_integration
@@ -109,3 +111,34 @@ DATASETS:
         - kbet_y
         - graph_connectivity_y
         # - pcr_y
+
+  lisi:
+    input:
+      metrics:
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    metrics:
+      label: cell_type
+      batch: donor_id
+      methods:
+        - ilisi
+        - ilisi_re
+        - ilisi_y
+        - clisi
+        - clisi_re
+        - clisi_y
+
+
+  lisi_small:
+    input:
+      metrics:
+        small: test/input/pbmc68k.h5ad
+    metrics:
+      label: bulk_labels
+      batch: phase
+      methods:
+        - ilisi
+        - ilisi_re
+        - ilisi_y
+        - clisi
+        - clisi_re
+        - clisi_y
