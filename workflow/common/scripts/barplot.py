@@ -36,7 +36,7 @@ if hue in df.columns:
 n_rows = 1 if facet_row is None else df[facet_row].nunique()
 n_cols = 1 if facet_col is None else df[facet_col].nunique()
 adjust = np.min([.8 + (.04 * n_rows), .95])
-order = df.groupby(category)[metric].min().sort_values(ascending=False).index
+order = df.groupby(category, observed=False)[metric].min().sort_values(ascending=False).index
 
 g = sns.catplot(
     data=df,
@@ -48,7 +48,7 @@ g = sns.catplot(
     margin_titles=True,
     kind='bar',
     order=order,
-    errwidth=0.5,
+    err_kws={'linewidth': 0.5},
     capsize=0.2,
     dodge=params.get('dodge', False),
 )

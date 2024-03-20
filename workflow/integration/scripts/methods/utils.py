@@ -1,6 +1,43 @@
 # from utils_pipeline.misc import ensure_sparse
+from utils_pipeline.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
+
+SCVI_MODEL_PARAMS = [
+    'n_hidden',
+    'n_latent',
+    'n_layers',
+    'dropout_rate',
+    'dispersion',
+    'gene_likelihood',
+    'latent_distribution',
+    # VAE parameters
+    'n_batch',
+    'n_labels',
+    'n_hidden',
+    'n_latent',
+    'n_layers',
+    'n_continuous_cov',
+    'n_cats_per_cov',
+    'dropout_rate',
+    'dispersion',
+    'log_variational',
+    'gene_likelihood',
+    'latent_distribution',
+    'encode_covariates',
+    'deeply_inject_covariates',
+    'use_batch_norm',
+    'use_layer_norm',
+    'use_size_factor_key',
+    'use_observed_lib_size',
+    'library_log_means',
+    'library_log_vars',
+    'var_activation',
+    'extra_encoder_kwargs',
+    'extra_decoder_kwargs',
+]
+
+SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']
 
 
 def ensure_sparse(adata):
@@ -10,7 +47,7 @@ def ensure_sparse(adata):
         adata.X = csr_matrix(adata.X)
 
 
-def add_metadata(adata, wildcards, params):
+def add_metadata(adata, wildcards, params, **kwargs):
     """
     Add integration metatdata to integratd output
     :param adata:
@@ -33,10 +70,12 @@ def add_metadata(adata, wildcards, params):
         'batch_key': wildcards.batch,
         'output_type': params['output_type'],
         'hyperparams': params['hyperparams'],
+        **kwargs
     }
+    add_wildcards(adata, wildcards, 'integration')
 
 
-def remove_slots(adata, output_type):
+def remove_slots(adata, output_type, keep_X=False):
     """
     Remove slots that are redundant to integration output
     """
@@ -44,19 +83,48 @@ def remove_slots(adata, output_type):
         output_type = [output_type]
     
     del adata.layers
-    if 'X_pca' in adata.obsm:
-        del adata.obsm['X_pca']
+    #if 'X_pca' in adata.obsm:
+    #    del adata.obsm['X_pca']
     
     if 'full' in output_type:
         ensure_sparse(adata)
     elif 'embed' in output_type:
-        del adata.X
+        if keep_X:
+            assert adata.X is not None
+            ensure_sparse(adata)
+        else:
+            del adata.X
     elif 'knn' in output_type:
         # del adata.X
         pass
     else:
         raise ValueError(f'Invalid output type {output_type}')
     return adata
+
+
+def set_model_history_dtypes(model_history, dtype='float32'):
+    """
+    Quickfix to change encoding of the model history for saving in zarr file
+    
+    :param model_history: model.history from pytorch model (dictionary of pandas DataFrames)
+    :param dtype: dtype to convert to
+    """
+    return {
+        key: value.astype(dtype)
+        for key, value in model_history.items()
+    }
+
+
+def plot_model_history(title, train, validation, output_path):
+    from matplotlib import pyplot as plt
+    plt.plot(train, label='train')
+    plt.plot(validation, label='validation')
+    plt.title(f'Training loss: {title}')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def check_output(adata, output_type):
@@ -80,3 +148,25 @@ def check_output(adata, output_type):
         assert 'distances' in adata.obsp
     else:
         raise ValueError(f'Invalid output type {output_type}')
+
+
+def get_hyperparams(
+    hyperparams: dict,
+    model_params: list = None,
+    train_params: list = None
+):
+    """
+    Get hyperparameters and training parameters from hyperparameter dictionary
+    :param hyperparams: dictionary of hyperparameters
+    :param train_params: list of training parameters
+    :return: hyperparams, train_params
+    """
+    if hyperparams is None:
+        return {}, {}
+    if model_params is None:
+        model_params = []
+        if train_params is not None:
+            model_params = [x for x in hyperparams if x not in train_params]
+    model_params = {k: v for k, v in hyperparams.items() if k in model_params}
+    train_params = {k: v for k, v in hyperparams.items() if k not in model_params}
+    return model_params, train_params

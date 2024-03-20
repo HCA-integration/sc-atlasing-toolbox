@@ -1,8 +1,8 @@
 output_dir: test/out
 images: test/images
 
-use_gpu: true
-env_mode: from_yaml
+use_gpu: false
+env_mode: local
 
 resources:
   cpu:
@@ -18,80 +18,60 @@ resources:
 
 defaults:
   integration:
-    raw_counts: counts
-    norm_counts: X
-    methods:
-      bbknn:
-      combat:
-      harmony:
-      harmony_rapids:
-      harmonypy:
-      scanorama:
-      scanvi:
-        n_hidden: 128
-        dispersion: gene
-        max_epochs: 10
-        use_observed_lib_size: true
-      scgen:
-        n_epochs: 10
-      scpoli:
-        supervised:
-          - true
-          - false
-        model:
-          embedding_dims: 5
-          recon_loss: nb
-        train:
-          n_epochs: 50
-      scvi:
-        n_hidden: 128
-        dispersion:
-          - gene
-          - gene-batch
-          - gene-label
-          - gene-cell
-        max_epochs: 10
-        use_observed_lib_size: true
-      unintegrated:
+    raw_counts: layers/counts
+    norm_counts: layers/normcounts
   datasets:
     - test
-    - test2
-    - test3
-    # - harmony_comparison
-    # - scpoli
+    - multi_wildcards
+    - preprocessed
+    - harmony
+    - scarches
+    - scvi_tools
 
 
 DATASETS:
   test:
     input:
       integration:
+        pbmc68k: test/input/pbmc68k.h5ad
+        # unprocessed: test/input/pbmc68k_unprocessed.h5ad
+    integration:
+      threads: 3
+      batch: batch
+      umap_colors:
+        - bulk_labels
+        - phase
+      methods:
+        bbknn:
+          neighbors_within_batch: 3
+        combat:
+          covariates:
+            - bulk_labels
+        scanorama:
+          batch_size: 100
+        unintegrated:
+
+  multi_wildcards:
+    input:
+      integration:
         pbmc: test/input/pbmc68k.h5ad
     integration:
+      methods:
+        unintegrated:
       label:
         - bulk_labels
         - louvain
       batch:
         - phase
         - batch_2
+      output_types:
+        - embed
+        - knn
 
-  test2:
-    input:
-      integration: test/input/pbmc68k.h5ad
-    integration:
-      label: bulk_labels
-      batch: batch
-      methods:
-        unintegrated:
-      umap_colors:
-        - bulk_labels
-        - phase
-
-  test3:
+  preprocessed:
     input:
       integration: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
-      raw_counts: raw
-      norm_counts: X
       label: bulk_labels
       batch: batch
       methods:
@@ -99,37 +79,76 @@ DATASETS:
         scgen:
           n_epochs: 10
 
-  harmony_comparison:
+  harmony:
     input:
       integration: test/input/pbmc68k.h5ad
     integration:
       label: bulk_labels
       batch: batch
       methods:
-        harmony_rapids:
         harmonypy:
+          sigma: 0.1
         harmony:
+          sigma: 0.1
+      umap_colors:
+        - phase
+
+  scarches:
+    input:
+      integration: test/input/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        scgen:
+          hidden_layer_sizes: [128, 128]
+          n_epochs: 10
+          early_stopping_kwargs:
+            early_stopping_metric: val_loss
+            patience: 20
+            threshold: 0
+            reduce_lr: true
+            lr_patience: 13
+            lr_factor: 0.1
+        scpoli:
+          cell_type_keys:
+            - 
+            - bulk_labels
+          embedding_dims: 5
+          recon_loss: nb
+          n_epochs: 50
+          early_stopping_kwargs:
+            early_stopping_metric: val_prototype_loss
+            mode: min
+            threshold: 0
+            patience: 20
+            reduce_lr: true
+            lr_patience: 13
+            lr_factor: 0.1
       umap_colors:
         - bulk_labels
         - phase
 
-
-  scpoli:
+  scvi_tools:
     input:
-      integration: test/input/pbmc68k.h5ad
+      integration:
+        orig: test/input/pbmc68k.h5ad
+        prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     integration:
+      threads: 3
       label: bulk_labels
       batch: batch
       methods:
-        scpoli:
-          supervised:
-            - true
-            - false
-          model:
-            embedding_dims: 5
-            recon_loss: nb
-          train:
-            n_epochs: 50
+        scvi:
+          n_hidden: 128
+          dispersion:
+            - gene
+            - gene-batch
+            - gene-label
+            - gene-cell
+          use_observed_lib_size: true
+          max_epochs: 10
+          early_stopping: true
+        scanvi:
       umap_colors:
-        - bulk_labels
         - phase

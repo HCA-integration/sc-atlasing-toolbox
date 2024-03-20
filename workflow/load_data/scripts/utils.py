@@ -1,5 +1,4 @@
 from pathlib import Path
-import requests
 
 # CELLxGENE columns of schema 3.0.0
 # https://github.com/chanzuckerberg/single-cell-curation/blob/main/schema/3.0.0/schema.md#general-requirements
@@ -124,6 +123,7 @@ def get_cxg_url(collection_id, dataset_id):
     """
     Adapted code from https://github.com/chanzuckerberg/single-cell-curation/blob/main/notebooks/curation_api/python_raw/get_dataset.ipynb
     """
+    import requests
     print(f'Get URL for CxG collection ID "{collection_id}" and dataset ID "{dataset_id}"')
 
     url = f'https://api.cellxgene.cziscience.com/curation/v1/collections/{collection_id}/datasets/{dataset_id}/'
@@ -139,6 +139,8 @@ def get_dcp_url(project_uuid, catalog='dcp25'):
     """
     Adapted code from https://github.com/DataBiosphere/azul/blob/develop/docs/download-project-matrices.ipynb
     """
+    import requests
+    
     
     def iterate_matrices_tree(tree, keys=()):
         if isinstance(tree, dict):

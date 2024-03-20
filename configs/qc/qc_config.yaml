@@ -1,0 +1,11 @@
+DATASETS:
+  test:
+    input:
+      qc:
+        test: data/pbmc68k.h5ad
+        test2: data/pbmc68k.h5ad
+    qc:
+      sample: batch
+      donor: phase
+      hue:
+        - phase

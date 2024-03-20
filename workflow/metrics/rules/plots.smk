@@ -9,7 +9,7 @@ module plots:
 
 use rule barplot from plots as metrics_barplot with:
     input:
-        tsv=rules.merge.output.tsv
+        tsv=rules.merge_metrics.output.tsv
     output:
         png=mcfg.image_dir / 'all' /'{metric}-barplot.png'
     params:
@@ -27,7 +27,7 @@ use rule barplot from plots as metrics_barplot with:
 
 use rule barplot from plots as metrics_barplot_per_dataset with:
     input:
-        tsv=rules.merge_per_dataset.output.tsv
+        tsv=rules.merge_metrics_per_dataset.output.tsv
     output:
         png=mcfg.image_dir / 'per_dataset' / '{dataset}' / '{metric}-barplot.png'
     params:
@@ -44,7 +44,7 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
 
 use rule barplot from plots as metrics_barplot_per_file with:
     input:
-        tsv=rules.merge_per_file.output.tsv
+        tsv=rules.merge_metrics_per_file.output.tsv
     output:
         png=mcfg.image_dir / 'per_file' / '{file_id}' / '{metric}-barplot.png'
     params:
@@ -63,7 +63,7 @@ use rule barplot from plots as metrics_barplot_per_file with:
 
 use rule swarmplot from plots as metrics_swarmplot with:
     input:
-        tsv=rules.merge.output.tsv
+        tsv=rules.merge_metrics.output.tsv
     output:
         png=mcfg.image_dir / 'all' / '{metric}-swarmplot.png'
     params:
@@ -80,7 +80,7 @@ use rule swarmplot from plots as metrics_swarmplot with:
 
 use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
     input:
-        tsv=rules.merge_per_dataset.output.tsv
+        tsv=rules.merge_metrics_per_dataset.output.tsv
     output:
         png=mcfg.image_dir / 'per_dataset' / '{dataset}' / '{metric}-swarmplot.png'
     params:
@@ -97,7 +97,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
 
 use rule swarmplot from plots as metrics_swarmplot_per_file with:
     input:
-        tsv=rules.merge_per_file.output.tsv
+        tsv=rules.merge_metrics_per_file.output.tsv
     output:
         png=mcfg.image_dir / 'per_file' / '{file_id}' / '{metric}-swarmplot.png'
     params:
@@ -114,7 +114,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_file with:
 
 rule compare_metrics:
     input:
-        tsv=rules.merge.output.tsv
+        tsv=rules.merge_metrics.output.tsv
     output:
         time=mcfg.image_dir / 'comparison_time.png',
         score=mcfg.image_dir / 'comparison_score.png',
@@ -130,8 +130,8 @@ rule compare_metrics:
 
 rule funkyheatmap:
     input:
-        tsv=rules.merge.output.tsv,
-        extra_columns=rules.merge.output.extra_columns,
+        tsv=rules.merge_metrics.output.tsv,
+        extra_columns=rules.merge_metrics.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'all' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'all' / 'funky_heatmap.tsv'
@@ -141,7 +141,7 @@ rule funkyheatmap:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
-        cran_url='http://cran.us.r-project.org' #'https://ftp.fau.de/cran/'
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'), #'https://ftp.fau.de/cran/'
     conda:
         get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
@@ -154,8 +154,8 @@ rule funkyheatmap:
 
 use rule funkyheatmap as funkyheatmap_per_dataset with:
     input:
-        tsv=rules.merge_per_dataset.output.tsv,
-        extra_columns=rules.merge_per_dataset.output.extra_columns,
+        tsv=rules.merge_metrics_per_dataset.output.tsv,
+        extra_columns=rules.merge_metrics_per_dataset.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_dataset' / '{dataset}' / 'funky_heatmap.tsv',
@@ -165,12 +165,13 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_batch with:
     input:
-        tsv=rules.merge_per_batch.output.tsv,
-        extra_columns=rules.merge_per_batch.output.extra_columns,
+        tsv=rules.merge_metrics_per_batch.output.tsv,
+        extra_columns=rules.merge_metrics_per_batch.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_batch' / '{batch}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_batch' / '{batch}' / 'funky_heatmap.tsv',
@@ -180,12 +181,13 @@ use rule funkyheatmap as funkyheatmap_per_batch with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_label with:
     input:
-        tsv=rules.merge_per_label.output.tsv,
-        extra_columns=rules.merge_per_label.output.extra_columns,
+        tsv=rules.merge_metrics_per_label.output.tsv,
+        extra_columns=rules.merge_metrics_per_label.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_label' / '{label}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_label' / '{label}' / 'funky_heatmap.tsv',
@@ -195,12 +197,13 @@ use rule funkyheatmap as funkyheatmap_per_label with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 use rule funkyheatmap as funkyheatmap_per_file with:
     input:
-        tsv=rules.merge_per_file.output.tsv,
-        extra_columns=rules.merge_per_file.output.extra_columns,
+        tsv=rules.merge_metrics_per_file.output.tsv,
+        extra_columns=rules.merge_metrics_per_file.output.extra_columns,
     output:
         pdf=mcfg.image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.pdf',
         tsv=mcfg.image_dir / 'per_file' / '{file_id}' / 'funky_heatmap.tsv',
@@ -210,11 +213,12 @@ use rule funkyheatmap as funkyheatmap_per_file with:
         value_var='score',
         weight_batch=0.4,
         n_top=50,
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
 
 
 rule funkyheatmap_standalone:
     input:
-        tsv=rules.merge.output.tsv
+        tsv=rules.merge_metrics.output.tsv
     output:
         png=mcfg.image_dir / 'funky_heatmap.png'
     group:

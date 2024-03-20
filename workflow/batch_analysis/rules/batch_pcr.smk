@@ -1,34 +1,13 @@
-# for _, row in mcfg.get_wildcards(as_df=True).iterrows():
-#     dataset = row['dataset']
-#     file_id = row['file_id']
-#     config["DATASETS"][dataset]['input'].update(
-#             {
-#                 'preprocessing': mcfg.get_input_file(dataset, file_id)
-#             }
-#     )
-#     pp_config = mcfg.get_defaults(module_name='preprocessing')
-#     pp_config.update(config["DATASETS"][dataset].get("preprocessing", {}))
-#     pp_config.update(dict(raw_counts='X', batch='study'))
-#     config["DATASETS"][dataset]["preprocessing"] = pp_config
-
-
-# module preprocessing:
-#     snakefile: "../../preprocessing/Snakefile"
-#     config: config
-
-# use rule * from preprocessing as preprocessing_*
-
-
 checkpoint determine_covariates:
     input:
         anndata=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup')
+        covariate_setup=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / 'covariate_setup'),
     params:
         covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'covariates', default=[]),
         permute_covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'permute_covariates', default=None),
-        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key', check_query_keys=False),
-        n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
+        # n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10),
     conda:
         get_env(config, 'scanpy')
     script:
@@ -59,11 +38,11 @@ rule batch_pcr:
         tsv=mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr' / '{covariate}.tsv',
     params:
         n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False),
-        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key', check_query_keys=False),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
     conda:
         get_env(config, 'scib_accel')
     threads:
-        lambda wildcards: min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False, as_type=float))
+        lambda wildcards: max(1, min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False)))
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

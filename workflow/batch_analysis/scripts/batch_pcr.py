@@ -3,98 +3,107 @@ from scipy import sparse
 import numpy as np
 import scib
 from anndata import AnnData
-from anndata.experimental import read_elem
-import zarr
 import yaml
-from multiprocessing.pool import ThreadPool
-
+from concurrent.futures import ProcessPoolExecutor
+# from multiprocessing.pool import ThreadPool
 try:
     from sklearnex import patch_sklearn
     patch_sklearn()
 except ImportError:
-    logger.error('no hardware acceleration for sklearn')
+    print('no hardware acceleration for sklearn', flush=True)
 
-import logging
-logger = logging.getLogger('Batch PCR')
+from utils.io import read_anndata
+
 
 input_file = snakemake.input.anndata
 setup_file = snakemake.input.setup
 output_file = snakemake.output.tsv
 covariate = snakemake.wildcards.covariate
 sample_key = snakemake.params.get('sample_key')
-n_threads = snakemake.threads
+n_threads = np.max([snakemake.threads, 1])
 
-logger.error('Read anndata file...')
-z = zarr.open(input_file)
-X_pca = read_elem(z['obsm/X_pca'])
-obs = read_elem(z['obs'])
-uns = read_elem(z['uns'])
-n_covariate = obs[covariate].nunique()
+print('Read anndata file...', flush=True)
+adata = read_anndata(input_file, obsm='obsm', obs='obs', uns='uns')
+n_covariate = adata.obs[covariate].nunique()
 
 # set default sample key
 if sample_key is None or sample_key == 'None':
+    print('Using index as sample key...', flush=True)
     sample_key = 'index'
-    obs[sample_key] = obs.index
+    adata.obs[sample_key] = adata.obs.index
 
 # make sure the PCA embedding is an array
-if not isinstance(X_pca, np.ndarray):
-    X_pca = X_pca.toarray()
+if not isinstance(adata.obsm['X_pca'], np.ndarray):
+    adata.obsm['X_pca'] = adata.obsm['X_pca'].toarray()
 
 
-logger.error('Read covariate setup...')
+print('Read covariate setup...', flush=True)
 with open(setup_file, 'r') as f:
     setup = yaml.safe_load(f)
-n_permute = setup['n_permute']
+# n_permute = setup['n_permute']
 # n_permute = min(snakemake.params.get('n_permute', 0), n_permute)
-logger.error(f'n_permute: {n_permute}')
+n_permute = snakemake.params.get('n_permute', 0)
+print(f'n_permute: {n_permute}', flush=True)
 
+if sample_key == covariate:
+    print('Sample key is the same as covariate, skipping permutation...', flush=True)
+    n_permute = 0
 
 # PCR for permuted covariates
-logger.error(f'Permute covariate: "{covariate}"')
+print(f'Permutate covariate: "{covariate}"...', flush=True)
 perm_covariates = []
 for i in range(n_permute):
+    # aggregate and permutate covariate
+    cov_per_sample = adata.obs.groupby(sample_key, observed=True).agg({covariate: 'first'})
+    cov_map = dict(zip(cov_per_sample.index, cov_per_sample[covariate].sample(frac=1)))
+    
+    # apply permutation
     covariate_perm = f'{covariate}-{i}'
-    cov_per_sample = obs.groupby(sample_key).agg({covariate: 'first'})
-    cov_map = dict(
-        zip(
-            cov_per_sample.index,
-            cov_per_sample[covariate].sample(cov_per_sample.shape[0])
-        )
-    )
-    # permute covariate
-    obs[covariate_perm] = obs[sample_key].map(cov_map)
+    adata.obs[covariate_perm] = adata.obs[sample_key].map(cov_map)
     perm_covariates.append(covariate_perm)
 
+# defragment adata.obs
+adata.obs = adata.obs.copy()
 
 # PC regression for all covariates
-adata = AnnData(obs=obs, obsm={'X_pca': X_pca}, uns=uns)
+# adata = AnnData(obs=obs, obsm={'X_pca': X_pca}, uns=uns)
 covariates = [covariate]+perm_covariates
 # adatas = [adata[obs[covariate].notna()] for covariate in covariates]
-pcr_scores = []
 
 
-def compute_pcr(covariate):
-    logger.error(f'PCR for covariate: "{covariate}"')
+def compute_pcr(adata, covariate, is_permuted):
+    print(f'PCR for covariate: "{covariate}"', flush=True)
     pcr = scib.me.pcr(
-        adata[obs[covariate].notna()],
+        adata[adata.obs[covariate].notna()],
         covariate=covariate,
         recompute_pca=False,
         verbose=False
     )
-    logger.error(pcr)
-    return pcr
+    print(f'covariate: {covariate}, pcr: {pcr}', flush=True)
+    return (covariate, pcr, is_permuted)
 
 
-with ThreadPool(processes=n_threads) as pool:
-    for pcr in pool.map(compute_pcr, covariates):
-        pcr_scores.append(pcr)
+with ProcessPoolExecutor(max_workers=n_threads) as executor:
+# with ThreadPool(processes=n_threads) as pool:
+    chunk_size = max(1, int(n_permute / n_threads))
+    print(f'chunk_size: {chunk_size}', flush=True)
+    # pcr_scores = []
+    # for pcr in pool.imap_unordered(compute_pcr, covariates, chunksize=chunk_size):
+    # for pcr in pool.map(compute_pcr, covariates):
+    #     pcr_scores.append(pcr)
+    pcr_scores = list(
+        executor.map(
+            compute_pcr,
+            [adata]*len(covariates),
+            covariates,
+            [x in perm_covariates for x in covariates],
+            chunksize=chunk_size,
+        )
+    )
 
-df = pd.DataFrame.from_dict(
-    {
-        'covariate': covariates,
-        'pcr': pcr_scores,
-        'permuted': [c in perm_covariates for c in covariates],
-    }
+df = pd.DataFrame.from_records(
+    pcr_scores,
+    columns=['covariate', 'pcr', 'permuted'],
 )
 df['n_covariates'] = f'n={n_covariate}'
 df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')

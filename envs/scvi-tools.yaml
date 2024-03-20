@@ -2,17 +2,19 @@ name: scvi-tools
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
-  - scanpy=1.9
-  - numpy<1.24
-  - pandas<2.0.0
+  - python=3.10
+  - anndata=0.10
   - scvi-tools
   - cudatoolkit
   - jax<0.4.14
   - jaxlib
   - zarr
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - pip
   - pip:
     - torch
     - torchvision
     - torchaudio
+    - git+https://github.com/scverse/scanpy.git@main

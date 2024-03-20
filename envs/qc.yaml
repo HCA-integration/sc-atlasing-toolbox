@@ -1,0 +1,19 @@
+name: qc
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - anndata=0.10
+  - hdf5=1.14.2
+  - leidenalg
+  - dask
+  - sparse
+  - zarr
+  - scrublet
+  - cffi
+  - pip
+  - pip:
+    - doubletdetection
+    - git+https://github.com/mumichae/sctk.git@mumichae-patch-1
+    - git+https://github.com/scverse/scanpy.git@main

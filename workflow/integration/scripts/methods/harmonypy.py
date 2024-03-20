@@ -1,35 +1,69 @@
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 from scipy.sparse import issparse
-import harmonypy as hm
+try:
+    import subprocess
+    if subprocess.run('nvidia-smi', shell=True).returncode != 0:
+        logging.info('No GPU found...')
+        raise ImportError()
+    from rapids_singlecell.pp import harmony_integrate
+    import cupy as cp
+    import rmm
+    from rmm.allocators.cupy import rmm_cupy_allocator
+    rmm.reinitialize(
+        managed_memory=True,
+        pool_allocator=False,
+    )
+    cp.cuda.set_allocator(rmm_cupy_allocator)
+    logging.info('Using rapids_singlecell...')
+except ImportError as e:
+    from scanpy.external.pp import harmony_integrate
+    logging.info('Importing rapids failed, using scanpy...')
 
 from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata
-from utils_pipeline.accessors import select_layer
+from utils_pipeline.io import read_anndata, write_zarr_linked
 
 
-input_adata = snakemake.input[0]
-output_adata = snakemake.output[0]
+input_file = snakemake.input[0]
+output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+hyperparams = params.get('hyperparams', {})
+hyperparams = {} if hyperparams is None else hyperparams
+hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
-logging.info(f'Read {input_adata}...')
-adata = read_anndata(input_adata)
+logging.info(f'Read {input_file}...')
+adata = read_anndata(
+    input_file,
+    obs='obs',
+    var='var',
+    obsm='obsm',
+    uns='uns'
+)
 
-# prepare for integration
-del adata.X
+use_rep = hyperparams.pop('use_rep', 'X_pca')
+assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 
 # run method
-logging.info('Run harmonypy...')
-harmony_out = hm.run_harmony(
-    data_mat=adata.obsm['X_pca'],
-    meta_data=adata.obs,
-    vars_use=[wildcards.batch]
+logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
+harmony_integrate(
+    adata,
+    key=wildcards.batch,
+    basis=use_rep,
+    adjusted_basis='X_emb',
+    **hyperparams
 )
-adata.obsm['X_emb'] = harmony_out.Z_corr.T
 
 # prepare output adata
 adata = remove_slots(adata=adata, output_type=params['output_type'])
 add_metadata(adata, wildcards, params)
 
-adata.write_zarr(output_adata)
+logging.info(f'Write {output_file}...')
+logging.info(adata.__str__())
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obsm', 'uns'],
+)

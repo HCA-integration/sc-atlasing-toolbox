@@ -36,22 +36,26 @@ DATASETS:
   test_integration_clustering:
     input:
       preprocessing: data/pbmc68k.h5ad
-      integration: preprocessing
-      clustering: integration
+      clustering: preprocessing
+      integration: clustering
     preprocessing:
       label: bulk_labels
       batch: phase
       sample: phase
+    clustering:
+      neighbors_key: neighbors
+      algorithm: louvain
+      resolutions:
+        - 0.4
+        - 0.8
     integration:
       raw_counts: raw
       norm_counts: normcounts
       batch: phase
+      label: louvain_0.4
       methods:
         unintegrated:
         combat:
-    clustering:
-      neighbors_key: neighbors
-      resolutions:
-        - 0.4
-        - 0.8
+      umap_colors:
+        - louvain_0.4
 

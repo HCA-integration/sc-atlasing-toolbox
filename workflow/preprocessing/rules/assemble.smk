@@ -8,7 +8,9 @@ use rule normalize from preprocessing as preprocessing_normalize with:
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'normalized.zarr'),
     params:
-        raw_counts=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'raw_counts']),
+        raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts'),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -18,13 +20,15 @@ use rule normalize from preprocessing as preprocessing_normalize with:
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
     input:
-        zarr=rules.preprocessing_normalize.output.zarr
+        zarr=rules.preprocessing_normalize.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr'),
     params:
-        args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'highly_variable_genes'], default={}),
-        batch=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'batch']),
-        lineage=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'lineage']),
+        args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'highly_variable_genes', default={}),
+        batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
+        lineage=lambda wildcards: mcfg.get_from_parameters(wildcards, 'lineage'),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -37,28 +41,30 @@ use rule pca from preprocessing as preprocessing_pca with:
         zarr=rules.preprocessing_highly_variable_genes.output.zarr,
         counts=rules.preprocessing_normalize.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr'),
     params:
-        args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'pca'], default={}),
-        scale=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'scale']),
+        args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'pca', default={}),
+        scale=lambda wildcards: mcfg.get_from_parameters(wildcards, 'scale', default=False),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
 use rule neighbors from preprocessing as preprocessing_neighbors with:
     input:
-        zarr=rules.preprocessing_pca.output.zarr
+        zarr=rules.preprocessing_pca.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
     params:
-        args=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'neighbors'], default={}),
+        args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors', default={}),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
 
 
@@ -67,29 +73,34 @@ use rule umap from preprocessing as preprocessing_umap with:
         zarr=rules.preprocessing_neighbors.output.zarr,
         rep=rules.preprocessing_pca.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
+        done=touch(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.done'),
     params:
+        # args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'umap', default={}),  # TODO use args instead of direct params
         neighbors_key='neighbors',
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
 def collect_files(wildcards):
     file_dict = {
-        'counts': mcfg.get_input_file(**wildcards),
+        # 'counts': mcfg.get_input_file(**wildcards),
         'normalize': rules.preprocessing_normalize.output.zarr,
         'highly_variable_genes': rules.preprocessing_highly_variable_genes.output.zarr,
         'pca': rules.preprocessing_pca.output.zarr,
         'neighbors': rules.preprocessing_neighbors.output.zarr,
         'umap': rules.preprocessing_umap.output.zarr,
     }
-    assembly_config = mcfg.get_for_dataset(wildcards.dataset, [mcfg.module_name, 'assemble'])
+    assembly_config = mcfg.get_from_parameters(wildcards, 'assemble')
     if assembly_config is None:
         return file_dict
-    return {k: v for k, v in file_dict.items() if k in assembly_config}
+    return {
+        k: v for k, v in file_dict.items()
+        if k in assembly_config
+    }
 
 
 use rule assemble from preprocessing as preprocessing_assemble with:
@@ -99,6 +110,6 @@ use rule assemble from preprocessing as preprocessing_assemble with:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr')
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
+    retries: 1
     conda:
         get_env(config, 'scanpy')

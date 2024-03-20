@@ -16,8 +16,10 @@ module_name = 'load_data'
 
 if 'dataset_df' in config.keys():
     dataset_df = config['dataset_df']
-else:
+elif 'dataset_meta' in config.keys():
     dataset_df = load_dataset_df(config['dataset_meta'])
+else:
+    dataset_df = pd.DataFrame(columns=['dataset', 'study', 'organ', 'url', 'subset'])
 out_dir = Path(config['output_dir']) / module_name
 image_dir = Path(config['images']) / module_name
 
@@ -58,12 +60,13 @@ module load_data:
 
 include: 'rules/load_data.smk'
 include: 'rules/dcp_metadata.smk'
+include: 'rules/filter.smk'
 include: 'rules/merge.smk'
 
 rule all:
     input:
         expand(rules.load_data_merge_organ.output,**get_wildcards(dataset_df,['organ'])),
-        expand(rules.load_data_merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
+        # expand(rules.load_data_merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
     default_target: True
 
 

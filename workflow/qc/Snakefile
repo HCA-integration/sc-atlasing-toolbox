@@ -1,0 +1,84 @@
+"""
+QC
+"""
+import logging
+from pathlib import Path
+import pandas as pd
+
+from utils.ModuleConfig import ModuleConfig
+from utils.environments import get_env
+from utils.misc import merge
+from qc_utils import read_threshold_file, unpack_thresholds
+
+
+mcfg = ModuleConfig(
+    module_name='qc',
+    config=config,
+    config_params=[
+        'hue',
+        'thresholds',
+        'alternative_thresholds',
+        'thresholds_file'
+    ],
+)
+wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
+
+# fix threshold mapping
+wildcards_df['thresholds'] = wildcards_df[['file_id', 'thresholds']].apply(unpack_thresholds, axis=1)
+
+# parse user-specified thresholds from TSV files
+user_thresholds = [
+    read_threshold_file(file)
+    for file in wildcards_df['thresholds_file'].unique()
+    if isinstance(file, str)
+]
+if len(user_thresholds) > 0:
+    parameters_df = merge(user_thresholds, how='outer', verbose=False).set_index('file_id')
+
+    # parse user-specified thresholds from TSV files
+    user_df = parameters_df[parameters_df['threshold_type'] == 'user'].drop(columns='threshold_type')
+    for file_id, row in user_df.iterrows():
+        file_id_mask = wildcards_df['file_id'] == file_id
+        wildcards_df.loc[file_id_mask, 'thresholds'] = [row.dropna().to_dict()] * file_id_mask.sum()
+    
+    # parse user-specified alternative thresholds from TSV files
+    alternative_df = parameters_df[parameters_df['threshold_type'] == 'alternative'].drop(columns='threshold_type')
+    for file_id, row in alternative_df.iterrows():
+        file_id_mask = wildcards_df['file_id'] == file_id
+        wildcards_df.loc[file_id_mask, 'alternative_thresholds'] = [row.dropna().to_dict()] * file_id_mask.sum()
+    wildcards_df['alternative_thresholds'] = wildcards_df['alternative_thresholds'].apply(lambda x: {} if x != x else x)
+    
+    # update wildcards_df
+    mcfg.update_parameters(wildcards_df)
+
+params = mcfg.get_paramspace()
+
+wildcard_constraints:
+    dataset=r'[^/]+',
+    file_id=r'[^/]+',
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+include: 'rules/calculate_metrics.smk'
+include: 'rules/plots.smk'
+
+
+rule all:
+    input:
+        rules.autoqc_all.input,
+        rules.thresholds_all.input,
+        rules.plots_all.input,
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )

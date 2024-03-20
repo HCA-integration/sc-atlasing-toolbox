@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from anndata.experimental import read_elem
@@ -43,7 +44,10 @@ obs = read_elem(z["obs"])
 # clean obsnames
 obs_names = pd.Series(obs.index).str.split('-', n=1, expand=True)[0]
 
-samples = obs['sample'].unique().to_list()
+# Select random 100 samples to plot
+np.random.seed(42)
+size = np.min((100, obs['sample'].nunique()))
+samples = np.random.choice(obs['sample'].unique(), size=size, replace=False).tolist()
 barcodes = [obs.query(f'sample == "{sample}"').index.tolist() for sample in samples]
 
 UpSetFromLists(

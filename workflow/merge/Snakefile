@@ -1,0 +1,52 @@
+from pathlib import Path
+import pandas as pd
+
+from utils.ModuleConfig import ModuleConfig
+from utils.environments import get_env
+
+
+mcfg = ModuleConfig(
+    module_name='merge',
+    config=config,
+    config_params=['dask', 'backed'],
+    mandatory_wildcards=['dataset'],
+)
+params = mcfg.get_paramspace()
+
+
+wildcard_constraints:
+    dataset=r'[^/]+',
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+
+rule merge:
+    input:
+        unpack(lambda wildcards: mcfg.get_input_files_per_dataset(dataset=wildcards.dataset))
+    output:
+        zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=3),
+    script:
+        'merge.py'
+
+
+rule all:
+    input:
+        mcfg.get_output_files(rules.merge.output)
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )

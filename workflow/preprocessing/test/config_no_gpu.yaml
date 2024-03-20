@@ -9,13 +9,14 @@ DATASETS:
   no_gpu:
     input:
       preprocessing:
-        pbmc: test/input/pbmc68k.h5ad
+        h5ad: test/input/pbmc68k.h5ad
+        zarr: test/out/preprocessing/dataset~no_gpu/file_id~h5ad/normalized.zarr
     preprocessing:
-      raw_counts: counts
+      raw_counts: layers/counts
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: false
+        subset: true
       assemble:
         - counts
         - normalize

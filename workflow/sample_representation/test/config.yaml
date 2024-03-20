@@ -1,0 +1,17 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  blood:
+    input:
+      sample_representation:
+        blood: test/input/SchulteSchrepping2020.zarr
+    sample_representation:
+      sample: sample
+  test:
+    input:
+      sample_representation:
+        test: test/input/pbmc68k.h5ad
+    sample_representation:
+      sample: batch

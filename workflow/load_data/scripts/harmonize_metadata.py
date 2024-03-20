@@ -4,32 +4,46 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 import pandas as pd
-from scipy.sparse import csr_matrix
 from matplotlib import pyplot as plt
-import anndata
+import anndata as ad
 import scanpy as sc
 import numpy as np
+from dask import config as da_config
+
 from utils import SCHEMAS, get_union
+from utils_pipeline.io import read_anndata, to_memory
 
 in_file = snakemake.input.h5ad
-out_file = snakemake.output.zarr
-out_plot = snakemake.output.plot
-wildcards = snakemake.wildcards
-meta = snakemake.params.meta
 schema_file = snakemake.input.schema
 annotation_file = snakemake.input.get('annotation_file')
+out_file = snakemake.output.zarr
+# out_plot = snakemake.output.plot
 
-logging.info('meta:')
-logging.info(pformat(meta))
+backed = snakemake.params.get('backed', False)
+dask = snakemake.params.get('dask', False)
+meta = snakemake.params.get('meta', {})
+logging.info(f'meta:\n{pformat(meta)}')
 
 
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
-    adata = sc.read(in_file, as_sparse=['X'])
-except:
+    adata = read_anndata(in_file, backed=backed, dask=dask)
+except Exception as e:
+    print(e)
     adata = sc.read_loom(in_file, sparse=True)
 logging.info(adata)
+
+# ensure raw counts are kept in .X
+if 'final' not in adata.layers:
+    adata.layers['final'] = adata.X
+adata.X = adata.raw.X if isinstance(adata.raw, ad._core.raw.Raw) else adata.X
+
+# # plot count distribution -> save to file
+# x = to_memory(adata.X)
+# plt.hist(x.data, bins=60)
+# plt.savefig(out_plot)
+# del x
 
 # Adding general dataset info to uns and obs
 adata.uns['meta'] = meta
@@ -42,7 +56,7 @@ author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     barcode_column = meta['barcode_column']
-    annotation = pd.read_csv(annotation_file)
+    annotation = pd.read_csv(annotation_file, low_memory=False)
 
     # remove duplicates
     annotation = annotation.drop_duplicates(subset=barcode_column)
@@ -52,13 +66,14 @@ if annotation_file is not None:
     adata.obs.index = adata.obs.index.astype(str)
 
     # remove column if existing to avoid conflict
-    if author_annotation in adata.obs.columns:
-        logging.info(f'column {author_annotation} already exists, removing it')
-        del adata.obs[author_annotation]
+    #if author_annotation in adata.obs.columns:
+    #    logging.info(f'column {author_annotation} already exists, removing it')
+    #    del adata.obs[author_annotation]
 
     # merge annotations
-    adata.obs[author_annotation] = annotation[author_annotation]
-    logging.info(adata.obs[author_annotation])
+    for col in annotation.columns:
+        logging.info(f'add column {col} to obs')
+        adata.obs[col] = annotation[col]
 
 
 # assign sample and donor variables
@@ -66,12 +81,12 @@ donor_column = meta['donor_column']
 adata.obs['donor'] = adata.obs[donor_column]
 
 sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
-adata.obs['sample'] = adata.obs[sample_columns].apply(lambda x: '-'.join(x), axis=1)
+adata.obs['sample'] = adata.obs[sample_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
 
 # CELLxGENE specific
 if 'batch_condition' in adata.uns.keys():
     batch_columns = adata.uns['batch_condition']
-    adata.obs['batch_condition'] = adata.obs[batch_columns].apply(lambda x: '-'.join(x), axis=1)
+    adata.obs['batch_condition'] = adata.obs[batch_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
 else:
     adata.obs['batch_condition'] = meta['study']
 
@@ -88,14 +103,6 @@ for key, value in meta.items():
     if isinstance(value, list):
         continue
     adata.obs[key] = value
-
-# ensure raw counts are kept in .X
-adata.layers['final'] = adata.X
-if isinstance(adata.raw, anndata._core.raw.Raw):
-    adata.X = adata.raw.X
-else:
-    adata.X = adata.X
-adata.X = csr_matrix(adata.X)
 
 # add author annotations column
 adata.obs['author_annotation'] = adata.obs[author_annotation]
@@ -140,13 +147,11 @@ for column in SCHEMAS["CELLxGENE_VARS"]:
         adata.var[column] = np.nan
 adata.var = adata.var[SCHEMAS["CELLxGENE_VARS"]]
 
-if 'feature_id' not in adata.var.columns:
-    adata.var['feature_id'] = adata.var_names
+if 'feature_id' in adata.var.columns:
+    adata.var_names = adata.var['feature_id']
+    del adata.var['feature_id']
 adata.var.index.set_names('feature_id', inplace=True)
 
 logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
-adata.write_zarr(out_file)
-
-# plot count distribution -> save to file
-plt.hist(adata.X.data, bins=60)
-plt.savefig(out_plot)
+with da_config.set(num_workers=snakemake.threads):
+    adata.write_zarr(out_file)

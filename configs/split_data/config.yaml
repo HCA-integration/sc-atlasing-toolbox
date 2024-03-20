@@ -4,6 +4,7 @@ DATASETS:
       split_data:
         pbmc: data/pbmc68k.h5ad
       preprocessing: split_data
+      qc: preprocessing
     split_data:
       key: bulk_labels
       values:
@@ -11,11 +12,33 @@ DATASETS:
         - Dendritic
         - CD14+_Monocyte
         - CD19+_B
+        - dummy
     preprocessing:
       raw_counts: X
-      assemble:
-        - counts
-        - normalize
-        - highly_variable_genes
-        - pca
-        - neighbors
+    qc:
+      sample: batch
+      donor: phase
+      categories:
+        - phase
+
+  test_integration:
+    input:
+      preprocessing:
+        pbmc: data/pbmc68k.h5ad
+      integration: preprocessing
+      split_data: integration
+    split_data:
+      key: bulk_labels
+      values:
+        - CD4+_CD45RA+_CD25-_Naive_T
+        - Dendritic
+        - CD14+_Monocyte
+        - CD19+_B
+        - dummy
+    preprocessing:
+      raw_counts: X
+    integration:
+      raw_counts: layers/counts
+      norm_counts: layers/normcounts
+      methods:
+        unintegrated:

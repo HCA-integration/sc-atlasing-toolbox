@@ -28,11 +28,11 @@ class IntegrationConfig(ModuleConfig):
             parameters = parameters.explode('output_type')
             kwargs['parameters'] = parameters
         
-        super().__init__(**kwargs)
+        super().__init__(**kwargs, write_output_files=False)
         
         # set hyperparameters
         self.set_hyperparams()
-        
+
         # remove redundant label wildcards
         wildcards_df = self.parameters.wildcards_df
         if 'use_cell_type' in wildcards_df.columns:
@@ -41,6 +41,18 @@ class IntegrationConfig(ModuleConfig):
                 wildcards_df['label'],
                 'None'
             )
+        
+        # subset to user defined output types
+        remove_indices = []
+        for dataset in wildcards_df['dataset'].unique():
+            output_type_col = wildcards_df.query('dataset == @dataset')['output_type']
+            output_types = self.get_for_dataset(
+                dataset=dataset,
+                query=[self.module_name, 'output_types'],
+                default=output_type_col.unique()
+            )
+            remove_indices.extend(output_type_col[~output_type_col.isin(output_types)].index)
+        wildcards_df = wildcards_df.drop(remove_indices)
         
         # set default paramspace arguments
         if kwargs.get('paramspace_kwargs') is None:
@@ -55,6 +67,9 @@ class IntegrationConfig(ModuleConfig):
             wildcard_names=self.parameters.wildcard_names + ['hyperparams'],
             **paramspace_kwargs,
         )
+
+        # write output files
+        self.write_output_files()
 
 
     def set_hyperparams(self):
@@ -78,9 +93,11 @@ class IntegrationConfig(ModuleConfig):
                 continue
             for method, hyperparams_dict in methods_config.items():
                 if isinstance(hyperparams_dict, dict):
+                    do_not_expand = self.parameters.wildcards_df.query('method == @method and dataset == @dataset').iloc[0]['do_not_expand']
+                    do_not_expand = do_not_expand.split(',') if isinstance(do_not_expand, str) else [do_not_expand]
                     records.extend(
                         (dataset, method, *rec)
-                        for rec in expand_dict_and_serialize(hyperparams_dict)
+                        for rec in expand_dict_and_serialize(hyperparams_dict, do_not_expand=do_not_expand)
                     )
                 else:
                     records.append((dataset, method, str(hyperparams_dict), hyperparams_dict))

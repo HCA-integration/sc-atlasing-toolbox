@@ -1,0 +1,44 @@
+from pathlib import Path
+import pandas as pd
+
+from utils.ModuleConfig import ModuleConfig
+from utils.environments import get_env
+
+
+mcfg = ModuleConfig(
+    module_name='filter',
+    config=config,
+    config_params=['dask', 'backed', 'subset',  'remove_by_column'],  # , 'keep_by_colum'
+    dtypes={
+        'dask': bool,
+        'backed': bool,
+    },
+)
+params = mcfg.get_paramspace()
+
+wildcard_constraints:
+    dataset=r'[^/]+',
+    file_id=r'[^/]+',
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+include: 'rules/filter.smk'
+
+
+rule all:
+    input:
+        rules.filter_all.input
+    default_target: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )

@@ -1,0 +1,8 @@
+DATASETS:
+  test:
+    input:
+      doublets:
+        test: data/pbmc68k.h5ad
+        test2: data/pbmc68k.h5ad
+    doublets:
+      batch: phase

@@ -10,7 +10,7 @@ rule normalize:
     output:
         zarr=directory('{dataset}_normalized.zarr'),
     conda:
-        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell', no_gpu=True)
     script:
         '../scripts/normalize.py'
 
@@ -21,7 +21,7 @@ rule highly_variable_genes:
     output:
         zarr=directory('{dataset}_highly_variable_genes.zarr')
     conda:
-        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell', no_gpu=True)
     script:
         '../scripts/highly_variable_genes.py'
 
@@ -85,23 +85,14 @@ rule assemble:
 
 ### Plots ###
 
-rule plot_embedding:
+rule plots:
     input:
         anndata='{dataset}.h5ad',
     output:
-        plot='plot_{dataset}_pca.png',
+        plots=directory('{dataset}_plot'),
+    params:
+        basis='X_pca'
     conda:
         get_env(config, 'scanpy')
     script:
-        '../scripts/plot_embedding.py'
-
-
-rule plot_umap:
-    input:
-        anndata='{dataset}.h5ad'
-    output:
-        plot='plot_{dataset}.png',
-    conda:
-        get_env(config, 'scanpy')
-    script:
-        '../scripts/plot_umap.py'
+        '../scripts/plot.py'

@@ -1,28 +1,29 @@
-import warnings
 from pprint import pprint
 from typing import Union
 from pathlib import Path
 import pandas as pd
+from snakemake.exceptions import WildcardError
 from snakemake.io import expand, Wildcards
 from snakemake.rules import Rule
+import logging
 
 from .WildcardParameters import WildcardParameters
 from .InputFiles import InputFiles
 from .config import get_from_config, _get_or_default_from_config
 from .misc import create_hash, get_use_gpu
 
+# set up logger
+logger = logging.getLogger('ModuleConfig')
+logger.setLevel(logging.WARNING)
+
+# Create a handler with the same formatter as basicConfig
+formatter = logging.Formatter('%(levelname)s:%(name)s: %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 class ModuleConfig:
-
-    # module_name = ''
-    # config = {}
-    # datasets = {}
-    # wildcard_names = []
-    # parameters = WildcardParameters()
-    # input_files = InputFiles()
-    # default_target = None
-    # out_dir = Path()
-    # image_dir = Path()
 
 
     def __init__(
@@ -32,10 +33,14 @@ class ModuleConfig:
         parameters: [pd.DataFrame, str] = None,
         default_target: [str, Rule] = None,
         wildcard_names: list = None,
+        mandatory_wildcards: list = None,
         config_params: list = None,
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
+        dtypes: dict = None,
+        write_output_files: bool = True,
+        warn: bool = True,
     ):
         """
         :param module_name: name of module
@@ -46,14 +51,14 @@ class ModuleConfig:
         :param config_params: list of parameters that a module should consider as wildcards, order and length must match wildcard_names, by default will take wildcard_names
         :param explode_by: column(s) to explode wildcard_names extracted from config by
         :param paramspace_kwargs: arguments passed to WildcardParameters
+        :param dtypes: dictionary of dtypes for parameters DataFrame
         """
         self.module_name = module_name
-        self.config = config
+        self.config = config.copy()
         self.set_defaults()
-        self.set_datasets()
+        self.set_datasets(warn=False)
 
         self.out_dir = Path(self.config['output_dir']) / self.module_name
-        self.out_dir.mkdir(parents=True, exist_ok=True)
         self.image_dir = Path(self.config['images']) / self.module_name
 
         self.input_files = InputFiles(
@@ -61,7 +66,7 @@ class ModuleConfig:
             dataset_config=self.datasets,
             output_directory=self.out_dir,
         )
-
+        
         if wildcard_names is None:
             wildcard_names = []
 
@@ -75,13 +80,17 @@ class ModuleConfig:
             dataset_config=self.datasets,
             default_config=self.config.get('defaults'),
             wildcard_names=wildcard_names,
+            mandatory_wildcards=mandatory_wildcards,
             config_params=config_params,
             rename_config_params=rename_config_params,
             explode_by=explode_by,
             paramspace_kwargs=paramspace_kwargs,
+            dtypes=dtypes,
         )
 
-        self.set_default_target(default_target)
+        self.set_default_target(default_target, warn=warn)
+        if write_output_files:
+            self.write_output_files()
 
 
     def set_defaults(self, warn: bool = False):
@@ -114,7 +123,7 @@ class ModuleConfig:
         self.datasets[dataset][self.module_name] = entry
 
 
-    def set_datasets(self):
+    def set_datasets(self, warn: bool = False):
         """
         Set dataset configs
         """
@@ -124,17 +133,22 @@ class ModuleConfig:
         }
         
         for dataset in self.datasets:
-            self.set_defaults_per_dataset(dataset)
+            self.set_defaults_per_dataset(dataset, warn=warn)
 
 
-    def set_default_target(self, default_target: [str, Rule] = None):
+    def set_default_target(self, default_target: [str, Rule] = None, warn: bool = False):
         if default_target is not None:
             self.default_target = default_target
         elif self.module_name in self.config['output_map']:
             self.default_target = self.config['output_map'][self.module_name]
         else:
-            default_target = self.out_dir / self.parameters.get_paramspace().wildcard_pattern / f'{self.module_name}.tsv'
-            warnings.warn(f'\nNo default target specified for module "{self.module_name}", using "{default_target}"')
+            wildcard_pattern = self.parameters.get_paramspace().wildcard_pattern
+            default_target = self.out_dir / f'{wildcard_pattern}.zarr'
+            if warn:
+                logger.warn(
+                    f'No default target specified for module "{self.module_name}",'
+                    f' using default:\n"{default_target}..."'
+                )
             self.default_target = default_target
 
 
@@ -206,6 +220,9 @@ class ModuleConfig:
         pattern: [str, Rule] = None,
         allow_missing: bool=False,
         as_dict: bool=False,
+        as_records: bool=False,
+        return_wildcards: bool=False,
+        verbose: bool=False,
         **kwargs
     ) -> list:
         """
@@ -215,32 +232,72 @@ class ModuleConfig:
         """
         if pattern is None:
             pattern = self.default_target
+        kwargs['verbose'] = verbose
         wildcards = self.get_wildcards(**kwargs)
-        targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
+        if verbose:
+            print(wildcards)
+        try:
+            targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
+        except WildcardError as e:
+            raise ValueError(
+                f'WildcardError: {e}\nInvalid wildcard "{wildcards}" for pattern "{pattern}"'
+            )
+        
+        def get_wildcard_string(wildcard_name, wildcard_value):
+            if wildcard_name == 'file_id':
+                if '/' in wildcard_value:
+                    wildcard_value = create_hash(wildcard_value)
+                else:
+                    return f'{self.module_name}:{wildcard_value}'
+            return f'{self.module_name}_{wildcard_name}={wildcard_value}'
+        
+        def shorten_name(name):
+            split_values = name.split(f'--{self.module_name}_', 1)
+            if len(split_values) > 1 and len(name) > 200:
+                name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
+            return name
+        
+        wildcard_names = list(wildcards.keys())
+        wildcard_values = list(wildcards.values())
+        
+        if len(wildcard_names) == 1:
+            wildcard_names = ['file_id']
+        
+        task_names = [
+            '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcard_names, w) if k != 'dataset'])
+            for w in zip(*wildcard_values)
+        ]
+        task_names = [shorten_name(name) for name in task_names]
+        
         if as_dict:
-            
-            def get_wildcard_string(wildcard_name, wildcard_value):
-                if wildcard_name == 'file_id':
-                    if '/' in wildcard_value:
-                        wildcard_value = create_hash(wildcard_value)
-                    else:
-                        return f'{self.module_name}:{wildcard_value}'
-                return f'{self.module_name}_{wildcard_name}={wildcard_value}'
-            
-            def shorten_name(name):
-                split_values = name.split(f'--{self.module_name}_', 1)
-                if len(split_values) > 1 and len(name) > 300:
-                    name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
-                return name
-            
-            task_names = [
-                '--'.join([get_wildcard_string(k, v) for k, v in zip(wildcards.keys(), w) if k != 'dataset'])
-                for w in zip(*wildcards.values())
-            ]
-            task_names = [shorten_name(name) for name in task_names]
             targets = dict(zip(task_names, targets))
+        elif as_records:
+            if return_wildcards:
+                targets = list(zip(*wildcard_values, task_names, targets)), wildcard_names
+            else:
+                targets = list(zip(task_names, targets))
+            
+        if verbose:
+            print(targets)
         return targets
 
+
+    def write_output_files(self):
+        # write output file mapping
+        default_output_files, wildcard_names = self.get_output_files(
+            default_datasets=False, as_records=True, return_wildcards=True
+        )
+        output_df = pd.DataFrame.from_records(
+            default_output_files, columns=wildcard_names+['out_file_id', 'file_path']
+        )
+        if self.out_dir is not None and output_df.shape[0] > 0:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            output_df.to_csv(
+                self.out_dir / 'output_files.tsv',
+                sep='\t',
+                index=False
+            )
+    
 
     def get_input_file_wildcards(self):
         return self.input_files.get_wildcards()
@@ -338,5 +395,5 @@ class ModuleConfig:
             )
             return ''
         if resource_key == 'mem_mb':
-            return int(res + (attempt - 1) * factor * res)
+            return int(res * (1 + factor * (attempt - 1)))
         return res

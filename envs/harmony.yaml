@@ -3,10 +3,14 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.9
-  - scanpy=1.9
-  - pandas<2.0.0
-  - numpy<1.24
+  - python=3.10
+  - anndata=0.10
   - zarr
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - harmony-pytorch
   - harmonypy
+  - pip
+  - pip:
+    - git+https://github.com/scverse/scanpy.git@main

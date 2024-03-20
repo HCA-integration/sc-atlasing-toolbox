@@ -3,13 +3,13 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.9
-  - scanpy=1.9
-  - numpy<1.24
-  - matplotlib<3.7
-  - pandas<2.0.0
+  - python=3.10
+  - anndata=0.10
   - cudatoolkit
   - zarr
+  - hdf5=1.14.2
+  - dask
+  - sparse
   - pip
   - pip:
     - torch
@@ -19,3 +19,4 @@ dependencies:
     - torchaudio
     - git+https://github.com/theislab/scgen.git@fix_concatenation
     - scvi-tools==0.19
+    - git+https://github.com/scverse/scanpy.git@main

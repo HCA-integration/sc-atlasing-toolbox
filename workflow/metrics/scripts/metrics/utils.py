@@ -10,7 +10,6 @@ def write_metrics(filename, scores, output_types, **kwargs):
     :param output_types: list of output types, order must match that of scores
     :param kwargs: additional information to add to output
     """
-
     meta_names = list(kwargs.keys())
     meta_values = [kwargs[col] for col in meta_names]
 
@@ -32,8 +31,15 @@ def select_neighbors(adata, output_type):
     # neighbors_key = f'neighbors_{output_type}'
     neighbors_key = 'neighbors'
     adata.uns['neighbors'] = adata.uns[neighbors_key]
-    adata.obsp['connectivities'] = adata.obsp[adata.uns[neighbors_key]['connectivities_key']]
-    adata.obsp['distances'] = adata.obsp[adata.uns[neighbors_key]['distances_key']]
+    
+    connectivities_key = adata.uns[neighbors_key]['connectivities_key']
+    assert connectivities_key in adata.obsp, f'Connectivities key "{connectivities_key}" missing from adata.obsp {adata}'
+    adata.obsp['connectivities'] = adata.obsp[connectivities_key]
+    
+    distances_key = adata.uns[neighbors_key]['distances_key']
+    assert distances_key in adata.obsp, f'Distances key "{distances_key}" missing from adata.obsp {adata}'
+    adata.obsp['distances'] = adata.obsp[distances_key]
+    
     return adata
 
 
