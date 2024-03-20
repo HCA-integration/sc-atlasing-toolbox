@@ -9,6 +9,10 @@ mcfg = ModuleConfig(
     module_name='filter',
     config=config,
     config_params=['dask', 'backed', 'subset',  'remove_by_column'],  # , 'keep_by_colum'
+    dtypes={
+        'dask': bool,
+        'backed': bool,
+    },
 )
 params = mcfg.get_paramspace()
 
