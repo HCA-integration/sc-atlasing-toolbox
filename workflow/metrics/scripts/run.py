@@ -58,16 +58,16 @@ if output_type not in allowed_output_types:
 logger.info(f'Read {input_file} ...')
 kwargs = dict(
     obs='obs',
-    obsp='obsp',
-    var='var',
     uns='uns',
 )
+if input_type == 'knn':
+    kwargs |= {'obsp': 'obsp'}
 if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
 if input_type == 'full':
-    kwargs |= {'X': 'X', 'obsm': 'obsm'}
+    kwargs |= {'X': 'X', 'var': 'var'}
 if comparison:
-    kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
+    kwargs |= {'raw': 'raw', 'var': 'var', 'varm': 'varm'}
 
 adata = read_anndata(input_file, **kwargs)
 if comparison:

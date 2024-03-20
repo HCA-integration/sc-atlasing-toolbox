@@ -102,6 +102,7 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     
     embed = 'X_emb' if output_type == 'embed' else 'X_pca'
     assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+    adata.obsm['X_emb'] = adata.obsm[embed]
 
     adata_raw = adata_to_memory(adata_raw)
     
@@ -122,7 +123,7 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
             adata_pre=adata_raw,
             adata_post=adata,
             batch_key=batch_key,
-            embed=embed,
+            embed='X_emb',
             recompute_cc=False,
             organism=organism,
             verbose=False,
