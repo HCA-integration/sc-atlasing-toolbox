@@ -31,10 +31,10 @@ defaults:
       - pcr
       # - pcr_y  # broken function
   datasets:
-    # - test_metrics
-    # - test_no_name
+    - test_metrics
+    - test_no_name
     - test_integration
-    # - scib_metrics
+    - scib_metrics
 
 
 DATASETS:
