@@ -5,7 +5,8 @@ images: images
 use_gpu: true
 
 output_map:
-  # qc: data/out/qc/dataset~{dataset}/file_id~{file_id}/filtered.zarr
+  merge: data/out/merge/dataset~{dataset}.zarr
+  # qc: data/out/qc/dataset~{dataset}/file_id~{file_id}.zarr
   clustering: data/out/clustering/dataset~{dataset}/file_id~{file_id}.zarr
   sample_representation: data/out/sample_representation/dataset~{dataset}/file_id~{file_id}/pseudobulk.h5ad
   split_data: data/out/split_data/dataset~{dataset}/file_id~{file_id}/key~{key}/value~{value}.zarr
