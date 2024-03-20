@@ -9,6 +9,13 @@ try:
         raise ImportError()
     from rapids_singlecell.pp import harmony_integrate
     import cupy as cp
+    import rmm
+    from rmm.allocators.cupy import rmm_cupy_allocator
+    rmm.reinitialize(
+        managed_memory=True,
+        pool_allocator=False,
+    )
+    cp.cuda.set_allocator(rmm_cupy_allocator)
     logging.info('Using rapids_singlecell...')
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
