@@ -147,7 +147,7 @@ def _get_or_default_from_config(
     key,
     value,
     return_missing=None,
-    warn=True,
+    warn=False,
     update=False,
 ):
     """
