@@ -8,10 +8,10 @@ use rule umap from preprocessing as integration_compute_umap with:
         zarr=directory(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
         done=touch(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.done'),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
 
 
 def get_colors(wildcards):

@@ -79,10 +79,10 @@ use rule umap from preprocessing as preprocessing_umap with:
         # args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'umap', default={}),  # TODO use args instead of direct params
         neighbors_key='neighbors',
     resources:
-        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
-        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
-        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
 def collect_files(wildcards):
@@ -110,7 +110,6 @@ use rule assemble from preprocessing as preprocessing_assemble with:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'preprocessed.zarr')
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
-        disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     retries: 1
     conda:
         get_env(config, 'scanpy')
