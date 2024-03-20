@@ -126,7 +126,7 @@ for x, y, log_x, log_y in coordinates:
             title='',
             **scatter_plot_kwargs,
         )
-        if legend:
+        if g.ax_joint.legend_ is not None:
             sns.move_legend(g.ax_joint, 'right')
         plt.tight_layout()
         plt.savefig(png_file, bbox_inches='tight')
@@ -160,7 +160,7 @@ for x, y, log_x, log_y in coordinates:
             title='',
             **scatter_plot_kwargs,
         )
-        if legend:
+        if g.ax_joint.legend_ is not None:
            sns.move_legend(g.ax_joint, 'lower left')
         plt.tight_layout()
         plt.savefig(png_file, bbox_inches='tight')

@@ -70,7 +70,7 @@ for group in groups:
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
     adata.obs[group] = pd.Categorical(adata.obs[group], categories=order)
 
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(11 * (1 + n_groups/100), 6))
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(14, 5 * (1 + n_groups/50)))
     sns.histplot(
         data=adata.obs,
         y=group,

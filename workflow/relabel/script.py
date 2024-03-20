@@ -15,8 +15,10 @@ output_file = snakemake.output.zarr
 file_id = snakemake.wildcards.file_id
 
 logging.info('Read adata...')
-adata = read_anndata(input_file, obs='obs')
-
+if input_file.endswith('.zarr'):
+    adata = read_anndata(input_file, obs='obs')
+else:
+    adata = anndata.read(input_file)
 
 # merge new columns
 if input_new_cols is not None:
