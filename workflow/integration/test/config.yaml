@@ -20,13 +20,15 @@ defaults:
   integration:
     raw_counts: layers/counts
     norm_counts: layers/normcounts
+    var_mask: highly_variable
+    save_subset: false
   datasets:
-    - test
-    - multi_wildcards
+    # - test
+    # - multi_wildcards
     - preprocessed
-    - harmony
-    - scarches
-    - scvi_tools
+    # - harmony
+    # - scarches
+    # - scvi_tools
 
 
 DATASETS:

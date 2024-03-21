@@ -1,8 +1,10 @@
 import warnings
 import numpy as np
 import anndata as ad
+from dask import array as da
 
 from .io import to_memory
+from .misc import apply_layers
 
 
 # deprecated
@@ -48,24 +50,32 @@ def select_neighbors(adata, output_type):
     return adata
 
 
-def subset_hvg(adata, to_memory: [str, list] = 'X', hvgs: list = None) -> (ad.AnnData, bool):
+def subset_hvg(
+    adata: ad.AnnData,
+    to_memory: [str, list] = 'X',
+    var_column: str = 'highly_variable'
+) -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
     :param adata: anndata object
     :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
-    if hvgs is None:
-        if 'highly_variable' not in adata.var.columns:
-            raise ValueError('No highly_variable column in adata.var')
-        hvgs = adata.var_names[adata.var['highly_variable']]
-    if adata.var_names.isin(hvgs).all():
+    assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
+    assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
+
+    if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
         subsetted = False
     else:
         subsetted = True
-        adata = adata[:, hvgs].copy()
+        adata = adata[:, adata.var[var_column]].copy()
     adata = adata_to_memory(adata, layers=to_memory)
+    adata = apply_layers(
+        adata,
+        func=lambda x: x.compute() if isinstance(x, da.Array) else x,
+        layers=to_memory,
+    )
     return adata, subsetted
 
 

@@ -34,14 +34,16 @@ def read_layer(
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
+var_mask = params.get('var_mask', 'highly_variable')
+save_subset = params.get('save_subset', False)
 
 
 def read_and_subset(
     input_file: [str, Path],
     layer_key: str,
+    var_column: str,
     files_to_keep: list,
     slot_map: dict,
-    hvgs: list = None,
 ):
     in_layer = params.get(layer_key, 'X')
     assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
@@ -51,6 +53,7 @@ def read_and_subset(
     adata = read_anndata(
         input_file,
         X=in_layer,
+        obsm='obsm',
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
         varp='varp',
@@ -59,11 +62,11 @@ def read_and_subset(
     )
     
     logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(adata, hvgs=hvgs)
+    adata, subsetted = subset_hvg(adata, var_column=var_column)
     
     # determine output
-    if subsetted:
-        files_to_keep.extend(['X', out_layer, 'var', 'varm', 'varp'])
+    if subsetted and save_subset:
+        files_to_keep.extend([out_layer, 'var', 'varm', 'varp'])
     else:
         slot_map |= {out_layer: in_layer}
     
@@ -76,15 +79,16 @@ slot_map = {}
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='norm_counts',
+    var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='raw_counts',
+    var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    hvgs=adata_norm.var_names,
 )
 
 assert adata_norm.var_names.equals(adata_raw.var_names), f'\nnorm:\n{adata_norm.var}\nraw:\n{adata_raw.var}'
@@ -110,10 +114,12 @@ if input_file.endswith('.h5ad'):
             'raw_counts': adata_raw.X,
         },
     )
+    files_to_keep.append('X')
 elif input_file.endswith('.zarr'):
     adata = AnnData(
         X=adata_norm.X,
         obs=adata_norm.obs,
+        obsm=adata_norm.obsm,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,

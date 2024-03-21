@@ -7,6 +7,8 @@ rule prepare:
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
+        var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask', exclude=['output_type'], default='highly_variable'),
+        save_subset=lambda wildcards: mcfg.get_from_parameters(wildcards, 'save_subset', exclude=['output_type']),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     threads:
@@ -18,6 +20,7 @@ rule prepare:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     script:
         '../scripts/prepare.py'
+
 
 integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
 
@@ -42,6 +45,7 @@ use rule run_method from integration as integration_run_method with:
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
+        var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask', exclude=['output_type'], default='highly_variable'),
         output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', exclude=['output_type']),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict', exclude=['output_type']),
         seed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'seed', exclude=['output_type'], default=0),
