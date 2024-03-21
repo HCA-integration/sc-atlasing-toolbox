@@ -12,7 +12,6 @@ from utils_pipeline.io import link_zarr
 
 in_file = snakemake.input[0]
 in_dcp = snakemake.input[1]
-out_obs = snakemake.output.obs
 out_stats = snakemake.output.stats
 out_adata = snakemake.output.zarr
 metadata_columns = snakemake.params.metadata_cols
@@ -112,11 +111,6 @@ if intersect_max['intersection'] > 0:
     obs_df = obs_df.drop_duplicates(subset=["index"])
     del obs_df['index']
     assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
-
-# save obs
-logging.info(obs_df.shape)
-logging.info(f'save obs to {out_obs}...')
-obs_df.to_csv(out_obs, sep='\t', index=False)
 
 # save stats
 intersect_max.to_csv(out_stats, sep='\t', index=True)
