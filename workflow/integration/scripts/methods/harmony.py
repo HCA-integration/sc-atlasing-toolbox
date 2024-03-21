@@ -4,9 +4,8 @@ logging.basicConfig(level=logging.INFO)
 import torch
 from harmony import harmonize
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
-
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]

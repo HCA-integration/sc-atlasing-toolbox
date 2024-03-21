@@ -1,4 +1,11 @@
 rule prepare:
+    message:
+        """
+        Prepare: Prepare dataset {wildcards.dataset} with file_id {wildcards.file_id}
+        input: {input}
+        output: {output}
+        params: norm_counts={params.norm_counts} raw_counts={params.raw_counts} var_mask={params.var_mask} save_subset={params.save_subset}
+        """
     input:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:

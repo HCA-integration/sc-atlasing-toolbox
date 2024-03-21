@@ -5,13 +5,15 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+var_mask = params.get('var_mask', 'highly_variable')
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -27,8 +29,13 @@ adata = read_anndata(
     X='layers/norm_counts',
     obs='obs',
     var='var',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # run method
 logging.info(f'Run Combat with parameters {pformat(hyperparams)}...')

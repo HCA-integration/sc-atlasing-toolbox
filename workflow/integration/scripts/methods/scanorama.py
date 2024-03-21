@@ -4,8 +4,9 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import scanorama
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 # TODO: use scanpy/anndata directly
@@ -39,6 +40,7 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
 params = snakemake.params
+var_mask = params.get('var_mask', 'highly_variable')
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -50,8 +52,13 @@ adata = read_anndata(
     X='layers/norm_counts',
     obs='obs',
     var='var',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 batch_categories = adata.obs[batch_key].unique().tolist()
 adatas = [

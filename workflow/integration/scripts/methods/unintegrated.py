@@ -3,15 +3,16 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils_pipeline.processing import assert_neighbors
-
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.processing import assert_neighbors
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+var_mask = params.get('var_mask', 'highly_variable')
 
 adata = read_anndata(
     input_file,
@@ -21,8 +22,13 @@ adata = read_anndata(
     obsp='obsp',
     obsm='obsm',
     varm='varm',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # prepare output adata
 files_to_keep = ['obsm', 'uns']
