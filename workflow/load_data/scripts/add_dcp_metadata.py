@@ -8,12 +8,12 @@ import zarr
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils_pipeline.io import link_zarr
+from utils.io import read_anndata, write_zarr_linked
 
-in_file = snakemake.input[0]
-in_dcp = snakemake.input[1]
+input_file = snakemake.input[0]
+in_dcp = snakemake.input.dcp
+output_file = snakemake.output.zarr
 out_stats = snakemake.output.stats
-out_adata = snakemake.output.zarr
 metadata_columns = snakemake.params.metadata_cols
 
 def explode_table(df, col, sep=' \|\| '):
@@ -25,9 +25,7 @@ def explode_table(df, col, sep=' \|\| '):
 id_cols = snakemake.params.id_cols
 
 dcp_tsv = pd.read_table(in_dcp)
-with zarr.open(in_file) as z:
-    obs_df = read_elem(z['obs'])
-n_obs = obs_df.shape[0]
+adata = read_anndata(input_file, obs='obs')
 
 # identify ID column
 cols = []
@@ -45,7 +43,7 @@ for col in id_cols:
 
         # count ID overlaps
         dcp_ids = set(dcp_tsv_exploded[col].unique())
-        obs_ids = set(obs_df[cxg_id].unique())
+        obs_ids = set(adata.obs[cxg_id].unique())
         intersect = obs_ids.intersection(dcp_ids)
 
         cols.append(col)
@@ -72,8 +70,8 @@ id_col = intersect_max['dcp_column']
 cxg_col = intersect_max['cxg_column']
 
 # get IDs that don't match
-intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(obs_df[cxg_col].unique()))
-intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
+intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(adata.obs[cxg_col].unique()))
+intersect_max['mismatched_cxg'] = list(set(adata.obs[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
 intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
 intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
 
@@ -97,10 +95,10 @@ if intersect_max['intersection'] > 0:
             del dcp_tsv[col]
 
     # rename columns
-    obs_df['index'] = obs_df.reset_index().index
+    adata.obs['index'] = adata.obs.reset_index().index
 
     # merge on ID column
-    obs_df = obs_df.merge(
+    adata.obs = adata.obs.merge(
         dcp_tsv,
         left_on=cxg_col,
         right_on=id_col,
@@ -108,9 +106,9 @@ if intersect_max['intersection'] > 0:
     )
 
     # make unique per barcode
-    obs_df = obs_df.drop_duplicates(subset=["index"])
-    del obs_df['index']
-    assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
+    adata.obs = adata.obs.drop_duplicates(subset=["index"])
+    del adata.obs['index']
+    assert adata.n_obs == adata.obs.shape[0], f'Number of observations changed from {adata.n_obs} to {adata.obs.shape[0]}'
 
 # save stats
 intersect_max.to_csv(out_stats, sep='\t', index=True)
@@ -118,16 +116,10 @@ intersect_max.to_csv(out_stats, sep='\t', index=True)
 # TODO: aggregatedness of donor ID
 
 # save anndata
-logging.info(f'Write to {out_adata}...')
-adata = anndata.AnnData(obs=obs_df)
-adata.write_zarr(out_adata)
-
-if in_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(in_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['obs']]
-    link_zarr(
-        in_dir=in_file,
-        out_dir=out_adata,
-        file_names=files_to_keep,
-        overwrite=True,
+logging.info(f'Write to {output_file}...')
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obs'],
 )

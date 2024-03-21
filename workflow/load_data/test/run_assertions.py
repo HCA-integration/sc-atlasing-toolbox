@@ -3,7 +3,7 @@ import glob
 from anndata.experimental import read_elem
 import zarr
 
-from utils import SCHEMAS
+from load_data_utils import SCHEMAS
 
 # single dataset
 single_outputs = glob.glob('test/out/*/harmonize_metadata/*.zarr')

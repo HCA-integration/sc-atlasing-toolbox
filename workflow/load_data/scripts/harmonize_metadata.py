@@ -10,9 +10,9 @@ import scanpy as sc
 import numpy as np
 from dask import config as da_config
 
-from utils import SCHEMAS, get_union
-from utils_pipeline.io import read_anndata, to_memory
-from utils_pipeline.misc import ensure_sparse
+from load_data_utils import SCHEMAS, get_union
+from utils.io import read_anndata, to_memory
+from utils.misc import ensure_sparse
 
 in_file = snakemake.input.h5ad
 schema_file = snakemake.input.schema
