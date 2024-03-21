@@ -26,6 +26,7 @@ id_cols = snakemake.params.id_cols
 
 dcp_tsv = pd.read_table(in_dcp)
 adata = read_anndata(input_file, obs='obs')
+obs_df = adata.obs.copy()
 
 # identify ID column
 cols = []
@@ -43,7 +44,7 @@ for col in id_cols:
 
         # count ID overlaps
         dcp_ids = set(dcp_tsv_exploded[col].unique())
-        obs_ids = set(adata.obs[cxg_id].unique())
+        obs_ids = set(obs_df[cxg_id].unique())
         intersect = obs_ids.intersection(dcp_ids)
 
         cols.append(col)
@@ -70,8 +71,8 @@ id_col = intersect_max['dcp_column']
 cxg_col = intersect_max['cxg_column']
 
 # get IDs that don't match
-intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(adata.obs[cxg_col].unique()))
-intersect_max['mismatched_cxg'] = list(set(adata.obs[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
+intersect_max['mismatched_dcp'] = list(set(dcp_tsv[id_col].unique()) - set(obs_df[cxg_col].unique()))
+intersect_max['mismatched_cxg'] = list(set(obs_df[cxg_col].unique()) - set(dcp_tsv[id_col].unique()))
 intersect_max['n_mismatched_dcp'] = len(intersect_max['mismatched_dcp'])
 intersect_max['n_mismatched_cxg'] = len(intersect_max['mismatched_cxg'])
 
@@ -95,10 +96,10 @@ if intersect_max['intersection'] > 0:
             del dcp_tsv[col]
 
     # rename columns
-    adata.obs['index'] = adata.obs.reset_index().index
+    obs_df['index'] = obs_df.reset_index().index
 
     # merge on ID column
-    adata.obs = adata.obs.merge(
+    obs_df = obs_df.merge(
         dcp_tsv,
         left_on=cxg_col,
         right_on=id_col,
@@ -106,9 +107,12 @@ if intersect_max['intersection'] > 0:
     )
 
     # make unique per barcode
-    adata.obs = adata.obs.drop_duplicates(subset=["index"])
-    del adata.obs['index']
-    assert adata.n_obs == adata.obs.shape[0], f'Number of observations changed from {adata.n_obs} to {adata.obs.shape[0]}'
+    obs_df = obs_df.drop_duplicates(subset=["index"])
+    del obs_df['index']
+    assert adata.n_obs == obs_df.shape[0], f'Number of observations changed from {adata.n_obs} to {obs_df.shape[0]}'
+
+# reassign updated obs
+adata.obs = obs_df
 
 # save stats
 intersect_max.to_csv(out_stats, sep='\t', index=True)
