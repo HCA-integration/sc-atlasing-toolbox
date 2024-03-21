@@ -44,10 +44,18 @@ rule prepare_all:
 #     return inputs
 
 
+class MetricNotDefinedError(RuntimeError):
+    
+    def __init__(self, wildcards):
+        super().__init__(
+            f'Metric {wildcards.metric} is not defined for dataset {wildcards.dataset} and file_id {wildcards.file_id}'
+        )
+
+
 rule run:
     message:
        """
-       Metrics: Evaluate {wildcards.metric} on {wildcards.dataset}
+       Metrics: Evaluate metric={wildcards.metric} on dataset={wildcards.dataset} and file_id={wildcards.file_id}
        input: {input}
        output: {output}
        wildcards: {wildcards}
@@ -61,12 +69,11 @@ rule run:
     benchmark:
         mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.benchmark.tsv'
     params:
-        batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
-        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
-        metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type'),
-        output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_type'),
+        metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type', default=MetricNotDefinedError(wildcards)),
+        output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', default=MetricNotDefinedError(wildcards)),
+        input_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'input_type', default=MetricNotDefinedError(wildcards)),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
-        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True),
+        env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)
     resources:
@@ -74,7 +81,6 @@ rule run:
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
         mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt),
         gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w)),
-        disk_mb=100,
         time="1-08:00:00",
     script:
         '../scripts/run.py'

@@ -46,11 +46,13 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         )
 
         if scale:
-            score = (pcr_before - pcr_after) / pcr_before
+            score = 1 - pcr_after / pcr_before # (pcr_before - pcr_after) / pcr_before
             if score < 0:
                 print(
                     "Warning: Variance contribution increased after integration!\n"
-                    "Setting PCR comparison score to 0."
+                    f"Setting PCR comparison score from {score} to 0."
+                    f"pcr_before: {pcr_before}, pcr_after: {pcr_after}",
+                    flush=True
                 )
                 score = 0
             return score
@@ -100,6 +102,7 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     
     embed = 'X_emb' if output_type == 'embed' else 'X_pca'
     assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+    adata.obsm['X_emb'] = adata.obsm[embed]
 
     adata_raw = adata_to_memory(adata_raw)
     
@@ -120,7 +123,7 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
             adata_pre=adata_raw,
             adata_post=adata,
             batch_key=batch_key,
-            embed=embed,
+            embed='X_emb',
             recompute_cc=False,
             organism=organism,
             verbose=False,

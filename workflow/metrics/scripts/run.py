@@ -17,29 +17,33 @@ from utils.io import read_anndata
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-dataset = snakemake.wildcards.dataset
-file_id = snakemake.wildcards.file_id
-metric = snakemake.wildcards.metric
+wildcards = snakemake.wildcards
 params = snakemake.params
-batch_key = params.batch_key
-label_key = params.label_key
 
-# metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
+dataset = wildcards.dataset
+file_id = wildcards.file_id
+batch_key = wildcards.batch
+label_key = wildcards.label
+metric = wildcards.metric
+
 metric_type = params.get('metric_type')
 assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
-metric_output_types = params.get('output_types', [])
+allowed_output_types = params.get('output_types')
+input_type = params.get('input_type')
 comparison = params.get('comparison', False)
-metric_function = metric_map.get(metric)
+metric_function = metric_map.get(metric, ValueError(f'No function for metric: {metric}'))
 
 uns = read_anndata(input_file, uns='uns').uns
-data_output_type = uns.get('output_type', 'full') # Same as in prepare.py
-if data_output_type not in metric_output_types:
+output_type = uns.get('output_type', 'full') # Same as in prepare.py
+
+if output_type not in allowed_output_types:
     logging.info(
-        f'Skip metric={metric} for data output type={data_output_type}\nmetrics output types={metric_output_types}'
+        f'Skip metric={metric} for data output type={output_type}\n'
+        f'allowed output types={allowed_output_types}'
     )
     write_metrics(
         scores=[np.nan],
-        output_types=[data_output_type],
+        output_types=[output_type],
         metric=metric,
         metric_type=metric_type,
         batch=batch_key,
@@ -54,16 +58,16 @@ if data_output_type not in metric_output_types:
 logger.info(f'Read {input_file} ...')
 kwargs = dict(
     obs='obs',
-    obsp='obsp',
-    var='var',
     uns='uns',
 )
-if 'embed' in metric_output_types:
+if input_type == 'knn':
+    kwargs |= {'obsp': 'obsp'}
+if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
-if 'full' in metric_output_types:
-    kwargs |= {'X': 'X'}
+if input_type == 'full':
+    kwargs |= {'X': 'X', 'var': 'var'}
 if comparison:
-    kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
+    kwargs |= {'raw': 'raw', 'var': 'var', 'varm': 'varm'}
 
 adata = read_anndata(input_file, **kwargs)
 if comparison:
@@ -75,12 +79,11 @@ if comparison:
 else:
     adata_raw = None
 
-data_output_type = adata.uns.get('output_type', 'full')
-logger.info(f'Run metric {metric} for {data_output_type}...')
+logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
     adata,
-    data_output_type,
+    output_type,
     batch_key=batch_key,
     label_key=label_key,
     adata_raw=adata_raw,
@@ -88,7 +91,7 @@ score = metric_function(
 
 write_metrics(
     scores=[score],
-    output_types=[data_output_type],
+    output_types=[output_type],
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,
