@@ -54,6 +54,10 @@ module common:
 
 use rule * from common as common_ *
 
+module load_data_filter:
+    snakefile: "filter_rules.smk"
+    config: config
+
 module load_data:
     snakefile: "rules.smk"
     config: config

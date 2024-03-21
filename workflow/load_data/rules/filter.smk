@@ -1,15 +1,10 @@
-module filtering:
-    snakefile: "../../filter/rules/rules.smk"
-    config: config
-
-
 def get_annotated_study(wildcards):
     if wildcards.study in dcp_studies:
         return dict(rules.add_dcp_metadata.output)
     return dict(rules.load_data_merge_study.output)
 
 
-use rule filter from filtering as load_data_filter_study with:
+use rule filter from load_data_filter as load_data_filter_study with:
     message:
         """
         Filter the data for study {wildcards.study}
