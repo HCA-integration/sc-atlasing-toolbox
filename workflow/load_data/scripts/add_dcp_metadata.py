@@ -8,13 +8,12 @@ import zarr
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils_pipeline.io import link_zarr
+from utils.io import read_anndata, write_zarr_linked
 
-in_file = snakemake.input[0]
-in_dcp = snakemake.input[1]
-out_obs = snakemake.output.obs
+input_file = snakemake.input[0]
+in_dcp = snakemake.input.dcp
+output_file = snakemake.output.zarr
 out_stats = snakemake.output.stats
-out_adata = snakemake.output.zarr
 metadata_columns = snakemake.params.metadata_cols
 
 def explode_table(df, col, sep=' \|\| '):
@@ -26,9 +25,8 @@ def explode_table(df, col, sep=' \|\| '):
 id_cols = snakemake.params.id_cols
 
 dcp_tsv = pd.read_table(in_dcp)
-with zarr.open(in_file) as z:
-    obs_df = read_elem(z['obs'])
-n_obs = obs_df.shape[0]
+adata = read_anndata(input_file, obs='obs')
+obs_df = adata.obs.copy()
 
 # identify ID column
 cols = []
@@ -111,12 +109,10 @@ if intersect_max['intersection'] > 0:
     # make unique per barcode
     obs_df = obs_df.drop_duplicates(subset=["index"])
     del obs_df['index']
-    assert n_obs == obs_df.shape[0], f'Number of observations changed from {n_obs} to {obs_df.shape[0]}'
+    assert adata.n_obs == obs_df.shape[0], f'Number of observations changed from {adata.n_obs} to {obs_df.shape[0]}'
 
-# save obs
-logging.info(obs_df.shape)
-logging.info(f'save obs to {out_obs}...')
-obs_df.to_csv(out_obs, sep='\t', index=False)
+# reassign updated obs
+adata.obs = obs_df
 
 # save stats
 intersect_max.to_csv(out_stats, sep='\t', index=True)
@@ -124,16 +120,10 @@ intersect_max.to_csv(out_stats, sep='\t', index=True)
 # TODO: aggregatedness of donor ID
 
 # save anndata
-logging.info(f'Write to {out_adata}...')
-adata = anndata.AnnData(obs=obs_df)
-adata.write_zarr(out_adata)
-
-if in_file.endswith('.zarr'):
-    input_files = [f.name for f in Path(in_file).iterdir()]
-    files_to_keep = [f for f in input_files if f not in ['obs']]
-    link_zarr(
-        in_dir=in_file,
-        out_dir=out_adata,
-        file_names=files_to_keep,
-        overwrite=True,
+logging.info(f'Write to {output_file}...')
+write_zarr_linked(
+    adata,
+    input_file,
+    output_file,
+    files_to_keep=['obs'],
 )

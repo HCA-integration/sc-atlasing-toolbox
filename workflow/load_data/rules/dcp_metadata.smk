@@ -9,6 +9,7 @@ else:
 
 dcp_studies = set(metadata_df['study']).intersection(set(dataset_df['study']))
 
+
 # rule download_dcp_tsv:
 #     output:
 #         tsv=out_dir / 'dcp_metadata' / '{study}' / 'dcp_metadata.tsv'
@@ -29,8 +30,7 @@ rule add_dcp_metadata:
         dcp=lambda wildcards: metadata_df.query('study == @wildcards.study')['filename'].values[0],
         # dcp=rules.download_dcp_tsv.output.tsv,
     output:
-        zarr=directory(out_dir / 'dcp_metadata' / '{study}' / 'adata.zarr'),
-        obs=out_dir / 'dcp_metadata' / '{study}' / 'obs_merged.tsv',
+        zarr=directory(out_dir / 'dcp_metadata' / '{study}.zarr'),
         stats=out_dir / 'dcp_metadata' / '{study}' / 'stats.tsv'
     params:
         id_cols=[
