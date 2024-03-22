@@ -1,20 +1,18 @@
 rule prepare:
     message:
         """
-        Prepare: Prepare dataset {wildcards.dataset} with file_id {wildcards.file_id}
+        Prepare: Prepare dataset={wildcards.dataset} with file_id={wildcards.file_id} and var_mask={wildcards.var_mask}
         input: {input}
         output: {output}
-        params: norm_counts={params.norm_counts} raw_counts={params.raw_counts} var_mask={params.var_mask} save_subset={params.save_subset}
+        params: norm_counts={params.norm_counts} raw_counts={params.raw_counts} save_subset={params.save_subset}
         """
     input:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
     output:
-        zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}--file_id~{file_id}.zarr'),
-        done=touch(out_dir / 'prepare' / '.dataset~{dataset}--file_id~{file_id}.done'),
+        zarr=directory(out_dir / 'prepare' / 'dataset~{dataset}' / 'file_id~{file_id}' / 'var_mask~{var_mask}.zarr'),
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
-        var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask', exclude=['output_type'], default='highly_variable'),
         save_subset=lambda wildcards: mcfg.get_from_parameters(wildcards, 'save_subset', exclude=['output_type']),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
@@ -27,6 +25,11 @@ rule prepare:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
     script:
         '../scripts/prepare.py'
+
+
+rule prepare_all:
+    input:
+        mcfg.get_output_files(rules.prepare.output),
 
 
 integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
@@ -42,7 +45,6 @@ use rule run_method from integration as integration_run_method with:
        """
     input:
         zarr=rules.prepare.output.zarr,
-        done=rules.prepare.output.done,
     output:
         zarr=directory(out_dir / integration_run_pattern / 'adata.zarr'),
         model=touch(directory(out_dir / integration_run_pattern / 'model')),
@@ -52,7 +54,6 @@ use rule run_method from integration as integration_run_method with:
     params:
         norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', exclude=['output_type']),
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
-        var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask', exclude=['output_type'], default='highly_variable'),
         output_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', exclude=['output_type']),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict', exclude=['output_type']),
         seed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'seed', exclude=['output_type'], default=0),
@@ -91,7 +92,6 @@ use rule neighbors from preprocessing as integration_postprocess with:
         done=rules.integration_run_method.output.model,
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
-        done=touch(directory(out_dir / f'{paramspace.wildcard_pattern}.zarr/obs')),
     params:
         args=update_neighbors_args,
         extra_uns=lambda wildcards: {'output_type': wildcards.output_type},

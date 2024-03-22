@@ -23,12 +23,12 @@ defaults:
     var_mask: highly_variable
     save_subset: false
   datasets:
-    # - test
-    # - multi_wildcards
+    - test
+    - multi_wildcards
     - preprocessed
-    # - harmony
-    # - scarches
-    # - scvi_tools
+    - harmony
+    - scarches
+    - scvi_tools
 
 
 DATASETS:
@@ -38,6 +38,7 @@ DATASETS:
         pbmc68k: test/input/pbmc68k.h5ad
         # unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
+      var_mask:
       threads: 3
       batch: batch
       umap_colors:
@@ -69,6 +70,9 @@ DATASETS:
       output_types:
         - embed
         - knn
+      var_mask:
+        - highly_variable
+        - highly_variable_2
 
   preprocessed:
     input:

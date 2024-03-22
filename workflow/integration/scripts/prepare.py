@@ -34,7 +34,7 @@ def read_layer(
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
-var_mask = params.get('var_mask', 'highly_variable')
+var_mask = snakemake.wildcards.var_mask
 save_subset = params.get('save_subset', False)
 
 

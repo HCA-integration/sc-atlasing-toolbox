@@ -13,7 +13,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-var_mask = params.get('var_mask', 'highly_variable')
+var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams

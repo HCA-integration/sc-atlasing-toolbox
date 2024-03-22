@@ -27,6 +27,9 @@ adata.obs.loc[adata.obs['na_column'] == 'Dendritic', 'na_column'] = np.nan
 # add bolean columns
 adata.obs['is_cd14_mono'] = adata.obs['bulk_labels'] == 'CD14+ Monocyte'
 
+# add var mask
+adata.var['highly_variable_2'] = adata.var['highly_variable'].copy()
+
 # add raw
 adata.raw = AnnData(
     X=adata.layers['counts'],

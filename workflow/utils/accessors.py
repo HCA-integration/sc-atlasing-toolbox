@@ -61,6 +61,9 @@ def subset_hvg(
     :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
+    if var_column is None or var_column == 'None':
+        var_column = 'mask'
+        adata.var[var_column] = True
     assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
     assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
 

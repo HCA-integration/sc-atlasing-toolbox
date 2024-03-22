@@ -17,7 +17,7 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
-var_mask = params.get('var_mask', 'highly_variable')
+var_mask = wildcards.var_mask
 
 torch.manual_seed(params.get('seed', 0))
 torch.set_num_threads(snakemake.threads)

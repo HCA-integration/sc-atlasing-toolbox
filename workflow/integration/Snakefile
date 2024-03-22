@@ -24,9 +24,9 @@ mcfg = IntegrationConfig(
         'var_mask',
         'save_subset',
     ],
-    wildcard_names=['method', 'batch', 'label', 'output_type'],
+    wildcard_names=['method', 'batch', 'label', 'var_mask', 'output_type'],
     rename_config_params={'methods': 'method'},
-    explode_by=['method', 'batch', 'label'],
+    explode_by=['method', 'batch', 'label', 'var_mask'],
     dtypes={
         'seed': int,
         'threads': int,

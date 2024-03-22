@@ -40,7 +40,7 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
 params = snakemake.params
-var_mask = params.get('var_mask', 'highly_variable')
+var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams

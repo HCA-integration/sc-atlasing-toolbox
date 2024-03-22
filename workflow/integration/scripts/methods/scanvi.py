@@ -19,7 +19,7 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
-var_mask = params.get('var_mask', 'highly_variable')
+var_mask = wildcards.var_mask
 
 scvi.settings.seed = params.get('seed', 0)
 scvi.settings.progress_bar_style = 'tqdm'
