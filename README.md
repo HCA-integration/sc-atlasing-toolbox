@@ -153,7 +153,7 @@ The global configuration allows you to set output locations, computational resou
 
 You can find example configuration files under `configs/`.
 
-#### Global configuration: Output settings
+#### 1. Global configuration: Output settings
 
 You can specify pipeline output as follows.
 Intermediate and large files will be stored under `output_dir`, while images and smaller outputs that are used for understanding the outputs will be stored under `images`.
@@ -184,7 +184,7 @@ output_map:
 
 The default output settings under `configs/outputs.yaml` should work out of the box.
 
-#### Global configuration: Computational settings
+#### 2. Global configuration: Computational settings
 
 Depending on the hardware you have available, you can configure the workflow to make use of them.
 If you have a GPU, you can set `use_gpu` to `true` and the pipeline will try to use the GPU for all modules that support it.
@@ -196,7 +196,7 @@ os: intel
 use_gpu: true
 ```
 
-#### Input configuration
+#### 3. Input configuration
 
 You can select and combine modules to create a custom workflow by specifying the input and module configuration in a YAML file.
 Each instance of a workflow needs a unique task name and it can take any number of inputs consist of modules.
@@ -219,7 +219,7 @@ DATASETS: # TODO: rename to TASKS
 
 > :warning: **Warning** There can only be one instance of a module as a key in the input mapping (in the backend this is a dictionary). But you can reuse the same module output as input for multiple other modules. The order of the entries in the input mapping doesn't matter. 
 
-#### Module configuration
+#### 4. Module configuration
 
 You can configure the behaviour of each module by specifying their parameters under the same dataset name.
  ```yaml
@@ -288,7 +288,7 @@ conda activate snakemake
 
 </details>
 
-#### Create a wrapper script (recommended)
+#### 1. Create a wrapper script (recommended)
 
 Next, you can create a wrapper script that will call the pipeline with the correct profile and configuration file(s).
 This way, it is easier to call the pipeline and you can avoid having to remember all the flags and options.
@@ -330,7 +330,7 @@ snakemake \
 
 > :bulb: **Tip** Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
-#### Call the pipeline
+#### 2. Call the pipeline
 
 When you execute the script (say, we call it `run_pipeline.sh`), you can treat it like a snakemake command and add any additional snakemake arguments you want to use.
 
@@ -346,7 +346,7 @@ Executing the actual workflow providing 10 cores would be:
 bash run_pipeline.sh -c10
 ```
 
-#### Specify which subworkflow you want to run
+#### 3. Specify which subworkflow you want to run
 
 The pipeline will only run the rule that you explicitly tell it to run.
 You can list all possible rules with:
