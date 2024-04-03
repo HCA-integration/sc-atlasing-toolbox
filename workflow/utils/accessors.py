@@ -52,8 +52,10 @@ def select_neighbors(adata, output_type):
 
 def subset_hvg(
     adata: ad.AnnData,
-    to_memory: [str, list] = 'X',
-    var_column: str = 'highly_variable'
+    to_memory: [str, list, bool] = 'X',
+    var_column: str = 'highly_variable',
+    compute_dask: bool = True,
+    add_column: str = 'highly_variable',
 ) -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
@@ -66,29 +68,53 @@ def subset_hvg(
         adata.var[var_column] = True
     assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
     assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
+    
+    if add_column is not None:
+        adata.var[add_column] = adata.var[var_column]
 
     if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
         subsetted = False
     else:
         subsetted = True
+        print(
+            f'Subsetting to {adata.var[var_column].sum()} features from {var_column}...',
+            flush=True
+        )
         adata = adata[:, adata.var[var_column]].copy()
-    adata = adata_to_memory(adata, layers=to_memory)
-    adata = apply_layers(
+    
+    adata = adata_to_memory(
         adata,
-        func=lambda x: x.compute() if isinstance(x, da.Array) else x,
         layers=to_memory,
+        verbose=True,
     )
+    
+    if compute_dask:
+        adata = apply_layers(
+            adata,
+            func=lambda x: x.compute() if isinstance(x, da.Array) else x,
+            layers=to_memory,
+            verbose=True,
+        )
+    
     return adata, subsetted
 
 
-def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData:
-    if layers is None:
+def adata_to_memory(
+    adata: ad.AnnData,
+    layers: [str, list, bool] = None,
+    verbose: bool = False,
+) -> ad.AnnData:
+    if layers is None or layers is True:
         layers = ['X', 'raw'] + list(adata.layers.keys())
     elif isinstance(layers, str):
         layers = [layers]
+    elif layers is False:
+        return adata
     
     for layer in layers:
+        if verbose:
+            print(f'Convert {layer} to memory...', flush=True)
         if layer in adata.layers:
             adata.layers[layer] = to_memory(adata.layers[layer])
         elif layer == 'X':
@@ -99,4 +125,6 @@ def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData
             adata_raw = adata.raw.to_adata()
             adata_raw.X = to_memory(adata.raw.X)
             adata.raw = adata_raw
+        elif verbose:
+            print(f'Layer {layer} not found, skipping...', flush=True)
     return adata

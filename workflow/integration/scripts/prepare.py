@@ -1,5 +1,5 @@
 from anndata import AnnData
-import scanpy as sc
+from dask import array as da
 from pathlib import Path
 from pprint import pformat
 import logging
@@ -7,28 +7,8 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
-from utils.processing import assert_neighbors
-
-
-def read_layer(
-    input_file: [str, Path],
-    layer: str,
-    **kwargs,
-) -> (AnnData, str):
-    """
-    Read anndata with correct count slot
-    :param input_file: input file
-    :param layer: slot in file store to read e.g. 'X', 'raw/X', 'layers/counts'
-    :return: anndata object, var_key, layer
-    """
-    logging.info(f'Read {input_file}...')
-    adata = read_anndata(
-        input_file,
-        X=layer,
-        var='raw/var' if 'raw/' in layer else 'var',
-        **kwargs,
-    )
-    return adata
+from utils.misc import apply_layers
+from utils.processing import assert_neighbors, sc
 
 
 input_file = snakemake.input[0]
@@ -59,10 +39,16 @@ def read_and_subset(
         varp='varp',
         uns='uns',
         backed=True,
+        dask=True,
     )
     
     logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(adata, var_column=var_column)
+    adata, subsetted = subset_hvg(
+        adata,
+        var_column=var_column,
+        to_memory=False,
+        compute_dask=False,
+    )
     
     # determine output
     if subsetted and save_subset:
@@ -117,7 +103,6 @@ if input_file.endswith('.h5ad'):
     files_to_keep.append('X')
 elif input_file.endswith('.zarr'):
     adata = AnnData(
-        X=adata_norm.X,
         obs=adata_norm.obs,
         obsm=adata_norm.obsm,
         var=adata_norm.var,
@@ -130,11 +115,19 @@ elif input_file.endswith('.zarr'):
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
+apply_layers(
+    adata,
+    func=lambda x: x.compute() if isinstance(x, da.Array) else x,
+    layers=['norm_counts', 'raw_counts'],
+    verbose=True,
+)
+
 # preprocess if missing
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
-    sc.pp.pca(adata)
-    files_to_keep.extend(['obsm', 'varm', 'uns'])
+    import scanpy
+    scanpy.pp.pca(adata, layer='norm_counts')
+    files_to_keep.extend(['obsm', 'uns'])
 
 try:
     assert_neighbors(adata)

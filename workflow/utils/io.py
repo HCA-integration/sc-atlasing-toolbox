@@ -362,7 +362,7 @@ def link_zarr(
         will update default mapping of same input and output naming
     """
     def prune_nested_links(slot_map, in_dir_map):
-        # determine equivalent classes of slots (top hierarchy)
+        # determine equivalence classes of slots (top hierarchy)
         eq_classes = {}
         for out_slot in slot_map:
             if '/' not in out_slot:

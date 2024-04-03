@@ -4,16 +4,9 @@ Build kNN graph on embedding
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
-try:
-    import rapids_singlecell as sc
-    import cupy as cp
-    logging.info('Using rapids_singlecell...')
-except ImportError as e:
-    import scanpy as sc
-    logging.info('Importing rapids failed, using scanpy...')
 
 from utils.io import read_anndata, write_zarr_linked
-from utils.processing import assert_neighbors
+from utils.processing import assert_neighbors, sc
 from utils.misc import ensure_dense, ensure_sparse
 
 
