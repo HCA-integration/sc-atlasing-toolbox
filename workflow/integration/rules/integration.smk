@@ -19,10 +19,10 @@ rule prepare:
     threads:
         lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
-        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
     script:
         '../scripts/prepare.py'
 

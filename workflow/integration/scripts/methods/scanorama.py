@@ -92,5 +92,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'obsm', 'uns'],
+    files_to_keep=['X', 'obsm', 'var', 'uns'],
 )

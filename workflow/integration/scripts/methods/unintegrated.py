@@ -31,7 +31,7 @@ adata = read_anndata(
 adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # prepare output adata
-files_to_keep = ['obsm', 'uns']
+files_to_keep = ['obsm', 'var', 'uns']
 
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
