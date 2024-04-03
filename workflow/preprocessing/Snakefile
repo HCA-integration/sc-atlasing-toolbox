@@ -55,13 +55,15 @@ rule plots_all:
     input:
         mcfg.get_output_files(rules.preprocessing_plot_pca.output),
         mcfg.get_output_files(rules.preprocessing_plot_umap.output),
+    localrule: True
 
 
 rule all:
     input:
-        mcfg.get_output_files(rules.assemble.output),
+        mcfg.get_output_files(rules.preprocessing_assemble.output),
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -71,3 +73,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

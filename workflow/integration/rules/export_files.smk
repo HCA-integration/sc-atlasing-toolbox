@@ -17,3 +17,4 @@ rule export_files:
 rule export_files_all:
     input:
         mcfg.get_output_files(rules.export_files.output)
+    localrule: True

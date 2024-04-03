@@ -25,6 +25,7 @@ rule all:
         mcfg.get_output_files(rules.celltypist_plots.output),
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 module common:
@@ -42,3 +43,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

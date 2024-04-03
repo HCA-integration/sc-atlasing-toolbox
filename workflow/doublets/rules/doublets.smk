@@ -75,6 +75,7 @@ rule collect:
         doubletdetection=lambda wildcards: get_from_checkpoint(wildcards, rules.doubletdetection.output.tsv),
     output:
         zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
+    localrule: True
     conda:
         get_env(config, 'scanpy')
     resources:

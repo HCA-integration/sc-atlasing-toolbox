@@ -1,6 +1,7 @@
 rule save_config:
     output:
         json='.snakemake/{images}_{target}/config.json'
+    localrule: True
     run:
         import json
 
@@ -11,6 +12,7 @@ rule save_config:
 rule rulegraph:
     input: rules.save_config.output.json
     output: '{images}/rule_graphs/{target}.png'
+    localrule: True
     shell:
         """
         snakemake {wildcards.target} --configfile {input} --rulegraph | \
@@ -22,6 +24,7 @@ rule rulegraph:
 rule dag:
     input: rules.save_config.output.json
     output: '{images}/job_graphs/{target}.png'
+    localrule: True
     shell:
         """
         snakemake {wildcards.target} --configfile {input} --dag | \
@@ -34,3 +37,4 @@ rule dependency_graph:
     input:
         rules.rulegraph.output,
         rules.dag.output,
+    localrule: True

@@ -22,6 +22,7 @@ rule download_all:
             dataset=dataset_df[dataset_df['url'].apply(lambda x: not Path(x).is_file())] \
                 .to_dict(orient='list').get('dataset')
         )
+    localrule: True
 
 
 def get_files_for_metadata_harm(wildcards):
@@ -75,6 +76,7 @@ rule harmonize_metadata:
 rule harmonize_metadata_all:
     input:
         expand(rules.harmonize_metadata.output,dataset=dataset_df['dataset'])
+    localrule: True
 
 
 use rule merge from load_data as load_data_merge_study with:
@@ -98,3 +100,4 @@ use rule merge from load_data as load_data_merge_study with:
 
 rule merge_study_all:
     input: expand(rules.load_data_merge_study.output,**get_wildcards(dataset_df,['study']))
+    localrule: True

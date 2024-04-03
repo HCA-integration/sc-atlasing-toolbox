@@ -24,6 +24,7 @@ rule prepare:
 rule prepare_all:
     input:
         mcfg.get_output_files(rules.prepare.output)
+    localrule: True
 
 
 # def get_metric_input(wildcards):
@@ -89,3 +90,4 @@ rule run:
 rule run_all:
     input:
         mcfg.get_output_files(rules.run.output, all_params=True)
+    localrule: True

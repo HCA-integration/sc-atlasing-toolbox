@@ -96,6 +96,7 @@ rule all:
         # rules.clustering_all.input,
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -105,3 +106,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

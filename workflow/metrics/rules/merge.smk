@@ -17,8 +17,7 @@ rule merge_metrics:
         wildcards_string=mcfg.get_wildcards(as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
     conda:
         get_env(config, 'scanpy')
-    group:
-        'metrics_merge'
+    localrule: True
     resources:
         mem_mb=1000,
         disk_mb=500
@@ -100,3 +99,4 @@ rule merge_metrics_all:
         mcfg.get_output_files(rules.merge_metrics_per_batch.output, wildcard_names=['batch']),
         mcfg.get_output_files(rules.merge_metrics_per_label.output, wildcard_names=['label']),
         mcfg.get_output_files(rules.merge_metrics_per_file.output, wildcard_names=['file_id']),
+    localrule: True

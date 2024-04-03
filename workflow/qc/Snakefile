@@ -73,6 +73,7 @@ rule all:
         rules.thresholds_all.input,
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:

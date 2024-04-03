@@ -11,8 +11,7 @@ rule benchmark_per_dataset:
         benchmark=out_dir / 'dataset~{dataset}' / 'integration.benchmark.tsv'
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, as_df=True)
-    group:
-        'integration'
+    localrule: True
     run:
         benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
         benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
@@ -27,8 +26,7 @@ rule benchmark:
         benchmark=out_dir / 'integration.benchmark.tsv'
     params:
         wildcards=mcfg.get_wildcards(as_df=True)
-    group:
-        'integration'
+    localrule: True
     run:
         benchmark_df = pd.concat([pd.read_table(file) for file in input.benchmark]).reset_index(drop=True)
         benchmark_df = pd.concat([params.wildcards.reset_index(drop=True), benchmark_df],axis=1)
@@ -41,8 +39,6 @@ use rule barplot from plots as integration_barplot with:
         tsv=rules.benchmark.output.benchmark
     output:
         png=image_dir / 'benchmark' / '{metric}.png'
-    group:
-        'integration'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='method',
@@ -60,8 +56,6 @@ use rule barplot from plots as integration_barplot_per_dataset with:
         tsv=rules.benchmark_per_dataset.output.benchmark
     output:
         png=image_dir / 'benchmark' / 'dataset~{dataset}' / 'metric~{metric}.png'
-    group:
-        'integration'
     params:
         metric=lambda wildcards: wildcards.metric,
         category='method',
@@ -89,3 +83,4 @@ rule benchmark_all:
             ),
             metric=['s', 'max_uss', 'mean_load'],
         )
+    localrule: True

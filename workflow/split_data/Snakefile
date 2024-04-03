@@ -61,7 +61,7 @@ rule link:
         done=lambda wildcards: mcfg.get_output_files(rules.split.output.done, subset_dict=wildcards),
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
-        X=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr' / 'X'),
+    localrule: True
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
@@ -72,6 +72,7 @@ rule all:
     input:
         mcfg.get_output_files(rules.link.output)
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -81,3 +82,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

@@ -70,6 +70,7 @@ rule add_dcp_metadata:
 rule add_dcp_metadata_all:
     input:
         expand(rules.add_dcp_metadata.output,study=dcp_studies)
+    localrule: True
 
 
 def collect_stats(wildcards):
@@ -96,3 +97,4 @@ rule dcp_metadata_all:
     input:
         rules.add_dcp_metadata_all.output,
         rules.plot_stats.output,
+    localrule: True

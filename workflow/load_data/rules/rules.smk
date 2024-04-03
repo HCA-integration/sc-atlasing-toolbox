@@ -5,7 +5,7 @@ rule merge:
     input:
         [
             'dataset1.h5ad',
-            '{dataset2.h5ad'
+            'dataset2.h5ad'
         ]
     output:
         zarr=directory('merged.zarr'),

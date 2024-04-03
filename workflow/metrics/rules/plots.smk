@@ -108,8 +108,6 @@ use rule swarmplot from plots as metrics_swarmplot_per_file with:
         title='Metrics',
         description=wildcards_to_str,
         dodge=True,
-    group:
-        'metrics_plots'
 
 
 rule compare_metrics:
@@ -120,8 +118,7 @@ rule compare_metrics:
         score=mcfg.image_dir / 'comparison_score.png',
     conda:
         get_env(config, 'plots')
-    group:
-        'metrics_plots'
+    localrule: True
     script:
         '../scripts/plots/comparison.py'
 
@@ -146,8 +143,7 @@ rule funkyheatmap:
         get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
         'docker://ghcr.io/dynverse/funky_heatmap:latest'
-    group:
-        'metrics_plots'
+    localrule: True
     script:
         '../scripts/plots/funkyheatmap.R'
 
@@ -221,8 +217,7 @@ rule funkyheatmap_standalone:
         tsv=rules.merge_metrics.output.tsv
     output:
         png=mcfg.image_dir / 'funky_heatmap.png'
-    group:
-        'metrics_plots'
+    localrule: True
     shell:
         """
         wget https://github.com/dynverse/funkyheatmap/releases/latest/download/executable.zip
@@ -249,3 +244,4 @@ rule plots_all:
         # expand(rules.metrics_swarmplot_per_file.output,metric='score',**mcfg.get_wildcards(wildcard_names=['file_id'])),
         # # implementation comparison
         # rules.compare_metrics.output,
+    localrule: True

@@ -31,6 +31,7 @@ rule all:
         rules.marker_genes_all.input,
         rules.barcode_matching_all.input,
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -40,3 +41,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

@@ -27,3 +27,4 @@ use rule filter from load_data_filter as load_data_filter_study with:
 
 rule filter_all:
     input: expand(rules.load_data_filter_study.output,**get_wildcards(dataset_df,['study']))
+    localrule: True
