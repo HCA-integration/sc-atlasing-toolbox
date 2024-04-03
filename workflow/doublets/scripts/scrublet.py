@@ -4,7 +4,7 @@ import pandas as pd
 import scanpy as sc
 import anndata as ad
 import logging
-logger = logging.getLogger('Scrublet')
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 
@@ -13,14 +13,13 @@ output_tsv = snakemake.output.tsv
 batch_key = snakemake.params.get('batch_key')
 batch = str(snakemake.wildcards.batch)
 
-logger.info(f'Read {input_zarr}...')
+logging.info(f'Read {input_zarr}...')
 adata = read_anndata(input_zarr, backed=True, X='X', obs='obs')
 
-logger.info(f'Subset to batch {batch}...')
+logging.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
     adata = adata[adata.obs[batch_key].astype(str) == batch, :]
-else:
-    adata = adata
+logging.info(adata.__str__())
 
 if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
     adata.X = adata.X.to_memory()
@@ -32,7 +31,7 @@ if adata.n_obs < 10:
     exit(0)
 
 # run scrublet
-logger.info('Run scrublet...')
+logging.info('Run scrublet...')
 sc.external.pp.scrublet(
     adata,
     batch_key=None,
@@ -55,7 +54,7 @@ sc.external.pp.scrublet(
 )
 
 # save results
-logger.info('Save results...')
+logging.info('Save results...')
 df = adata.obs[['doublet_score', 'predicted_doublet']].rename(
     columns={
         'doublet_score': 'scrublet_score',
