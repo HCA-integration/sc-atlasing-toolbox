@@ -48,6 +48,7 @@ rule all:
             strategy=['by_sample', 'within_sample']
         )
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -57,3 +58,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

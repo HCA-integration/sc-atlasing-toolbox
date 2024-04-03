@@ -33,6 +33,7 @@ rule summary_stats_all:
         tsv=mcfg.image_dir / 'summary' / per_dataset_pattern / 'per_dataset_stats.tsv',
         aggregate=mcfg.image_dir / 'summary' / per_dataset_pattern / 'per_dataset_stats_aggregated.tsv',
         png=mcfg.image_dir / 'summary' / per_dataset_pattern / 'per_dataset_stats.png',
+    localrule: True
     conda:
         get_env(config, 'scanpy')
     script:
@@ -42,3 +43,4 @@ rule summary_stats_all:
 rule summary_all:
     input:
         mcfg.get_output_files(rules.summary_stats_all.output, exclude=['file_id']),
+    localrule: True

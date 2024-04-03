@@ -50,3 +50,4 @@ rule clustering_all:
     input:
         mcfg.get_output_files(rules.integration_cluster_merge.output),
         mcfg.get_output_files(rules.integration_cluster_plot_umap.output),
+    localrule: True

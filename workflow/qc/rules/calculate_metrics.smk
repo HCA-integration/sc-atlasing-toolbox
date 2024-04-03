@@ -16,6 +16,7 @@ rule autoqc:
 rule autoqc_all:
     input:
         mcfg.get_output_files(rules.autoqc.output),
+    localrule: True
 
 
 rule get_thresholds:
@@ -47,6 +48,7 @@ rule merge_thresholds:
     output:
         tsv=mcfg.image_dir / 'dataset~{dataset}' / 'thresholds.tsv',
         qc_stats=mcfg.image_dir / 'dataset~{dataset}' / 'qc_stats.tsv',
+    localrule: True
     run:
         import pandas as pd
         
@@ -63,3 +65,4 @@ rule thresholds_all:
     input:
         mcfg.get_output_files(rules.get_thresholds.output),
         mcfg.get_output_files(rules.merge_thresholds.output),
+    localrule: True

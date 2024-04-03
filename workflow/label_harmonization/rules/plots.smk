@@ -94,6 +94,7 @@ rule dotplot:
 
 rule dotplot_all:
     input: mcfg.get_output_files(rules.dotplot.output)
+    localrule: True
 
 
 rule plots_all:
@@ -102,3 +103,4 @@ rule plots_all:
         mcfg.get_output_files(rules.label_harmonization_umap.output),
         mcfg.get_output_files(rules.celltypist_umap.output),
         mcfg.get_output_files(rules.dotplot.output),
+    localrule: True

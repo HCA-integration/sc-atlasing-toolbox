@@ -34,6 +34,7 @@ rule all:
         mcfg.get_output_files(rules.collect.output),
         mcfg.get_output_files(rules.plot.output),
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -43,3 +44,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

@@ -69,3 +69,4 @@ rule  merge_subset_all:
             rules.load_data_merge_subset.output,
             **get_wildcards(dataset_df,['organ', 'subset'],drop_na=True)
         )
+    localrule: True

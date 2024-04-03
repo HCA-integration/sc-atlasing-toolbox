@@ -30,8 +30,10 @@ rule marker_genes_collect:
         )
     output:
         touch(out_dir / 'marker_genes' / paramspace.wildcard_pattern / 'marker_genes.done')
+    localrule: True
 
 
 rule marker_genes_all:
     input:
         mcfg.get_output_files(rules.marker_genes_collect.output)
+    localrule: True

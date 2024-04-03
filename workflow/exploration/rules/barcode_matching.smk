@@ -42,3 +42,4 @@ rule barcode_matching:
 rule barcode_matching_all:
     input:
         mcfg.get_output_files(rules.barcode_matching.output)
+    localrule: True

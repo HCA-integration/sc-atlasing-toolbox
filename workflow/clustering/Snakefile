@@ -44,6 +44,7 @@ rule all:
         mcfg.get_output_files(rules.clustering_merge.output),
         mcfg.get_output_files(rules.clustering_plot_umap.output),
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -53,4 +54,5 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True
 

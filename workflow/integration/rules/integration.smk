@@ -30,6 +30,7 @@ rule prepare:
 rule prepare_all:
     input:
         mcfg.get_output_files(rules.prepare.output),
+    localrule: True
 
 
 integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('--output_type~{output_type}', '')
@@ -106,3 +107,4 @@ rule run_all:
     input:
         mcfg.get_output_files(rules.integration_run_method.output),
         mcfg.get_output_files(rules.integration_postprocess.output),
+    localrule: True

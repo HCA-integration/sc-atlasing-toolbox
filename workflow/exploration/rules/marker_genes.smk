@@ -24,3 +24,4 @@ rule marker_genes:
 rule marker_genes_all:
     input:
         mcfg.get_output_files(rules.marker_genes.output)
+    localrule: True
