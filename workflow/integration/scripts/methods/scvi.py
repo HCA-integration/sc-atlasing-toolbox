@@ -4,9 +4,10 @@ from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
-    SCVI_MODEL_PARAMS
-from utils_pipeline.io import read_anndata, write_zarr_linked, to_memory
+from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
+    SCVI_MODEL_PARAMS, plot_model_history
+from utils.io import read_anndata, write_zarr_linked, to_memory
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -16,6 +17,8 @@ Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
 
 wildcards = snakemake.wildcards
 params = snakemake.params
+batch_key = wildcards.batch
+var_mask = wildcards.var_mask
 
 scvi.settings.seed = params.get('seed', 0)
 scvi.settings.progress_bar_style = 'tqdm'
@@ -37,12 +40,20 @@ adata = read_anndata(
     var='var',
     obs='obs',
     uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# prepare data for model
+adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 scvi.model.SCVI.setup_anndata(
     adata,
     # categorical_covariate_keys=[batch], # Does not work with scArches
-    batch_key=wildcards.batch,
+    batch_key=batch_key,
 )
 
 logging.info(f'Set up scVI with parameters:\n{pformat(model_params)}')
@@ -68,9 +79,6 @@ add_metadata(
     model_history=set_model_history_dtypes(model.history)
 )
 
-# plot model history
-from utils import plot_model_history
-
 for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
     train_key = f'{loss}_train'
     validation_key = f'{loss}_validation'
@@ -90,5 +98,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['obsm', 'uns'],
+    files_to_keep=['obsm', 'var', 'uns'],
 )

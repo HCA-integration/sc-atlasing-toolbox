@@ -34,6 +34,7 @@ use rule plots from preprocessing as integration_plot_umap with:
         basis='X_umap',
         ncols=1,
         outlier_factor=10,
+        size=2,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

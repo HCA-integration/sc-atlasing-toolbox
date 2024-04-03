@@ -13,13 +13,24 @@ mcfg = IntegrationConfig(
     module_name='integration',
     config=config,
     parameters=workflow.source_path('params.tsv'),
-    config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts', 'seed', 'threads'],
-    wildcard_names=['method', 'batch', 'label', 'output_type'],
+    config_params=[
+        'methods',
+        'batch',
+        'label',
+        'var_mask',
+        'norm_counts',
+        'raw_counts',
+        'seed',
+        'threads',
+        'save_subset',
+    ],
+    wildcard_names=['method', 'batch', 'label', 'var_mask', 'output_type'],
     rename_config_params={'methods': 'method'},
-    explode_by=['method', 'batch', 'label'],
+    explode_by=['method', 'batch', 'label', 'var_mask'],
     dtypes={
         'seed': int,
         'threads': int,
+        'save_subset': bool,
     }
 )
 

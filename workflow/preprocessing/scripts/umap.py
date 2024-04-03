@@ -6,22 +6,9 @@ import numpy as np
 import anndata as ad
 import logging
 logging.basicConfig(level=logging.INFO)
-try:
-    import rapids_singlecell as sc
-    import cupy as cp
-    logging.info('Using rapids_singlecell...')
-    import rmm
-    from rmm.allocators.cupy import rmm_cupy_allocator
-    rmm.reinitialize(
-        managed_memory=True,
-        pool_allocator=False,
-    )
-    cp.cuda.set_allocator(rmm_cupy_allocator)
-except ImportError as e:
-    import scanpy as sc
-    logging.info('Importing rapids failed, using scanpy...')
 
 from utils.io import read_anndata, link_zarr_partial, check_slot_exists
+from utils.processing import sc
 from utils.misc import ensure_dense
 
 

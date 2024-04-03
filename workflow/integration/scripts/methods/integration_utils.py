@@ -1,5 +1,5 @@
-# from utils_pipeline.misc import ensure_sparse
-from utils_pipeline.annotate import add_wildcards
+# from utils.misc import ensure_sparse
+from utils.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
 

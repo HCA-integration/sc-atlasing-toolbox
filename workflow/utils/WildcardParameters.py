@@ -66,11 +66,14 @@ class WildcardParameters:
         
         # add input file wildcards
         self.wildcards_df = self.wildcards_df.merge(
-            pd.DataFrame(input_file_wildcards, dtype='object'),
+            pd.DataFrame(input_file_wildcards, dtype=str),
             on='dataset',
             how='left',
         )
         
+        # set wildcards to string
+        self.wildcards_df.loc[:, self.wildcard_names] = self.wildcards_df.loc[:, self.wildcard_names].astype(str)
+
         # set paramspace
         if paramspace_kwargs is None:
             paramspace_kwargs = {}
@@ -78,7 +81,7 @@ class WildcardParameters:
         # self.paramspace = Paramspace(
         #     self.wildcards_df[self.wildcard_names],
         #     **paramspace_kwargs
-        # )
+        # )        
 
 
     def subset_by_query(

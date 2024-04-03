@@ -1,5 +1,5 @@
 from anndata import AnnData
-import scanpy as sc
+from dask import array as da
 from pathlib import Path
 from pprint import pformat
 import logging
@@ -7,41 +7,23 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
-from utils.processing import assert_neighbors
-
-
-def read_layer(
-    input_file: [str, Path],
-    layer: str,
-    **kwargs,
-) -> (AnnData, str):
-    """
-    Read anndata with correct count slot
-    :param input_file: input file
-    :param layer: slot in file store to read e.g. 'X', 'raw/X', 'layers/counts'
-    :return: anndata object, var_key, layer
-    """
-    logging.info(f'Read {input_file}...')
-    adata = read_anndata(
-        input_file,
-        X=layer,
-        var='raw/var' if 'raw/' in layer else 'var',
-        **kwargs,
-    )
-    return adata
+from utils.misc import apply_layers
+from utils.processing import assert_neighbors, sc
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
+var_mask = snakemake.wildcards.var_mask
+save_subset = params.get('save_subset', False)
 
 
 def read_and_subset(
     input_file: [str, Path],
     layer_key: str,
+    var_column: str,
     files_to_keep: list,
     slot_map: dict,
-    hvgs: list = None,
 ):
     in_layer = params.get(layer_key, 'X')
     assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
@@ -51,19 +33,26 @@ def read_and_subset(
     adata = read_anndata(
         input_file,
         X=in_layer,
+        obsm='obsm',
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
         varp='varp',
         uns='uns',
         backed=True,
+        dask=True,
     )
     
     logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(adata, hvgs=hvgs)
+    adata, subsetted = subset_hvg(
+        adata,
+        var_column=var_column,
+        to_memory=False,
+        compute_dask=False,
+    )
     
     # determine output
-    if subsetted:
-        files_to_keep.extend(['X', out_layer, 'var', 'varm', 'varp'])
+    if subsetted and save_subset:
+        files_to_keep.extend([out_layer, 'var', 'varm', 'varp'])
     else:
         slot_map |= {out_layer: in_layer}
     
@@ -76,15 +65,16 @@ slot_map = {}
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='norm_counts',
+    var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='raw_counts',
+    var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    hvgs=adata_norm.var_names,
 )
 
 assert adata_norm.var_names.equals(adata_raw.var_names), f'\nnorm:\n{adata_norm.var}\nraw:\n{adata_raw.var}'
@@ -110,10 +100,11 @@ if input_file.endswith('.h5ad'):
             'raw_counts': adata_raw.X,
         },
     )
+    files_to_keep.append('X')
 elif input_file.endswith('.zarr'):
     adata = AnnData(
-        X=adata_norm.X,
         obs=adata_norm.obs,
+        obsm=adata_norm.obsm,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,
@@ -124,11 +115,19 @@ elif input_file.endswith('.zarr'):
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
+apply_layers(
+    adata,
+    func=lambda x: x.compute() if isinstance(x, da.Array) else x,
+    layers=['norm_counts', 'raw_counts'],
+    verbose=True,
+)
+
 # preprocess if missing
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
-    sc.pp.pca(adata)
-    files_to_keep.extend(['obsm', 'varm', 'uns'])
+    import scanpy
+    scanpy.pp.pca(adata, layer='norm_counts')
+    files_to_keep.extend(['obsm', 'uns'])
 
 try:
     assert_neighbors(adata)

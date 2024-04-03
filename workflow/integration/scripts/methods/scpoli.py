@@ -3,9 +3,9 @@ from scarches.models.scpoli import scPoli
 from pprint import pformat
 from pathlib import Path
 
-from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
-from utils_pipeline.io import read_anndata, write_zarr_linked
-
+from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, plot_model_history
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -17,6 +17,7 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
+var_mask = wildcards.var_mask
 
 torch.manual_seed(params.get('seed', 0))
 torch.set_num_threads(snakemake.threads)
@@ -78,8 +79,13 @@ adata = read_anndata(
     X='layers/raw_counts',
     obs='obs',
     var='var',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # prepare data for model
 adata.X = adata.X.astype('float32')
@@ -104,9 +110,6 @@ add_metadata(
     params,
     model_history=dict(model.trainer.logs)
 )
-
-# plot model history
-from utils import plot_model_history
 
 plot_model_history(
     title='loss',

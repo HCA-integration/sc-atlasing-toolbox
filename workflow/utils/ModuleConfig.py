@@ -357,7 +357,7 @@ class ModuleConfig:
             wildcard_names=wildcard_names,
             **paramspace_kwargs,
         )
-        self.set_default_target(self.default_target)
+        self.set_default_target()
 
 
     def get_profile(self, wildcards: [dict, Wildcards]):

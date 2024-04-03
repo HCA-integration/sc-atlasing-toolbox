@@ -40,10 +40,10 @@ config_kwargs = {
     ),
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
-        config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts'],
-        wildcard_names=['method', 'batch', 'label', 'output_type'],
+        config_params=['methods', 'batch', 'label', 'var_mask'],
+        wildcard_names=['method', 'batch', 'label', 'var_mask', 'output_type'],
         rename_config_params={'methods': 'method'},
-        explode_by=['method', 'batch'],
+        explode_by=['method', 'batch', 'label', 'var_mask'],
     ),
     'metrics': dict(
         parameters=workflow.source_path('metrics/params.tsv'),

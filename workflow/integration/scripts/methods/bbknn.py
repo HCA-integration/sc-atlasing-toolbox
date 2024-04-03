@@ -3,8 +3,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -12,11 +13,12 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
+var_mask = wildcards.var_mask
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
 hyperparams = {'pynndescent_random_state': params.get('seed', 0)} | hyperparams
 
-files_to_keep = ['obsm', 'obsp', 'uns']
+files_to_keep = ['obsm', 'obsp', 'var', 'uns']
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -26,6 +28,9 @@ adata = read_anndata(
     obsm='obsm',
     uns='uns'
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 use_rep = hyperparams.pop('use_rep', 'X_pca')
 assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'

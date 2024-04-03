@@ -21,13 +21,15 @@ except ImportError as e:
     from scanpy.external.pp import harmony_integrate
     logging.info('Importing rapids failed, using scanpy...')
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
+var_mask = wildcards.var_mask
 params = snakemake.params
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -44,6 +46,9 @@ adata = read_anndata(
 
 use_rep = hyperparams.pop('use_rep', 'X_pca')
 assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
+
+# subset features
+adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # run method
 logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
@@ -65,5 +70,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['obsm', 'uns'],
+    files_to_keep=['obsm', 'var', 'uns'],
 )
