@@ -7,7 +7,9 @@ warnings.filterwarnings("ignore")
 
 from matplotlib import pyplot as plt
 import scanpy as sc
-from pandas.api.types import is_numeric_dtype
+import numpy as np
+import pandas as pd
+from pandas.api.types import is_numeric_dtype, is_string_dtype, is_categorical_dtype
 from pprint import pformat
 
 from utils.io import read_anndata
@@ -19,8 +21,8 @@ sc.set_figure_params(
     vector_friendly=True,
     fontsize=9,
     figsize=(6,6),
-    dpi=100,
-    dpi_save=200
+    dpi=300,
+    dpi_save=300
 )
 
 input_file = snakemake.input[0]
@@ -36,7 +38,7 @@ logging.info(f'Read file {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsm='obsm')
 ensure_dense(adata, basis)
 
-if adata.obs.shape[0] == 0:
+if adata.n_obs == 0:
     logging.info('No cells, skip...')
     exit()
 
@@ -48,17 +50,19 @@ if 'color' in params:
     # remove that are not in the data
     colors = [color for color in colors if color in adata.obs.columns]
     # filter colors with too few or too many categories
-    colors = [color for color in colors if 1 < adata.obs[color].nunique() <= 100 or is_numeric_dtype(adata.obs[color])]
     logging.info(f'Colors after filtering:\n{pformat(colors)}')
     
-    # set color parameters
-    if len(colors) > 0:
-        for color in colors:
-            if adata.obs[color].dtype.name == 'category':
-                adata.obs[color] = adata.obs[color].astype('str')
-    else:
+    # else:
+    if len(colors) == 0:
         logging.info('No valid colors, skip...')
         colors = [None]
+    else:
+        for color in colors:
+            column = adata.obs[color]
+            if is_categorical_dtype(column) or is_string_dtype(column):
+                column = column.replace(['NaN', 'None', '', 'nan'], float('nan'))
+                column = pd.Categorical(column)
+                adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
 
 # remove outliers
@@ -68,16 +72,27 @@ params.pop('outlier_factor', None)
 adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 
+# set minimum point size
+default_size = 150000 / adata.n_obs
+size = params.get('size', default_size)
+if size is None:
+    size = default_size
+params['size'] = np.min([np.max([size, 3, default_size]), 200])
+print(f'Size: {params["size"]}', flush=True)
+print(default_size, flush=True)
+params['size'] = None
+
+
 for color in colors:
     logging.info(f'Plot color "{color}"...')
-    if color in adata.obs.columns and is_numeric_dtype(adata.obs[color]):
-        adata.obs[color] = adata.obs[color].astype('float32')
+    palette = sc.pl.palettes.godsnot_102 if is_categorical_dtype(adata.obs[color]) and adata.obs[color].nunique() > 20 else None
     try:
         fig = sc.pl.embedding(
             adata[adata.obs.sample(adata.n_obs).index],
             color=color,
             show=False,
             return_fig=True,
+            palette=palette,
             **params
         )
         fig.suptitle(f'{wildcards_string}\nn={adata.n_obs}')

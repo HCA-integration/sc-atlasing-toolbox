@@ -24,3 +24,12 @@ DATASETS:
         - pca
         - neighbors
         - umap
+      colors:
+        - bulk_labels
+        - batch
+        - na_column
+        - na_str_column
+        - n_counts
+        - n_genes
+        - percent_mito
+        - is_cd14_mono
