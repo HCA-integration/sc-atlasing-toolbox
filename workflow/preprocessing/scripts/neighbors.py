@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
-from utils.processing import assert_neighbors, sc
+from utils.processing import assert_neighbors, sc, USE_GPU
 from utils.misc import ensure_dense, ensure_sparse
 
 
@@ -61,8 +61,16 @@ else:
     
     # compute kNN graph
     logging.info(f'parameters: {params}')
-    sc.pp.neighbors(adata, **params)
-    assert_neighbors(adata)
+    try:
+        sc.pp.neighbors(adata, **params)
+    except Exception as e:
+        if not USE_GPU:
+            raise e
+        logging.error(f"Recompute with scanpy because of error: {e}")
+        import scanpy
+        scanpy.pp.neighbors(adata, **params)
+    finally:
+        assert_neighbors(adata)
 
 # update .uns
 adata.uns |= extra_uns
