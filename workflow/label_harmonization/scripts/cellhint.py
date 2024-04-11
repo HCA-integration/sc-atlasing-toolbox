@@ -1,7 +1,7 @@
 import logging
 import scanpy as sc
 from scipy import sparse
-import celltypist
+import cellhint
 
 from utils.io import read_anndata
 
@@ -14,9 +14,9 @@ output_relation = snakemake.output.relation
 output_model = snakemake.output.model
 author_label_key = snakemake.params.author_label_key
 dataset_key = snakemake.params.dataset_key
-params = snakemake.params.params
-subsample = snakemake.params.subsample
-force_scale = snakemake.params.force_scale
+params = snakemake.params.get('params', {})
+subsample = snakemake.params.get('subsample', False)
+force_scale = snakemake.params.get('force_scale', False)
 
 print(params)
 
@@ -38,13 +38,13 @@ except KeyError:
     scaled = False
 
 # scale for PCT if not already scaled
-if 'use_pct' in params and params['use_pct'] and (force_scale or not scaled):
+if params.get('use_pct', False) and (force_scale or not scaled):
     logger.info("Scale .X for PCT")
     sc.pp.scale(adata, max_value=10)
 
 print(adata)
 
-alignment = celltypist.harmonize(
+alignment = cellhint.harmonize(
     adata=adata,
     dataset=dataset_key,
     cell_type=author_label_key,

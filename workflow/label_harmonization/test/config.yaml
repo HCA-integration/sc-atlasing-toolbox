@@ -14,15 +14,15 @@ resources:
 
 # defaults:
 #   label_harmonization:
-#     celltypist:
+#     cellhint:
 #       use_rep: 'X_pca'
 #       use_pct: true
 
 DATASETS:
-  test_celltypist:
+  test_cellhint:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/all/pbmc/preprocessed.zarr
+        pbmc: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     label_harmonization:
       plot_colors:
         - phase
@@ -30,19 +30,19 @@ DATASETS:
       dataset_key: phase
       author_label_key: bulk_labels
       organ: blood
-      celltypist:
+      cellhint:
         use_rep: X_pca
         use_pct: false
-  test_celltypist_pct:
+  test_cellhint_pct:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/all/pbmc/preprocessed.zarr
+        pbmc: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     label_harmonization:
       plot_colors: bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
       organ: blood
-      celltypist:
+      cellhint:
         use_rep: X_pca
         use_pct: true
 

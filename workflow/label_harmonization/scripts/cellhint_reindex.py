@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-import celltypist
+import cellhint
 
 from utils.io import read_anndata
 
