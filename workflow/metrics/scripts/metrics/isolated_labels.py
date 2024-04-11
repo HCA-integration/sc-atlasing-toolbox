@@ -20,8 +20,6 @@ def isolated_label_asw(adata, output_type, batch_key, label_key, **kwargs):
     if output_type == 'knn':
         return np.nan
 
-    adata = select_neighbors(adata, output_type)
-
     return scib.me.isolated_labels_asw(
         adata,
         label_key=label_key,
