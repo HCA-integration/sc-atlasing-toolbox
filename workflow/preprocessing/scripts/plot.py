@@ -21,8 +21,8 @@ sc.set_figure_params(
     vector_friendly=True,
     fontsize=9,
     figsize=(6,6),
-    dpi=100,
-    dpi_save=200
+    dpi=300,
+    dpi_save=300
 )
 
 input_file = snakemake.input[0]
@@ -77,7 +77,7 @@ default_size = 150000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 2, default_size]), 200])
+params['size'] = np.min([np.max([size, 3, default_size]), 200])
 print(f'Size: {params["size"]}', flush=True)
 print(default_size, flush=True)
 params['size'] = None
