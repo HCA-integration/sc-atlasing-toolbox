@@ -1,5 +1,6 @@
 from anndata import AnnData
 from dask import array as da
+import numpy as np
 from pathlib import Path
 from pprint import pformat
 import logging
@@ -43,23 +44,29 @@ def read_and_subset(
     )
     
     logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(
-        adata,
-        var_column=var_column,
-        to_memory=False,
-        compute_dask=False,
-    )
+    subsetted = False
+    if var_column not in adata.var:
+        adata.var['highly_variable'] = True
+    else:
+        adata.var['highly_variable'] = adata.var[var_column]
+    if save_subset:
+        adata, subsetted = subset_hvg(
+            adata,
+            var_column='highly_variable',
+            to_memory=False,
+            compute_dask=False,
+        )
     
     # determine output
     if subsetted and save_subset:
-        files_to_keep.extend([out_layer, 'var', 'varm', 'varp'])
+        files_to_keep.append(out_layer)
     else:
         slot_map |= {out_layer: in_layer}
     
     return adata, files_to_keep, slot_map
 
 
-files_to_keep = []
+files_to_keep = ['obs', 'var']
 slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
@@ -102,6 +109,8 @@ if input_file.endswith('.h5ad'):
     )
     files_to_keep.append('X')
 elif input_file.endswith('.zarr'):
+    if save_subset:
+        files_to_keep.extend(['varm', 'varp'])
     adata = AnnData(
         obs=adata_norm.obs,
         obsm=adata_norm.obsm,
@@ -126,15 +135,15 @@ apply_layers(
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
     import scanpy
-    scanpy.pp.pca(adata, layer='norm_counts')
+    scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
     files_to_keep.extend(['obsm', 'uns'])
 
 try:
     assert_neighbors(adata)
     logging.info(adata.uns['neighbors'].keys())
-except AssertionError:
-    logging.info('Compute neighbors...')
-    sc.pp.neighbors(adata)
+except AssertionError as e:
+    logging.info(f'Compute neighbors due to Assertion Error: {e}...')
+    sc.pp.neighbors(adata, use_rep='X_pca')
     files_to_keep.extend(['obsp', 'uns'])
 
 logging.info(f'Write {output_file}...')

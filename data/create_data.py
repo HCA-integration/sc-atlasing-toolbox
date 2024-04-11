@@ -23,6 +23,7 @@ adata.layers['normcounts'] = adata.X.copy()
 # add column with NA columns
 adata.obs['na_column'] = adata.obs['bulk_labels'].astype(str)
 adata.obs.loc[adata.obs['na_column'] == 'Dendritic', 'na_column'] = np.nan
+adata.obs['na_str_column'] = adata.obs['na_column'].astype(str)
 
 # add bolean columns
 adata.obs['is_cd14_mono'] = adata.obs['bulk_labels'] == 'CD14+ Monocyte'

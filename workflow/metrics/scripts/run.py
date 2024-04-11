@@ -13,6 +13,7 @@ except ImportError:
 from metrics import metric_map
 from metrics.utils import write_metrics
 from utils.io import read_anndata
+from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -66,14 +67,20 @@ if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
 if input_type == 'full':
     kwargs |= {'X': 'X', 'var': 'var'}
-if comparison:
-    kwargs |= {'raw': 'raw', 'var': 'var', 'varm': 'varm'}
 
 adata = read_anndata(input_file, **kwargs)
+print(adata, flush=True)
+adata_raw = None
+
 if comparison:
-    adata_raw = adata.raw.to_adata()
+    kwargs = {'obs': 'obs', 'var': 'raw/var', 'varm': 'raw/varm', 'X': 'raw/X'}
+    adata_raw = read_anndata(input_file, **kwargs, dask=True, backed=True)
+    print('adata_raw')
+    print(adata_raw, flush=True)
+    
+    adata_raw, _ = subset_hvg(adata_raw, var_column='highly_variable', to_memory=[], compute_dask=False)
     adata_raw.obs = adata.obs
-    adata_raw.var = adata.var
+    adata_raw.obsm = adata.obsm
     adata_raw.uns = adata.uns
     adata_raw.varm = adata.varm
 else:
