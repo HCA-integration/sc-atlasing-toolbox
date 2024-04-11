@@ -6,6 +6,7 @@ def isolated_label_f1(adata, output_type, batch_key, label_key, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.isolated_labels_f1(
         adata,
         label_key=label_key,
@@ -20,8 +21,7 @@ def isolated_label_asw(adata, output_type, batch_key, label_key, **kwargs):
     if output_type == 'knn':
         return np.nan
 
-    adata = select_neighbors(adata, output_type)
-
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.isolated_labels_asw(
         adata,
         label_key=label_key,

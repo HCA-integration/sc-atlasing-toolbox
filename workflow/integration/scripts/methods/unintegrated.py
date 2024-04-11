@@ -31,7 +31,7 @@ adata = read_anndata(
 adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # prepare output adata
-files_to_keep = ['obsm', 'var', 'uns']
+files_to_keep = ['obsm', 'uns']
 
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
@@ -44,8 +44,8 @@ logging.info(adata.uns.keys())
 try:
     assert_neighbors(adata)
     logging.info(adata.uns['neighbors'].keys())
-except AssertionError:
-    logging.info('Compute neighbors...')
+except AssertionError as e:
+    logging.info(f'Recompute neighbors due to {e}...')
     sc.pp.neighbors(adata)
     print(adata.uns['neighbors'])
     files_to_keep.extend(['obsp', 'uns'])

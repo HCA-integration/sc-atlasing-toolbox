@@ -5,6 +5,7 @@ from .utils import select_neighbors, rename_categories
 def clisi(adata, output_type, batch_key, label_key, **kwargs):
     import scib
 
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.clisi_graph(
         adata,
         batch_key=batch_key,

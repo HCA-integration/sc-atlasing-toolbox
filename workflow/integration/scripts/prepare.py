@@ -15,6 +15,7 @@ from utils.processing import assert_neighbors, sc
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
+batch_keys = params.batches
 var_mask = snakemake.wildcards.var_mask
 save_subset = params.get('save_subset', False)
 
@@ -34,6 +35,7 @@ def read_and_subset(
     adata = read_anndata(
         input_file,
         X=in_layer,
+        obs='obs',
         obsm='obsm',
         var='raw/var' if 'raw/' in in_layer else 'var',
         varm='varm',
@@ -145,6 +147,11 @@ except AssertionError as e:
     logging.info(f'Compute neighbors due to Assertion Error: {e}...')
     sc.pp.neighbors(adata, use_rep='X_pca')
     files_to_keep.extend(['obsp', 'uns'])
+
+# fix batch covariate
+for batch_key in batch_keys:
+    assert batch_key in adata.obs, f'Batch key {batch_key} is missing'
+    adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())

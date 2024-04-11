@@ -16,6 +16,7 @@ def nmi(adata, output_type, batch_key, label_key, **kwargs):
         use_rep=None,
         n_iterations=5
     )
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.nmi(adata, label_key, 'cluster')
 
 

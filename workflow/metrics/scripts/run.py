@@ -82,12 +82,9 @@ if comparison:
     adata_raw.obs = adata.obs
     adata_raw.obsm = adata.obsm
     adata_raw.uns = adata.uns
-    adata_raw.varm = adata.varm
-else:
-    adata_raw = None
 
 logger.info(f'Run metric {metric} for {output_type}...')
-adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
+adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
     adata,
     output_type,
