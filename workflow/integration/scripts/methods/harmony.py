@@ -6,13 +6,12 @@ from harmony import harmonize
 
 from integration_utils import add_metadata, remove_slots
 from utils.io import read_anndata, write_zarr_linked
-from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
-var_mask = wildcards.var_mask
 params = snakemake.params
+batch_key = wildcards.batch
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -26,16 +25,12 @@ logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
     obs='obs',
-    var='var',
     obsm='obsm',
     uns='uns'
 )
 
 use_rep = hyperparams.pop('use_rep', 'X_pca')
 assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
-
-# subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # run method
 logging.info(f'Run Harmony pytorch with parameters {pformat(hyperparams)}...')
@@ -58,5 +53,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['obsm', 'var', 'uns'],
+    files_to_keep=['obsm', 'uns'],
 )

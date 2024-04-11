@@ -48,7 +48,7 @@ adata = read_anndata(
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
 
 # subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
+adata, subsetted = subset_hvg(adata, var_column=var_mask)
 
 scvi.model.SCVI.setup_anndata(
     adata,
@@ -98,5 +98,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['obsm', 'var', 'uns'],
+    files_to_keep=['obsm', 'uns'],
 )
