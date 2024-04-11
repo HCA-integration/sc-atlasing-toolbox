@@ -27,7 +27,7 @@ rule subset:
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')
     resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
         disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     params:
         n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells', as_type=int, check_query_keys=False),
