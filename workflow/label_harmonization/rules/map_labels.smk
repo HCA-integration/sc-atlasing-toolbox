@@ -25,24 +25,6 @@ rule cellhint:
         '../scripts/cellhint.py'
 
 
-rule cellhint_index_reannotations:
-    """
-    Add a column for reannotations (should make relabeling easier)
-    """
-    input:
-        reannotation=rules.cellhint.output.reannotation
-    output:
-        reannotation=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation_index.tsv',
-    conda:
-        get_env(config, 'cellhint')
-    resources:
-        partition=mcfg.get_resource(resource_key='partition'),
-        qos=mcfg.get_resource(resource_key='qos'),
-        mem_mb=mcfg.get_resource(resource_key='mem_mb'),
-    script:
-        '../scripts/cellhint_reindex.py'
-
-
 rule cellhint_plots:
     """
     Plots for cellhint output

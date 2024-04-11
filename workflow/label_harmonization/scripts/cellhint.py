@@ -64,9 +64,8 @@ relation['group'] = alignment.groups
 relation.to_csv(output_relation, sep='\t', index=False)
 
 # add reannotations to adata.obs
-print(adata.obs, flush=True)
-adata.obs[['reannotation_index', 'low_hierarchy', 'high_hierarchy']] = \
-    reannotation.loc[adata.obs_names, ['reannotation_index', 'reannotation', 'group']]
+anno_cols = ['reannotation_index', 'reannotation', 'group']
+adata.obs[anno_cols] = reannotation.loc[adata.obs_names, anno_cols]
 print(adata.obs, flush=True)
 
 logging.info(f'Write {output_file}...')
