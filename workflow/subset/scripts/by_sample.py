@@ -34,12 +34,12 @@ n_cells = 0
 
 shuffled_samples = adata.obs[sample_key].value_counts().sample(frac=1, random_state=42)
 for sample, count in shuffled_samples.items():
-    n_cells += count
-    logging.info(f'sample: {sample}')
-    logging.info(f'count: {count}')
     if len(samples) > 0 and n_cells > n_cell_max:
         break
+    n_cells += count
     samples.append(sample)
+    logging.info(f'sample: {sample}')
+    logging.info(f'count: {count}')
 
 logging.info(f'Subset to {n_cells} cells, {len(samples)} samples...')
 
