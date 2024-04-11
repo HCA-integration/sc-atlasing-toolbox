@@ -40,6 +40,7 @@ def asw_label(adata, output_type, batch_key, label_key, **kwargs):
     if output_type == 'knn':
         return np.nan
 
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.silhouette(
         adata,
         label_key=label_key,
