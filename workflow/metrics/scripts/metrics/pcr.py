@@ -5,6 +5,7 @@ from scipy.sparse import issparse
 
 from utils.accessors import adata_to_memory
 from utils.assertions import assert_pca
+from utils.misc import dask_compute
 
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
@@ -23,7 +24,7 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         adata_pre,
         adata_post,
         covariate,
-        embed=None,
+        embed,
         n_comps=50,
         scale=True,
         verbose=False,
@@ -104,8 +105,8 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
     adata.obsm['X_emb'] = adata.obsm[embed]
 
-    adata_raw = adata_to_memory(adata_raw)
-    
+    dask_compute(adata_raw)
+
     try:
         # compute cell cycle score per batch
         batch_key = batch_key
