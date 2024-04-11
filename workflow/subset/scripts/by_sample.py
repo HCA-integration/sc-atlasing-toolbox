@@ -3,6 +3,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
+from utils.misc import dask_compute
 
 
 input_file = snakemake.input[0]
@@ -49,4 +50,5 @@ logging.info(adata)
 
 # save
 logging.info('Write...')
+dask_compute(adata)
 adata.write_zarr(output_file)
