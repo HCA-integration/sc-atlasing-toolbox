@@ -3,9 +3,9 @@ rule cellhint:
     Map author labels of datasets
     """
     input:
-        anndata=lambda wildcards: mcfg.get_input_file(**wildcards),
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        h5ad=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.h5ad',
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.zarr'),
         reannotation=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation.tsv',
         relation=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
         model=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
@@ -60,11 +60,3 @@ rule cellhint_plots:
         get_env(config, 'cellhint')
     script:
         '../scripts/cellhint_plots.py'
-
-
-# cellhint_columns = ['dataset', 'dataset_key', 'author_label_key', 'cellhint']
-# try:
-#     cellhint_datasets = parameters[cellhint_columns].dropna()['dataset'].unique()
-# except KeyError:
-#     cellhint_datasets = []
-
