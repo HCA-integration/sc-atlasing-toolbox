@@ -4,8 +4,10 @@ logger = logging.getLogger('Preprocess for metrics')
 logger.setLevel(logging.INFO)
 import numpy as np
 import anndata as ad
+import scanpy
 
 from utils.assertions import assert_pca
+from utils.accessors import subset_hvg
 from utils.io import read_anndata, write_zarr_linked
 from utils.processing import compute_neighbors, sc
 
@@ -17,6 +19,12 @@ label_key = params.get('label_key')
 neighbor_args = params.get('neighbor_args', {})
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 corrected_layer = params.get('corrected_layer', 'X')
+
+files_to_keep = ['obsm', 'obsp', 'raw', 'var', 'varm', 'uns']
+slot_map = {
+    'X': corrected_layer,
+    'raw/X': unintegrated_layer,
+}
 
 # determine output types
 # default output type is 'full'
@@ -32,7 +40,7 @@ kwargs = dict(
     uns='uns',
 )
 if output_type == 'full':
-    kwargs|= {'X': corrected_layer}
+    kwargs |= {'X': corrected_layer}
 adata = read_anndata(input_file, **kwargs)
 
 # remove cells without labels
@@ -61,15 +69,21 @@ adata.raw = read_anndata(
     X=unintegrated_layer,
     var='var',
 )
-logging.info('Run PCA on unintegrated data...')
 adata_raw = adata.raw.to_adata()
-sc.pp.pca(
-    adata_raw,
-    use_highly_variable='highly_variable' in adata_raw.var.columns
-)
-adata.obsm['X_pca'] = adata_raw.obsm['X_pca']
-adata.varm['PCs'] = adata_raw.varm['PCs']
+
+# subset features
+if 'highly_variable' not in adata_raw.var.columns:
+    adata_raw.var['highly_variable'] = True
+adata_raw, subsetted = subset_hvg(adata_raw, var_column='highly_variable')
+adata._inplace_subset_var(adata_raw.var_names)
+if subsetted:
+    files_to_keep.extend(['X', 'raw/X', 'varp'])
+
+logging.info('Run PCA on unintegrated data...')
+scanpy.pp.pca(adata_raw, mask_var='highly_variable')
 adata.uns['pca'] = adata_raw.uns['pca']
+adata.obsm['X_pca'] = adata_raw.obsm['X_pca']
+adata.raw = adata_raw
 del adata_raw
 
 # write to file
@@ -79,9 +93,6 @@ write_zarr_linked(
     adata,
     in_dir=input_file,
     out_dir=output_file,
-    files_to_keep=['obsm', 'obsp', 'raw', 'var', 'varm', 'uns'],
-    slot_map={
-        'X': corrected_layer,
-        'raw/X': unintegrated_layer,
-    }
+    files_to_keep=files_to_keep,
+    slot_map=slot_map,
 )
