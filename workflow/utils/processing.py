@@ -19,9 +19,11 @@ try:
     )
     cp.cuda.set_allocator(rmm_cupy_allocator)
     logging.info('Using rapids_singlecell...')
+    USE_GPU = True
 except ImportError as e:
     import scanpy as sc
     logging.info('Importing rapids failed, using scanpy...')
+    USE_GPU = False
 
 from .assertions import assert_neighbors
 from .io import to_memory
