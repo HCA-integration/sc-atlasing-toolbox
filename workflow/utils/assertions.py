@@ -19,15 +19,15 @@ def assert_neighbors(
     check_n_neighbors=False,
 ):
     assert neighbors_key in adata.uns, f'neighbors key "{neighbors_key}" not on .uns'
-    assert 'connectivities_key' in adata.uns[neighbors_key]
-    assert 'distances_key' in adata.uns[neighbors_key]
+    assert 'connectivities_key' in adata.uns[neighbors_key], f'"connectivities_key" not in .uns["{neighbors_key}"]'
+    assert 'distances_key' in adata.uns[neighbors_key], f'"distances_key" not in .uns["{neighbors_key}"]'
     assert adata.uns[neighbors_key]['connectivities_key'] == conn_key, f'"{conn_key} is not saved as conectivities_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
     assert adata.uns[neighbors_key]['distances_key'] == dist_key, f'"{dist_key} is not saved as distances_key for "{neighbors_key}": {adata.uns[neighbors_key]}'
     assert conn_key in adata.obsp, f'"{conn_key}" not in .obsp {adata.obsp.keys()}'
     assert dist_key in adata.obsp, f'"{dist_key}" not in .obsp {adata.obsp.keys()}'
     if check_params:
-        assert 'params' in adata.uns[neighbors_key]
-        assert 'use_rep' in adata.uns[neighbors_key]['params']
+        assert 'params' in adata.uns[neighbors_key], f'"params" missing from .uns["{neighbors_key}"]'
+        assert 'use_rep' in adata.uns[neighbors_key]['params'], f'"use_rep" missing from .uns["{neighbors_key}"]["params"]'
     
     # check that all cells have the same number of neighbors
     n_neighbors = np.unique(adata.obsp['distances'].nonzero()[0], return_counts=True)[1]
