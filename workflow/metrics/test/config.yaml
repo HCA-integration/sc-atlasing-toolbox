@@ -87,8 +87,9 @@ DATASETS:
   scib_metrics:
     input:
       metrics:
-        pbmc: test/input/pbmc68k.h5ad
-        prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
     metrics:
       label: bulk_labels
       batch: batch
