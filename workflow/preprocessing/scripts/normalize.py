@@ -76,6 +76,8 @@ if rapids:
     logging.info('Transfer to CPU...')
     sc.utils.anndata_to_CPU(adata)
 
+adata.layers['normcounts'] = adata.X
+
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
@@ -83,23 +85,20 @@ if 'preprocessing' not in adata.uns:
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
 
-if input_file.endswith('.h5ad'):
-    adata.layers['normcounts'] = adata.X
-
 logging.info(f'Write to {output_file}...')
 logging.info(adata.__str__())
 write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'uns'],
+    files_to_keep=['uns', 'layers/normcounts'],
     slot_map={
+        'X': 'layers/normcounts',
+        'layers/counts': layer,
         'raw/X': layer,
         'raw/var': 'var',
-        'layers/counts': layer,
-        'layers/normcounts': 'X',
     },
     in_dir_map={
-        'X': output_file,
+        'layers/normcounts': output_file,
     },
 )
