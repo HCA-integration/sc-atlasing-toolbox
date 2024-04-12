@@ -5,10 +5,10 @@ rule cellhint:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.zarr'),
-        reannotation=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation.tsv',
-        relation=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
-        model=mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.zarr'),
+        reannotation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation.tsv',
+        relation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
+        model=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
     params:
         author_label_key=lambda w: mcfg.get_for_dataset( w.dataset, query=[mcfg.module_name,'author_label_key']),
         dataset_key=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'dataset_key']),
@@ -32,10 +32,10 @@ rule cellhint_plots:
     input:
         model=rules.cellhint.output.model,
     output:
-        treeplot=mcfg.image_dir / paramspace.wildcard_pattern / 'cellhint--treeplot.png',
-        treeplot_ordered=mcfg.image_dir / paramspace.wildcard_pattern / 'cellhint--treeplot_ordered.png',
-        heatmap=mcfg.image_dir / paramspace.wildcard_pattern / 'cellhint--heatmap.png',
-        # sankeyplot=mcfg.image_dir / paramspace.wildcard_pattern / 'cellhint' / 'sankeyplot.pdf',
+        treeplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot.png',
+        treeplot_ordered=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot_ordered.png',
+        heatmap=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'heatmap.png',
+        # sankeyplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'sankeyplot.pdf',
     params:
         coarse_cell_type=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'author_label_key']),
     conda:

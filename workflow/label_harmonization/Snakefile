@@ -14,6 +14,14 @@ mcfg = ModuleConfig(
 )
 
 paramspace = mcfg.get_paramspace()
+out_dir = mcfg.out_dir
+image_dir = mcfg.image_dir
+
+
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
+
 
 include: 'rules/map_labels.smk'
 include: 'rules/plots.smk'
