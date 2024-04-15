@@ -1,10 +1,3 @@
-def get_marker_gene_set(mcfg, wildcards):
-    gene_set_key = mcfg.get_from_parameters(wildcards, 'marker_genes', default='')
-    assert isinstance(gene_set_key, str), f'Expected string, got {gene_set_key}'
-    gene_set = mcfg.config.get('MARKER_GENES', {}).get(gene_set_key, {})
-    return gene_set
-
-
 rule marker_genes:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
