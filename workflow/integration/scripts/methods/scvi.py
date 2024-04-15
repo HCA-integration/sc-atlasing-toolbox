@@ -28,6 +28,8 @@ model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
     model_params=SCVI_MODEL_PARAMS,
 )
+categorical_covariate_keys = model_params.pop('categorical_covariate_keys', [])
+continuous_covariate_keys = model_params.pop('continuous_covariate_keys', [])
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
@@ -52,15 +54,13 @@ adata, subsetted = subset_hvg(adata, var_column=var_mask)
 
 scvi.model.SCVI.setup_anndata(
     adata,
-    # categorical_covariate_keys=[batch], # Does not work with scArches
     batch_key=batch_key,
+    categorical_covariate_keys=categorical_covariate_keys, # Does not work with scArches
+    continuous_covariate_keys=continuous_covariate_keys,
 )
 
 logging.info(f'Set up scVI with parameters:\n{pformat(model_params)}')
-model = scvi.model.SCVI(
-    adata,
-    **model_params
-)
+model = scvi.model.SCVI(adata, **model_params)
 
 logging.info(f'Train scVI with parameters:\n{pformat(train_params)}')
 model.train(**train_params)
