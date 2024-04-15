@@ -30,7 +30,7 @@ DATASETS:
         - bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
-      organ: blood
+      marker_genes: blood
       cellhint:
         use_rep: X_pca
         use_pct: false
@@ -43,18 +43,16 @@ DATASETS:
       plot_colors: bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
-      organ: blood
+      marker_genes: blood
       cellhint:
         use_rep: X_pca
         use_pct: true
       force_scale: true
 
-# TODO: use updated way to get marker genes
-ORGANS:
+MARKER_GENES:
   blood:
-    marker_genes:
-      - ITGB2
-      - HES4
-      - CD14
-      - SSU72
-      - S100B
+    - ITGB2
+    - HES4
+    - CD14
+    - SSU72
+    - S100B

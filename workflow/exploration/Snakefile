@@ -1,6 +1,7 @@
 """
 Exploration
 """
+from utils.marker_genes import get_marker_gene_set
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 

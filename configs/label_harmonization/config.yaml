@@ -34,7 +34,7 @@ DATASETS:
     input:
       label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.zarr
     label_harmonization:
-      organ: blood
+      marker_genes: blood
       plot_colors:
         - study
         - lineage
@@ -55,7 +55,7 @@ DATASETS:
     input:
       label_harmonization: data/out/preprocessing/blood_harm_pp/preprocessed.zarr
     label_harmonization:
-      organ: blood
+      marker_genes: blood
       plot_colors: study
       dataset_key: study
       author_label_key: author_annotation
