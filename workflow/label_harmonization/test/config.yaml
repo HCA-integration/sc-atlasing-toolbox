@@ -22,7 +22,8 @@ DATASETS:
   test_cellhint:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+        pbmc: test/input/pbmc68k.h5ad
     label_harmonization:
       plot_colors:
         - phase
@@ -33,10 +34,11 @@ DATASETS:
       cellhint:
         use_rep: X_pca
         use_pct: false
+      subsample: 0.8
   test_cellhint_pct:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     label_harmonization:
       plot_colors: bulk_labels
       dataset_key: phase
@@ -45,7 +47,9 @@ DATASETS:
       cellhint:
         use_rep: X_pca
         use_pct: true
+      force_scale: true
 
+# TODO: use updated way to get marker genes
 ORGANS:
   blood:
     marker_genes:

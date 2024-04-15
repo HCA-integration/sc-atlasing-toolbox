@@ -45,10 +45,10 @@ use rule umap from preprocessing as label_harmonization_umap with:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
 
 
 rule cellhint_umap:

@@ -1,5 +1,6 @@
 import logging
 logging.basicConfig(level=logging.INFO)
+import anndata as ad
 import scanpy as sc
 import cellhint
 
@@ -29,17 +30,20 @@ if use_pct:
     kwargs |= {'X': input_layer}
 adata = read_anndata(input_file, **kwargs)
 print(adata, flush=True)
+obs = adata.obs
 
-# subsample genes
+# subsample cells
 if subsample:
     assert 0 < subsample < 1
     sc.pp.subsample(adata, fraction=subsample)
+
+# subsample HVGs
+adata, _ = subset_hvg(adata, 'highly_variable')
 
 # scale for PCT if not already scaled
 scaled = adata.uns.get('preprocessing', {}).get('scaled', False)
 if use_pct and (force_scale or not scaled):
     logger.info("Scale .X for PCT")
-    adata, _ = subset_hvg(adata, 'highly_variable')
     sc.pp.scale(adata, max_value=10)
 
 logging.info('Harmonize with CellHint...')
@@ -65,7 +69,11 @@ relation.to_csv(output_relation, sep='\t', index=False)
 
 # add reannotations to adata.obs
 anno_cols = ['reannotation_index', 'reannotation', 'group']
-adata.obs[anno_cols] = reannotation.loc[adata.obs_names, anno_cols]
+if input_file.endswith(('.zarr', '.zarr/')):
+    obs[anno_cols] = reannotation.loc[adata.obs_names, anno_cols]
+    adata = ad.AnnData(obs=obs)
+else:
+    adata.obs[anno_cols] = reannotation.loc[adata.obs_names, anno_cols]
 print(adata.obs, flush=True)
 
 logging.info(f'Write {output_file}...')

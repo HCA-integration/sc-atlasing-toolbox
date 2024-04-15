@@ -27,7 +27,7 @@ print(adata, flush=True)
 # add grouq assignment to adata
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
 group_cols = ['group', 'reannotation']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
+adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols]
 
 # remove outliers
 adata = remove_outliers(adata, 'max')

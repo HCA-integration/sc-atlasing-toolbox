@@ -27,7 +27,7 @@ def mapping_to_dict(mapping: MutableMapping) -> dict:
 
 
 input_file = snakemake.input[0]
-input_group_assignment = snakemake.input.group_assignment
+# input_group_assignment = snakemake.input.group_assignment
 output_file = snakemake.output[0]
 output_per_group = Path(snakemake.output.per_group)
 output_per_group.mkdir(exist_ok=True)
@@ -35,12 +35,12 @@ output_per_group.mkdir(exist_ok=True)
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
 
-adata = read_anndata(input_file)
-group_assignment = pd.read_table(input_group_assignment, index_col=0)
+adata = read_anndata(input_file,  obs='obs', var='var', X='X')
+# group_assignment = pd.read_table(input_group_assignment, index_col=0)
 
 # add group assignment to adata
-group_cols = ['group', 'reannotation', 'reannotation_index']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols].astype(str)
+# group_cols = ['group', 'reannotation', 'reannotation_index']
+# adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols].astype(str)
 
 # match marker genes and var_names
 logging.info(adata.var)
