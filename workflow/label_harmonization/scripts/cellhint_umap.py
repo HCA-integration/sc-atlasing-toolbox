@@ -6,6 +6,7 @@ import scanpy as sc
 import warnings
 warnings.filterwarnings("ignore", message="No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 
+from utils.io import read_anndata
 from utils.misc import remove_outliers
 
 
@@ -16,22 +17,17 @@ kwargs = dict(
 
 input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
-input_coordinates = snakemake.input.coordinates
-output_file = snakemake.output[0]
+output_png = snakemake.output[0]
 output_per_group = Path(snakemake.output.per_group)
 output_per_group.mkdir(exist_ok=True)
 
-adata = sc.read(input_file)
-group_assignment = pd.read_table(input_group_assignment, index_col=0)
-umap = np.load(input_coordinates)
-
-# add UMAP coordinates to adata
-adata.obsm['X_umap'] = umap
+adata = read_anndata(input_file, obs='obs', obsm='obsm', var='var')
+print(adata, flush=True)
 
 # add grouq assignment to adata
+group_assignment = pd.read_table(input_group_assignment, index_col=0)
 group_cols = ['group', 'reannotation']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
-
+adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols]
 
 # remove outliers
 adata = remove_outliers(adata, 'max')
@@ -40,7 +36,7 @@ adata = remove_outliers(adata, 'min')
 # plot
 sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 sc.pl.umap(adata, color='group')
-plt.savefig(output_file, bbox_inches='tight', dpi=200)
+plt.savefig(output_png, bbox_inches='tight', dpi=200)
 
 # per group
 for group in adata.obs['group'].unique():

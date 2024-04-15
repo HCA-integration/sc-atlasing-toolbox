@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import seaborn as sns
-import celltypist
+import cellhint
 
 dpi = 300
 plt.rcParams['figure.dpi'] = dpi
@@ -12,9 +12,9 @@ output_heatmap = snakemake.output.heatmap
 # output_sankeyplot = snakemake.output.sankeyplot
 dataset = snakemake.wildcards.dataset
 
-alignment = celltypist.DistanceAlignment.load(input_file)
+alignment = cellhint.DistanceAlignment.load(input_file)
 
-celltypist.treeplot(
+cellhint.treeplot(
     alignment,
     order_dataset=False,
     label_size=12,
@@ -24,7 +24,7 @@ celltypist.treeplot(
     save=output_treeplot
 )
 
-celltypist.treeplot(
+cellhint.treeplot(
     alignment,
     order_dataset=True,
     label_size=12,
@@ -38,4 +38,4 @@ plot = sns.clustermap(alignment.base_distance.to_meta())
 plot.fig.suptitle(dataset)
 plt.savefig(output_heatmap, dpi=dpi, bbox_inches='tight')
 
-# celltypist.sankeyplot(alignment, show=False, save=output_sankeyplot)
+# cellhint.sankeyplot(alignment, show=False, save=output_sankeyplot)

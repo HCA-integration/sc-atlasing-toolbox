@@ -35,12 +35,13 @@ output_per_group.mkdir(exist_ok=True)
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
 
-adata = read_anndata(input_file)
+adata = read_anndata(input_file,  obs='obs', var='var', X='X')
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
 
 # add group assignment to adata
 group_cols = ['group', 'reannotation', 'reannotation_index']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols].astype(str)
+adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols].astype(str)
+print(adata.obs[group_cols])
 
 # match marker genes and var_names
 logging.info(adata.var)
