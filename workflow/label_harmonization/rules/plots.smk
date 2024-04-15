@@ -1,5 +1,5 @@
 def get_plotting_colors(wildcards):
-    colors = mcfg.get_for_dataset(wildcards.dataset, [mcfg.module_name, 'plot_colors'], default=[])
+    colors = mcfg.get_from_parameters(wildcards, 'plot_colors', default=[])
     if isinstance(colors, str):
         colors = [colors]
     return colors + ['groups', 'reannotation']
@@ -12,7 +12,7 @@ use rule plots from preprocessing as label_harmonization_plot_embedding with:
         plots=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'embeddings'),
     params:
         color=get_plotting_colors,
-        basis=lambda w: mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'cellhint', 'use_rep']),
+        basis=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cellhint').get('use_rep', 'X_pca'),
         ncols=2,
         wspace=0.5,
     resources:
@@ -27,8 +27,8 @@ use rule neighbors from preprocessing as label_harmonization_neighbors with:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'neighbors.zarr'),
     params:
-        args=lambda w: {
-            'use_rep': mcfg.get_for_dataset(w.dataset, [mcfg.module_name, 'cellhint', 'use_rep'])
+        args=lambda wildcards: {
+            'use_rep': mcfg.get_from_parameters(wildcards, 'cellhint').get('use_rep', 'X_pca'),
         },
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
@@ -82,7 +82,6 @@ def get_for_organ(config, wildcards, key):
 rule dotplot:
     input:
         anndata=rules.cellhint.output.zarr,
-        group_assignment=rules.cellhint.output.reannotation,
     output:
         plot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot.png',
         per_group=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot_per_group'),

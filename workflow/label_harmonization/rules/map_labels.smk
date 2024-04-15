@@ -10,11 +10,11 @@ rule cellhint:
         relation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
         model=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
     params:
-        author_label_key=lambda w: mcfg.get_for_dataset( w.dataset, query=[mcfg.module_name,'author_label_key']),
-        dataset_key=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'dataset_key']),
-        params=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'cellhint'], default={}),
-        subsample=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'subsample'], default=False),
-        force_scale=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'force_scale'], default=False),
+        author_label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),
+        dataset_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dataset_key'),
+        params=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cellhint', default={}),
+        subsample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'subsample', default=False),
+        force_scale=lambda wildcards: mcfg.get_from_parameters(wildcards, 'force_scale', default=False),
     conda:
         get_env(config, 'cellhint')
     resources:
@@ -37,7 +37,7 @@ rule cellhint_plots:
         heatmap=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'heatmap.png',
         # sankeyplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'sankeyplot.pdf',
     params:
-        coarse_cell_type=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'author_label_key']),
+        coarse_cell_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),
     conda:
         get_env(config, 'cellhint')
     script:
