@@ -70,15 +70,6 @@ rule cellhint_umap:
         '../scripts/cellhint_umap.py'
 
 
-def get_for_organ(config, wildcards, key):
-    organ = mcfg.get_from_parameters(wildcards, 'organ')
-    try:
-        organ_config = config['ORGANS'][organ]
-    except KeyError as e:
-        raise ValueError(f'Organ "{organ}" not found in config file') from e
-    return organ_config[key]
-
-
 rule dotplot:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -87,7 +78,7 @@ rule dotplot:
         plot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot.png',
         per_group=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot_per_group'),
     params:
-        marker_genes=lambda wildcards: get_for_organ(config, wildcards, 'marker_genes'),
+        marker_genes=lambda wildcards: get_marker_gene_set(mcfg, wildcards),
         kwargs=dict(
             use_raw=False,
             standard_scale='var',

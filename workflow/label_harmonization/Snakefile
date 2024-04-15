@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
+from utils.marker_genes import get_marker_gene_set
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
@@ -8,7 +9,16 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='label_harmonization',
     config=config,
-    config_params=['cellhint', 'organ', 'dataset_key', 'author_label_key', 'plot_colors', 'subsample', 'force_scale'],
+    config_params=[
+        'cellhint',
+        'organ',
+        'dataset_key',
+        'author_label_key',
+        'plot_colors',
+        'subsample',
+        'force_scale',
+        'marker_genes',
+    ],
     dtypes={
         'subsample': float,
         'force_scale': bool,
