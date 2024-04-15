@@ -26,7 +26,7 @@ logging.info(f'params: {params}')
 
 logging.info(f'Read {input_file}...')
 kwargs = {'obs': 'obs', 'var': 'var', 'uns': 'uns', 'obsm': 'obsm'}
-if use_pct:
+if use_pct or not input_file.endswith(('.zarr', '.zarr/')):
     kwargs |= {'X': input_layer}
 adata = read_anndata(input_file, **kwargs)
 print(adata, flush=True)

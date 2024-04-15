@@ -81,7 +81,8 @@ def get_for_organ(config, wildcards, key):
 
 rule dotplot:
     input:
-        anndata=rules.cellhint.output.zarr,
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        group_assignment=rules.cellhint.output.reannotation,
     output:
         plot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot.png',
         per_group=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'dotplot_per_group'),
