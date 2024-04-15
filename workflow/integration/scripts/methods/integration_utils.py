@@ -35,6 +35,8 @@ SCVI_MODEL_PARAMS = [
     'var_activation',
     'extra_encoder_kwargs',
     'extra_decoder_kwargs',
+    'categorical_covariate_keys',
+    'continuous_covariate_keys',
 ]
 
 SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']

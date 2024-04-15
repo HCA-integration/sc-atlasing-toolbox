@@ -150,11 +150,18 @@ DATASETS:
           dispersion:
             - gene
             - gene-batch
-            - gene-label
-            - gene-cell
           use_observed_lib_size: true
-          max_epochs: 10
+          max_epochs: 100
           early_stopping: true
         scanvi:
+          max_epochs: 100
+          early_stopping: true
+          categorical_covariate_keys:
+            - batch_2
+            - phase
+          continuous_covariate_keys:
+            - percent_mito
       umap_colors:
+        - bulk_labels
         - phase
+        - percent_mito
