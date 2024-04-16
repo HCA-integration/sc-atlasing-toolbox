@@ -5,6 +5,8 @@ def get_plotting_colors(wildcards):
     return colors + ['groups', 'reannotation']
 
 
+# embedding plots
+
 use rule plots from preprocessing as label_harmonization_plot_embedding with:
     input:
         anndata=rules.cellhint.output.zarr,
@@ -13,14 +15,13 @@ use rule plots from preprocessing as label_harmonization_plot_embedding with:
     params:
         color=get_plotting_colors,
         basis=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cellhint').get('use_rep', 'X_pca'),
-        ncols=2,
-        wspace=0.5,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
 
 
+# umap
 use rule neighbors from preprocessing as label_harmonization_neighbors with:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -49,6 +50,20 @@ use rule umap from preprocessing as label_harmonization_umap with:
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+
+
+use rule plots from preprocessing as label_harmonization_plot_umap with:
+    input:
+        anndata=rules.label_harmonization_umap.output.zarr,
+    output:
+        plots=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'umaps'),
+    params:
+        color=get_plotting_colors,
+        basis='X_umap',
+    resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
 
 
 rule cellhint_umap:
@@ -83,7 +98,6 @@ rule dotplot:
             use_raw=False,
             standard_scale='var',
             # dendrogram=True,
-            swap_axes=False,
         )
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
@@ -101,6 +115,7 @@ rule dotplot_all:
 rule plots_all:
     input:
         mcfg.get_output_files(rules.label_harmonization_plot_embedding.output),
+        mcfg.get_output_files(rules.label_harmonization_plot_umap.output),
         mcfg.get_output_files(rules.cellhint_umap.output),
         mcfg.get_output_files(rules.dotplot.output),
     localrule: True
