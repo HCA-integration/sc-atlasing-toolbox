@@ -143,7 +143,7 @@ module label_transfer:
 
 module label_harmonization:
     snakefile: "label_harmonization/Snakefile"
-    config: config_for_module(config, module='label_harmonization')
+    config: config
 
 module relabel:
     snakefile: "relabel/Snakefile"
