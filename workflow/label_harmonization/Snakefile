@@ -11,7 +11,6 @@ mcfg = ModuleConfig(
     config=config,
     config_params=[
         'cellhint',
-        'organ',
         'dataset_key',
         'author_label_key',
         'plot_colors',
