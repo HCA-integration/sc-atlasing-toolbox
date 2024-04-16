@@ -51,8 +51,11 @@ if 'feature_name' in adata.var.columns:
 logging.info('Marker genes before filtering:')
 logging.info(marker_genes)
 marker_genes = filter_markers(marker_genes, adata.var_names)
+assert len(marker_genes) > 0, 'No marker genes found in data'
 logging.info('Marker genes after filtering:')
 logging.info(marker_genes)
+n_marker_genes = len(marker_genes) if isinstance(marker_genes, list) else sum(len(v) for v in marker_genes.values())
+logging.info(f'Number of marker genes: {n_marker_genes}')
 
 logging.info('Plotting...')
 sc.pl.dotplot(
@@ -61,6 +64,8 @@ sc.pl.dotplot(
     var_names=marker_genes,
     show=False,
     title=f'Markers vs groups for {snakemake.wildcards.dataset}',
+    swap_axes=False,
+    # swap_axes=n_marker_genes > adata.obs['group'].nunique(),
     **kwargs,
 )
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
