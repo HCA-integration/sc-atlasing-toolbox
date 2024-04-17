@@ -16,8 +16,7 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        zarr=rules.prepare.output.zarr,
-        done=rules.prepare.output.done,
+        zarr=rules.metrics_cluster_collect.output.zarr,
     output:
         metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
     benchmark:

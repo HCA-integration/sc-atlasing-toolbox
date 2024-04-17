@@ -22,7 +22,15 @@ mcfg = ModuleConfig(
     module_name='metrics',
     config=config,
     parameters=workflow.source_path('params.tsv'),
-    config_params=['label', 'batch', 'methods', 'unintegrated', 'corrected', 'overwrite_file_id'],
+    config_params=[
+        'label',
+        'batch',
+        'methods',
+        'unintegrated',
+        'corrected',
+        'overwrite_file_id',
+        'cluster_algorithm',
+    ],
     wildcard_names=['label', 'batch'],
     rename_config_params={'methods': 'metric'},
     explode_by=['metric', 'batch', 'label'],
@@ -42,6 +50,10 @@ wildcard_constraints:
     lineage_key='((?![/]).)*',
     lineage_specific='((?![/]).)*',
 
+
+module clustering:
+    snakefile: "../../clustering/rules/rules.smk"
+    config: config
 
 module common:
     snakefile: "../common/Snakefile"
