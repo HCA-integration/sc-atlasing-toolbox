@@ -13,5 +13,5 @@ dependencies:
   - pip
   - pip:
     - scikit-learn-intelex
-    - git+https://github.com/theislab/scib.git
+    - git+https://github.com/theislab/scib.git@use_precomputed_clustering
     # - git+https://github.com/scverse/scanpy.git@main

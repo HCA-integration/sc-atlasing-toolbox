@@ -1,23 +1,24 @@
 import numpy as np
 import scanpy as sc
-from .utils import cluster_optimal, select_neighbors, rename_categories
+from .utils import select_neighbors, rename_categories
 
 
-def nmi(adata, output_type, batch_key, label_key, **kwargs):
+def nmi(adata, output_type, batch_key, label_key, cluster_key, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
-    cluster_optimal(
+    scib.cl.cluster_optimal_resolution(
         adata=adata,
         label_key=label_key,
-        cluster_key='cluster',
-        cluster_function=sc.tl.leiden,
+        cluster_key=cluster_key,
         metric=scib.me.nmi,
         use_rep=None,
-        n_iterations=5
     )
-    adata = adata[adata.obs[label_key].notna()].copy()
-    return scib.me.nmi(adata, label_key, 'cluster')
+    return scib.me.nmi(
+        adata=adata[adata.obs[label_key].notna()],
+        label_key=label_key,
+        cluster_key=cluster_key,
+    )
 
 
 def nmi_leiden_y(adata, output_type, batch_key, label_key, **kwargs):
