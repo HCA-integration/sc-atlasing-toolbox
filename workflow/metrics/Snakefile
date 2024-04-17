@@ -51,6 +51,7 @@ module common:
 use rule * from common as common_ *
 
 
+include: 'rules/prepare.smk'
 include: 'rules/metrics.smk'
 include: 'rules/merge.smk'
 include: 'rules/plots.smk'
