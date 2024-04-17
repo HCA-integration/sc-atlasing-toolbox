@@ -32,6 +32,7 @@ assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric
 allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
+cluster_key = params.get('cluster_key', 'leiden')
 metric_function = metric_map.get(metric, ValueError(f'No function for metric: {metric}'))
 
 uns = read_anndata(input_file, uns='uns').uns
@@ -91,6 +92,7 @@ score = metric_function(
     batch_key=batch_key,
     label_key=label_key,
     adata_raw=adata_raw,
+    cluster_key=cluster_key,
 )
 
 write_metrics(

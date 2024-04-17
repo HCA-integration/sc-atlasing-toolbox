@@ -26,6 +26,7 @@ rule run:
         output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', default=MetricNotDefinedError(wildcards)),
         input_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'input_type', default=MetricNotDefinedError(wildcards)),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
+        cluster_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cluster_algorithm', default='leiden'),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)
