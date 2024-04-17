@@ -3,13 +3,7 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
-try:
-    import rapids_singlecell as sc
-    import cupy as cp
-    logging.info('Using rapids_singlecell...')
-except ImportError as e:
-    import scanpy as sc
-    logging.info('Importing rapids failed, using scanpy...')
+from utils.processing import sc
 
 from utils.io import read_anndata
 
@@ -20,7 +14,7 @@ neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
 cluster_alg = snakemake.params.get('algorithm', 'louvain')
 
 logging.info(f'Read anndata file {input_file}...')
-adata = read_anndata(input_file)
+adata = read_anndata(input_file, obs='obs', uns='uns', obsp='obsp')
 
 if neighbors_key not in adata.uns:
     assert 'connectivities' in adata.obsp
