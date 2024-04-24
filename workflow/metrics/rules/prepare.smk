@@ -55,11 +55,6 @@ use rule merge from clustering as metrics_cluster_collect with:
         ),
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'clustered.zarr'),
-    resources:
-        partition=lambda w: mcfg.get_resource(resource_key='partition', profile='gpu'),
-        qos=lambda w: mcfg.get_resource(resource_key='qos', profile='gpu'),
-        gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='gpu', attempt=attempt),
 
 
 rule cluster_all:
