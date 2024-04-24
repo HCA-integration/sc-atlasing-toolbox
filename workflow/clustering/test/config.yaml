@@ -2,7 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
-env_mode: from_yaml
+env_mode: local
 
 resources:
   cpu:

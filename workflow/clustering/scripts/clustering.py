@@ -3,45 +3,62 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
-from utils.processing import sc
 
-from utils.io import read_anndata
+from utils.io import read_anndata, get_file_reader
+
+def check_and_set_neighbors_key(adata, neighbors_key):
+    neighbors = adata.uns.get(neighbors_key, {})
+    neighbors |= {
+        'connectivities_key': neighbors.get('connectivities_key', 'connectivities'),
+        'distances_key': neighbors.get('distances_key', 'distances'),
+        'params': neighbors.get('params', {'use_rep': 'X_pca', 'method': None}),
+    }
+    adata.uns[neighbors_key] = neighbors
+    
+    adata.obsp['connectivities'] = adata.obsp[neighbors['connectivities_key']]
+    adata.obsp['distances'] = adata.obsp[neighbors['distances_key']]
+
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 resolution = float(snakemake.wildcards.resolution)
 neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
 cluster_alg = snakemake.params.get('algorithm', 'louvain')
+overwrite = snakemake.params.get('overwrite', False)
 
-logging.info(f'Read anndata file {input_file}...')
-adata = read_anndata(input_file, obs='obs', uns='uns', obsp='obsp')
-
-if neighbors_key not in adata.uns:
-    assert 'connectivities' in adata.obsp
-    assert 'distances' in adata.obsp
-    adata.uns[neighbors_key] = {
-        'connectivities_key': 'connectivities',
-        'distances_key': 'distances',
-    }
-
-neighbors = adata.uns[neighbors_key]
-adata.uns['neighbors'] = neighbors
-adata.obsp['connectivities'] = adata.obsp[neighbors['connectivities_key']]
-adata.obsp['distances'] = adata.obsp[neighbors['distances_key']]
-
-logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
 cluster_key = f'{cluster_alg}_{resolution}'
 
-cluster_alg_map = {
-    'louvain': sc.tl.louvain,
-    'leiden': sc.tl.leiden,
-}
+read_func, _ = get_file_reader(input_file)
+with read_func(input_file, 'r') as f:
+    cluster_key_exists = cluster_key in f['obs'].keys()
 
-cluster_alg_map[cluster_alg](
-    adata,
-    resolution=resolution,
-    key_added=cluster_key,
-)
+if cluster_key_exists and not overwrite:
+    logging.info(f'Read anndata file {input_file} and skip clustering...')
+    adata = read_anndata(input_file, obs='obs')
+else:
+    try:
+        import subprocess
+        assert subprocess.run('nvidia-smi', shell=True).returncode == 0
+        from _rsc_clustering import leiden, louvain
+    except AssertionError:
+        logging.info('No GPU found...')
+        from scanpy.tools import leiden, louvain
 
-logging.info('Write file...')
+    cluster_alg_map = {
+        'louvain': louvain,
+        'leiden': leiden,
+    }
+
+    logging.info(f'Read anndata file {input_file}...')
+    adata = read_anndata(input_file, obs='obs', uns='uns', obsp='obsp')
+
+    # select neighbors
+    logging.info(f'Select neighbors for "{neighbors_key}"...')
+    check_and_set_neighbors_key(adata, neighbors_key)
+    
+    logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
+    cluster_func = cluster_alg_map.get(cluster_alg, KeyError(f'Unknown clustering algorithm: {cluster_alg}'))
+    cluster_func(adata, resolution=resolution, key_added=cluster_key)
+
+logging.info(f'Write {cluster_key} to {output_file}...')
 adata.obs[cluster_key].to_csv(output_file, sep='\t', index=True)
