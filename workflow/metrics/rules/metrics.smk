@@ -30,6 +30,8 @@ rule run:
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)
+    threads:
+        lambda wildcards: mcfg.get_from_parameters(wildcards, 'threads', default=1, as_type=int),
     resources:
         partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),

@@ -10,7 +10,7 @@ from utils.misc import dask_compute
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
 
-def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
+def pcr(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -28,6 +28,7 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         n_comps=50,
         scale=True,
         verbose=False,
+        n_threads=1,
     ):
         pcr_before = scib.me.pcr(
             adata_pre,
@@ -65,6 +66,7 @@ def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         adata_post=adata,
         covariate=batch_key,
         embed=embed,
+        n_threads=n_threads,
     )
 
 

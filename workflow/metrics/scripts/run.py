@@ -20,6 +20,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
+threads = snakemake.threads
 
 dataset = wildcards.dataset
 file_id = wildcards.file_id
@@ -93,6 +94,7 @@ score = metric_function(
     label_key=label_key,
     adata_raw=adata_raw,
     cluster_key=cluster_key,
+    n_threads=threads,
 )
 
 write_metrics(
