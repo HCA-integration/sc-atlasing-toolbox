@@ -13,7 +13,6 @@ except ImportError:
 from metrics import metric_map
 from metrics.utils import write_metrics
 from utils.io import read_anndata
-from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -58,11 +57,7 @@ if output_type not in allowed_output_types:
         )
     exit(0)
 
-logger.info(f'Read {input_file} ...')
-kwargs = dict(
-    obs='obs',
-    uns='uns',
-)
+kwargs = {'obs': 'obs', 'uns': 'uns'}
 if input_type == 'knn':
     kwargs |= {'obsp': 'obsp'}
 if input_type == 'embed':
@@ -70,20 +65,24 @@ if input_type == 'embed':
 if input_type == 'full':
     kwargs |= {'X': 'X', 'var': 'var'}
 
+logger.info(f'Read {input_file} ...')
 adata = read_anndata(input_file, **kwargs)
 print(adata, flush=True)
 adata_raw = None
 
 if comparison:
-    kwargs = {'obs': 'obs', 'var': 'raw/var', 'varm': 'raw/varm', 'X': 'raw/X'}
-    adata_raw = read_anndata(input_file, **kwargs, dask=True, backed=True)
+    adata_raw = read_anndata(
+        input_file,
+        X='raw/X',
+        obs='obs',
+        obsm='raw/obsm',
+        var='raw/var',
+        uns='raw/uns',
+        dask=True,
+        backed=True,
+    )
     print('adata_raw')
     print(adata_raw, flush=True)
-    
-    adata_raw, _ = subset_hvg(adata_raw, var_column='highly_variable', to_memory=[], compute_dask=False)
-    adata_raw.obs = adata.obs
-    adata_raw.obsm = adata.obsm
-    adata_raw.uns = adata.uns
 
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
