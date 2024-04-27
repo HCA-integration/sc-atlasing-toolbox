@@ -6,6 +6,12 @@ class MetricNotDefinedError(RuntimeError):
         )
 
 
+def get_metric_input(wildcards):
+    if mcfg.get_from_parameters(wildcards, 'clustering', default=False):
+        return rules.metrics_cluster_collect.output.zarr
+    return rules.prepare.output.zarr
+
+
 rule run:
     message:
        """
@@ -16,7 +22,7 @@ rule run:
        resources: gpu={resources.gpu} mem_mb={resources.mem_mb}
        """
     input:
-        zarr=rules.metrics_cluster_collect.output.zarr,
+        zarr=get_metric_input,
     output:
         metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
     benchmark:
@@ -44,5 +50,6 @@ rule run:
 
 rule run_all:
     input:
-        mcfg.get_output_files(rules.run.output, all_params=True)
+        rules.prepare_all.input,
+        mcfg.get_output_files(rules.run.output, all_params=True),
     localrule: True
