@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 from utils.processing import sc, USE_GPU
+from utils.misc import dask_compute
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
@@ -15,15 +16,18 @@ batch_key = snakemake.params.get('batch_key')
 batch = str(snakemake.wildcards.batch)
 
 logging.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, backed=True, X='X', obs='obs')
+adata = read_anndata(
+    input_zarr,
+    X='X',
+    obs='obs',
+    backed=True,
+    dask=True,
+)
 
 logging.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key].astype(str) == batch, :]
+    adata = adata[adata.obs[batch_key].astype(str) == batch, :].copy()
 logging.info(adata.__str__())
-
-if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-    adata.X = adata.X.to_memory()
 
 if adata.n_obs < 10:
     columns = ['scrublet_score', 'scrublet_prediction']
@@ -31,14 +35,14 @@ if adata.n_obs < 10:
     df.to_csv(output_tsv, sep='\t')
     exit(0)
 
+# load data to memory
+adata = dask_compute(adata)
+
 # run scrublet
 logging.info('Run scrublet...')
 
 if USE_GPU:
-    # sc.get.anndata_to_GPU(adata)
-    from cupyx import scipy
-    X = scipy.sparse.csr_matrix(adata.X)  # moves `.X` to the GPU
-    adata = ad.AnnData(X=X, obs=adata.obs)
+    sc.get.anndata_to_GPU(adata)
 
 sc.pp.scrublet(
     adata,
