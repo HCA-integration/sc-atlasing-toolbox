@@ -51,7 +51,7 @@ def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     )
 
 
-def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
+def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -77,24 +77,26 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
         for batch in adata.obs[batch_key].unique():
             scib.pp.score_cell_cycle(
                 adata_raw[adata_raw.obs[batch_key] == batch],
-                organism=organism
+                organism=organism,
             )
     except Exception as e:
         raise ValueError(f'Error in score_cell_cycle: {e}') from e
     
-    try:
-        # compute score
-        score = scib.me.cell_cycle(
-            adata_pre=adata_raw,
-            adata_post=adata,
-            batch_key=batch_key,
-            embed='X_emb',
-            recompute_cc=False,
-            organism=organism,
-            verbose=False,
-        )
-    except ValueError as e:
-        print(f'Warning: caught error in cell cycle score: {e}')
-        score = np.nan
+    # try:
+    # compute score
+    score = scib.me.cell_cycle(
+        adata_pre=adata_raw,
+        adata_post=adata,
+        batch_key=batch_key,
+        embed='X_emb',
+        recompute_cc=False,
+        organism=organism,
+        verbose=False,
+        linreg_method='sklearn',
+        n_threads=n_threads,
+    )
+    # except ValueError as e:
+    #     print(f'Warning: caught error in cell cycle score: {e}')
+    #     score = np.nan
 
     return score
