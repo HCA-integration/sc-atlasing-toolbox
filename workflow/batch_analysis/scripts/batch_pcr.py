@@ -70,13 +70,15 @@ adata.obs = adata.obs.copy()
 covariates = [covariate]+perm_covariates
 
 
-def compute_pcr(adata, covariate, is_permuted):
+def compute_pcr(adata, covariate, is_permuted, n_threads=1):
     print(f'PCR for covariate: "{covariate}"', flush=True)
     pcr = scib.me.pcr(
         adata,
         covariate=covariate,
         recompute_pca=False,
-        verbose=False
+        verbose=False,
+        linreg_method='numpy',
+        n_threads=n_threads,
     )
     print(f'covariate: {covariate}, pcr: {pcr}', flush=True)
     return (covariate, pcr, is_permuted)
@@ -86,16 +88,14 @@ with ProcessPoolExecutor(max_workers=n_threads) as executor:
 # with ThreadPool(processes=n_threads) as pool:
     chunk_size = max(1, 2 * int(n_permute / n_threads))
     print(f'chunk_size: {chunk_size}', flush=True)
-    # pcr_scores = []
-    # for pcr in pool.imap_unordered(compute_pcr, covariates, chunksize=chunk_size):
-    # for pcr in pool.map(compute_pcr, covariates):
-    #     pcr_scores.append(pcr)
+    n_covariates = len(covariates)
     pcr_scores = list(
         executor.map(
             compute_pcr,
-            [adata]*len(covariates),
+            [adata] * n_covariates,
             covariates,
             [x in perm_covariates for x in covariates],
+            [chunk_size] * n_covariates,
             chunksize=chunk_size,
         )
     )
