@@ -95,7 +95,7 @@ with ProcessPoolExecutor(max_workers=n_threads) as executor:
             [adata] * n_covariates,
             covariates,
             [x in perm_covariates for x in covariates],
-            [chunk_size] * n_covariates,
+            # [chunk_size] * n_covariates,
             chunksize=chunk_size,
         )
     )
