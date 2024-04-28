@@ -38,6 +38,7 @@ rule scrublet:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
         get_env(config, 'qc', gpu_env='rapids_singlecell')
+    priority: 1
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition', attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos', attempt=attempt),
