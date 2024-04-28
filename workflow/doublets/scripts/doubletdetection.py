@@ -7,6 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
+from utils.misc import dask_compute
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
@@ -15,21 +16,27 @@ batch = str(snakemake.wildcards.batch)
 threads = snakemake.threads
 
 logging.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, backed=True, X='X', obs='obs', var='var')
+adata = read_anndata(
+    input_zarr,
+    X='X',
+    obs='obs',
+    backed=True,
+    dask=True,
+)
 
 logging.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key].astype(str) == batch, :]
+    adata = adata[adata.obs[batch_key].astype(str) == batch, :].copy()
 logging.info(adata.__str__())
-
-if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-    adata.X = adata.X.to_memory()
 
 if adata.n_obs < 10:
     columns = ['doubletdetection_score', 'doubletdetection_prediction']
     df = pd.DataFrame(index=adata.obs.index, columns=columns, dtype=float).fillna(0)
     df.to_csv(output_tsv, sep='\t')
     exit(0)
+
+# load data to memory
+adata = dask_compute(adata)
 
 # run doubletdetection
 logging.info('Run doubletdetection...')
