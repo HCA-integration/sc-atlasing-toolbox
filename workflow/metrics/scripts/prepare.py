@@ -4,12 +4,12 @@ logger = logging.getLogger('Preprocess for metrics')
 logger.setLevel(logging.INFO)
 import numpy as np
 import anndata as ad
-import scanpy
+import scanpy as sc
 
 from utils.assertions import assert_pca
 from utils.accessors import subset_hvg
 from utils.io import read_anndata, write_zarr_linked
-from utils.processing import compute_neighbors, sc
+from utils.processing import compute_neighbors
 
 
 input_file = snakemake.input[0]
@@ -20,11 +20,7 @@ neighbor_args = params.get('neighbor_args', {})
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 corrected_layer = params.get('corrected_layer', 'X')
 
-files_to_keep = ['obsm', 'obsp', 'raw', 'var', 'varm', 'uns']
-slot_map = {
-    'X': corrected_layer,
-    'raw/X': unintegrated_layer,
-}
+files_to_keep = ['obsm', 'obsp', 'var', 'uns']
 
 # determine output types
 # default output type is 'full'
@@ -45,14 +41,35 @@ adata = read_anndata(input_file, **kwargs)
 
 # remove cells without labels
 n_obs = adata.n_obs
-logger.info('Filtering out cells without labels')
+# logger.info('Filtering out cells without labels')
 # TODO: only for metrics that require labels?
 # logger.info(f'Before: {adata.n_obs} cells')
 # adata = adata[(adata.obs[label_key].notna() | adata.obs[label_key] != 'NA') ]
 # logger.info(f'After: {adata.n_obs} cells')
-if adata.is_view:
-    adata = adata.copy()
+# if adata.is_view:
+#     adata = adata.copy()
 force_neighbors = n_obs > adata.n_obs
+
+if 'highly_variable' not in adata.var.columns:
+    adata.var['highly_variable'] = True
+adata, subsetted = subset_hvg(adata, var_column='highly_variable')
+if subsetted:
+    files_to_keep.extend(['X', 'varm', 'varp'])
+
+logging.info('Run PCA on integrated data...')
+if output_type == 'full':
+    sc.tl.pca(adata, mask_var='highly_variable')
+elif output_type == 'embed':
+    X_pca, _, variance_ratio, variance = sc.tl.pca(
+        adata.obsm['X_emb'],
+        return_info=True,
+    )
+    adata.obsm['X_pca'] = X_pca
+    adata.uns['pca'] = {
+        'variance_ratio': variance_ratio,
+        'variance': variance,
+    }
+    print('after PCA', adata)
 
 logging.info(f'Computing neighbors for output type {output_type} force_neighbors={force_neighbors}...')
 compute_neighbors(
@@ -63,36 +80,41 @@ compute_neighbors(
     **neighbor_args
 )
 
-logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
-adata.raw = read_anndata(
-    input_file,
-    X=unintegrated_layer,
-    var='var',
-)
-adata_raw = adata.raw.to_adata()
-
-# subset features
-if 'highly_variable' not in adata_raw.var.columns:
-    adata_raw.var['highly_variable'] = True
-adata_raw, subsetted = subset_hvg(adata_raw, var_column='highly_variable')
-adata._inplace_subset_var(adata_raw.var_names)
-if subsetted:
-    files_to_keep.extend(['X', 'raw/X', 'varp'])
-
-logging.info('Run PCA on unintegrated data...')
-scanpy.pp.pca(adata_raw, mask_var='highly_variable')
-adata.uns['pca'] = adata_raw.uns['pca']
-adata.obsm['X_pca'] = adata_raw.obsm['X_pca']
-adata.raw = adata_raw
-del adata_raw
-
-# write to file
-logging.info(adata.__str__())
 logging.info(f'Write to {output_file}...')
+logging.info(adata.__str__())
 write_zarr_linked(
     adata,
     in_dir=input_file,
     out_dir=output_file,
     files_to_keep=files_to_keep,
-    slot_map=slot_map,
+    slot_map={'X': corrected_layer},
 )
+
+# unintegrated for comparison metrics
+if output_type != 'knn':  # assuming that there aren't any knn-based metrics that require PCA
+    logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
+    adata_raw = read_anndata(
+        input_file,
+        X=unintegrated_layer,
+        var='var',
+        dask=True,
+        backed=True,
+    )
+
+    if 'highly_variable' not in adata_raw.var.columns:
+        adata_raw.var['highly_variable'] = True
+    adata_raw, subsetted = subset_hvg(adata_raw, var_column='highly_variable')
+    if subsetted:
+        files_to_keep.extend(['X', 'varm', 'varp'])
+
+    logging.info('Run PCA on unintegrated data...')
+    sc.tl.pca(adata_raw, mask_var='highly_variable')
+
+    logging.info(f'Write to {output_file}/raw...')
+    write_zarr_linked(
+        adata_raw,
+        in_dir=input_file,
+        out_dir=f'{output_file}/raw',
+        files_to_keep=files_to_keep,
+        slot_map={'X': unintegrated_layer},
+    )

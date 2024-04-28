@@ -19,6 +19,7 @@ rule merge:
         tsv=expand('{resolution}.tsv', resolution=[0.5, 1.0]),
     output:
         zarr=directory('all_resolutions.zarr')
+    localrule: True
     conda:
         get_env(config, 'scanpy')
     script:

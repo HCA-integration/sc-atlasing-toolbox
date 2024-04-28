@@ -7,14 +7,13 @@ dependencies:
   - python=3.10
   - anndata=0.10
   - scanpy=1.10
-  - pandas<2.0
   - leidenalg
-  - louvain
+  - python-louvain
   - zarr
   - cuda-version=11.4
   - cuda-cudart=11.4
   - cuda-nvrtc=11.4
-  - rapids=24.02
+  - rapids=24.04
   - hdf5=1.14.2
   - dask
   - dask-ml
@@ -22,4 +21,3 @@ dependencies:
   - pip
   - pip:
     - rapids-singlecell
-    # - git+https://github.com/scverse/scanpy.git@main
