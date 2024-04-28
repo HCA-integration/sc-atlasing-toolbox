@@ -7,6 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
+from utils.processing import sc, USE_GPU
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
@@ -32,7 +33,14 @@ if adata.n_obs < 10:
 
 # run scrublet
 logging.info('Run scrublet...')
-sc.external.pp.scrublet(
+
+if USE_GPU:
+    # sc.get.anndata_to_GPU(adata)
+    from cupyx import scipy
+    X = scipy.sparse.csr_matrix(adata.X)  # moves `.X` to the GPU
+    adata = ad.AnnData(X=X, obs=adata.obs)
+
+sc.pp.scrublet(
     adata,
     batch_key=None,
     sim_doublet_ratio=2.0,
