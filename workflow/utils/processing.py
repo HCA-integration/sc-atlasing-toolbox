@@ -26,7 +26,7 @@ except ImportError as e:
     USE_GPU = False
 
 from .assertions import assert_neighbors
-from .io import to_memory
+from .io import to_memory, csr_matrix_int64_indptr
 
 
 def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=False, **kwargs):
@@ -78,3 +78,29 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
         raise ValueError(f'Invalid output type {output_type}')
     
     assert_neighbors(adata, check_n_neighbors=False)
+
+
+def filter_genes(adata, **kwargs):
+    """
+    Filter anndata based on .X matrix
+    """
+    import scanpy as sc
+    from dask import array as da
+    
+    logging.info('Filter genes...')
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+    gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
+    if isinstance(gene_subset, da.Array):
+        gene_subset = gene_subset.compute()
+    
+    # apply gene subset
+    if any(gene_subset == False):
+        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
+        adata = adata[:, gene_subset].copy()
+    
+    # convert dask array to csr matrix
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(csr_matrix_int64_indptr).compute()
+
+    return adata
