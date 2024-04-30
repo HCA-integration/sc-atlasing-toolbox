@@ -93,7 +93,7 @@ use rule neighbors from preprocessing as integration_postprocess with:
         zarr=rules.integration_run_method.output.zarr,
         done=rules.integration_run_method.output.model,
     output:
-        zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+        zarr=directory(out_dir / 'postprocess' / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         args=update_neighbors_args,
         extra_uns=lambda wildcards: {'output_type': wildcards.output_type},
