@@ -17,14 +17,14 @@ da_config.set(num_workers=snakemake.threads)
 from utils.accessors import adata_to_memory
 from utils.annotate import add_wildcards
 from utils.io import read_anndata, csr_matrix_int64_indptr
-from utils.misc import apply_layers
+from utils.misc import dask_compute
 
 input_file = snakemake.input[0]
 output_dir = snakemake.output[0]
 split_key = snakemake.wildcards.key
 values = snakemake.params.get('values', [])
-backed = snakemake.params.get('backed', False)
-dask = snakemake.params.get('dask', False)
+backed = snakemake.params.get('backed', True)
+dask = snakemake.params.get('dask', True)
 exclude_slots = snakemake.params.get('exclude_slots', [])
 
 out_dir = Path(output_dir)
@@ -44,19 +44,6 @@ logging.info(adata.__str__())
 # convert split_key column to string
 adata.obs[split_key] = adata.obs[split_key].astype(str)
 logging.info(adata.obs[split_key].value_counts())
-
-# logging.info('Convert dtypes...')
-# def convert_to_dtype(x, func):
-#     if isinstance(x, da.Array):
-#         return x.map_blocks(lambda x: func(x), dtype=x.dtype)
-#     # if isinstance(x, csr_matrix):
-#     #     return func(x)
-#     return x
-
-# adata = apply_layers(
-#     adata,
-#     lambda x: convert_to_dtype(x, sparse.GCXS)
-# )
 
 file_value_map = {
     s.replace(' ', '_').replace('/', '_'): s
@@ -94,21 +81,10 @@ for split_file in split_files:
         )
     else:
         logging.info('Copy subset...')
-        adata_sub = adata_sub.copy()
+        adata_sub = adata_sub.copy()      
+        adata_sub = dask_compute(adata_sub)
+        adata_sub = adata_to_memory(adata_sub)
         
-        if backed:
-            logging.info('Load backed arrays to memory...')
-            adata_sub = adata_to_memory(adata_sub)
-        if dask:
-            logging.info('Convert to csr_matrix with int64 indptr...')
-            adata_sub = apply_layers(
-                adata_sub,
-                # lambda x: convert_to_dtype(x, lambda y: y.to_scipy_sparse())
-                # lambda x: x.compute().to_scipy_sparse() if isinstance(x, da.Array) else x
-                # lambda x: csr_matrix(x.compute()) if isinstance(x, da.Array) else x
-                lambda x: x.map_blocks(csr_matrix_int64_indptr, dtype=x.dtype)
-            )
-    
     # write to file
     logging.info(f'Write to {out_file}...')
     add_wildcards(adata_sub, {'key': split_key, 'value': split} , 'split_data')
