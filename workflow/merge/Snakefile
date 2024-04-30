@@ -8,8 +8,12 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='merge',
     config=config,
-    config_params=['dask', 'backed'],
+    config_params=['merge_strategy', 'dask', 'backed'],
     mandatory_wildcards=['dataset'],
+    dtypes=dict(
+        dask=bool,
+        backed=bool
+    ),
 )
 params = mcfg.get_paramspace()
 
@@ -29,6 +33,10 @@ rule merge:
         unpack(lambda wildcards: mcfg.get_input_files_per_dataset(dataset=wildcards.dataset))
     output:
         zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
+    params:
+        merge_strategy=lambda wildcards: mcfg.get_from_parameters(wildcards, 'merge_strategy', default='inner'),
+        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=False),
+        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:

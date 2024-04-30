@@ -90,13 +90,32 @@ else:
     for file in files[1:]:
         logging.info(f'Read {file}...')
         _adata = read_adata(file, backed=backed, dask=dask)
-        logging.info(_adata.__str__())
+        logging.info(f'{file}:\n{_adata}')
         
         # merge adata
         adata = sc.concat([adata, _adata], join=merge_strategy)
+        logging.info(f'after merge:\n{adata}')
 
         del _adata
         gc.collect()
+
+
+# merge lost annotations
+logging.info('Add gene info...')
+for _ad in adatas:
+    # get intersection of var_names
+    var_names = list(set(adata.var_names).intersection(set(_ad.var_names)))
+    
+    # conver categorical columns to str
+    categorical_columns = _ad.var.select_dtypes(include='category').columns
+    _ad.var[categorical_columns] = _ad.var[categorical_columns].astype(str)
+    
+    # add new columns to adata.var
+    adata.var.loc[var_names, _ad.var.columns] = _ad.var.loc[var_names, :]
+
+# fix dtypes
+adata.var = adata.var.infer_objects()
+logging.info(adata.var)
 
 # set new indices
 adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(str)
