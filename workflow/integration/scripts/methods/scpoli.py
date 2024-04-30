@@ -89,8 +89,13 @@ adata, _ = subset_hvg(adata, var_column=var_mask)
 
 # prepare data for model
 adata.X = adata.X.astype('float32')
-if label_key in adata.obs.columns:
-    adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
+cell_type_keys = model_params.get('cell_type_keys', [])
+if isinstance(cell_type_keys, str):
+    cell_type_keys = [cell_type_keys]
+elif cell_type_keys is None:
+    cell_type_keys = []
+for key in cell_type_keys:
+    adata.obs[key] = adata.obs[key].astype(str).fillna('NA').astype('category')
 
 print(f'Set up scPoli with parameters:\n{pformat(model_params)}', flush=True)
 model = scPoli(adata=adata, **model_params)
