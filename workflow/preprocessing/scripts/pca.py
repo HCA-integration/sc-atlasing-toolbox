@@ -76,7 +76,7 @@ if isinstance(adata.X, da.Array):
 # make sure data is on GPU for rapids_singlecell
 if rapids:
     logging.info('Transfer to GPU...')
-    sc.utils.anndata_to_GPU(adata)
+    sc.get.anndata_to_GPU(adata)
 
 # scaling TODO: move to separate rule
 if scale:

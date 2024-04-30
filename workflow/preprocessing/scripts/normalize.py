@@ -61,7 +61,7 @@ if isinstance(adata.X, da.Array):
 if rapids:
     logging.info('Transfer to GPU...')
     # adata.X = adata.X.astype('float32')
-    sc.utils.anndata_to_GPU(adata)
+    sc.get.anndata_to_GPU(adata)
 
 logging.info('normalize_total...')
 sc.pp.normalize_total(adata)
@@ -74,7 +74,7 @@ ensure_sparse(adata, sparse_type=csr_matrix_int64_indptr)
 
 if rapids:
     logging.info('Transfer to CPU...')
-    sc.utils.anndata_to_CPU(adata)
+    sc.get.anndata_to_CPU(adata)
 
 adata.layers['normcounts'] = adata.X
 
@@ -84,6 +84,8 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
+# scanpy.pp.log1p was supposed to add it but it's not saved
+adata.uns["log1p"] = {"base": None}
 
 logging.info(f'Write to {output_file}...')
 logging.info(adata.__str__())
