@@ -17,14 +17,14 @@ from utils.processing import filter_genes, sc, USE_GPU
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 args = snakemake.params.get('args', {})
-batch_key = snakemake.params.get('batch')
 dask = snakemake.params.get('dask', False) and not USE_GPU
 backed = snakemake.params.get('backed', False) and dask and not USE_GPU
 
 if args is None:
     args = {}
+elif isinstance(args, dict):
+    args.pop('subset', None) # don't support subsetting
 # subset_to_hvg = isinstance(args, dict) and args.get('subset', False)
-args.pop('subset', None) # don't support subsetting
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
@@ -51,16 +51,15 @@ if args == False:
     var['highly_variable'] = True
 else:
     # filter genes that are all 0
-    adata = filter_genes(adata, min_cells=1)
+    adata = filter_genes(adata, min_cells=1, batch_key=args.get('batch_key'))
     
     # make sure data is on GPU for rapids_singlecell
     if USE_GPU:
-        sc.utils.anndata_to_GPU(adata)
+        sc.get.anndata_to_GPU(adata)
     
     logging.info(f'Select features with arguments: {args}...')
     sc.pp.highly_variable_genes(
         adata,
-        batch_key=batch_key,
         **args
     )
 
@@ -90,8 +89,6 @@ files_to_keep = ['uns', 'var']
 #     logging.info(adata.__str__())
 # else:
 adata = ad.AnnData(var=var, uns=adata.uns)
-
-logging.info(f'Write to {output_file}...')
 write_zarr_linked(
     adata,
     in_dir=input_file,

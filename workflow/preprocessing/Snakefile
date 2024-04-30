@@ -13,7 +13,6 @@ mcfg = ModuleConfig(
     config=config,
     config_params=[
         'assemble',
-        'batch',
         'colors',
         'highly_variable_genes',
         'lineage',

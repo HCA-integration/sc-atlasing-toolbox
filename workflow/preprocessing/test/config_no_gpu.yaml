@@ -16,7 +16,6 @@ DATASETS:
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: true
       assemble:
         - counts
         - normalize

@@ -25,8 +25,6 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'highly_variable_genes', default={}),
-        batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch'),
-        lineage=lambda wildcards: mcfg.get_from_parameters(wildcards, 'lineage'),
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
         dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
     resources:
