@@ -99,7 +99,11 @@ class InputFiles:
         """
         Get file name to file path mapping for a given dataset
         """
-        return self.file_map[dataset]
+        try:
+            file = self.file_map[dataset]
+        except KeyError:
+            raise KeyError(f'No files found for dataset "{dataset}" file_map: {self.file_map}')
+        return file
 
 
     def get_file(self, dataset, file_id) -> [str, Path]:

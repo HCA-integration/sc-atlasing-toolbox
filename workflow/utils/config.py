@@ -163,8 +163,9 @@ def _get_or_default_from_config(
     :return:
     """
     if key not in config.keys():
-        print(key, value)
-        print('config:', config)
+        print('config:')
+        pprint(config)
+        print(f'key: {key}, value: {value}')
         raise KeyError(f'Key "{key}" not found in config')
     
     config_at_key = config.get(key)

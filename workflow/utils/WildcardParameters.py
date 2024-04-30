@@ -415,5 +415,5 @@ class WildcardParameters:
         if as_type is not None:
             parameter = as_type(parameter)
         if verbose:
-            print(f'parameter: {parameter}')
+            print(f'parameter: {parameter}, {type(parameter)}')
         return parameter
