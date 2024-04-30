@@ -8,7 +8,7 @@ dependencies:
   - anndata=0.10
   - scanpy=1.10
   - leidenalg
-  - python-louvain
+  - louvain
   - zarr
   - cuda-version=11.4
   - cuda-cudart=11.4
