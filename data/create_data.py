@@ -40,6 +40,10 @@ adata.raw = AnnData(
 
 print(adata)
 
+# add umap
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
+
 out_file = Path(__file__).parent / 'pbmc68k.h5ad'
 print(f'writing to {out_file}...')
 adata.write(out_file, compression='gzip')
