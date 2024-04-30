@@ -13,9 +13,9 @@ mcfg = ModuleConfig(
     config=config,
     config_params=[
         'assemble',
-        'batch',
         'colors',
         'highly_variable_genes',
+        'extra_hvgs',
         'lineage',
         'neighbors',
         'pca',

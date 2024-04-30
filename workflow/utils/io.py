@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import MutableMapping
 import shutil
+import json
 import anndata as ad
 import zarr
 import h5py
@@ -538,3 +539,23 @@ def write_zarr_linked(
         slot_map=slot_map,
         in_dir_map=in_dir_map,
     )
+    
+    # update .zattrs files
+    for slot in ['obs', 'var']:
+        zattrs_file = Path(out_dir) / slot / '.zattrs'
+
+        if not (zattrs_file).exists():
+            continue
+        
+        with open(zattrs_file, 'r') as file:
+            zattrs = json.load(file)
+        
+        # add all columns (otherwise linked columns are not included)
+        columns = [
+            f.name for f in zattrs_file.parent.iterdir()
+            if not f.name.startswith('.') and f.name not in zattrs['_index']
+        ]
+        zattrs['column-order'] = sorted(columns)
+        
+        with open(zattrs_file, 'w') as file:
+            json.dump(zattrs, file, indent=4)

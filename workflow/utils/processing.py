@@ -26,7 +26,7 @@ except ImportError as e:
     USE_GPU = False
 
 from .assertions import assert_neighbors
-from .io import to_memory
+from .io import to_memory, csr_matrix_int64_indptr
 
 
 def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=False, **kwargs):
@@ -78,3 +78,42 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
         raise ValueError(f'Invalid output type {output_type}')
     
     assert_neighbors(adata, check_n_neighbors=False)
+
+
+def filter_genes(adata, batch_key=None, **kwargs):
+    """
+    Filter anndata based on .X matrix
+    """
+    import scanpy as sc
+    from dask import array as da
+    
+    logging.info('Filter genes...')
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+    gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
+    if isinstance(gene_subset, da.Array):
+        gene_subset = gene_subset.compute()
+    
+    subsetted = False
+    
+    # filter cells from batches with too few cells
+    if batch_key is not None:
+        cells_per_batch = adata.obs[batch_key].value_counts()
+        subsetted = cells_per_batch.min() < 2
+        if subsetted:
+            adata = adata[adata.obs[batch_key].isin(cells_per_batch[cells_per_batch > 1].index)]
+        
+    # apply filter
+    if any(gene_subset == False):
+        subsetted = True
+        logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
+        adata = adata[:, gene_subset]
+    
+    if subsetted:
+        adata = adata.copy()    
+    
+    # convert dask array to csr matrix
+    if isinstance(adata.X, da.Array):
+        adata.X = adata.X.map_blocks(csr_matrix_int64_indptr).compute()
+
+    return adata

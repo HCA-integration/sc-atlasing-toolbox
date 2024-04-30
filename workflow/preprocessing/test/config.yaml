@@ -28,12 +28,10 @@ DATASETS:
       dask: false
       backed: false
       raw_counts: X
-      batch: dataset
-      lineage: cell_type
       scale: false
       highly_variable_genes:
+        batch_key: dataset
         n_top_genes: 2000
-        subset: true
       assemble:
         - counts
         - normalize
@@ -54,7 +52,6 @@ DATASETS:
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: false
       assemble:
         - counts
         - normalize
