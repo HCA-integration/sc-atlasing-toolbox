@@ -174,7 +174,6 @@ use rule * from label_transfer as label_transfer_ *
 use rule * from label_harmonization as label_harmonization_ *
 use rule * from relabel as relabel_ *
 use rule * from integration as integration_ *
-# use rule * from integration_per_lineage as integration_per_lineage_ *
 use rule * from metrics as metrics_ *
 
 
