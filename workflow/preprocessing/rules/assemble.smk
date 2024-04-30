@@ -34,6 +34,21 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
 
 
+use rule extra_hvgs from preprocessing as preprocessing_extra_hvgs with:
+    input:
+        zarr=rules.preprocessing_normalize.output.zarr,
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'extra_hvgs.zarr'),
+    params:
+        args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'highly_variable_genes', default={}),
+        extra_hvgs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'extra_hvgs', default={}),
+    resources:
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+
+
 use rule pca from preprocessing as preprocessing_pca with:
     input:
         zarr=rules.preprocessing_highly_variable_genes.output.zarr,
@@ -88,6 +103,7 @@ def collect_files(wildcards):
         # 'counts': mcfg.get_input_file(**wildcards),
         'normalize': rules.preprocessing_normalize.output.zarr,
         'highly_variable_genes': rules.preprocessing_highly_variable_genes.output.zarr,
+        'extra_hvgs': rules.preprocessing_extra_hvgs.output.zarr,
         'pca': rules.preprocessing_pca.output.zarr,
         'neighbors': rules.preprocessing_neighbors.output.zarr,
         'umap': rules.preprocessing_umap.output.zarr,
