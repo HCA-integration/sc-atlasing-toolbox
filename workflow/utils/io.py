@@ -507,7 +507,10 @@ def write_zarr_linked(
     ]
 
     # For those not keeping, link
-    files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_clean]
+    files_to_link = [
+        f for f in in_dirs
+        if f.split('/', 1)[-1] not in file_to_link_clean
+    ]
     
     if slot_map is None:
         slot_map = {}
@@ -521,9 +524,9 @@ def write_zarr_linked(
     }
     
     # remove slots that will be overwritten anyway
-    for slot in files_to_link+extra_slots_to_link:
-        if slot in adata.__dict__:
-            print_flushed(f'remove {slot}...')
+    for slot in set(files_to_link+extra_slots_to_link):
+        if hasattr(adata, slot):
+            print_flushed(f'remove slot to be linked: {slot}')
             delattr(adata, slot)
     
     # write zarr file
