@@ -52,7 +52,6 @@ use rule extra_hvgs from preprocessing as preprocessing_extra_hvgs with:
 use rule pca from preprocessing as preprocessing_pca with:
     input:
         zarr=rules.preprocessing_highly_variable_genes.output.zarr,
-        counts=rules.preprocessing_normalize.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pca.zarr'),
     params:
