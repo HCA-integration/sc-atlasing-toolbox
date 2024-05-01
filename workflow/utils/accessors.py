@@ -4,7 +4,7 @@ import anndata as ad
 from dask import array as da
 
 from .io import to_memory
-from .misc import apply_layers
+from .misc import dask_compute
 
 
 # deprecated
@@ -100,12 +100,7 @@ def subset_hvg(
     )
     
     if compute_dask:
-        adata = apply_layers(
-            adata,
-            func=lambda x: x.compute() if isinstance(x, da.Array) else x,
-            layers=to_memory,
-            verbose=True,
-        )
+        adata = dask_compute(adata, layers=to_memory)
     
     return adata, subsetted
 
