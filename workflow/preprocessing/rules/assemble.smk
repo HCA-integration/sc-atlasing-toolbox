@@ -15,7 +15,7 @@ use rule normalize from preprocessing as preprocessing_normalize with:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
 
 
 use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
@@ -28,10 +28,10 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed'),
         dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
     resources:
-        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
 
 
 use rule extra_hvgs from preprocessing as preprocessing_extra_hvgs with:
@@ -43,10 +43,10 @@ use rule extra_hvgs from preprocessing as preprocessing_extra_hvgs with:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'highly_variable_genes', default={}),
         extra_hvgs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'extra_hvgs', default={}),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt, factor=1),
 
 
 use rule pca from preprocessing as preprocessing_pca with:
@@ -64,7 +64,7 @@ use rule pca from preprocessing as preprocessing_pca with:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
         gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
 
 
 use rule neighbors from preprocessing as preprocessing_neighbors with:
