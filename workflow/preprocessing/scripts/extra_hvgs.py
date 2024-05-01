@@ -64,12 +64,22 @@ else:
     if union_over is not None:
         adata.var['extra_hvgs'] = False
         for group in adata.obs[union_over].unique():
-            _ad = adata[adata.obs[union_over] == group].copy()
-            _ad = filter_genes(_ad, min_cells=1, batch_key=args.get('batch_key'))
+            logging.info(f'Subset to group={group}...')
+            _ad = dask_compute(
+                adata[adata.obs[union_over] == group].copy()
+            )
+            
+            logging.info('Filter genes...')
+            _ad = filter_genes(
+                _ad,
+                min_cells=1,
+                batch_key=args.get('batch_key'),
+            )
+            
             if _ad.n_obs < 2:
+                logging.info(f'Group={group} has less than 2 cells, skipping...')
                 continue
             
-            _ad = dask_compute(_ad)
             if USE_GPU:
                 sc.get.anndata_to_GPU(_ad)
 
