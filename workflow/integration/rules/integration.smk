@@ -39,7 +39,7 @@ integration_run_pattern = 'run_method/' + paramspace.wildcard_pattern.replace('-
 use rule run_method from integration as integration_run_method with:
     message:
        """
-       Integration: Run integration method {wildcards.method} on {wildcards.dataset}
+       Integration: Run integration method {wildcards.method} on dataset={wildcards.dataset} file_id={wildcards.file_id}
        input: {input}
        output: {output}
        wildcards: {wildcards}
