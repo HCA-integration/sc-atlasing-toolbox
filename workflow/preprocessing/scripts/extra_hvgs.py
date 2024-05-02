@@ -65,9 +65,8 @@ else:
         adata.var['extra_hvgs'] = False
         for group in adata.obs[union_over].unique():
             logging.info(f'Subset to group={group}...')
-            _ad = dask_compute(
-                adata[adata.obs[union_over] == group].copy()
-            )
+            _ad = dask_compute(adata[adata.obs[union_over] == group].copy())
+            logging.info(f'{_ad.n_obs} cells, {_ad.n_vars} genes')
             
             logging.info('Filter genes...')
             _ad = filter_genes(
