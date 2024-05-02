@@ -87,29 +87,24 @@ def filter_genes(adata, batch_key=None, **kwargs):
     import scanpy as sc
     from dask import array as da
     
-    logging.info('Filter genes...')
     if isinstance(adata.X, da.Array):
         adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
     gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
     if isinstance(gene_subset, da.Array):
         gene_subset = gene_subset.compute()
     
-    subsetted = False
-    
     # filter cells from batches with too few cells
     if batch_key is not None:
         cells_per_batch = adata.obs[batch_key].value_counts()
-        subsetted = cells_per_batch.min() < 2
-        if subsetted:
+        if cells_per_batch.min() < 2:
             adata = adata[adata.obs[batch_key].isin(cells_per_batch[cells_per_batch > 1].index)]
         
     # apply filter
     if any(gene_subset == False):
-        subsetted = True
         logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
         adata = adata[:, gene_subset]
     
-    if subsetted:
+    if adata.is_view:
         adata = adata.copy()    
     
     # convert dask array to csr matrix
