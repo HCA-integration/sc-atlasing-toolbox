@@ -434,7 +434,14 @@ def link_zarr(
 
     # link all files
     out_dir = Path(out_dir)
-    for out_slot, in_slot in slot_map.items():
+    print_flushed('slot_map:', slot_map)
+    slot_map = sorted(
+        slot_map.items(),
+        key=lambda item: out_dir.name in str(in_dir_map[item[1]]),
+        reverse=False,
+    )
+
+    for out_slot, in_slot in slot_map:
         in_dir = in_dir_map[in_slot]
         in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
         out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
