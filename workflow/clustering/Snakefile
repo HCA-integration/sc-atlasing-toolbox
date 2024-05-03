@@ -15,17 +15,16 @@ mcfg = ModuleConfig(
     module_name='clustering',
     config=config,
     config_params=['umap_exists', 'neighbors_key', 'resolutions', 'algorithm'],
-    wildcard_names=['neighbors_key', 'resolution'],
     rename_config_params={'resolutions': 'resolution'},
     explode_by='resolution',
-    dtypes={'umap_exists': bool},
+    dtypes={'umap_exists': bool, 'resolution': str},
 )
-paramspace = mcfg.get_paramspace(exclude=['neighbors_key', 'resolution'])
+paramspace = mcfg.get_paramspace()
 
 
 wildcard_constraints:
-    dataset='((?![/]).)*',
-
+    dataset='\w+',
+    file_id='\w+',
 
 module common:
     snakefile: "../common/Snakefile"

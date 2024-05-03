@@ -7,9 +7,9 @@ use rule cluster from clustering as clustering_cluster with:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        tsv=mcfg.out_dir / paramspace.wildcard_pattern / 'resolutions' / '{resolution}.tsv',
+        tsv=mcfg.out_dir / 'resolutions' / paramspace.wildcard_pattern / '{resolution}.tsv',
     params:
-        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key'),
+        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         algorithm=lambda wildcards: mcfg.get_from_parameters(wildcards, 'algorithm', default='leiden'),
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
@@ -23,9 +23,9 @@ use rule umap from preprocessing as clustering_compute_umap with:
         anndata=lambda wildcards: mcfg.get_input_file(**wildcards),
         rep=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
+        zarr=directory(mcfg.out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
     params:
-        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key'),
+        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
@@ -42,11 +42,15 @@ def get_umap_file(wildcards):
 use rule merge from clustering as clustering_merge with:
     input:
         zarr=get_umap_file, # rules.clustering_compute_umap.output.zarr,
-        tsv=lambda wildcards: mcfg.get_output_files(rules.clustering_cluster.output.tsv, subset_dict=dict(wildcards)),
+        tsv=lambda wildcards: mcfg.get_output_files(
+            rules.clustering_cluster.output.tsv,
+            subset_dict=dict(wildcards),
+            all_params=True,
+        ),
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
     params:
-        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key'),
+        neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         algorithm=lambda wildcards: mcfg.get_from_parameters(wildcards, 'algorithm', default='leiden')
 
 

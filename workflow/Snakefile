@@ -32,12 +32,6 @@ config_kwargs = {
         rename_config_params={'values': 'value'},
         explode_by=['value'],
     ),
-    'clustering': dict(
-        config_params=['neighbors_key', 'resolutions'],
-        wildcard_names=['neighbors_key', 'resolution'],
-        rename_config_params={'resolutions': 'resolution'},
-        explode_by='resolution',
-    ),
     'integration': dict(
         parameters=workflow.source_path('integration/params.tsv'),
         config_params=['methods', 'batch', 'label', 'var_mask'],
