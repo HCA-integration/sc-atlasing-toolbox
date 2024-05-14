@@ -78,7 +78,7 @@ if 'color' in params:
                 continue
             column = adata.obs[color]
             if is_categorical_dtype(column) or is_string_dtype(column):
-                column = column.replace(['NaN', 'None', '', 'nan'], float('nan'))
+                column = column.replace(['NaN', 'None', '', 'nan', 'unknown'], float('nan'))
                 column = pd.Categorical(column)
                 adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
