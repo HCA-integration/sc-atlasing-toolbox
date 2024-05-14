@@ -94,8 +94,10 @@ DATASETS:
       methods:
         harmonypy:
           sigma: 0.1
+          key: batch_2
         harmony:
           sigma: 0.1
+          batch_key: batch_2
       umap_colors:
         - phase
 
@@ -157,8 +159,12 @@ DATASETS:
           max_epochs: 100
           early_stopping: true
           categorical_covariate_keys:
-            - batch_2
-            - phase
+            -
+            -
+              - batch_2
+            -
+              - batch_2
+              - phase
           continuous_covariate_keys:
             - percent_mito
       umap_colors:
