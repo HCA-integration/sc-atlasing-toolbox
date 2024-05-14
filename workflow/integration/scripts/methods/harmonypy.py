@@ -35,7 +35,18 @@ hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
 hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
-logging.info(f'Read {input_file}...')
+# set harmony var_use
+key = hyperparams.get('key', [])
+if key is None:
+    key = {batch_key}
+elif isinstance(key, str):
+    key = {batch_key, key}
+elif isinstance(key, list):
+    key = set(key).union({batch_key})
+hyperparams['key'] = list(key)
+
+logging.info
+(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
     obs='obs',
@@ -50,7 +61,6 @@ assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
 logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
 harmony_integrate(
     adata,
-    key=batch_key,
     basis=use_rep,
     adjusted_basis='X_emb',
     **hyperparams
