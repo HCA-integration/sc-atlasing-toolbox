@@ -151,6 +151,11 @@ module metrics:
     snakefile: "metrics/Snakefile"
     config: config
 
+module marker_genes:
+    snakefile: "marker_genes/Snakefile"
+    config: config
+
+
 use rule * from common as common_ *
 use rule * from load_data as load_data_ *
 use rule * from filtering as filter_ *
@@ -169,6 +174,7 @@ use rule * from label_harmonization as label_harmonization_ *
 use rule * from relabel as relabel_ *
 use rule * from integration as integration_ *
 use rule * from metrics as metrics_ *
+use rule * from marker_genes as marker_genes_ *
 
 
 rule all:

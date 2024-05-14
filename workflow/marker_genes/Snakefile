@@ -1,0 +1,51 @@
+"""
+Marker genes
+"""
+from pathlib import Path
+import pandas as pd
+
+from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
+
+
+mcfg = ModuleConfig(
+    module_name='marker_genes',
+    config=config,
+    config_params=['groups', 'rank_genes_groups', 'plot'],
+    rename_config_params={'groups': 'group'},
+    explode_by='group',
+)
+paramspace = mcfg.get_paramspace()
+
+
+wildcard_constraints:
+    dataset='((?![/]).)*',
+    file_id='((?![/]).)*',
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+include: 'rules/marker_genes.smk'
+
+
+rule all:
+    input:
+        mcfg.get_output_files(rules.plot.output, all_params=True),
+        mcfg.get_output_files(rules.collect.output),
+    default_target: True
+    localrule: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )
+    localrule: True
+

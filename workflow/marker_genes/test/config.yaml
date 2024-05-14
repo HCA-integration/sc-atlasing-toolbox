@@ -1,0 +1,29 @@
+output_dir: test/out
+images: test/images
+
+use_gpu: true
+env_mode: local
+
+DATASETS:
+  test:
+    input:
+      marker_genes:
+        test_1: test/input/pbmc68k.h5ad
+        test_2: test/input/pbmc68k.h5ad
+    marker_genes:
+      rank_genes_groups:
+        reference: rest
+        n_genes: 100
+        method: wilcoxon
+      plot:
+        n_genes: 20
+      groups:
+        - bulk_labels
+        - phase
+        - batch
+  test2:
+    input:
+      marker_genes: test/input/pbmc68k.h5ad
+    marker_genes:
+      groups:
+        - bulk_labels
