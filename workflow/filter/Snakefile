@@ -42,7 +42,7 @@ use rule filter from filtering as filter with:
         dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask'),
         subset=lambda wildcards: mcfg.get_from_parameters(wildcards, 'subset'),
     resources:
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=2),
 
 
 rule all:
