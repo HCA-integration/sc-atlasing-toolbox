@@ -69,7 +69,7 @@ def subset_hvg(
     assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
     assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
     
-    if add_column is not None:
+    if add_column is not None and add_column != var_column:
         adata.var[add_column] = adata.var[var_column]
     
     # filter features that are all 0
