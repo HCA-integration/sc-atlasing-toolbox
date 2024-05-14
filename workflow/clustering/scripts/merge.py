@@ -4,11 +4,11 @@ from utils.io import read_anndata, write_zarr_linked
 from utils.misc import merge
 
 
-input_tsv = snakemake.input.tsv
+input_tsv = snakemake.input.parquet
 input_zarr = snakemake.input.zarr
 output_zarr = snakemake.output.zarr
 
-dfs = [pd.read_table(file, index_col=0, dtype='str') for file in input_tsv]
+dfs = [pd.read_parquet(file) for file in input_tsv]
 cluster_df = merge(dfs, left_index=True, right_index=True)
 print(cluster_df)
 

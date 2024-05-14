@@ -7,7 +7,7 @@ use rule cluster from clustering as clustering_cluster with:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        tsv=mcfg.out_dir / 'resolutions' / paramspace.wildcard_pattern / '{resolution}.tsv',
+        parquet=mcfg.out_dir / 'resolutions' / paramspace.wildcard_pattern / '{resolution}.parquet',
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         algorithm=lambda wildcards: mcfg.get_from_parameters(wildcards, 'algorithm', default='leiden'),
@@ -42,8 +42,8 @@ def get_umap_file(wildcards):
 use rule merge from clustering as clustering_merge with:
     input:
         zarr=get_umap_file, # rules.clustering_compute_umap.output.zarr,
-        tsv=lambda wildcards: mcfg.get_output_files(
-            rules.clustering_cluster.output.tsv,
+        parquet=lambda wildcards: mcfg.get_output_files(
+            rules.clustering_cluster.output.parquet,
             subset_dict=dict(wildcards),
             all_params=True,
         ),
