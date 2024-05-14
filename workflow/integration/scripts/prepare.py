@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
-from utils.misc import apply_layers
+from utils.misc import dask_compute
 from utils.processing import assert_neighbors, sc
 
 
@@ -18,6 +18,7 @@ params = snakemake.params
 batch_keys = params.batches
 var_mask = snakemake.wildcards.var_mask
 save_subset = params.get('save_subset', False)
+recompute_pca = params.get('recompute_pca', True)
 
 
 def read_and_subset(
@@ -26,6 +27,7 @@ def read_and_subset(
     var_column: str,
     files_to_keep: list,
     slot_map: dict,
+    **kwargs,
 ):
     in_layer = params.get(layer_key, 'X')
     assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
@@ -36,13 +38,11 @@ def read_and_subset(
         input_file,
         X=in_layer,
         obs='obs',
-        obsm='obsm',
         var='raw/var' if 'raw/' in in_layer else 'var',
-        varm='varm',
-        varp='varp',
         uns='uns',
         backed=True,
         dask=True,
+        **kwargs
     )
     
     logging.info('Subset highly variable genes...')
@@ -58,6 +58,7 @@ def read_and_subset(
             to_memory=False,
             compute_dask=False,
         )
+        dask_compute(adata, layers=[layer_key], verbose=True)
     
     # determine output
     if subsetted and save_subset:
@@ -77,6 +78,10 @@ adata_norm, files_to_link, slot_map = read_and_subset(
     var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    obsm='obsm',
+    obsp='obsp',
+    varm='varm',
+    varp='varp',
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
@@ -116,6 +121,7 @@ elif input_file.endswith('.zarr'):
     adata = AnnData(
         obs=adata_norm.obs,
         obsm=adata_norm.obsm,
+        obsp=adata_norm.obsp,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,
@@ -126,21 +132,16 @@ elif input_file.endswith('.zarr'):
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
-apply_layers(
-    adata,
-    func=lambda x: x.compute() if isinstance(x, da.Array) else x,
-    layers=['norm_counts', 'raw_counts'],
-    verbose=True,
-)
-
 # preprocess if missing
-if 'X_pca' not in adata.obsm:
+if recompute_pca or 'X_pca' not in adata.obsm:
+    dask_compute(adata, layers=['norm_counts'], verbose=True)
     logging.info('Compute PCA...')
     import scanpy
     scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
     files_to_keep.extend(['obsm', 'uns'])
 
 try:
+    assert not recompute_pca, 'PCA was recomputed'
     assert_neighbors(adata)
     logging.info(adata.uns['neighbors'].keys())
 except AssertionError as e:

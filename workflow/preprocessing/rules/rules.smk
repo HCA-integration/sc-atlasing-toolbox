@@ -40,7 +40,6 @@ rule extra_hvgs:
 rule pca:
     input:
         zarr='{dataset}.h5ad',
-        counts='{dataset}.h5ad',
     output:
         zarr=directory('{dataset}_pca.zarr')
     conda:

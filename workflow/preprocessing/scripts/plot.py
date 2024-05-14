@@ -12,8 +12,8 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_string_dtype, is_categorical_dtype
 from pprint import pformat
 
-from utils.io import read_anndata
-from utils.misc import ensure_dense, remove_outliers
+from utils.io import read_anndata, get_file_reader
+from utils.misc import ensure_dense, remove_outliers, dask_compute
 
 
 sc.set_figure_params(
@@ -35,7 +35,22 @@ wildcards_string = '\n'.join([f'{k}: {v}' for k, v in snakemake.wildcards.items(
 logging.info(f'Wildcard string: {wildcards_string}...')
 
 logging.info(f'Read file {input_file}...')
-adata = read_anndata(input_file, obs='obs', obsm='obsm')
+kwargs = dict(
+    obs='obs',
+    obsm='obsm',
+    var='var',
+    dask=True,
+    backed=True,
+)
+
+# check if .X exists
+read_func, _ = get_file_reader(input_file)
+if 'X' in read_func(input_file, 'r'):
+    kwargs |= {'X': 'X'}
+
+logging.info(f'Read {input_file}...')
+adata = read_anndata(input_file, **kwargs)
+assert basis in adata.obsm.keys(), f'"{basis}" not in adata.obsm'
 ensure_dense(adata, basis)
 
 if adata.n_obs == 0:
@@ -48,7 +63,8 @@ if 'color' in params:
     logging.info(f'Configured colors:\n{pformat(colors)}')
     colors = colors if isinstance(colors, list) else [colors]
     # remove that are not in the data
-    colors = [color for color in colors if color in adata.obs.columns]
+    columns = adata.obs.columns.tolist() + adata.var_names.tolist()
+    colors = [color for color in colors if color in columns]
     # filter colors with too few or too many categories
     logging.info(f'Colors after filtering:\n{pformat(colors)}')
     
@@ -58,12 +74,22 @@ if 'color' in params:
         colors = [None]
     else:
         for color in colors:
+            if color not in adata.obs.columns:
+                continue
             column = adata.obs[color]
             if is_categorical_dtype(column) or is_string_dtype(column):
-                column = column.replace(['NaN', 'None', '', 'nan'], float('nan'))
+                column = column.replace(['NaN', 'None', '', 'nan', 'unknown'], float('nan'))
                 column = pd.Categorical(column)
                 adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
+
+
+# subset to requested genes
+adata = adata[:, adata.var_names.isin(colors)].copy()
+dask_compute(adata, layers='X')
+
+# shuffle cells
+adata = adata[adata.obs.sample(frac=1).index].copy()
 
 # remove outliers
 outlier_factor = params.get('outlier_factor', 0)
@@ -77,7 +103,7 @@ default_size = 150000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 3, default_size]), 200])
+params['size'] = np.min([np.max([size, 10, default_size]), 200])
 print(f'Size: {params["size"]}', flush=True)
 print(default_size, flush=True)
 params['size'] = None
@@ -85,10 +111,14 @@ params['size'] = None
 
 for color in colors:
     logging.info(f'Plot color "{color}"...')
-    palette = sc.pl.palettes.godsnot_102 if is_categorical_dtype(adata.obs[color]) and adata.obs[color].nunique() > 20 else None
+    palette = None
+    if color in adata.obs.columns:
+        color_vec = adata.obs[color]
+        if is_categorical_dtype(color_vec) and color_vec.nunique() > 20:
+            palette = sc.pl.palettes.godsnot_102
     try:
         fig = sc.pl.embedding(
-            adata[adata.obs.sample(adata.n_obs).index],
+            adata,
             color=color,
             show=False,
             return_fig=True,

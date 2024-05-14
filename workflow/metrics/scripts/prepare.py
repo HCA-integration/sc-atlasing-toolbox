@@ -54,7 +54,7 @@ if 'highly_variable' not in adata.var.columns:
     adata.var['highly_variable'] = True
 adata, subsetted = subset_hvg(adata, var_column='highly_variable')
 if subsetted:
-    files_to_keep.extend(['X', 'varm', 'varp'])
+    files_to_keep.extend(['X', 'varm', 'varp', 'raw'])
 
 logging.info('Run PCA on integrated data...')
 if output_type == 'full':

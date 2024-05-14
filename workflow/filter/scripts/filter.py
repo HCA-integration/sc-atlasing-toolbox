@@ -11,6 +11,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
+from utils.misc import dask_compute
 
 
 input_file = snakemake.input[0]
@@ -63,7 +64,7 @@ if subset and False in value_counts.index:
     adata.obs = obs # updated obs
     
     logging.info('Subset data by filters...')
-    adata = adata[adata.obs['filtered']].copy()
+    adata = dask_compute(adata[adata.obs['filtered']].copy())
     logging.info(adata.__str__())
 
 logging.info(f'Write to {output_file}...')

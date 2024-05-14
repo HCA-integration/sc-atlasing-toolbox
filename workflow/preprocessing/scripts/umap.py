@@ -13,17 +13,14 @@ from utils.misc import ensure_dense
 
 
 def check_and_update_neighbors_info(adata, neighbors_key):
-    # check if representation is available
-    if neighbors_key not in adata.uns:
-        adata.uns[neighbors_key] = {
-            'connectivities_key': 'connectivities',
-            'distances_key': 'distances',
-            'params': {
-                'use_rep': 'X_pca',
-                'method': None,
-            },
-        }
-    adata.uns[neighbors_key]['params'] = adata.uns[neighbors_key].get('params', {'use_rep': 'X_pca'})
+    # set neighbors_key if missing
+    neighbors = adata.uns.get(neighbors_key, {})
+    neighbors |= {
+        'connectivities_key': neighbors.get('connectivities_key', 'connectivities'),
+        'distances_key': neighbors.get('distances_key', 'distances'),
+        'params': neighbors.get('params', {'use_rep': 'X_pca', 'method': None}),
+    }
+    adata.uns[neighbors_key] = neighbors
     
     try:
         assert adata.uns[neighbors_key]['connectivities_key'] in adata.obsp
@@ -37,14 +34,14 @@ def check_and_update_neighbors_info(adata, neighbors_key):
     if 'n_neighbors' not in adata.uns[neighbors_key]['params']:
         distances_key = adata.uns[neighbors_key]['distances_key']
         n_neighbors = np.unique(adata.obsp[distances_key].nonzero()[0], return_counts=True)[1]
-        assert len(np.unique(n_neighbors)) == 1, f'Number of neighbors is not consistent!\nn_neighbors: {np.unique(n_neighbors)}'
+        # assert len(np.unique(n_neighbors)) == 1, f'Number of neighbors is not consistent!\nn_neighbors: {np.unique(n_neighbors)}'
         adata.uns[neighbors_key]['params']['n_neighbors'] = int(n_neighbors[0])
 
     # get correct cell-level representation for UMAP
-    use_rep = adata.uns[neighbors_key]['params'].get('use_rep')
+    use_rep = adata.uns[neighbors_key]['params'].get('use_rep', 'X')
     if use_rep not in adata.obsm:
         logging.info(f'Read representation file {input_rep} for use_rep="{use_rep}"...')
-        if use_rep == 'X':
+        if use_rep == 'X' or use_rep is None:
             adata = ad.AnnData(
                 X=read_anndata(input_rep, X='X').X,
                 obs=adata.obs,

@@ -5,8 +5,7 @@ use rule umap from preprocessing as integration_compute_umap with:
         anndata=rules.integration_postprocess.output.zarr,
         rep=rules.integration_postprocess.output.zarr,
     output:
-        zarr=directory(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
-        done=touch(out_dir / 'umap' / f'{paramspace.wildcard_pattern}.done'),
+        zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

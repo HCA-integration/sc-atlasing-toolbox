@@ -49,6 +49,7 @@ rule split:
     resources:
         mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt, factor=1),
     threads: 5
+    priority: 1
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
@@ -62,6 +63,7 @@ rule link:
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     localrule: True
+    priority: 1
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:

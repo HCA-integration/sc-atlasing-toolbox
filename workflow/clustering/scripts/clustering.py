@@ -6,6 +6,7 @@ import numpy as np
 
 from utils.io import read_anndata, get_file_reader
 
+
 def check_and_set_neighbors_key(adata, neighbors_key):
     neighbors = adata.uns.get(neighbors_key, {})
     neighbors |= {
@@ -61,4 +62,4 @@ else:
     cluster_func(adata, resolution=resolution, key_added=cluster_key)
 
 logging.info(f'Write {cluster_key} to {output_file}...')
-adata.obs[cluster_key].to_csv(output_file, sep='\t', index=True)
+adata.obs[[cluster_key]].to_parquet(output_file)

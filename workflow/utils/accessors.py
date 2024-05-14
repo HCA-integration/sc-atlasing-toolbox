@@ -4,7 +4,7 @@ import anndata as ad
 from dask import array as da
 
 from .io import to_memory
-from .misc import apply_layers
+from .misc import dask_compute
 
 
 # deprecated
@@ -69,7 +69,7 @@ def subset_hvg(
     assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
     assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
     
-    if add_column is not None:
+    if add_column is not None and add_column != var_column:
         adata.var[add_column] = adata.var[var_column]
     
     # filter features that are all 0
@@ -100,12 +100,7 @@ def subset_hvg(
     )
     
     if compute_dask:
-        adata = apply_layers(
-            adata,
-            func=lambda x: x.compute() if isinstance(x, da.Array) else x,
-            layers=to_memory,
-            verbose=True,
-        )
+        adata = dask_compute(adata, layers=to_memory)
     
     return adata, subsetted
 

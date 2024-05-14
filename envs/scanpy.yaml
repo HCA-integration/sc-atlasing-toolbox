@@ -12,6 +12,7 @@ dependencies:
   # - scipy<1.11
   - hdf5=1.14.2
   - leidenalg
+  - louvain
   - dask
   - dask-ml
   - sparse
