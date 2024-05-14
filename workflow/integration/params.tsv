@@ -5,7 +5,7 @@ combat	full	false	false	scanpy	cpu
 harmony	embed	false	false	harmony	gpu	
 harmonypy	embed	false	false	harmony_rapids	gpu	
 scanorama	embed,full	false	false	scanorama	cpu	
-scanvi	embed	true	true	scvi-tools	gpu	categorical_covariate_keys,continuous_covariate_keys
-scvi	embed	false	true	scvi-tools	gpu	categorical_covariate_keys,continuous_covariate_keys
+scanvi	embed	true	true	scvi-tools	gpu	
+scvi	embed	false	true	scvi-tools	gpu	
 scpoli	embed	true	false	scarches	gpu	conditions,unknown_ct_names,labeled_indices,hidden_layer_sizes
 scgen	embed,full	true	false	scarches	gpu	hidden_layer_sizes
