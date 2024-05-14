@@ -185,10 +185,20 @@ class WildcardParameters:
         # create dataframe
         columns = [*['dataset']+config_params]
         df = pd.DataFrame.from_records(records, columns=columns)
-        df = df.convert_dtypes()
-        default_dtypes = df.dtypes.to_dict()
-        # default_dtypes = {col: 'object' for col in columns}
-        dtypes = default_dtypes | dtypes
+        
+        # rename columns
+        if rename_config_params is None:
+            rename_config_params = {}
+        df = df.rename(columns=rename_config_params)
+        
+        # explode columns
+        if explode_by is not None:
+            explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
+            for column in explode_by:
+                df = df.explode(column)
+        
+        # infer and set dtypes
+        dtypes = df.convert_dtypes().dtypes.to_dict() | dtypes
         
         def get_default_value(x, dtype):
             if pd.api.types.is_bool_dtype(x) or dtype in (bool, np.bool_):
@@ -202,16 +212,6 @@ class WildcardParameters:
         na_map = {col: get_default_value(df[col], dtype) for col, dtype in dtypes.items()}
         na_map = {k: v for k, v in na_map.items() if v is not None}
         df = df.fillna(value=na_map).astype(dtypes)
-        
-        # rename columns
-        if rename_config_params is None:
-            rename_config_params = {}
-        df = df.rename(columns=rename_config_params)
-        
-        if explode_by is not None:
-            explode_by = [explode_by] if isinstance(explode_by, str) else explode_by
-            for column in explode_by:
-                df = df.explode(column)
         
         if df.empty:
             self.wildcards_df = df
