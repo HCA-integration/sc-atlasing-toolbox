@@ -11,11 +11,20 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-batch_key = wildcards.batch
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
 hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
+
+
+batch_key = hyperparams.get('batch_key', [])
+if batch_key is None:
+    batch_key = {wildcards.batch}
+elif isinstance(batch_key, str):
+    batch_key = {batch_key, wildcards.batch}
+elif isinstance(batch_key, list):
+    batch_key = set(batch_key).union({wildcards.batch})
+hyperparams['batch_key'] = list(batch_key)
 
 # check GPU
 use_gpu = torch.cuda.is_available()
@@ -37,7 +46,6 @@ logging.info(f'Run Harmony pytorch with parameters {pformat(hyperparams)}...')
 adata.obsm['X_emb'] = harmonize(
     X=adata.obsm[use_rep],
     batch_mat=adata.obs,
-    batch_key=wildcards.batch,
     use_gpu=use_gpu,
     n_jobs=snakemake.threads,
     **hyperparams
