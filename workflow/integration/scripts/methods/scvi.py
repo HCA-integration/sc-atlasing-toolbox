@@ -29,7 +29,11 @@ model_params, train_params = get_hyperparams(
     model_params=SCVI_MODEL_PARAMS,
 )
 categorical_covariate_keys = model_params.pop('categorical_covariate_keys', [])
+if isinstance(categorical_covariate_keys, str):
+    categorical_covariate_keys = [categorical_covariate_keys]
 continuous_covariate_keys = model_params.pop('continuous_covariate_keys', [])
+if isinstance(continuous_covariate_keys, str):
+    continuous_covariate_keys = [continuous_covariate_keys]
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
