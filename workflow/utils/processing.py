@@ -2,6 +2,7 @@ import traceback
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
+import pandas as pd
 import anndata as ad
 from scipy import sparse
 try:
@@ -112,3 +113,36 @@ def filter_genes(adata, batch_key=None, **kwargs):
         adata.X = adata.X.map_blocks(csr_matrix_int64_indptr).compute()
 
     return adata
+
+
+def get_pseudobulks(adata, group_key, agg='mean'):
+    def get_pseudobulk_df(adata, group_key, agg='mean'):
+        pseudobulk = {'Genes': adata.var_names.values}
+        for i in adata.obs.loc[:, group_key].unique():
+            temp = adata.obs.loc[:, group_key] == i
+            if agg == 'sum':
+                pseudobulk[i] = adata[temp].X.sum(axis=0).A1
+            elif agg == 'mean':
+                pseudobulk[i] = adata[temp].X.mean(axis=0).A1
+            else:
+                raise ValueError(f'invalid aggregation method "{agg}"')
+        return pd.DataFrame(pseudobulk).set_index('Genes')
+    
+    
+    pbulks_df = get_pseudobulk_df(adata, group_key=group_key, agg=agg)
+    obs = pd.DataFrame(pbulks_df.columns, columns=[group_key]).merge(
+        adata.obs.drop_duplicates(subset=[group_key]),
+        on=group_key,
+        how='right'
+    )
+    
+    logging.info('Reset categories...')
+    for col in obs.columns:
+        if obs[col].dtype.name == 'category':
+            obs[col] = obs[col].astype(str).astype('category')
+
+    return ad.AnnData(
+        pbulks_df.transpose().reset_index(drop=True),
+        obs=obs,
+        dtype='float32'
+    )

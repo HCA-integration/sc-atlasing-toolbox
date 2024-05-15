@@ -9,7 +9,7 @@ rank_gene_func = sc.tl.rank_genes_groups
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
-# from utils.processing import sc, USE_GPU
+from utils.processing import filter_genes, get_pseudobulks #, sc, USE_GPU
 
 # if USE_GPU:
 #     rank_gene_func = sc.tl.rank_genes_groups_logreg
@@ -21,6 +21,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output.zarr
 output_tsv = snakemake.output.tsv
 group_key = snakemake.wildcards.group
+sample_key = snakemake.params.sample
 args = snakemake.params.get('args', {})
 
 logging.info(f'Reading {input_file}...')
@@ -34,7 +35,14 @@ adata = read_anndata(
     backed=True,
 )
 
+logging.info('Subset highly variable genes...')
 adata, _ = subset_hvg(adata, var_column='highly_variable')
+# adata = filter_genes(adata, batch_key=sample_key, min_cells=1, min_counts=1)
+
+# pseudobulk if sample key is set
+if sample_key is not None:
+    adata.obs['pseudo_group'] = adata.obs[group_key].astype(str) + '_' + adata.obs[sample_key].astype(str)
+    adata = get_pseudobulks(adata, group_key='pseudo_group', agg='sum')
 
 # filter groups
 groups_counts = adata.obs[group_key].value_counts()
@@ -48,7 +56,7 @@ key = f'marker_genes_group={group_key}'
 rank_gene_func(
     adata,
     groupby=group_key,
-    groups=groups[0],
+    groups=groups,
     pts=True,
     use_raw=False,
     key_added=key,
@@ -56,6 +64,18 @@ rank_gene_func(
 )
 
 logging.info(f'Writing {output_file}...')
+if input_file.endswith('.h5ad'):
+    logging.info('Retrieving original data from h5ad...')
+    new_uns = adata.uns[key]
+    adata = read_anndata(
+        input_file,
+        X='X',
+        obs='obs',
+        var='var',
+        dask=True,
+        backed=True,
+    )
+    adata.uns[key] = new_uns
 write_zarr_linked(
     adata,
     in_dir=input_file,
