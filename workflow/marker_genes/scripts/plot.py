@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
-from utils.misc import dask_compute
+from utils.misc import dask_compute, ensure_dense
 
 input_file = snakemake.input[0]
 output_rankplot = snakemake.output.rankplot
@@ -34,7 +34,10 @@ adata = read_anndata(
 marker_gene_key = args.get('key')
 genes_to_plot = list(set().union(*adata.uns[marker_gene_key]['names']))
 logging.info(f'Load {len(genes_to_plot)} genes to memory...')
-adata = dask_compute(adata[:, adata.var_names.isin(genes_to_plot)].copy())
+adata = adata[:, adata.var_names.isin(genes_to_plot)].copy()
+adata = dask_compute(adata)
+adata = ensure_dense(adata)
+logging.info(adata.__str__())
 
 logging.info('Rankplot...')
 sc.pl.rank_genes_groups(adata, **args)
