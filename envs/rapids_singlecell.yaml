@@ -1,6 +1,6 @@
 name: rapids_singlecell
 channels:
-  - rapidsai
+  - rapidsai-nightly
   - nvidia
   - conda-forge
 dependencies:
@@ -13,7 +13,7 @@ dependencies:
   - cuda-version=11.4
   - cuda-cudart=11.4
   - cuda-nvrtc=11.4
-  - rapids=24.04
+  - rapids=24.06
   - hdf5=1.14.2
   - dask
   - dask-ml
