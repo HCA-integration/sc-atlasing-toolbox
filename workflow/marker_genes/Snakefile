@@ -11,7 +11,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='marker_genes',
     config=config,
-    config_params=['groups', 'rank_genes_groups', 'plot'],
+    config_params=['groups', 'rank_genes_groups', 'plot', 'sample'],
     rename_config_params={'groups': 'group'},
     explode_by='group',
 )
@@ -48,4 +48,3 @@ rule dependency_graph:
             target='all'
         )
     localrule: True
-

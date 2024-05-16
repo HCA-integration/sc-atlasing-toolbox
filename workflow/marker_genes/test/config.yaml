@@ -11,6 +11,7 @@ DATASETS:
         test_1: test/input/pbmc68k.h5ad
         test_2: test/input/pbmc68k.h5ad
     marker_genes:
+      sample: louvain
       rank_genes_groups:
         reference: rest
         n_genes: 100
