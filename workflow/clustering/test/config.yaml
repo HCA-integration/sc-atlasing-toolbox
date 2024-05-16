@@ -23,16 +23,15 @@ DATASETS:
         test_1: test/input/pbmc68k.h5ad
         test_2: test/input/pbmc68k.h5ad
     clustering:
+      umap_exists: true
       neighbors_key: neighbors
       algorithm: leiden
       resolutions:
         - 0.2
-        - 0.3
         - 0.4
-        - 0.5
-        - 0.6
-        - 0.7
         - 0.8
+        - 1.0
+        - 1.6
 
   test_single:
     input:
