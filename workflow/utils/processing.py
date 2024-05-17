@@ -4,7 +4,8 @@ logging.basicConfig(level=logging.INFO)
 import numpy as np
 import pandas as pd
 import anndata as ad
-from scipy import sparse
+import scipy.sparse
+from tqdm import tqdm
 try:
     import subprocess
     if subprocess.run('nvidia-smi', shell=True).returncode != 0:
@@ -115,34 +116,70 @@ def filter_genes(adata, batch_key=None, **kwargs):
     return adata
 
 
-def get_pseudobulks(adata, group_key, agg='mean'):
-    def get_pseudobulk_df(adata, group_key, agg='mean'):
-        pseudobulk = {'Genes': adata.var_names.values}
-        for i in adata.obs.loc[:, group_key].unique():
-            temp = adata.obs.loc[:, group_key] == i
-            if agg == 'sum':
-                pseudobulk[i] = adata[temp].X.sum(axis=0).A1
-            elif agg == 'mean':
-                pseudobulk[i] = adata[temp].X.mean(axis=0).A1
-            else:
-                raise ValueError(f'invalid aggregation method "{agg}"')
-        return pd.DataFrame(pseudobulk).set_index('Genes')
+def get_pseudobulks(adata, group_key, agg='sum'):
+    from dask import array as da
     
+    def aggregate(x, agg):
+        if agg == 'sum':
+            return x.sum(0)
+        elif agg == 'mean':
+            return x.mean(0)
+        else:
+            raise ValueError(f'invalid aggregation method "{agg}"')
     
-    pbulks_df = get_pseudobulk_df(adata, group_key=group_key, agg=agg)
-    obs = pd.DataFrame(pbulks_df.columns, columns=[group_key]).merge(
+    def _get_pseudobulk_matrix(adata, group_key, agg):
+        X = adata.X
+        value_counts = adata.obs[group_key].value_counts()
+        
+        # filter groups for at least 2 replicates
+        value_counts = value_counts[value_counts >= 2]
+        groups = value_counts.index
+        
+        if isinstance(X, da.Array):
+            from tqdm.dask import TqdmCallback
+            
+            # sort cells by group_key
+            df = adata.obs.reset_index(drop=True).query(f'{group_key} in @groups')
+            df[group_key] = pd.Categorical(df[group_key], categories=groups, ordered=True)
+            sorted_groups = df.sort_values(by=group_key)
+            
+            # sort dask array by group_key and rechunk by size of groups
+            # the result should be a dask chunk per pseudobulk group
+            X = X[sorted_groups.index.values].rechunk((tuple(value_counts.values), -1))
+            pseudobulks = X.map_blocks(lambda x: aggregate(x, agg))
+            
+            miniters = max(10, len(pseudobulks.dask) // 100)
+            with TqdmCallback(desc="Aggregate Dask array", miniters=miniters):
+                pseudobulks = pseudobulks.compute()
+        
+        elif isinstance(X, (scipy.sparse.spmatrix, np.ndarray)):
+            miniters = max(10, len(value_counts) // 100)
+            pseudobulks = []
+            for group in tqdm(value_counts.index, desc='Aggregate groups', miniters=miniters):
+                row_agg = aggregate(adata[adata.obs[group_key] == group].X, agg)
+                row_agg = row_agg.A1 if isinstance(row_agg, np.matrix) else row_agg
+                pseudobulks.append(row_agg)
+            pseudobulks = np.stack(pseudobulks, axis=0)
+        else:
+            raise ValueError(f'invalid type "{type(x)}"')
+        
+        return scipy.sparse.csr_matrix(pseudobulks), groups
+
+
+    pbulks, groups = _get_pseudobulk_matrix(adata, group_key=group_key, agg=agg)
+    obs = pd.DataFrame(groups, columns=[group_key]).merge(
         adata.obs.drop_duplicates(subset=[group_key]),
         on=group_key,
-        how='right'
-    )
+        how='left'
+    ).set_index(group_key)
     
-    logging.info('Reset categories...')
     for col in obs.columns:
         if obs[col].dtype.name == 'category':
             obs[col] = obs[col].astype(str).astype('category')
 
     return ad.AnnData(
-        pbulks_df.transpose().reset_index(drop=True),
+        pbulks,
         obs=obs,
+        var=adata.var,
         dtype='float32'
     )
