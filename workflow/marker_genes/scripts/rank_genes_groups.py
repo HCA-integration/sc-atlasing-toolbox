@@ -23,6 +23,7 @@ output_tsv = snakemake.output.tsv
 group_key = snakemake.wildcards.group
 sample_key = snakemake.params.sample
 args = snakemake.params.get('args', {})
+pseudobulk = sample_key is not None
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
@@ -31,18 +32,21 @@ adata = read_anndata(
     obs='obs',
     var='var',
     uns='uns',
-    dask=True,
-    backed=True,
+    dask=pseudobulk,
+    backed=pseudobulk,
 )
+logging.info(adata.__str__())
 
-logging.info('Subset highly variable genes...')
-adata, _ = subset_hvg(adata, var_column='highly_variable')
+# logging.info('Subset highly variable genes...')
+# adata, _ = subset_hvg(adata, var_column='highly_variable')
 # adata = filter_genes(adata, batch_key=sample_key, min_cells=1, min_counts=1)
 
 # pseudobulk if sample key is set
-if sample_key is not None:
+if pseudobulk:
+    logging.info(f'Creating pseudobulks for sample={sample_key} and group={group_key}...')
     adata.obs['pseudo_group'] = adata.obs[group_key].astype(str) + '_' + adata.obs[sample_key].astype(str)
     adata = get_pseudobulks(adata, group_key='pseudo_group', agg='sum')
+    logging.info(adata.__str__())
 
 # filter groups
 groups_counts = adata.obs[group_key].value_counts()
