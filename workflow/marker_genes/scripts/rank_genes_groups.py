@@ -48,8 +48,8 @@ if sample_key is not None:
 groups_counts = adata.obs[group_key].value_counts()
 groups = groups_counts[groups_counts > 1].index.tolist()
 
-if 'feature_names' in adata.var.columns:
-    adata.var_names = adata.var['feature_names']
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name']
 
 logging.info(f'Running marker genes analysis for {group_key} and args={args}...')
 key = f'marker_genes_group={group_key}'

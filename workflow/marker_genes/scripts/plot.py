@@ -30,6 +30,9 @@ adata = read_anndata(
     backed=True,
 )
 
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name']
+
 # subset to genes for plotting
 marker_gene_key = args.get('key')
 genes_to_plot = list(set().union(*adata.uns[marker_gene_key]['names']))
