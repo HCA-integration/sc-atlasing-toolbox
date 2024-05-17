@@ -135,6 +135,8 @@ def get_pseudobulks(adata, group_key, agg='sum'):
         value_counts = value_counts[value_counts >= 2]
         groups = value_counts.index
         
+        print(f'Aggregate {len(groups)} pseudobulks...')
+        
         if isinstance(X, da.Array):
             from tqdm.dask import TqdmCallback
             
