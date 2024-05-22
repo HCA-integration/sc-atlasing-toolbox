@@ -4,6 +4,7 @@ Marker genes
 from pathlib import Path
 import pandas as pd
 
+from utils.marker_genes import get_marker_gene_set
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
@@ -11,7 +12,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='marker_genes',
     config=config,
-    config_params=['groups', 'rank_genes_groups', 'plot', 'sample'],
+    config_params=['groups', 'rank_genes_groups', 'plot', 'sample', 'marker_genes'],
     rename_config_params={'groups': 'group'},
     explode_by='group',
 )
@@ -35,6 +36,7 @@ include: 'rules/marker_genes.smk'
 rule all:
     input:
         mcfg.get_output_files(rules.plot.output, all_params=True),
+        mcfg.get_output_files(rules.plot_user.output, all_params=True),
         mcfg.get_output_files(rules.collect.output),
     default_target: True
     localrule: True
