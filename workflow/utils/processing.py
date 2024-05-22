@@ -151,7 +151,8 @@ def get_pseudobulks(adata, group_key, agg='sum'):
             pseudobulks = X.map_blocks(lambda x: aggregate(x, agg))
             
             miniters = max(10, len(pseudobulks.dask) // 100)
-            with TqdmCallback(desc="Aggregate Dask array", miniters=miniters):
+            mininterval = min(max(1, len(groups) / 500), 10)
+            with TqdmCallback(desc="Aggregate Dask array", miniters=miniters, mininterval=mininterval):
                 pseudobulks = pseudobulks.compute()
         
         elif isinstance(X, (scipy.sparse.spmatrix, np.ndarray)):
