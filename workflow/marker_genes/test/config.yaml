@@ -12,6 +12,7 @@ DATASETS:
         test_2: test/input/pbmc68k.h5ad
     marker_genes:
       sample: louvain
+      marker_genes: default
       rank_genes_groups:
         reference: rest
         n_genes: 100
@@ -26,5 +27,35 @@ DATASETS:
     input:
       marker_genes: test/input/pbmc68k.h5ad
     marker_genes:
+      marker_genes: default
       groups:
         - bulk_labels
+
+MARKER_GENES:
+  default:
+    "Pan-immune": [ "CD44" ]
+    "T": [ "CD3D","CD4","CD8A" ]
+    "Naive T": [ "CCR7","LEF1","CD27","SELL" ]
+    "Memory": [ "IL7R","GZMK" ]
+    "Cytotoxic": [ "GZMH", "GZMA", "GZMB", "PRF1" ]
+    "G/D T": [ "TRGV9", "TRDV2" ]
+    "T Reg": [ "FOXP3", "IL2RA" ]
+    "MAIT": [ "TRAV1-2", "SLC4A10" ]
+    "NK": [ "KLRB1", "NCR1", "NCAM1", "GNLY" ]
+    "ILC": [ "TNFRSF18", "TNFRSF4" ]
+    "Monocyte": [ "FCER1G", "CD14", "FCGR3A" ]
+    "cDC1": [ "CLEC9A" ]
+    "cDC2": [ "CD1C", "FCER1A" ]
+    "pDC": [ "CLEC4C" ]
+    "AS-DC": [ "AXL", "SIGLEC6" ]
+    "B": [ "CD19", "CD79A" ]
+    "Naive B": [ "FCER2", "TCL1A" ]
+    "B Memory": [ "CD24" ]
+    "B non-switched": [ "IGHM", "IGHD" ]
+    "Antibody secreting": [ "TNFRSF13B", "JCHAIN", "CHPF", "IGHG1" ]
+    "Cycling": [ "MKI67" ]
+    "IFN stim": [ "IFIT1", "MX2" ]
+    "HPC": [ "KIT", "CD34" ]
+    "Platelet": [ "PPBP", "PF4" ]
+    "RBC": [ "HBB" ]
+    "Baso/Eos": [ "EPX" ]

@@ -1,15 +1,19 @@
 from matplotlib import pyplot as plt
 import scanpy as sc
+import anndata
+from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 from utils.misc import dask_compute, ensure_dense
 
+
+sc.set_figure_params(frameon=False)
+plt.rcParams['figure.figsize'] = 30, 25
 input_file = snakemake.input[0]
-output_rankplot = snakemake.output.rankplot
-output_dotplot = snakemake.output.dotplot
-output_heatmap = snakemake.output.heatmap
+output_png = snakemake.output.dotplot
+markers = snakemake.params.markers
 
 wildcards = snakemake.wildcards
 group_key = wildcards.group
@@ -30,40 +34,45 @@ adata = read_anndata(
     backed=True,
 )
 
+# if no cells filtered out, save empty plots
+if adata.n_obs == 0:
+    plt.savefig(output_png)
+    exit()
+
+
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
 
+# match marker genes and var_names
+logging.info(pformat({k: len(v) for k, v in markers.items()}))
+markers = {
+    k: adata.var[adata.var_names.isin(v)].index.to_list()
+    for k, v in markers.items()
+}
+logging.info(pformat({k: len(v) for k, v in markers.items()}))
+
 # subset to genes for plotting
-marker_gene_key = args.get('key')
-genes_to_plot = list(set().union(*adata.uns[marker_gene_key]['names']))
+genes_to_plot = list(set([element for sublist in markers.values() for element in sublist]))
 logging.info(f'Load {len(genes_to_plot)} genes to memory...')
 adata = adata[:, adata.var_names.isin(genes_to_plot)].copy()
 adata = dask_compute(adata)
 adata = ensure_dense(adata)
 logging.info(adata.__str__())
 
-logging.info('Rankplot...')
-sc.pl.rank_genes_groups(adata, **args)
-plt.suptitle(title)
-plt.savefig(output_rankplot, dpi=100, bbox_inches='tight')
+# check if author labels column is empty
+if adata.obs[group_key].nunique() == 0:
+    raise ValueError(f'No author labels in adata["{author_label}"]')
 
-logging.info('Dotplot...')
-sc.pl.rank_genes_groups_dotplot(
+sc.pl.dotplot(
     adata,
-    **args,
+    markers,
+    groupby=group_key,
+    use_raw=False,
     standard_scale='var',
-    swap_axes=False,
     title=title,
+    show=False,
+    ax=axes[0],
 )
-plt.savefig(output_dotplot, dpi=100, bbox_inches='tight')
 
-logging.info('Heatmap...')
-sc.pl.rank_genes_groups_heatmap(
-    adata,
-    **args,
-    standard_scale='var',
-    swap_axes=True,
-    show_gene_labels=len(genes_to_plot) < 300,
-)
-plt.suptitle(title)
-plt.savefig(output_heatmap, dpi=100, bbox_inches='tight')
+plt.tight_layout()
+plt.savefig(output_png)

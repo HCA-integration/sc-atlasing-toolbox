@@ -18,6 +18,22 @@ rule rank_genes_groups:
         '../scripts/rank_genes_groups.py'
 
 
+rule plot_user:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+    output:
+        dotplot=mcfg.image_dir / paramspace.wildcard_pattern / 'user'/ 'group={group}.png',
+    params:
+        args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'plot', default={}),
+        markers=lambda wildcards: get_marker_gene_set(mcfg, wildcards),
+    conda:
+        get_env(config, 'scanpy')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
+    script:
+        '../scripts/plot_user.py'
+
+
 rule plot:
     input:
         zarr=rules.rank_genes_groups.output.zarr,
@@ -29,6 +45,8 @@ rule plot:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'plot', default={}),
     conda:
         get_env(config, 'scanpy')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/plot.py'
 
