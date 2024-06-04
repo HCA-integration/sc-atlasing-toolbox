@@ -41,7 +41,13 @@ DATASETS:
       extra_hvgs:
         overwrite_args:
           batch_key: batch
-        union_over: bulk_labels
+        union_over:
+          - bulk_labels
+          - phase
+        remove_genes:
+          - C19orf43
+          - MAPKAPK5-AS1
+          - GZMK
         extra_genes:
           - CD44
           - CD3D
@@ -56,6 +62,7 @@ DATASETS:
       highly_variable_genes:
         n_top_genes: 200
       assemble:
+        - normalize
         - highly_variable_genes
         - extra_hvgs
       colors:

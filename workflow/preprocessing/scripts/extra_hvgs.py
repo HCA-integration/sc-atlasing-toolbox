@@ -23,6 +23,7 @@ extra_hvg_args = snakemake.params.get('extra_hvgs', {})
 overwrite_args = extra_hvg_args.get('overwrite_args', {})
 union_over = extra_hvg_args.get('union_over')
 extra_genes = extra_hvg_args.get('extra_genes', [])
+remove_genes = extra_hvg_args.get('remove_genes', [])
 
 if args is None:
     args = {}
@@ -60,12 +61,15 @@ if args == False:
     logging.info('No highly variable gene parameters provided, including all genes...')
     adata.var['extra_hvgs'] = True
 else:
+    adata.var['extra_hvgs'] = False
     # union over groups
     if union_over is not None:
-        adata.var['extra_hvgs'] = False
-        for group in adata.obs[union_over].unique():
+        if isinstance(union_over, str):
+            union_over = [union_over]
+        adata.obs['union_over'] = adata.obs[union_over].astype(str).apply(lambda x: '--'.join(x), axis=1)
+        for group in adata.obs['union_over'].unique():
             logging.info(f'Subset to group={group}...')
-            _ad = dask_compute(adata[adata.obs[union_over] == group].copy())
+            _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
             logging.info(f'{_ad.n_obs} cells, {_ad.n_vars} genes')
             
             logging.info('Filter genes...')
@@ -88,7 +92,9 @@ else:
             # get union of gene sets
             adata.var['extra_hvgs'] = adata.var['extra_hvgs'] | _ad.var['highly_variable']
             del _ad
+        del adata.obs['union_over']
     else:
+        # default gene selection
         logging.info(f'Select features for all cells with arguments: {args}...')
         adata = dask_compute(adata)
         if USE_GPU:
@@ -96,13 +102,12 @@ else:
         sc.pp.highly_variable_genes(adata, **args)
         adata.var['extra_hvgs'] = adata.var['highly_variable']
 
+    # workaround for CxG datasets
+    if 'feature_name' in adata.var.columns:
+        adata.var_names = adata.var['feature_name']
+
     # add user-provided genes
     if extra_genes is not None:
-        # workaround for CxG datasets
-        if 'feature_name' in adata.var.columns:
-            adata.var_names = adata.var['feature_name']
-        
-        # filter genes
         n_genes = len(extra_genes)
         extra_genes = [gene for gene in extra_genes if gene in adata.var_names]
         
@@ -112,6 +117,12 @@ else:
             logging.info('No extra user genes added...')
         else:
             adata.var.loc[extra_genes, 'extra_hvgs'] = True
+
+    # remove user-specified genes
+    if remove_genes is not None:
+        remove_genes = [gene for gene in remove_genes if gene in adata.var_names]
+        logging.info(f'Remove {len(remove_genes)} genes...')
+        adata.var.loc[remove_genes, 'extra_hvgs'] = False
 
 logging.info(f'Write to {output_file}...')
 write_zarr_linked(
