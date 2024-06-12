@@ -57,6 +57,9 @@ if adata.n_obs == 0:
     logging.info('No cells, skip...')
     exit()
 
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name']
+
 # parse colors
 colors = params.get('color', [None])
 if 'color' in params:
