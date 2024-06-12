@@ -102,15 +102,13 @@ adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 
 # set minimum point size
-default_size = 150000 / adata.n_obs
+default_size = 120_000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 10, default_size]), 200])
+params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
 print(f'Size: {params["size"]}', flush=True)
 print(default_size, flush=True)
-params['size'] = None
-
 
 for color in colors:
     logging.info(f'Plot color "{color}"...')
