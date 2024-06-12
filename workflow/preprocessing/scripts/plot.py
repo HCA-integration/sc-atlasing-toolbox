@@ -83,7 +83,7 @@ if 'color' in params:
             if is_categorical_dtype(column) or is_string_dtype(column):
                 column = column.replace(['NaN', 'None', '', 'nan', 'unknown'], float('nan'))
                 column = pd.Categorical(column)
-                adata.obs[color] = column.codes if len(column.categories) > 102 else column
+                # adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
 
 
@@ -117,8 +117,16 @@ for color in colors:
     palette = None
     if color in adata.obs.columns:
         color_vec = adata.obs[color]
-        if is_categorical_dtype(color_vec) and color_vec.nunique() > 20:
-            palette = sc.pl.palettes.godsnot_102
+        if is_categorical_dtype(color_vec):
+            if color_vec.nunique() > 102:
+                palette = 'turbo'
+            elif color_vec.nunique() > 20:
+                palette = sc.pl.palettes.godsnot_102
+        elif is_numeric_dtype(color_vec):
+            if color_vec.min() < 0:
+                palette = 'coolwarm'
+            else:
+                palette = 'plasma'
     try:
         fig = sc.pl.embedding(
             adata,
