@@ -137,7 +137,9 @@ for color in colors:
         )
         fig.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
         legend = fig.get_axes()[0].get_legend()
-        if legend:
+        if palette == 'turbo':
+            legend.remove()
+        elif legend:
             legend_bbox = legend.get_window_extent()
             fig_width, fig_height = fig.get_size_inches()
             fig_width = fig_width + (legend_bbox.width / fig.dpi)
