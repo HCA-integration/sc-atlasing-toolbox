@@ -57,6 +57,9 @@ if adata.n_obs == 0:
     logging.info('No cells, skip...')
     exit()
 
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name']
+
 # parse colors
 colors = params.get('color', [None])
 if 'color' in params:
@@ -80,7 +83,8 @@ if 'color' in params:
             if is_categorical_dtype(column) or is_string_dtype(column):
                 column = column.replace(['NaN', 'None', '', 'nan', 'unknown'], float('nan'))
                 column = pd.Categorical(column)
-                adata.obs[color] = column.codes if len(column.categories) > 102 else column
+                adata.obs[color] = column
+                # adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
 
 
@@ -99,23 +103,29 @@ adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 
 # set minimum point size
-default_size = 150000 / adata.n_obs
+default_size = 120_000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 10, default_size]), 200])
+params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
 print(f'Size: {params["size"]}', flush=True)
 print(default_size, flush=True)
-params['size'] = None
-
 
 for color in colors:
     logging.info(f'Plot color "{color}"...')
     palette = None
     if color in adata.obs.columns:
         color_vec = adata.obs[color]
-        if is_categorical_dtype(color_vec) and color_vec.nunique() > 20:
-            palette = sc.pl.palettes.godsnot_102
+        if is_categorical_dtype(color_vec):
+            if color_vec.nunique() > 102:
+                palette = 'turbo'
+            elif color_vec.nunique() > 20:
+                palette = sc.pl.palettes.godsnot_102
+        elif is_numeric_dtype(color_vec):
+            if color_vec.min() < 0:
+                palette = 'coolwarm'
+            else:
+                palette = 'plasma'
     try:
         fig = sc.pl.embedding(
             adata,
@@ -127,7 +137,9 @@ for color in colors:
         )
         fig.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
         legend = fig.get_axes()[0].get_legend()
-        if legend:
+        if palette == 'turbo':
+            legend.remove()
+        elif legend:
             legend_bbox = legend.get_window_extent()
             fig_width, fig_height = fig.get_size_inches()
             fig_width = fig_width + (legend_bbox.width / fig.dpi)
