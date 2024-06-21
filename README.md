@@ -107,7 +107,7 @@ git clone git@github.com:HCA-integration/hca_integration_toolbox.git
 
 HTTPS:
 ``` clone
-git clone git@github.com:HCA-integration/hca_integration_toolbox.git
+git clone https://github.com/HCA-integration/hca_integration_toolbox.git
 ```
 
 ### Requirements
