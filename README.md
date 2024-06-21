@@ -127,8 +127,8 @@ The different parts of the workflow (modules, rules) require specific conda envi
 The simplest way to install all environments is to run the following script:
 
 ```commandline
-bash envs/install_all_envs.sh -h # help message for customization
-bash envs/install_all_envs.sh
+bash envs/install_all_environments.sh -h # help message for customization
+bash envs/install_all_environments.sh
 ```
 
 > :memo: **Notes**
