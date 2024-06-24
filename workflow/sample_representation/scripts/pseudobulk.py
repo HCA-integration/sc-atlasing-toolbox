@@ -24,17 +24,19 @@ adata = read_anndata(
     X='X',
     obs='obs',
     var='var',
-    backed=True,
-    dask=True
+    backed=False,
+    dask=False,
 )
 
 # normalize counts
 # sc.pp.normalize_total(adata)
 
+logging.info(f'Pseudobulk by "{bulk_by}"...')
 adata_bulk = get_pseudobulks(adata, group_key=bulk_by, agg='sum')
+logging.info(adata_bulk.__str__())
 
-logging.info(f'Write "{output_h5ad}"...')
-adata_bulk.write(output_h5ad)
+logging.info(f'Write "{output_zarr}"...')
+adata_bulk.write_zarr(output_zarr)
 
 # # process pseudobulk adata
 # sc.pp.log1p(adata_bulk)
