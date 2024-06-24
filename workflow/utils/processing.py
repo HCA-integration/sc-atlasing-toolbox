@@ -154,15 +154,25 @@ def get_pseudobulks(adata, group_key, agg='sum'):
             mininterval = min(max(1, len(groups) / 500), 10)
             with TqdmCallback(desc="Aggregate Dask array", miniters=miniters, mininterval=mininterval):
                 pseudobulks = pseudobulks.compute()
-        
+
         elif isinstance(X, (scipy.sparse.spmatrix, np.ndarray)):
-            miniters = max(10, len(value_counts) // 100)
-            pseudobulks = []
-            for group in tqdm(value_counts.index, desc='Aggregate groups', miniters=miniters):
-                row_agg = aggregate(adata[adata.obs[group_key] == group].X, agg)
-                row_agg = row_agg.A1 if isinstance(row_agg, np.matrix) else row_agg
-                pseudobulks.append(row_agg)
-            pseudobulks = np.stack(pseudobulks, axis=0)
+            import scanpy as sc
+
+            pbulk_adata = sc.get.aggregate(
+                adata,
+                by=group_key,
+                func=[agg]
+            )
+            pbulk_adata = pbulk_adata[pbulk_adata.obs[group_key].isin(groups)].copy()
+            pseudobulks = pbulk_adata.layers[agg]
+            groups = pbulk_adata.obs_names
+            # miniters = max(10, len(value_counts) // 100)
+            # pseudobulks = []
+            # for group in tqdm(value_counts.index, desc='Aggregate groups', miniters=miniters):
+            #     row_agg = aggregate(adata[adata.obs[group_key] == group].X, agg)
+            #     row_agg = row_agg.A1 if isinstance(row_agg, np.matrix) else row_agg
+            #     pseudobulks.append(row_agg)
+            # pseudobulks = np.stack(pseudobulks, axis=0)
         else:
             raise ValueError(f'invalid type "{type(x)}"')
         
@@ -170,12 +180,15 @@ def get_pseudobulks(adata, group_key, agg='sum'):
 
 
     pbulks, groups = _get_pseudobulk_matrix(adata, group_key=group_key, agg=agg)
+
+    print(f'Merge metadata...', flush=True)
     obs = pd.DataFrame(groups, columns=[group_key]).merge(
         adata.obs.drop_duplicates(subset=[group_key]),
         on=group_key,
         how='left'
-    ).set_index(group_key)
-    
+    )
+    obs.index = obs[group_key].values
+
     for col in obs.columns:
         if obs[col].dtype.name == 'category':
             obs[col] = obs[col].astype(str).astype('category')
