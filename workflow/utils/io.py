@@ -563,7 +563,7 @@ def write_zarr_linked(
         # add all columns (otherwise linked columns are not included)
         columns = [
             f.name for f in zattrs_file.parent.iterdir()
-            if not f.name.startswith('.') and f.name not in zattrs['_index']
+            if not f.name.startswith('.') and f.name != zattrs['_index']
         ]
         zattrs['column-order'] = sorted(columns)
         
