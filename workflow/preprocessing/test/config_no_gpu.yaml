@@ -45,14 +45,11 @@ DATASETS:
           - bulk_labels
           - phase
         remove_genes:
-          - C19orf43
+          - .*orf.*
           - MAPKAPK5-AS1
           - GZMK
         extra_genes:
-          - CD44
-          - CD3D
-          - CD4
-          - CD8A
+          - CD.*
           - CCR7
           - LEF1
           - CD27
