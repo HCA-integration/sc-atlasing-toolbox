@@ -16,6 +16,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
 batch_keys = params.batches
+label_keys = params.labels
 var_mask = snakemake.wildcards.var_mask
 save_subset = params.get('save_subset', False)
 recompute_pca = params.get('recompute_pca', True)
@@ -153,6 +154,14 @@ except AssertionError as e:
 for batch_key in batch_keys:
     assert batch_key in adata.obs, f'Batch key {batch_key} is missing'
     adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
+
+# fix labels
+for label_key in label_keys:
+    if label_key is None or label_key == 'None':
+        continue
+    assert label_key in adata.obs, f'Label key {label_key} is missing'
+    adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
+
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())

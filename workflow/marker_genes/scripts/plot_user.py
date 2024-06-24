@@ -20,9 +20,6 @@ group_key = wildcards.group
 file_id = wildcards.file_id
 title = f'Marker genes for file_id={file_id} group={group_key}'
 
-args = snakemake.params.get('args', {})
-args['key'] = f'marker_genes_group={group_key}'
-
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
     input_file,
@@ -33,12 +30,6 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
-
-# if no cells filtered out, save empty plots
-if adata.n_obs == 0:
-    plt.savefig(output_png)
-    exit()
-
 
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
@@ -59,9 +50,10 @@ adata = dask_compute(adata)
 adata = ensure_dense(adata)
 logging.info(adata.__str__())
 
-# check if author labels column is empty
-if adata.obs[group_key].nunique() == 0:
-    raise ValueError(f'No author labels in adata["{author_label}"]')
+# if no cells or genes to plot, save empty plots
+if min(adata.shape) == 0:
+    plt.savefig(output_png)
+    exit()
 
 sc.pl.dotplot(
     adata,
@@ -69,10 +61,9 @@ sc.pl.dotplot(
     groupby=group_key,
     use_raw=False,
     standard_scale='var',
-    title=title,
+    # title=title,
     show=False,
-    ax=axes[0],
+    swap_axes=False,
 )
 
-plt.tight_layout()
-plt.savefig(output_png)
+plt.savefig(output_png, dpi=100, bbox_inches='tight')

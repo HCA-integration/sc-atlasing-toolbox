@@ -1,6 +1,6 @@
 name: rapids_singlecell
 channels:
-  - rapidsai-nightly
+  - rapidsai
   - nvidia
   - conda-forge
 dependencies:
@@ -10,14 +10,18 @@ dependencies:
   - leidenalg
   - louvain
   - zarr
-  - cuda-version=11.4
-  - cuda-cudart=11.4
-  - cuda-nvrtc=11.4
-  - rapids=24.06
+  - cuda-version=12.2
+  # - cuda-cudart=12.2
+  # - cuda-nvrtc=12.2
+  # - libnvjitlink=12.2
+  - rapids=24.04
+  # - pyarrow
+  # - arrow-cpp
   - hdf5=1.14.2
   - dask
   - dask-ml
   - sparse
   - pip
   - pip:
+    - torch
     - rapids-singlecell

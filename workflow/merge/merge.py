@@ -9,7 +9,7 @@ from anndata.experimental import AnnCollection
 from anndata import AnnData
 
 from utils.io import read_anndata, link_zarr
-from utils.misc import apply_layers
+from utils.misc import apply_layers, dask_compute
 
 
 def read_adata(file, backed=False, dask=False):
@@ -40,6 +40,9 @@ if len(files) == 1:
     exit(0)
 
 adatas = [read_anndata(file, obs='obs', var='var', uns='uns') for file in files]
+
+# subset to non-empty datasets
+files = [file for file, adata in zip(files, adatas) if adata.n_obs > 0]
 adatas = [adata for adata in adatas if adata.n_obs > 0]
 
 if len(adatas) == 0:
@@ -60,7 +63,6 @@ if dask:
     logging.info('Read all files with dask...')
     logging.info(f'n_threads: {snakemake.threads}')
     adatas = [read_adata(file, backed, dask) for file in files]
-    adatas = [adata for adata in adatas if adata.n_obs > 0]
     
     # concatenate
     adata = sc.concat(adatas, join=merge_strategy)
@@ -68,7 +70,6 @@ if dask:
 elif backed:
     logging.info('Read all files in backed mode...')
     adatas = [read_adata(file, backed, dask) for file in files]
-    adatas = [adata for adata in adatas if adata.n_obs > 0]
     dc = AnnCollection(
         adatas,
         join_obs='outer',
@@ -123,6 +124,9 @@ adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(
 # add uns data
 adata.uns['dataset'] = dataset
 logging.info(adata.__str__())
+
+logging.info('Compute matrix...')
+adata = dask_compute(adata)
 
 logging.info(f'Write to {out_file}...')
 adata.write_zarr(out_file)
