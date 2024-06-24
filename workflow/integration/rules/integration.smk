@@ -15,6 +15,7 @@ rule prepare:
         raw_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', exclude=['output_type']),
         save_subset=lambda wildcards: mcfg.get_from_parameters(wildcards, 'save_subset', exclude=['output_type']),
         batches=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch', exclude=['output_type'], single_value=False),
+        labels=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', exclude=['output_type'], single_value=False),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     threads:

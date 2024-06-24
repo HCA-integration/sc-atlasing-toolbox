@@ -51,12 +51,12 @@ adata = read_anndata(
     backed=True,
 )
 
-# prepare data for model
-adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
-adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
-
 # subset features
 adata, _ = subset_hvg(adata, var_column=var_mask)
+
+if isinstance(categorical_covariate_keys, list):
+    for cov in categorical_covariate_keys:
+        adata.obs[cov] = adata.obs[cov].astype('str')
 
 scvi.model.SCVI.setup_anndata(
     adata,
