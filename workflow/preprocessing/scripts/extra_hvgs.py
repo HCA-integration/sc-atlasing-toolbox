@@ -16,6 +16,18 @@ from utils.misc import dask_compute
 from utils.processing import filter_genes, sc, USE_GPU
 
 
+def match_genes(adata, gene_list):
+    pattern = '|'.join(gene_list)
+    try:
+        return adata.var_names[adata.var_names.astype(str).str.contains(pattern, regex=True)].values
+    except Exception as e:
+        logging.error(f'Error: {e}')
+        logging.error(f'Gene list: {gene_list}')
+        logging.error(f'Pattern: {pattern}')
+        logging.error(f'Gene names: {adata.var_names}')
+        raise e
+
+
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 args = snakemake.params.get('args', {})
@@ -106,23 +118,24 @@ else:
     if 'feature_name' in adata.var.columns:
         adata.var_names = adata.var['feature_name']
 
+    # remove user-specified genes
+    if remove_genes:
+        remove_genes = match_genes(adata, remove_genes)
+        logging.info(f'Remove {len(remove_genes)} genes...')
+        adata.var.loc[remove_genes, 'extra_hvgs'] = False
+
     # add user-provided genes
-    if extra_genes is not None:
+    if extra_genes:
         n_genes = len(extra_genes)
-        extra_genes = [gene for gene in extra_genes if gene in adata.var_names]
+        extra_genes = match_genes(adata, extra_genes)
         
         if len(extra_genes) < n_genes:
             logging.warning(f'Only {len(extra_genes)} of {n_genes} user-provided genes found in data...')
-        if extra_genes == 0:
+        if len(extra_genes) == 0:
             logging.info('No extra user genes added...')
         else:
+            logging.info(f'Add {len(extra_genes)} user-provided genes...')
             adata.var.loc[extra_genes, 'extra_hvgs'] = True
-
-    # remove user-specified genes
-    if remove_genes is not None:
-        remove_genes = [gene for gene in remove_genes if gene in adata.var_names]
-        logging.info(f'Remove {len(remove_genes)} genes...')
-        adata.var.loc[remove_genes, 'extra_hvgs'] = False
 
 logging.info(f'Write to {output_file}...')
 write_zarr_linked(
