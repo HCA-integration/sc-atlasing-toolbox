@@ -32,8 +32,8 @@ adata = read_anndata(
     obs='obs',
     var='var',
     uns='uns',
-    dask=pseudobulk,
-    backed=pseudobulk,
+    # dask=pseudobulk,
+    # backed=pseudobulk,
 )
 logging.info(adata.__str__())
 

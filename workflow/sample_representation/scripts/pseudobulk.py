@@ -14,7 +14,7 @@ from utils.processing import get_pseudobulks
 
 sc.set_figure_params(dpi=100, frameon=False)
 input_zarr = snakemake.input.zarr
-output_h5ad = snakemake.output.h5ad
+output_zarr = snakemake.output.zarr
 bulk_by = snakemake.params.get('bulk_by')
 dataset = snakemake.wildcards.file_id
 
@@ -24,17 +24,19 @@ adata = read_anndata(
     X='X',
     obs='obs',
     var='var',
-    backed=True,
-    dask=True
+    backed=False,
+    dask=False,
 )
 
 # normalize counts
 # sc.pp.normalize_total(adata)
 
+logging.info(f'Pseudobulk by "{bulk_by}"...')
 adata_bulk = get_pseudobulks(adata, group_key=bulk_by, agg='sum')
+logging.info(adata_bulk.__str__())
 
-logging.info(f'Write "{output_h5ad}"...')
-adata_bulk.write(output_h5ad)
+logging.info(f'Write "{output_zarr}"...')
+adata_bulk.write_zarr(output_zarr)
 
 # # process pseudobulk adata
 # sc.pp.log1p(adata_bulk)
