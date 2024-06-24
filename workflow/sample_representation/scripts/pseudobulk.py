@@ -14,7 +14,7 @@ from utils.processing import get_pseudobulks
 
 sc.set_figure_params(dpi=100, frameon=False)
 input_zarr = snakemake.input.zarr
-output_h5ad = snakemake.output.h5ad
+output_zarr = snakemake.output.zarr
 bulk_by = snakemake.params.get('bulk_by')
 dataset = snakemake.wildcards.file_id
 
