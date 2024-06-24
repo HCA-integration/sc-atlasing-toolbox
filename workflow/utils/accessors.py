@@ -73,6 +73,7 @@ def subset_hvg(
         adata.var[add_column] = adata.var[var_column]
     
     # filter features that are all 0
+    print('Determine features that are all 0...', flush=True)
     if isinstance(adata.X, da.Array):
         import sparse
         non_zero_mask = (adata.X.map_blocks(sparse.COO).sum(0) > 0).compute().todense()
@@ -80,6 +81,8 @@ def subset_hvg(
         non_zero_mask = adata.X.sum(0) > 0
     else:
         non_zero_mask = np.ones(adata.n_vars, dtype=bool)
+
+    # update gene mask
     adata.var[var_column] = np.ravel(non_zero_mask) & adata.var[var_column]
 
     if adata.var[var_column].sum() == adata.var.shape[0]:
@@ -93,14 +96,15 @@ def subset_hvg(
         )
         adata._inplace_subset_var(adata.var_names[adata.var[var_column]])
     
-    adata = adata_to_memory(
-        adata,
-        layers=to_memory,
-        verbose=True,
-    )
-    
     if compute_dask:
+        print('Compute dask array...', flush=True)
         adata = dask_compute(adata, layers=to_memory)
+    else:
+        adata = adata_to_memory(
+            adata,
+            layers=to_memory,
+            verbose=True,
+        )
     
     return adata, subsetted
 
