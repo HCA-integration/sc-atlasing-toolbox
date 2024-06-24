@@ -14,10 +14,17 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='clustering',
     config=config,
-    config_params=['umap_exists', 'neighbors_key', 'resolutions', 'algorithm'],
+    config_params=[
+        'recompute_neighbors',
+        'neighbors',
+        'umap_exists',
+        'neighbors_key',
+        'resolutions',
+        'algorithm',
+    ],
     rename_config_params={'resolutions': 'resolution'},
     explode_by='resolution',
-    dtypes={'umap_exists': bool, 'resolution': str},
+    dtypes={'recompute_neighbors': bool, 'umap_exists': bool, 'resolution': str},
 )
 paramspace = mcfg.get_paramspace()
 

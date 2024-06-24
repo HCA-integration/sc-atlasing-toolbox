@@ -28,7 +28,12 @@ cluster_alg = snakemake.params.get('algorithm', 'louvain')
 overwrite = snakemake.params.get('overwrite', False)
 USE_GPU = False
 
+# set parameters for clustering
 cluster_key = f'{cluster_alg}_{resolution}'
+kwargs = dict(resolution=resolution, key_added=cluster_key)
+cpu_kwargs = dict(flavor='igraph')
+if cluster_alg == 'leiden':
+    cpu_kwargs |= dict(n_iterations=2)
 
 read_func, _ = get_file_reader(input_file)
 with read_func(input_file, 'r') as f:
@@ -43,8 +48,8 @@ else:
         assert subprocess.run('nvidia-smi', shell=True).returncode == 0
         from _rsc_clustering import leiden, louvain
         USE_GPU = True
-    except AssertionError:
-        logging.info('No GPU found...')
+    except Exception as e:
+        logging.info(f'Error importing rapids found...\n{e}')
         from scanpy.tools import leiden, louvain
 
     cluster_alg_map = {
@@ -61,11 +66,15 @@ else:
     logging.info(f'Select neighbors for "{neighbors_key}"...')
     check_and_set_neighbors_key(adata, neighbors_key)
     
-    logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
+    if not USE_GPU:
+        kwargs |= cpu_kwargs
+    logging.info(f'{cluster_alg} clustering with {kwargs}...')
     cluster_func = cluster_alg_map.get(cluster_alg, KeyError(f'Unknown clustering algorithm: {cluster_alg}'))
-    cluster_func(adata, resolution=resolution, key_added=cluster_key)
+    cluster_func(adata, **kwargs)
     
-    if USE_GPU and adata.obs[cluster_key].nunique() > 200:
+    max_clusters = max(1, int(50 * resolution))
+    n_clusters = adata.obs[cluster_key].nunique()
+    if USE_GPU and n_clusters > max_clusters:
         # fallback when too many clusters are computed (assuming this is a bug in the rapids implementation)
         import scanpy as sc
         
@@ -73,9 +82,13 @@ else:
             'louvain': sc.tl.louvain,
             'leiden': sc.tl.leiden,
         }
-        logging.info(f'Cluster {cluster_key} has more than 100 unique values. Falling back to scanpy implementation...')
+        logging.info(
+            f'Cluster {cluster_key} has {n_clusters} custers, which is more than {max_clusters}.'
+            'Falling back to scanpy implementation...'
+        )
         cluster_func = alt_cluster_alg_map[cluster_alg]
-        cluster_func(adata, resolution=resolution, key_added=cluster_key)
+        kwargs |= cpu_kwargs
+        cluster_func(adata, **kwargs)
 
 logging.info(f'Write {cluster_key} to {output_file}...')
 adata.obs[[cluster_key]].to_parquet(output_file)

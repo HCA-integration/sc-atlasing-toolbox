@@ -38,7 +38,10 @@ DATASETS:
       clustering: test/input/pbmc68k.h5ad
     clustering:
       umap_exists: true
-      neighbors_key: neighbors
+      recompute_neighbors: true
+      neighbors:
+        n_neighbors: 30
+        use_rep: X_pca
       resolutions:
         - 0.2
         - 0.3
