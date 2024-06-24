@@ -50,6 +50,6 @@ stats = {
 
 for cat in categories:
     assert cat in adata.obs.columns, f'{cat} not in {adata.obs.columns}'
-    stats |= {cat: [','.join(adata.obs[cat].unique().tolist())]}
+    stats |= {cat: [','.join(adata.obs[cat].astype(str).unique().tolist())]}
 
 pd.DataFrame(stats).to_csv(output_tsv, sep='\t', index=False)
