@@ -28,7 +28,12 @@ cluster_alg = snakemake.params.get('algorithm', 'louvain')
 overwrite = snakemake.params.get('overwrite', False)
 USE_GPU = False
 
+# set parameters for clustering
 cluster_key = f'{cluster_alg}_{resolution}'
+kwargs = dict(resolution=resolution, key_added=cluster_key)
+cpu_kwargs = dict(flavor='igraph')
+if cluster_alg == 'leiden':
+    cpu_kwargs |= dict(n_iterations=2)
 
 read_func, _ = get_file_reader(input_file)
 with read_func(input_file, 'r') as f:
@@ -61,9 +66,11 @@ else:
     logging.info(f'Select neighbors for "{neighbors_key}"...')
     check_and_set_neighbors_key(adata, neighbors_key)
     
-    logging.info(f'{cluster_alg} clustering with resolution {resolution}...')
+    if not USE_GPU:
+        kwargs |= cpu_kwargs
+    logging.info(f'{cluster_alg} clustering with {kwargs}...')
     cluster_func = cluster_alg_map.get(cluster_alg, KeyError(f'Unknown clustering algorithm: {cluster_alg}'))
-    cluster_func(adata, resolution=resolution, key_added=cluster_key)
+    cluster_func(adata, **kwargs)
     
     max_clusters = max(1, int(50 * resolution))
     n_clusters = adata.obs[cluster_key].nunique()
@@ -80,7 +87,8 @@ else:
             'Falling back to scanpy implementation...'
         )
         cluster_func = alt_cluster_alg_map[cluster_alg]
-        cluster_func(adata, resolution=resolution, key_added=cluster_key)
+        kwargs |= cpu_kwargs
+        cluster_func(adata, **kwargs)
 
 logging.info(f'Write {cluster_key} to {output_file}...')
 adata.obs[[cluster_key]].to_parquet(output_file)
