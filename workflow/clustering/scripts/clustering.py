@@ -43,8 +43,8 @@ else:
         assert subprocess.run('nvidia-smi', shell=True).returncode == 0
         from _rsc_clustering import leiden, louvain
         USE_GPU = True
-    except AssertionError:
-        logging.info('No GPU found...')
+    except Exception as e:
+        logging.info(f'Error importing rapids found...\n{e}')
         from scanpy.tools import leiden, louvain
 
     cluster_alg_map = {
@@ -65,7 +65,9 @@ else:
     cluster_func = cluster_alg_map.get(cluster_alg, KeyError(f'Unknown clustering algorithm: {cluster_alg}'))
     cluster_func(adata, resolution=resolution, key_added=cluster_key)
     
-    if USE_GPU and adata.obs[cluster_key].nunique() > 200:
+    max_clusters = max(1, int(50 * resolution))
+    n_clusters = adata.obs[cluster_key].nunique()
+    if USE_GPU and n_clusters > max_clusters:
         # fallback when too many clusters are computed (assuming this is a bug in the rapids implementation)
         import scanpy as sc
         
@@ -73,7 +75,10 @@ else:
             'louvain': sc.tl.louvain,
             'leiden': sc.tl.leiden,
         }
-        logging.info(f'Cluster {cluster_key} has more than 100 unique values. Falling back to scanpy implementation...')
+        logging.info(
+            f'Cluster {cluster_key} has {n_clusters} custers, which is more than {max_clusters}.'
+            'Falling back to scanpy implementation...'
+        )
         cluster_func = alt_cluster_alg_map[cluster_alg]
         cluster_func(adata, resolution=resolution, key_added=cluster_key)
 
