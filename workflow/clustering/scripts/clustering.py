@@ -3,6 +3,7 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
+import scanpy as sc
 
 from utils.io import read_anndata, write_zarr_linked, get_file_reader
 
@@ -22,13 +23,19 @@ def check_and_set_neighbors_key(adata, neighbors_key):
 
 def apply_clustering(
     adata,
-    use_gpu=False,
-    cpu_kwargs={},
+    use_gpu: bool = False,
+    cpu_kwargs: dict = None,
+    n_cell_cpu=300_000,
     max_clusters=None,
     **kwargs,
 ):
-    import scanpy as sc
-    
+    """
+    :param adata: anndata object
+    :param use_gpu: whether to use GPU functions and parameters
+    :param cpu_kwargs: clustering parameters for CPU implementation
+    :param n_cell_cpu: number of cells to use CPU implementation
+    :param max_clusters: maximum number of clusters to determine if number of clusters are correct
+    """
     algorithm_map = {
         'louvain': louvain,
         'leiden': leiden,
@@ -38,8 +45,16 @@ def apply_clustering(
         'leiden': sc.tl.leiden,
     }
     
+    if not cpu_kwargs:
+        cpu_kwargs = dict()
+    
     if not use_gpu:
         kwargs |= cpu_kwargs
+        
+    if adata.n_obs < n_cell_cpu:
+        # switch to CPU implementation for smaller numbers of cells
+        algorithm_map = alt_algorithm_map
+    
     logging.info(f'{algorithm} clustering with {kwargs}...')
     cluster_func = algorithm_map.get(algorithm, KeyError(f'Unknown clustering algorithm: {algorithm}'))
     cluster_func(adata, **kwargs)
