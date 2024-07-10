@@ -1,23 +1,20 @@
-import pandas as pd
-
 from utils.io import read_anndata, write_zarr_linked
 from utils.misc import merge
 
 
-input_tsv = snakemake.input.parquet
+input_clusters = snakemake.input.cluster_anno
 input_zarr = snakemake.input.zarr
 output_zarr = snakemake.output.zarr
 
-dfs = [pd.read_parquet(file) for file in input_tsv]
+dfs = [read_anndata(file, obs='obs').obs for file in input_clusters]
 cluster_df = merge(dfs, left_index=True, right_index=True)
-print(cluster_df)
+print(cluster_df, flush=True)
 
 kwargs = dict() if input_zarr.endswith('.h5ad') else dict(obs='obs', uns='uns')
 adata = read_anndata(input_zarr, **kwargs)
 adata.obs = adata.obs.merge(cluster_df, left_index=True, right_index=True, how='left')
 adata.uns['clustering'] = {
     'neighbors_key': snakemake.params.get('neighbors_key', 'neighbors'),
-    'algorithm': snakemake.params.get('algorithm', 'louvain'),
 }
 
 write_zarr_linked(
