@@ -23,6 +23,7 @@ def check_and_set_neighbors_key(adata, neighbors_key):
 
 def apply_clustering(
     adata,
+    resolution: float,
     use_gpu: bool = False,
     cpu_kwargs: dict = None,
     n_cell_cpu=300_000,
@@ -45,6 +46,8 @@ def apply_clustering(
         'leiden': sc.tl.leiden,
     }
     
+    kwargs |= dict(resolution=resolution)
+    
     if not cpu_kwargs:
         cpu_kwargs = dict()
     
@@ -55,7 +58,10 @@ def apply_clustering(
         # switch to CPU implementation for smaller numbers of cells
         algorithm_map = alt_algorithm_map
     
-    logging.info(f'{algorithm} clustering with {kwargs}...')
+    # following observations from https://github.com/rapidsai/cugraph/issues/4072#issuecomment-2074822898
+    adata.obsp['connectivities'] = adata.obsp['connectivities'].astype('float64')
+    
+    logging.info(f'{algorithm} clustering with {kwargs} for {adata.n_obs} cells...')
     cluster_func = algorithm_map.get(algorithm, KeyError(f'Unknown clustering algorithm: {algorithm}'))
     cluster_func(adata, **kwargs)
     
@@ -85,6 +91,10 @@ USE_GPU = False
 
 # set parameters for clustering
 cluster_key = f'{algorithm}_{resolution}_{level}'
+kwargs = dict(
+    resolution=resolution,
+    key_added=cluster_key,
+) | snakemake.params.get('clustering_args', {})
 cpu_kwargs = dict(flavor='igraph')
 if algorithm == 'leiden':
     cpu_kwargs |= dict(n_iterations=2)
@@ -121,16 +131,12 @@ else:
         neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
         logging.info(f'Select neighbors for "{neighbors_key}"...')
         check_and_set_neighbors_key(adata, neighbors_key)
-        
-        # following observations from https://github.com/rapidsai/cugraph/issues/4072#issuecomment-2074822898
-        adata.obsp['connectivities'] = adata.obsp['connectivities'].astype('float64')
-        
+                
         adata = apply_clustering(
             adata,
             use_gpu=USE_GPU,
             cpu_kwargs=cpu_kwargs,
-            resolution=resolution,
-            key_added=cluster_key,
+            **kwargs,
         )
     else:
         logging.info(f'Read anndata file {input_file}...')
@@ -144,18 +150,19 @@ else:
         for cluster in adata.obs[prev_cluster_key].unique():
             logging.info(f'Subsetting to {prev_cluster_key}={cluster}...')
             sub_adata = adata[adata.obs[prev_cluster_key] == cluster].copy()
-            logging.info(sub_adata.shape)
             
-            logging.info(f'Compute neighbors for "{neighbors_args}"...')
+            if sub_adata.n_obs < 2 * neighbors_args.get('n_neighbors', 15):
+                adata.obs.loc[sub_adata.obs.index, cluster_key] = sub_adata.obs[[prev_cluster_key, prev_cluster_key]].agg('_'.join, axis=1)
+                continue
+            
+            logging.info(f'Compute neighbors for {neighbors_args}...')
             neighbors(sub_adata, **neighbors_args) # TODO: custom parameters
             
-            logging.info(f'Apply clustering for "{cluster_key}"...')
             sub_adata = apply_clustering(
                 sub_adata,
                 use_gpu=USE_GPU,
                 cpu_kwargs=cpu_kwargs,
-                resolution=resolution,
-                key_added=cluster_key,
+                **kwargs,
             )
             adata.obs.loc[sub_adata.obs.index, cluster_key] = sub_adata.obs[[prev_cluster_key, cluster_key]].agg('_'.join, axis=1)
 

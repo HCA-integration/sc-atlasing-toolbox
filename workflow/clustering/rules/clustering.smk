@@ -33,6 +33,7 @@ use rule cluster from clustering as clustering_cluster with:
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         neighbors_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors', default={}),
+        clustering_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'kwargs', default={}),
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
