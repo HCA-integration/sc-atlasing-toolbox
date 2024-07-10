@@ -85,8 +85,8 @@ else:
     try:
         import subprocess
         assert subprocess.run('nvidia-smi', shell=True).returncode == 0
-        from _rsc_clustering import leiden, louvain
-        from rapids_singlecell.tl import neighbors
+        from rapids_singlecell.tl import leiden, louvain
+        from rapids_singlecell.pp import neighbors
         USE_GPU = True
     except Exception as e:
         logging.info(f'Error importing rapids found...\n{e}')
