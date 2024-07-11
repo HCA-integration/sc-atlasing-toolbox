@@ -34,6 +34,8 @@ use rule cluster from clustering as clustering_cluster with:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         neighbors_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors', default={}),
         clustering_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'kwargs', default={}),
+    threads:
+        lambda wildcards: 5 * int(wildcards.level) - 4
     resources:
         partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='gpu',resource_key='qos'),

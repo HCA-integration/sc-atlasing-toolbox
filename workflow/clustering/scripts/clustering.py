@@ -3,9 +3,9 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
-import scanpy as sc
 
 from utils.io import read_anndata, write_zarr_linked, get_file_reader
+from utils.misc import dask_compute
 
 
 def check_and_set_neighbors_key(adata, neighbors_key):
@@ -24,19 +24,31 @@ def check_and_set_neighbors_key(adata, neighbors_key):
 def apply_clustering(
     adata,
     resolution: float,
-    use_gpu: bool = False,
     cpu_kwargs: dict = None,
-    n_cell_cpu=300_000,
-    max_clusters=None,
+    n_cell_cpu: int = 300_000,
+    max_clusters: bool = None,
+    recompute_neighbors: bool = False,
+    neighbors_args: dict = {},
     **kwargs,
 ):
     """
     :param adata: anndata object
-    :param use_gpu: whether to use GPU functions and parameters
     :param cpu_kwargs: clustering parameters for CPU implementation
     :param n_cell_cpu: number of cells to use CPU implementation
     :param max_clusters: maximum number of clusters to determine if number of clusters are correct
     """
+    import scanpy as sc
+    try:
+        import subprocess
+        assert subprocess.run('nvidia-smi', shell=True, stdout=subprocess.DEVNULL).returncode == 0
+        from rapids_singlecell.tl import leiden, louvain
+        from rapids_singlecell.pp import neighbors
+        USE_GPU = True
+    except Exception as e:
+        logging.info(f'Error importing rapids found...\n{e}')
+        from scanpy.tools import leiden, louvain
+        from scanpy.preprocessing import neighbors
+    
     algorithm_map = {
         'louvain': louvain,
         'leiden': leiden,
@@ -51,16 +63,21 @@ def apply_clustering(
     if not cpu_kwargs:
         cpu_kwargs = dict()
     
-    if not use_gpu:
+    if not USE_GPU:
         kwargs |= cpu_kwargs
-        
+    
+    if recompute_neighbors:
+        logging.info(f'Compute neighbors for {neighbors_args}...')
+        neighbors(adata, **neighbors_args)
+    
+    if USE_GPU:
+        # following observations from https://github.com/rapidsai/cugraph/issues/4072#issuecomment-2074822898
+        adata.obsp['connectivities'] = adata.obsp['connectivities'].astype('float64')
+
     if adata.n_obs < n_cell_cpu:
         # switch to CPU implementation for smaller numbers of cells
         algorithm_map = alt_algorithm_map
-    
-    # following observations from https://github.com/rapidsai/cugraph/issues/4072#issuecomment-2074822898
-    adata.obsp['connectivities'] = adata.obsp['connectivities'].astype('float64')
-    
+        
     logging.info(f'{algorithm} clustering with {kwargs} for {adata.n_obs} cells...')
     cluster_func = algorithm_map.get(algorithm, KeyError(f'Unknown clustering algorithm: {algorithm}'))
     cluster_func(adata, **kwargs)
@@ -69,10 +86,10 @@ def apply_clustering(
         max_clusters = max(1, int(50 * resolution))
     n_clusters = adata.obs[cluster_key].nunique()
     
-    if use_gpu and n_clusters > max_clusters:
+    if USE_GPU and n_clusters > max_clusters:
         # fallback when too many clusters are computed (assuming this is a bug in the rapids implementation)
         logging.info(
-            f'Cluster {cluster_key} has {n_clusters} custers, which is more than {max_clusters}.'
+            f'Cluster {cluster_key} has {n_clusters} custers, which is more than {max_clusters}. '
             'Falling back to scanpy implementation...'
         )
         cluster_func = alt_algorithm_map[algorithm]
@@ -86,8 +103,8 @@ output_file = snakemake.output[0]
 resolution = float(snakemake.wildcards.resolution)
 algorithm = snakemake.wildcards.algorithm
 level = int(snakemake.wildcards.level)
+threads = snakemake.threads
 overwrite = snakemake.params.get('overwrite', False)
-USE_GPU = False
 
 # set parameters for clustering
 cluster_key = f'{algorithm}_{resolution}_{level}'
@@ -107,25 +124,13 @@ if cluster_key_exists and not overwrite:
     logging.info(f'Read anndata file {input_file} and skip clustering...')
     adata = read_anndata(input_file, obs='obs')
 else:
-    try:
-        import subprocess
-        assert subprocess.run('nvidia-smi', shell=True).returncode == 0
-        from rapids_singlecell.tl import leiden, louvain
-        from rapids_singlecell.pp import neighbors
-        USE_GPU = True
-    except Exception as e:
-        logging.info(f'Error importing rapids found...\n{e}')
-        from scanpy.tools import leiden, louvain
-        from scanpy.preprocessing import neighbors
-    
-    read_kwargs = dict(obs='obs')
+    read_kwargs = dict(obs='obs', obsm='obsm')
     
     if level <= 1:
         logging.info(f'Read anndata file {input_file}...')
-        read_kwargs |= dict(uns='uns', obsp='obsp')
-        if input_file.endswith('.h5ad'):
-            read_kwargs |= dict(obsm='obsm')
-        adata = read_anndata(input_file, **read_kwargs)
+        if not input_file.endswith('.h5ad'):
+            read_kwargs.pop('obsm', None) # not needed, since neighobrs are already computed
+        adata = read_anndata(input_file, uns='uns', obsp='obsp', **read_kwargs)
         
         # select neighbors
         neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
@@ -134,37 +139,63 @@ else:
                 
         adata = apply_clustering(
             adata,
-            use_gpu=USE_GPU,
             cpu_kwargs=cpu_kwargs,
+            recompute_neighbors=False,
             **kwargs,
         )
     else:
+        from concurrent.futures import ProcessPoolExecutor
+        from concurrent.futures import as_completed
+        
         logging.info(f'Read anndata file {input_file}...')
-        read_kwargs |= dict(obsm='obsm')
-        adata = read_anndata(input_file, **read_kwargs)
+        adata = read_anndata(input_file, dask=True, backed=True, **read_kwargs)
         
-        neighbors_args = dict(use_rep='X_pca') | snakemake.params.get('neighbors_args', {})
-        
-        # TODO: parallelize using snakemake scripts
-        prev_cluster_key = f'{algorithm}_{resolution}_{level-1}'
-        for cluster in adata.obs[prev_cluster_key].unique():
-            logging.info(f'Subsetting to {prev_cluster_key}={cluster}...')
-            sub_adata = adata[adata.obs[prev_cluster_key] == cluster].copy()
+        def cluster_subset(
+            adata,
+            resolution,
+            key_added,
+            prev_cluster_key,
+            prev_cluster_value,
+            neighbors_args, # TODO: custom parameters
+        ):
+            logging.info(f'Subsetting to {prev_cluster_key}={prev_cluster_value}...')
+            sub_adata = dask_compute(adata[adata.obs[prev_cluster_key] == prev_cluster_value].copy())
             
             if sub_adata.n_obs < 2 * neighbors_args.get('n_neighbors', 15):
-                adata.obs.loc[sub_adata.obs.index, cluster_key] = sub_adata.obs[[prev_cluster_key, prev_cluster_key]].agg('_'.join, axis=1)
-                continue
-            
-            logging.info(f'Compute neighbors for {neighbors_args}...')
-            neighbors(sub_adata, **neighbors_args) # TODO: custom parameters
+                prev_cluster_clean = sub_adata.obs[prev_cluster_key].astype(str).apply(lambda x: x.split('_')[-1])
+                return sub_adata.obs[prev_cluster_key].str.cat(prev_cluster_clean, sep='_')
             
             sub_adata = apply_clustering(
                 sub_adata,
-                use_gpu=USE_GPU,
+                resolution=resolution,
+                key_added=key_added,
                 cpu_kwargs=cpu_kwargs,
-                **kwargs,
+                neighbors_args=neighbors_args,
+                recompute_neighbors=True,
             )
-            adata.obs.loc[sub_adata.obs.index, cluster_key] = sub_adata.obs[[prev_cluster_key, cluster_key]].agg('_'.join, axis=1)
+            return sub_adata.obs[[prev_cluster_key, key_added]].agg('_'.join, axis=1)
+        
+        
+        prev_cluster_key = f'{algorithm}_{resolution}_{level-1}'
+        neighbors_args = dict(use_rep='X_pca') | snakemake.params.get('neighbors_args', {})
+        
+        logging.info(f'Cluster {cluster_key} with {threads} threads...')
+        with ProcessPoolExecutor(threads) as executor:
+            futures = [
+                executor.submit(
+                    cluster_subset,
+                    adata,
+                    prev_cluster_key=prev_cluster_key,
+                    prev_cluster_value=prev_cluster,
+                    neighbors_args=neighbors_args,
+                    **kwargs
+                )
+                for prev_cluster in adata.obs[prev_cluster_key].unique()
+            ]
+
+            for future in as_completed(futures):
+                clusters = future.result()
+                adata.obs.loc[clusters.index, cluster_key] = clusters
 
 
 logging.info(f'Write {cluster_key} to {output_file}...')

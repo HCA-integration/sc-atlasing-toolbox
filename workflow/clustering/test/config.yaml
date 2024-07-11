@@ -37,7 +37,7 @@ DATASETS:
     input:
       clustering: test/input/pbmc68k.h5ad
     clustering:
-      umap_exists: true
+      umap_exists: false
       recompute_neighbors: true
       neighbors:
         n_neighbors: 30
