@@ -22,7 +22,7 @@ rule plot_user:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        dotplot=mcfg.image_dir / paramspace.wildcard_pattern / 'user'/ 'group={group}.png',
+        dotplot=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'user_markers'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'plot', default={}),
         markers=lambda wildcards: get_marker_gene_set(mcfg, wildcards),
@@ -38,9 +38,9 @@ rule plot:
     input:
         zarr=rules.rank_genes_groups.output.zarr,
     output:
-        rankplot=mcfg.image_dir / paramspace.wildcard_pattern / 'rank_plot' / 'group={group}.png',
-        dotplot=mcfg.image_dir / paramspace.wildcard_pattern / 'dotplot' / 'group={group}.png',
-        heatmap=mcfg.image_dir / paramspace.wildcard_pattern / 'heatmap' / 'group={group}.png',
+        rankplot=mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'rank_plot.png',
+        dotplot=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'dotplot'),
+        heatmap=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'heatmap'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'plot', default={}),
     conda:

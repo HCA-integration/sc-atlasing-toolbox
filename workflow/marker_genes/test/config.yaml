@@ -30,6 +30,9 @@ DATASETS:
       marker_genes: default
       groups:
         - bulk_labels
+      plot:
+        n_genes: 10
+        n_groups_per_split : 5
 
 MARKER_GENES:
   default:

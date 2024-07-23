@@ -1,5 +1,7 @@
-from matplotlib import pyplot as plt
+import numpy as np
 import scanpy as sc
+from pathlib import Path
+from matplotlib import pyplot as plt
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -11,6 +13,9 @@ output_rankplot = snakemake.output.rankplot
 output_dotplot = snakemake.output.dotplot
 output_heatmap = snakemake.output.heatmap
 
+Path(output_dotplot).mkdir(parents=True, exist_ok=True)
+Path(output_heatmap).mkdir(parents=True, exist_ok=True)
+
 wildcards = snakemake.wildcards
 group_key = wildcards.group
 file_id = wildcards.file_id
@@ -18,6 +23,7 @@ title = f'Marker genes for file_id={file_id} group={group_key}'
 
 args = snakemake.params.get('args', {})
 args['key'] = f'marker_genes_group={group_key}'
+n_groups_per_split = args.pop('n_groups_per_split', 10)
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
@@ -47,23 +53,40 @@ sc.pl.rank_genes_groups(adata, **args)
 plt.suptitle(title)
 plt.savefig(output_rankplot, dpi=100, bbox_inches='tight')
 
-logging.info('Dotplot...')
-sc.pl.rank_genes_groups_dotplot(
-    adata,
-    **args,
-    standard_scale='var',
-    swap_axes=False,
-    title=title,
-)
-plt.savefig(output_dotplot, dpi=100, bbox_inches='tight')
+# partition groups to make plots visualisable
+groups = adata.uns[f'marker_genes_group={group_key}']['names'].dtype.names
+n_splits = max(1, int(len(groups) / n_groups_per_split))
+splits = np.array_split(groups, n_splits)
 
-logging.info('Heatmap...')
-sc.pl.rank_genes_groups_heatmap(
-    adata,
-    **args,
-    standard_scale='var',
-    swap_axes=True,
-    show_gene_labels=len(genes_to_plot) < 300,
-)
-plt.suptitle(title)
-plt.savefig(output_heatmap, dpi=100, bbox_inches='tight')
+for i, partition_groups in enumerate(splits):
+    # partition_groups = list(partition_groups)
+    logging.info(f'Dotplot for partition {i}...')
+    sc.pl.rank_genes_groups_dotplot(
+        adata,
+        **args,
+        groups=partition_groups,
+        standard_scale='var',
+        swap_axes=False,
+        title=title,
+    )
+    plt.savefig(
+        f'{output_dotplot}/split={i}.png',
+        dpi=100,
+        bbox_inches='tight',
+    )
+
+    logging.info(f'Heatmap for partition {i}...')
+    sc.pl.rank_genes_groups_heatmap(
+        adata,
+        **args,
+        groups=partition_groups,
+        standard_scale='var',
+        swap_axes=True,
+        show_gene_labels=len(genes_to_plot) < 300,
+    )
+    plt.suptitle(title)
+    plt.savefig(
+        f'{output_heatmap}/split={i}.png',
+        dpi=100,
+        bbox_inches='tight'
+    )

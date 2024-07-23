@@ -1,6 +1,8 @@
-from matplotlib import pyplot as plt
+import numpy as np
 import scanpy as sc
 import anndata
+from pathlib import Path
+from matplotlib import pyplot as plt
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -15,10 +17,15 @@ input_file = snakemake.input[0]
 output_png = snakemake.output.dotplot
 markers = snakemake.params.markers
 
+Path(output_png) .mkdir(parents=True, exist_ok=True)
+
 wildcards = snakemake.wildcards
 group_key = wildcards.group
 file_id = wildcards.file_id
 title = f'Marker genes for file_id={file_id} group={group_key}'
+
+args = snakemake.params.get('args', {})
+n_groups_per_split = args.pop('n_groups_per_split', 10)
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
@@ -52,18 +59,28 @@ logging.info(adata.__str__())
 
 # if no cells or genes to plot, save empty plots
 if min(adata.shape) == 0:
-    plt.savefig(output_png)
+    plt.savefig(f'{output_png}/split=0.png')
     exit()
 
-sc.pl.dotplot(
-    adata,
-    markers,
-    groupby=group_key,
-    use_raw=False,
-    standard_scale='var',
-    # title=title,
-    show=False,
-    swap_axes=False,
-)
+# partition groups to make plots visualisable
+groups = adata.obs[group_key].unique().to_numpy()
+n_splits = max(1, int(len(groups) / n_groups_per_split))
+splits = np.array_split(groups, n_splits)
 
-plt.savefig(output_png, dpi=100, bbox_inches='tight')
+for i, partition_groups in enumerate(splits):
+    logging.info(f'Dotplot for partition {i}...')
+    sc.pl.dotplot(
+        adata[adata.obs[group_key].isin(partition_groups)],
+        markers,
+        groupby=group_key,
+        use_raw=False,
+        standard_scale='var',
+        # title=title,
+        show=False,
+        swap_axes=False,
+    )
+    plt.savefig(
+        f'{output_png}/split={i}.png',
+        dpi=100,
+        bbox_inches='tight'
+    )
