@@ -63,6 +63,8 @@ def read_anndata(
     # assert Path(file).exists(), f'File not found: {file}'
     if exclude_slots is None:
         exclude_slots = []
+    elif exclude_slots == 'all':
+        exclude_slots = ['X', 'layers', 'raw']
 
     func, file_type = get_file_reader(file)
     try:
