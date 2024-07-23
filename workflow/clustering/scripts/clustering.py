@@ -38,6 +38,7 @@ def apply_clustering(
     :param max_clusters: maximum number of clusters to determine if number of clusters are correct
     """
     import scanpy as sc
+    USE_GPU = False
     try:
         import subprocess
         assert subprocess.run('nvidia-smi', shell=True, stdout=subprocess.DEVNULL).returncode == 0
