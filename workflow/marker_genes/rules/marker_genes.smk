@@ -40,7 +40,7 @@ rule plot:
     output:
         rankplot=mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'rank_plot.png',
         dotplot=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'dotplot'),
-        heatmap=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'heatmap'),
+        matrixplot=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'group={group}' / 'matrixplot'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'plot', default={}),
     conda:

@@ -46,6 +46,9 @@ if pseudobulk:
     logging.info(f'Creating pseudobulks for sample={sample_key} and group={group_key}...')
     adata.obs['pseudo_group'] = adata.obs[group_key].astype(str) + '_' + adata.obs[sample_key].astype(str)
     adata = get_pseudobulks(adata, group_key='pseudo_group', agg='sum')
+
+    # compute for all genes, because sample size is way more manageable
+    args['n_genes'] = adata.n_vars
     logging.info(adata.__str__())
 
 # filter groups

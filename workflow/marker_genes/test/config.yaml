@@ -19,6 +19,7 @@ DATASETS:
         method: wilcoxon
       plot:
         n_genes: 20
+        min_logfoldchange: 3
       groups:
         - bulk_labels
         - phase
