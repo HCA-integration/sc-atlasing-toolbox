@@ -95,9 +95,11 @@ DATASETS:
         harmonypy:
           sigma: 0.1
           key: batch_2
+          n_comps: 30
         harmony:
           sigma: 0.1
           batch_key: batch_2
+          n_comps: 30
       umap_colors:
         - phase
 

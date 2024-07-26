@@ -3,6 +3,19 @@ from utils.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
 
+PCA_PARAMS = [
+    'n_comps',
+    'layer',
+    'zero_center',
+    'svd_solver',
+    'return_info',
+    'mask_var',
+    'use_highly_variable',
+    'dtype',
+    'chunked',
+    'chunk_size',
+]
+
 SCVI_MODEL_PARAMS = [
     'n_hidden',
     'n_latent',

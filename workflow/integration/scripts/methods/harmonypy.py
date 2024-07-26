@@ -7,7 +7,7 @@ try:
     if subprocess.run('nvidia-smi', shell=True).returncode != 0:
         logging.info('No GPU found...')
         raise ImportError()
-    from rapids_singlecell.pp import harmony_integrate
+    from rapids_singlecell.pp import pca, harmony_integrate
     import cupy as cp
     import rmm
     from rmm.allocators.cupy import rmm_cupy_allocator
@@ -19,10 +19,12 @@ try:
     logging.info('Using rapids_singlecell...')
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
+    from scanpy.pp import pca
     logging.info('Importing rapids failed, using scanpy...')
 
-from integration_utils import add_metadata, remove_slots
+from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -30,32 +32,47 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
+var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
+
+pca_kwargs, hyperparams = get_hyperparams(
+    hyperparams=hyperparams,
+    model_params=PCA_PARAMS,
+)
 hyperparams = {'random_state': params.get('seed', 0)} | hyperparams
 
 # set harmony var_use
-key = hyperparams.get('key', [])
-if key is None:
-    key = {batch_key}
-elif isinstance(key, str):
-    key = {batch_key, key}
-elif isinstance(key, list):
-    key = set(key).union({batch_key})
-hyperparams['key'] = list(key)
+keys = hyperparams.get('key', [])
+if keys is None:
+    keys = {batch_key}
+elif isinstance(keys, str):
+    keys = {batch_key, keys}
+elif isinstance(keys, list):
+    keys = set(keys).union({batch_key})
+hyperparams['key'] = list(keys)
 
 logging.info
 (f'Read {input_file}...')
 adata = read_anndata(
     input_file,
+    X='layers/norm_counts',
     obs='obs',
-    obsm='obsm',
-    uns='uns'
+    var='var',
+    uns='uns',
+    dask=True,
+    backed=True,
 )
 
-use_rep = hyperparams.pop('use_rep', 'X_pca')
-assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
+# subset features
+adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=True)
+
+# recompute PCA according to user-defined hyperparameters
+logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
+use_rep = 'X_pca'
+pca(adata, **pca_kwargs)
+# dask_compute(adata, layers=use_rep)
 
 # run method
 logging.info(f'Run harmonypy with parameters {pformat(hyperparams)}...')
