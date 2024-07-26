@@ -387,6 +387,7 @@ class WildcardParameters:
                 f'{e} for:\n\tparameter_key="{parameter_key}"\n\twildcards_sub={wildcards_sub}'
                 f'\nquery_dict:\n{pformat(query_dict)}'
                 f'\n{self.wildcards_df[list(query_dict.keys())+[parameter_key]]}'
+                f'\n{self.wildcards_df[list(query_dict.keys())+[parameter_key]].dtypes}'
                 f'\nall columns: {self.wildcards_df.columns.tolist()}'
             ) from e
         

@@ -402,3 +402,7 @@ class ModuleConfig:
         if resource_key == 'mem_mb':
             return int(res * (1 + factor * (attempt - 1)))
         return res
+
+
+    def copy(self):
+        return self.__class__(**self.__dict__)

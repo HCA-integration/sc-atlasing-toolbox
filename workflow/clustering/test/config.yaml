@@ -37,23 +37,35 @@ DATASETS:
     input:
       clustering: test/input/pbmc68k.h5ad
     clustering:
-      umap_exists: true
+      umap_exists: false
       recompute_neighbors: true
       neighbors:
         n_neighbors: 30
         use_rep: X_pca
+      algorithm:
+        - leiden
+        # - louvain
       resolutions:
         - 0.2
         - 0.3
         - 0.4
-
-  test_list:
+  test_hierarchical:
     input:
-      clustering:
-        - test/input/pbmc68k.h5ad
-        - test/input/pbmc68k_dup.h5ad
+      clustering: test/input/pbmc68k.h5ad
     clustering:
       neighbors_key: neighbors
-      algorithm: louvain
+      algorithm: leiden
       resolutions:
-        - 0.2
+        - 0.5
+      hierarchy:
+        1: 0.1
+        3: 0.2
+  test_hierarchical_int:
+    input:
+      clustering: test/input/pbmc68k.h5ad
+    clustering:
+      neighbors_key: neighbors
+      algorithm: leiden
+      resolutions:
+        - 0.5
+      hierarchy: 3

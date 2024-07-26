@@ -4,7 +4,7 @@ channels:
   - nvidia
   - conda-forge
 dependencies:
-  - python=3.10
+  - python=3.11
   - anndata=0.10
   - scanpy=1.10
   - leidenalg
@@ -14,7 +14,7 @@ dependencies:
   # - cuda-cudart=12.2
   # - cuda-nvrtc=12.2
   # - libnvjitlink=12.2
-  - rapids=24.04
+  - rapids=24.06
   # - pyarrow
   # - arrow-cpp
   - hdf5=1.14.2
