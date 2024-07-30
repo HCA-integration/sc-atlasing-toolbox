@@ -3,8 +3,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 
-from integration_utils import add_metadata, remove_slots
+from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 input_file = snakemake.input[0]
@@ -12,8 +13,15 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
+var_mask = wildcards.var_mask
+
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
+
+pca_kwargs, hyperparams = get_hyperparams(
+    hyperparams=hyperparams,
+    model_params=PCA_PARAMS,
+)
 hyperparams = {'pynndescent_random_state': params.get('seed', 0)} | hyperparams
 
 files_to_keep = ['obsm', 'obsp', 'uns']
@@ -21,13 +29,21 @@ files_to_keep = ['obsm', 'obsp', 'uns']
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
+    X='layers/norm_counts',
     obs='obs',
-    obsm='obsm',
-    uns='uns'
+    var='var',
+    uns='uns',
+    dask=True,
+    backed=True,
 )
 
-use_rep = hyperparams.pop('use_rep', 'X_pca')
-assert use_rep in adata.obsm.keys(), f'{use_rep} is missing'
+# subset features
+adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=True)
+
+# recompute PCA according to user-defined hyperparameters
+logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
+use_rep = 'X_pca'
+sc.pp.pca(adata, **pca_kwargs)
 
 # quickfix: remove batches with fewer than 3 cells
 neighbors_within_batch = hyperparams.get('neighbors_within_batch', 3)

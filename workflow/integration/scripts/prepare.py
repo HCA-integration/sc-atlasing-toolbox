@@ -133,22 +133,22 @@ elif input_file.endswith('.zarr'):
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
-# preprocess if missing
-if recompute_pca or 'X_pca' not in adata.obsm:
-    dask_compute(adata, layers=['norm_counts'], verbose=True)
-    logging.info('Compute PCA...')
-    import scanpy
-    scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
-    files_to_keep.extend(['obsm', 'uns'])
+# # preprocess if missing
+# if recompute_pca or 'X_pca' not in adata.obsm:
+#     dask_compute(adata, layers=['norm_counts'], verbose=True)
+#     logging.info('Compute PCA...')
+#     import scanpy
+#     scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
+#     files_to_keep.extend(['obsm', 'uns'])
 
-try:
-    assert not recompute_pca, 'PCA was recomputed'
-    assert_neighbors(adata)
-    logging.info(adata.uns['neighbors'].keys())
-except AssertionError as e:
-    logging.info(f'Compute neighbors due to Assertion Error: {e}...')
-    sc.pp.neighbors(adata, use_rep='X_pca')
-    files_to_keep.extend(['obsp', 'uns'])
+# try:
+#     assert not recompute_pca, 'PCA was recomputed'
+#     assert_neighbors(adata)
+#     logging.info(adata.uns['neighbors'].keys())
+# except AssertionError as e:
+#     logging.info(f'Compute neighbors due to Assertion Error: {e}...')
+#     sc.pp.neighbors(adata, use_rep='X_pca')
+#     files_to_keep.extend(['obsp', 'uns'])
 
 # fix batch covariate
 for batch_key in batch_keys:
