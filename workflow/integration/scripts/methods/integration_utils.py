@@ -3,6 +3,19 @@ from utils.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
 
+PCA_PARAMS = [
+    'n_comps',
+    'layer',
+    'zero_center',
+    'svd_solver',
+    'return_info',
+    'mask_var',
+    'use_highly_variable',
+    'dtype',
+    'chunked',
+    'chunk_size',
+]
+
 SCVI_MODEL_PARAMS = [
     'n_hidden',
     'n_latent',
@@ -85,8 +98,8 @@ def remove_slots(adata, output_type, keep_X=False):
         output_type = [output_type]
     
     del adata.layers
-    #if 'X_pca' in adata.obsm:
-    #    del adata.obsm['X_pca']
+    if 'X_pca' in adata.obsm:
+       del adata.obsm['X_pca']
     
     if 'full' in output_type:
         ensure_sparse(adata)
