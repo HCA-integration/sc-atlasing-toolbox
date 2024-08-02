@@ -10,21 +10,23 @@ import warnings
 warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
 from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
+import anndata as ad
 
 from utils.io import read_anndata, write_zarr_linked, csr_matrix_int64_indptr
 from utils.misc import dask_compute
 from utils.processing import filter_genes, sc, USE_GPU
 
 
-def match_genes(adata, gene_list):
+def match_genes(var_df, gene_list, column=None):
+    genes = var_df.index if column is None else var_df[column]
     pattern = '|'.join(gene_list)
     try:
-        return adata.var_names[adata.var_names.astype(str).str.contains(pattern, regex=True)].values
+        return genes[genes.astype(str).str.contains(pattern, regex=True)].index
     except Exception as e:
         logging.error(f'Error: {e}')
         logging.error(f'Gene list: {gene_list}')
         logging.error(f'Pattern: {pattern}')
-        logging.error(f'Gene names: {adata.var_names}')
+        logging.error(f'Gene names: {var_df.index}')
         raise e
 
 
@@ -73,6 +75,18 @@ if args == False:
     logging.info('No highly variable gene parameters provided, including all genes...')
     adata.var['extra_hvgs'] = True
 else:
+    var = adata.var.copy()
+    
+    # workaround for CxG datasets
+    feature_col = 'feature_name' if 'feature_name' in var.columns else None
+
+    # remove user-specified genes
+    if remove_genes:
+        remove_genes = match_genes(var, remove_genes, column=feature_col)
+        print(remove_genes)
+        logging.info(f'Remove {len(remove_genes)} genes (subset data)...')
+        adata = adata[:, ~adata.var_names.isin(remove_genes)].copy()
+
     adata.var['extra_hvgs'] = False
     # union over groups
     if union_over is not None:
@@ -114,20 +128,14 @@ else:
         sc.pp.highly_variable_genes(adata, **args)
         adata.var['extra_hvgs'] = adata.var['highly_variable']
 
-    # workaround for CxG datasets
-    if 'feature_name' in adata.var.columns:
-        adata.var_names = adata.var['feature_name']
-
-    # remove user-specified genes
-    if remove_genes:
-        remove_genes = match_genes(adata, remove_genes)
-        logging.info(f'Remove {len(remove_genes)} genes...')
-        adata.var.loc[remove_genes, 'extra_hvgs'] = False
+    var['extra_hvgs'] = False
+    var.loc[adata.var_names, 'extra_hvgs'] = adata.var['extra_hvgs']
+    adata = ad.AnnData(var=var, uns=adata.uns)
 
     # add user-provided genes
     if extra_genes:
         n_genes = len(extra_genes)
-        extra_genes = match_genes(adata, extra_genes)
+        extra_genes = match_genes(var, extra_genes, column=feature_col)
         
         if len(extra_genes) < n_genes:
             logging.warning(f'Only {len(extra_genes)} of {n_genes} user-provided genes found in data...')
@@ -135,7 +143,7 @@ else:
             logging.info('No extra user genes added...')
         else:
             logging.info(f'Add {len(extra_genes)} user-provided genes...')
-            adata.var.loc[extra_genes, 'extra_hvgs'] = True
+            var.loc[extra_genes, 'extra_hvgs'] = True
 
 logging.info(f'Write to {output_file}...')
 write_zarr_linked(
