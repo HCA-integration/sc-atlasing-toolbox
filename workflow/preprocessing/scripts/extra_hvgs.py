@@ -18,9 +18,36 @@ from utils.processing import filter_genes, sc, USE_GPU
 
 
 def match_genes(var_df, gene_list, column=None):
-    genes = var_df.index if column is None else var_df[column]
-    pattern = '|'.join(gene_list)
+    import urllib
+
+    def is_url(url):
+        try:
+            result = urllib.parse.urlparse(url)
+            return all([result.scheme, result.netloc])
+        except ValueError:
+            return False
+
+    genes_from_path = dict()
+    for gene in gene_list:
+        if Path(gene).exists():
+            with open(gene, 'r') as f:
+                genes_from_path[gene] = f.read().splitlines()
+        elif is_url(gene):
+            try:
+                with urllib.request.urlopen(gene) as f:
+                    genes_from_path[gene] = f.read().decode('utf-8').splitlines()
+            except Exception as e:
+                logging.error(f'Error reading gene list from URL {gene}...')
+                raise e
+
+    for path, genes in genes_from_path.items():
+        logging.info(f'Gene list from {path}: {len(genes)} genes')
+        gene_list.extend(genes)
+        gene_list.remove(path)
+
     try:
+        genes = var_df.index if column is None else var_df[column]
+        pattern = '|'.join(gene_list)
         return genes[genes.astype(str).str.contains(pattern, regex=True)].index
     except Exception as e:
         logging.error(f'Error: {e}')
@@ -46,7 +73,7 @@ elif isinstance(args, dict):
 if overwrite_args:
     args |= overwrite_args
 
-logging.info(str(args))
+logging.info(f'args: {args}')
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -83,7 +110,6 @@ else:
     # remove user-specified genes
     if remove_genes:
         remove_genes = match_genes(var, remove_genes, column=feature_col)
-        print(remove_genes)
         logging.info(f'Remove {len(remove_genes)} genes (subset data)...')
         adata = adata[:, ~adata.var_names.isin(remove_genes)].copy()
 

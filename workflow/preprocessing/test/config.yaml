@@ -29,6 +29,21 @@ DATASETS:
       backed: false
       raw_counts: X
       scale: false
+      extra_hvgs:
+        union_over:
+          - disease
+        remove_genes:
+          - test/input/remove_genes.txt
+          - broken/path.txt
+          - https://raw.githubusercontent.com/prabhakarlab/AIDA_Phase1/master/01_QualityControl/list_chrY_nonPAR_genes.txt
+        extra_genes:
+          - CD.*
+          - CCR7
+          - LEF1
+          - CD27
+          - SELL
+          - IL7R
+          - GZMK
       highly_variable_genes:
         batch_key: dataset
         n_top_genes: 2000
