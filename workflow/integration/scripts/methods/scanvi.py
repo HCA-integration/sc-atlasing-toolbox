@@ -1,3 +1,4 @@
+import torch
 import scvi
 from pprint import pformat
 from pathlib import Path
@@ -39,6 +40,9 @@ logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
 )
+
+# check GPU
+print(f'GPU available: {torch.cuda.is_available()}', flush=True)
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
