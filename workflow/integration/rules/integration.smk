@@ -74,7 +74,7 @@ use rule run_method from integration as integration_run_method with:
 def update_neighbors_args(wildcards):
     args = mcfg.get_for_dataset(
         dataset=wildcards.dataset,
-        query=['preprocessing', 'neighbors'],
+        query=['integration', 'neighbors'],
         default={}
     ).copy()
     output_type = wildcards.output_type
