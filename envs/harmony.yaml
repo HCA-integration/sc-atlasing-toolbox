@@ -8,6 +8,7 @@ dependencies:
   - zarr
   - hdf5=1.14.2
   - dask
+  - dask-ml
   - sparse
   - harmony-pytorch
   - harmonypy

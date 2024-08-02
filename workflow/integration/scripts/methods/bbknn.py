@@ -6,6 +6,7 @@ import scanpy as sc
 from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
+from utils.misc import dask_compute
 
 
 input_file = snakemake.input[0]
@@ -38,12 +39,15 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=True)
+adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=False)
 
 # recompute PCA according to user-defined hyperparameters
 logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
 use_rep = 'X_pca'
+adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
 sc.pp.pca(adata, **pca_kwargs)
+del adata.X
+dask_compute(adata, layers=use_rep)
 
 # quickfix: remove batches with fewer than 3 cells
 neighbors_within_batch = hyperparams.get('neighbors_within_batch', 3)
@@ -53,7 +57,7 @@ min_batches = adata.obs.groupby(
 ).filter(
     lambda x: len(x) > neighbors_within_batch
 ).index
-print(min_batches)
+
 if min_batches.nunique() < adata.n_obs:
     files_to_keep.extend(['obs'])
     # adata.layers = read_anndata(input_file, layers='layers').layers
