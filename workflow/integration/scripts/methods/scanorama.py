@@ -40,7 +40,6 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 batch_key = wildcards.batch
 params = snakemake.params
-var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -58,7 +57,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 batch_categories = adata.obs[batch_key].unique().tolist()
 adatas = [

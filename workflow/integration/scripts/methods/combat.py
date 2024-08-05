@@ -13,7 +13,6 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -35,7 +34,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 # run method
 logging.info(f'Run Combat with parameters {pformat(hyperparams)}...')

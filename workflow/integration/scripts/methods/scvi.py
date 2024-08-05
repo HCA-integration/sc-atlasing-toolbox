@@ -19,7 +19,6 @@ Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-var_mask = wildcards.var_mask
 
 scvi.settings.seed = params.get('seed', 0)
 scvi.settings.progress_bar_style = 'tqdm'
@@ -55,7 +54,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask)
+adata, subsetted = subset_hvg(adata, var_column='integration_features')
 
 if isinstance(categorical_covariate_keys, list):
     for cov in categorical_covariate_keys:

@@ -14,7 +14,6 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -39,15 +38,19 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=False)
+adata, _ = subset_hvg(
+    adata,
+    var_column='integration_features',
+    compute_dask=True
+)
 
 # recompute PCA according to user-defined hyperparameters
 logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
 use_rep = 'X_pca'
-adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+# adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
 sc.pp.pca(adata, **pca_kwargs)
 del adata.X
-dask_compute(adata, layers=use_rep)
+# dask_compute(adata, layers=use_rep)
 
 # quickfix: remove batches with fewer than 3 cells
 neighbors_within_batch = hyperparams.get('neighbors_within_batch', 3)
