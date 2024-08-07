@@ -35,7 +35,7 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
     """ Compute kNN graph based on output type.
 
     :param adata: integrated anndata object
-    :param output_type: string of output type
+    :param output_type: string of output typefilter
     :param force: force re-computation of kNN graph
     :param kwargs: additional arguments for sc.pp.neighbors
     :return: anndata with kNN graph based on output type
@@ -82,10 +82,7 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
     assert_neighbors(adata, check_n_neighbors=False)
 
 
-def filter_genes(adata, batch_key=None, **kwargs):
-    """
-    Filter anndata based on .X matrix
-    """
+def _filter_genes(adata, **kwargs):
     import scanpy as sc
     from dask import array as da
     
@@ -94,6 +91,14 @@ def filter_genes(adata, batch_key=None, **kwargs):
     gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
     if isinstance(gene_subset, da.Array):
         gene_subset = gene_subset.compute()
+    return gene_subset
+
+
+def filter_genes(adata, batch_key=None, **kwargs):
+    """
+    Filter anndata based on .X matrix
+    """
+    from dask import array as da
     
     # filter cells from batches with too few cells
     if batch_key is not None:
@@ -102,6 +107,7 @@ def filter_genes(adata, batch_key=None, **kwargs):
             adata = adata[adata.obs[batch_key].isin(cells_per_batch[cells_per_batch > 1].index)]
         
     # apply filter
+    gene_subset = _filter_genes(adata, **kwargs)
     if any(gene_subset == False):
         logging.info(f'Subset to {sum(gene_subset)}/{adata.n_vars} filtered genes...')
         adata = adata[:, gene_subset]
