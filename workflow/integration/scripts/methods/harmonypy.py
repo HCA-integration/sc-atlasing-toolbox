@@ -17,9 +17,11 @@ try:
     )
     cp.cuda.set_allocator(rmm_cupy_allocator)
     logging.info('Using rapids_singlecell...')
+    USE_GPU = True
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
     logging.info('Importing rapids failed, using scanpy...')
+    USE_GPU = False
 
 from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
@@ -51,6 +53,8 @@ elif isinstance(keys, str):
 elif isinstance(keys, list):
     keys = set(keys).union({batch_key})
 hyperparams['key'] = list(keys)
+if USE_GPU:
+    hyperparams['dtype'] = 'float32'
 
 logging.info
 (f'Read {input_file}...')
