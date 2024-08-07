@@ -72,19 +72,6 @@ def subset_hvg(
     if add_column is not None and add_column != var_column:
         adata.var[add_column] = adata.var[var_column]
     
-    # filter features that are all 0
-    print('Determine features that are all 0...', flush=True)
-    if isinstance(adata.X, da.Array):
-        import sparse
-        non_zero_mask = (adata.X.map_blocks(sparse.COO).sum(0) > 0).compute().todense()
-    elif adata.X is not None:
-        non_zero_mask = adata.X.sum(0) > 0
-    else:
-        non_zero_mask = np.ones(adata.n_vars, dtype=bool)
-
-    # update gene mask
-    adata.var[var_column] = np.ravel(non_zero_mask) & adata.var[var_column]
-
     if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
         subsetted = False
@@ -103,7 +90,7 @@ def subset_hvg(
         adata = adata_to_memory(
             adata,
             layers=to_memory,
-            verbose=True,
+            verbose=False,
         )
     
     return adata, subsetted
