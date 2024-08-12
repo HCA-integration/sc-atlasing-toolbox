@@ -119,6 +119,7 @@ adata.var = adata.var.infer_objects()
 logging.info(adata.var)
 
 # set new indices
+adata.obs[f'obs_names_before_{dataset}'] = adata.obs_names
 adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(str)
 
 # add uns data
