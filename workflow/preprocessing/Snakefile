@@ -18,6 +18,7 @@ mcfg = ModuleConfig(
         'extra_hvgs',
         'lineage',
         'neighbors',
+        'normalize',
         'pca',
         'raw_counts',
         'scale',

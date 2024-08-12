@@ -70,7 +70,7 @@ def check_and_update_neighbors_info(adata, neighbors_key):
 input_file = snakemake.input[0]
 input_rep = snakemake.input.rep
 output_file = snakemake.output[0]
-params = dict(snakemake.params.items())
+params = dict(init_pos='random') | dict(snakemake.params.items())
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsp='obsp', uns='uns')

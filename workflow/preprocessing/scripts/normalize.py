@@ -26,6 +26,7 @@ from utils.misc import apply_layers, ensure_sparse
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 layer = snakemake.params.get('raw_counts', 'X')
+args = snakemake.params.get('args', {})
 dask = snakemake.params.get('dask', False) and not rapids
 backed = snakemake.params.get('backed', False) and dask and not rapids
 
@@ -63,8 +64,8 @@ if rapids:
     # adata.X = adata.X.astype('float32')
     sc.get.anndata_to_GPU(adata)
 
-logging.info('normalize_total...')
-sc.pp.normalize_total(adata)
+logging.info('normalize_total with args={args}...')
+sc.pp.normalize_total(adata, **args)
 logging.info('log-transform...')
 sc.pp.log1p(adata)
 

@@ -64,6 +64,8 @@ DATASETS:
         pbmc: test/input/pbmc68k.h5ad
     preprocessing:
       raw_counts: layers/counts
+      normalize:
+        target_sum: 1e4
       scale: true
       highly_variable_genes:
         n_top_genes: 100
