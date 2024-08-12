@@ -21,10 +21,10 @@ rule prepare:
     threads:
         lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
-        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
-        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
-        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt, factor=2),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=2),
     script:
         '../scripts/prepare.py'
 
@@ -74,7 +74,7 @@ use rule run_method from integration as integration_run_method with:
 def update_neighbors_args(wildcards):
     args = mcfg.get_for_dataset(
         dataset=wildcards.dataset,
-        query=['preprocessing', 'neighbors'],
+        query=['integration', 'neighbors'],
         default={}
     ).copy()
     output_type = wildcards.output_type

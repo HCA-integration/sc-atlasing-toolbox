@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 from utils.misc import dask_compute
-from utils.processing import assert_neighbors, sc
+from utils.processing import assert_neighbors, sc, _filter_genes
 
 
 input_file = snakemake.input[0]
@@ -28,6 +28,8 @@ def read_and_subset(
     var_column: str,
     files_to_keep: list,
     slot_map: dict,
+    new_var_column: str = None,
+    filter_zero_genes: bool = True,
     **kwargs,
 ):
     in_layer = params.get(layer_key, 'X')
@@ -46,16 +48,28 @@ def read_and_subset(
         **kwargs
     )
     
-    logging.info('Subset highly variable genes...')
+    if new_var_column is None:
+        slot_map |= {out_layer: in_layer}
+        return adata, files_to_keep, slot_map
+    
+    logging.info('Determine var_mask...')
     subsetted = False
     if var_column not in adata.var:
-        adata.var['highly_variable'] = True
+        adata.var[new_var_column] = True
     else:
-        adata.var['highly_variable'] = adata.var[var_column]
+        adata.var[new_var_column] = adata.var[var_column]
+    
+    if filter_zero_genes:
+        logging.info('Filter all zero genes...')
+        # filter out which genes are all 0
+        all_zero_genes = _filter_genes(adata, min_cells=1)
+        adata.var[new_var_column] = adata.var[new_var_column] & ~adata.var_names.isin(all_zero_genes)
+    
     if save_subset:
+        logging.info('Subset HVG...')
         adata, subsetted = subset_hvg(
             adata,
-            var_column='highly_variable',
+            var_column=new_var_column,
             to_memory=False,
             compute_dask=False,
         )
@@ -77,6 +91,7 @@ adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='norm_counts',
     var_column=var_mask,
+    new_var_column='integration_features',
     files_to_keep=files_to_keep,
     slot_map=slot_map,
     obsm='obsm',
@@ -90,6 +105,7 @@ adata_raw, files_to_link, slot_map = read_and_subset(
     var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    filter_zero_genes=False,
 )
 
 assert adata_norm.var_names.equals(adata_raw.var_names), f'\nnorm:\n{adata_norm.var}\nraw:\n{adata_raw.var}'

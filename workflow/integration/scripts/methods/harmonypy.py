@@ -1,13 +1,13 @@
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
-from scipy.sparse import issparse
+from scanpy.pp import pca
 try:
     import subprocess
     if subprocess.run('nvidia-smi', shell=True).returncode != 0:
         logging.info('No GPU found...')
         raise ImportError()
-    from rapids_singlecell.pp import pca, harmony_integrate
+    from rapids_singlecell.pp import harmony_integrate
     import cupy as cp
     import rmm
     from rmm.allocators.cupy import rmm_cupy_allocator
@@ -17,14 +17,16 @@ try:
     )
     cp.cuda.set_allocator(rmm_cupy_allocator)
     logging.info('Using rapids_singlecell...')
+    USE_GPU = True
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
-    from scanpy.pp import pca
     logging.info('Importing rapids failed, using scanpy...')
+    USE_GPU = False
 
 from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
+from utils.misc import dask_compute
 
 
 input_file = snakemake.input[0]
@@ -32,7 +34,6 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -52,6 +53,8 @@ elif isinstance(keys, str):
 elif isinstance(keys, list):
     keys = set(keys).union({batch_key})
 hyperparams['key'] = list(keys)
+if USE_GPU:
+    hyperparams['dtype'] = 'float32'
 
 logging.info
 (f'Read {input_file}...')
@@ -66,12 +69,18 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=True)
+adata, _ = subset_hvg(
+    adata,
+    var_column='integration_features',
+    compute_dask=True
+)
 
 # recompute PCA according to user-defined hyperparameters
 logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
 use_rep = 'X_pca'
+# adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
 pca(adata, **pca_kwargs)
+del adata.X
 # dask_compute(adata, layers=use_rep)
 
 # run method

@@ -1,3 +1,4 @@
+import torch
 import scvi
 from pathlib import Path
 from pprint import pformat
@@ -18,7 +19,6 @@ Path(output_plot_dir).mkdir(parents=True, exist_ok=True)
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-var_mask = wildcards.var_mask
 
 scvi.settings.seed = params.get('seed', 0)
 scvi.settings.progress_bar_style = 'tqdm'
@@ -39,6 +39,9 @@ logging.info(
     f'training parameters:\n{pformat(train_params)}'
 )
 
+# check GPU
+print(f'GPU available: {torch.cuda.is_available()}', flush=True)
+
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
@@ -51,7 +54,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask)
+adata, subsetted = subset_hvg(adata, var_column='integration_features')
 
 if isinstance(categorical_covariate_keys, list):
     for cov in categorical_covariate_keys:

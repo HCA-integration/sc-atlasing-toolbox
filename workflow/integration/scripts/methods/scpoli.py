@@ -17,7 +17,6 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
-var_mask = wildcards.var_mask
 
 torch.manual_seed(params.get('seed', 0))
 torch.set_num_threads(snakemake.threads)
@@ -85,7 +84,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 # prepare data for model
 adata.X = adata.X.astype('float32')

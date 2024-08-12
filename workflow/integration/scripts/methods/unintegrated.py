@@ -12,7 +12,6 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
-var_mask = wildcards.var_mask
 
 adata = read_anndata(
     input_file,
@@ -28,7 +27,7 @@ adata = read_anndata(
 )
 
 # subset features
-adata, _ = subset_hvg(adata, var_column=var_mask)
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 # prepare output adata
 files_to_keep = ['obsm', 'uns']

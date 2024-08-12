@@ -8,6 +8,7 @@ from harmony import harmonize
 from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
+from utils.misc import dask_compute
 
 
 input_file = snakemake.input[0]
@@ -15,7 +16,6 @@ output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
-var_mask = wildcards.var_mask
 
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
@@ -53,12 +53,18 @@ adata = read_anndata(
 )
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column=var_mask, compute_dask=True)
+adata, _ = subset_hvg(
+    adata,
+    var_column='integration_features',
+    compute_dask=True
+)
 
 # recompute PCA according to user-defined hyperparameters
 logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
 use_rep = 'X_pca'
+# adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
 sc.pp.pca(adata, **pca_kwargs)
+del adata.X
 # dask_compute(adata, layers=use_rep)
 
 # run method
