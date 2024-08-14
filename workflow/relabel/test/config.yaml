@@ -28,3 +28,12 @@ DATASETS:
       merge_columns:
         file:  test/input/merge_test.tsv
         sep: '-'
+  test_relabel_index:
+    input:
+      relabel: test/input/pbmc68k.h5ad
+    relabel:
+      new_columns:
+        file:  test/input/mapping_index_test.tsv
+        order:
+          - index
+          - relabel_by_index

@@ -18,7 +18,9 @@ logging.info('Read adata...')
 if input_file.endswith('.zarr'):
     adata = read_anndata(input_file, obs='obs')
 else:
-    adata = anndata.read(input_file)
+    adata = anndata.read(input_file)  # read complete file to convert to zarr
+if adata.obs_names.name in (None, ''):
+    adata.obs_names.name = 'index'
 
 # merge new columns
 if input_new_cols is not None:
@@ -29,13 +31,11 @@ if input_new_cols is not None:
     label_key = None
     for mapping_label in mapping_order:
         if label_key is None:
-            try:
-                assert mapping_label in adata.obs.columns
-            except AssertionError as e:
-                raise ValueError(
-                    f'"{mapping_label}" not found in adata.obs.columns. '
-                    f'Please make sure the first entry in the mapping order is a column in adata.obs.'
-                ) from e
+            if mapping_label == adata.obs_names.name:
+                adata.obs.reset_index(inplace=True)
+                label_key = mapping_label
+            assert mapping_label in adata.obs.columns, f'"{mapping_label}" not found in adata.obs.columns. ' \
+                'Please make sure the first entry in the mapping order is a column in adata.obs.'
             label_key = mapping_label
             continue
         
