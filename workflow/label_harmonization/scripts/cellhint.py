@@ -1,5 +1,6 @@
 import logging
 logging.basicConfig(level=logging.INFO)
+import numpy as np
 import anndata as ad
 import scanpy as sc
 import cellhint

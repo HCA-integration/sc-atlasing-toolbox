@@ -18,9 +18,9 @@ rule cellhint:
     conda:
         get_env(config, 'cellhint')
     resources:
-        partition=mcfg.get_resource(resource_key='partition'),
-        qos=mcfg.get_resource(resource_key='qos'),
-        mem_mb=mcfg.get_resource(resource_key='mem_mb'),
+        partition=lambda w, attempt: mcfg.get_resource(resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb',attempt=attempt),
     script:
         '../scripts/cellhint.py'
 
