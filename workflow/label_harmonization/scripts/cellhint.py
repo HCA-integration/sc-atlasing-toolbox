@@ -18,9 +18,14 @@ author_label_key = snakemake.params.author_label_key
 dataset_key = snakemake.params.dataset_key
 params = snakemake.params.get('params', {})
 use_pct = params.get('use_pct', False)
+use_rep = params.get('use_rep', 'X_pca')
 subsample = snakemake.params.get('subsample', False)
 force_scale = snakemake.params.get('force_scale', False)
 input_layer = snakemake.params.get('input_layer', 'X')
+
+if use_rep is None:
+    use_rep = 'X_pca'
+    params['use_rep'] = use_rep
 
 logging.info(f'params: {params}')
 
@@ -57,6 +62,12 @@ if use_pct and (force_scale or not scaled):
     adata, subsetted = subset_hvg(adata, var_column='highly_variable')
     logger.info("Scale .X for PCT")
     sc.pp.scale(adata, max_value=10)
+
+if use_rep == 'X_pca' and use_rep not in adata.obsm.keys():
+    logging.info('Compute PCA...')
+    if not subsetted:
+        adata, _ = subset_hvg(adata, var_column='highly_variable')
+    sc.pp.pca(adata, use_highly_variable=True)
 
 logging.info('Harmonize with CellHint...')
 alignment = cellhint.harmonize(
