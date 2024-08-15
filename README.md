@@ -38,7 +38,7 @@ This allows for an efficient and scalable way to run analyses on large datasets 
         highly_variable_genes:
           n_top_genes: 2000
         pca:
-          n_pcs: 50
+          n_comps: 50
         assemble:
           - normalize
           - highly_variable_genes
@@ -188,7 +188,7 @@ DATASETS:
       highly_variable_genes:
         n_top_genes: 2000
       pca:
-        n_pcs: 50
+        n_comps: 50
       assemble:
         - normalize
         - highly_variable_genes
@@ -396,7 +396,7 @@ Under the `defaults` directive, you can set the defaults in the same way as the 
       highly_variable_genes:
         n_top_genes: 2000
       pca:
-        n_pcs: 50
+        n_comps: 50
       assemble:
         - normalize
         - highly_variable_genes
