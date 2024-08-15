@@ -28,7 +28,12 @@ logging.info(f'Read {input_file}...')
 kwargs = {'obs': 'obs', 'var': 'var', 'uns': 'uns', 'obsm': 'obsm'}
 if use_pct or not input_file.endswith(('.zarr', '.zarr/')):
     kwargs |= {'X': input_layer}
-adata = read_anndata(input_file, **kwargs)
+adata = read_anndata(
+    input_file,
+    **kwargs,
+    dask=True,
+    backed=True,
+)
 print(adata, flush=True)
 obs = adata.obs
 
