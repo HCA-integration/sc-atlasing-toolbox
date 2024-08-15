@@ -2,8 +2,7 @@
 set -e -x
 
 snakemake exploration_all integration_all \
-  --profile .profiles/czbiohub \
+  --profile .profiles/local \
   --configfile \
-    configs/computational_resources/czbiohub.yaml  \
     configs/integration/config.yaml \
     $@
