@@ -40,7 +40,14 @@ obs = adata.obs
 # subsample cells
 if subsample:
     assert 0 < subsample < 1
-    sc.pp.subsample(adata, fraction=subsample)
+    logging.info(f'Subsample to {subsample} cells...')
+    # sc.pp.subsample(adata, fraction=subsample)
+    subset_indices = np.random.choice(
+        adata.obs_names,
+        size=int(adata.n_obs * subsample),
+        replace=False
+    )
+    adata = adata[adata.obs_names.isin(subset_indices)].copy()
 
 # subsample HVGs
 adata, _ = subset_hvg(adata, 'highly_variable')
