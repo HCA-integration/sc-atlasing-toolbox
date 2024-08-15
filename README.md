@@ -9,90 +9,85 @@
 This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
 This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
 
-<details>
-  <summary>TL;DR What does a full workflow look like?</summary>
+## What modules does the toolbox support?
 
-  <a name="example_config"></a>
+The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
 
-  The heart of the configuration is captured in a YAML (or JSON) configuration file.
-  Here is an example of a workflow containing the `preprocessing`, `integration` and `metrics` modules:
+| Module                 | Description                                                               |
+|------------------------|---------------------------------------------------------------------------|
+| `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
+| `exploration`          | Exploration and quality control of datasets                               |
+| `batch_analysis`       | Exploration and quality control of batches within datasets                |
+| `qc`                   | Quality control of datasets                                               |
+| `doublets`             | Identifying and handling doublets in datasets                             |
+| `merge`                | Merging datasets                                                          |
+| `filter`               | Filtering datasets based on specified criteria                            |
+| `subset`               | Creating subsets of datasets                                              |
+| `relabel`              | Relabeling data points in datasets                                        |
+| `split_data`           | Splitting datasets into training and testing sets                         |
+| `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
+| `integration`          | Running single cell batch correction methods on datasets                  |
+| `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
+| `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
+| `label_transfer`       | Work in progress                                                          |
+| `sample_representation`| Work in progress                                                          |
 
-  ```yaml
-  output_dir: /path/to/output/directory
-  images: /path/to/image/directory
+## TL;DR What does a full workflow look like?
 
-  DATASETS:
+The heart of the configuration is captured in a YAML (or JSON) configuration file.
+Here is an example of a workflow containing the `preprocessing`, `integration` and `metrics` modules:
 
-    my_dataset: # custom task/workflow name
+```yaml
+output_dir: /path/to/output/directory
+images: /path/to/image/directory
 
-      # input specification: map of module name to map of input file name to input file path
-      input:
-        preprocessing:
-          file_1: file_1.h5ad
-          file_2: file_2.zarr
-        integration: preprocessing # all outputs of module will automatically be used as input
-        metrics: integration
-      
-      # module configuration
+DATASETS:
+
+  my_dataset: # custom task/workflow name
+
+    # input specification: map of module name to map of input file name to input file path
+    input:
       preprocessing:
-        highly_variable_genes:
-          n_top_genes: 2000
-        pca:
-          n_comps: 50
-        assemble:
-          - normalize
-          - highly_variable_genes
-          - pca
-      
-      # module configuration
-      integration:
-        raw_counts: raw/X
-        norm_counts: X
-        methods:
-          unintegrated:
-          scanorama:
-            batch_size: 100
-          scvi:
-            max_epochs: 10
-            early_stopping: true
+        file_1: data/pbmc68k.h5ad
+        # file_2: ... # more files if required
+      integration: preprocessing # all outputs of module will automatically be used as input
+      metrics: integration
+    
+    # module configuration
+    preprocessing:
+      highly_variable_genes:
+        n_top_genes: 2000
+      pca:
+        n_comps: 50
+      assemble:
+        - normalize
+        - highly_variable_genes
+        - pca
+    
+    # module configuration
+    integration:
+      raw_counts: raw/X
+      norm_counts: X
+      batch: batch
+      methods:
+        unintegrated:
+        scanorama:
+          batch_size: 100
+        scvi:
+          max_epochs: 10
+          early_stopping: true
 
-      # module configuration
-      metrics:
-        unintegrated: layers/norm_counts
-        methods:
-          - nmi
-          - graph_connectivity
-  ```
+    # module configuration
+    metrics:
+      unintegrated: layers/norm_counts
+      batch: batch
+      label: bulk_labels
+      methods:
+        - nmi
+        - graph_connectivity
+```
 
-  :sparkling_heart: Beautiful, right? [Read more](#configure-your-workflow) on how configuration works.
-
-</details>
-
-<details>
-  <summary> What modules does the toolbox support? </summary>
-
-  The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
-
-  | Module                 | Description                                                               |
-  |------------------------|---------------------------------------------------------------------------|
-  | `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
-  | `exploration`          | Exploration and quality control of datasets                               |
-  | `batch_analysis`       | Exploration and quality control of batches within datasets                |
-  | `qc`                   | Quality control of datasets                                               |
-  | `doublets`             | Identifying and handling doublets in datasets                             |
-  | `merge`                | Merging datasets                                                          |
-  | `filter`               | Filtering datasets based on specified criteria                            |
-  | `subset`               | Creating subsets of datasets                                              |
-  | `relabel`              | Relabeling data points in datasets                                        |
-  | `split_data`           | Splitting datasets into training and testing sets                         |
-  | `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
-  | `integration`          | Running single cell batch correction methods on datasets                  |
-  | `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
-  | `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
-  | `label_transfer`       | Work in progress                                                          |
-  | `sample_representation`| Work in progress                                                          |
-
-</details>
+:sparkling_heart: Beautiful, right? [Read more](#configure-your-workflow) on how configuration works.
 
 ## :rocket: Getting started
 
@@ -163,8 +158,8 @@ DATASETS: # TODO: rename to TASKS
     # input specification: map of module name to map of input file name to input file path
     input:
       preprocessing:
-        file_1: file_1.h5ad
-        file_2: file_2.zarr
+        file_1: data/pbmc68k.h5ad
+        # file_2: ... # more files if required
       integration: preprocessing # all outputs of module will automatically be used as input
       metrics: integration
 
@@ -198,6 +193,7 @@ DATASETS:
     integration:
       raw_counts: raw/X
       norm_counts: X
+      batch: batch
       methods:
         unintegrated:
         scanorama:
@@ -209,6 +205,8 @@ DATASETS:
     # module configuration
     metrics:
       unintegrated: layers/norm_counts
+      batch: batch
+      label: bulk_labels
       methods:
         - nmi
         - graph_connectivity
@@ -263,33 +261,7 @@ os: intel
 use_gpu: true
 ```
 
-### Run the pipeline
-
-Before running the pipeline, you need to activate your Snakemake environment.
-
-```commandline
-conda activate snakemake
-```
-
-<details>
-  <summary>How does Snakemake work?</summary>
-
-  > The general command for running a pipeline is:
-  >
-  > ```commandline
-  > snakemake <snakemake args>
-  > ```
-  >
-  > The most relevant snakemake arguments are:
-  > 
-  > + `-n`: dryrun
-  > + `--use-conda`: use rule-specific conda environments to ensure all dependencies are met
-  > + `-c`: maximum number of cores to be used
-  > + `--configfile`: specify a config file to use. The overall workflow already defaults to the config file under `configs/config.yaml`
-
-</details>
-
-#### Create a wrapper script (recommended)
+### Create a wrapper script (recommended)
 
 Next, you can create a wrapper script that will call the pipeline with the correct profile and configuration file(s).
 This way, it is easier to call the pipeline and you can avoid having to remember all the flags and options.
@@ -331,51 +303,160 @@ snakemake \
 
 > :bulb: **Tip** Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
-#### Call the pipeline
+### Calling the pipeline
+
+Before running the pipeline, you need to activate your Snakemake environment.
+
+```commandline
+conda activate snakemake
+```
+
+<details>
+  <summary>How does Snakemake work?</summary>
+
+  > The general command for running a pipeline is:
+  >
+  > ```commandline
+  > snakemake <snakemake args>
+  > ```
+  >
+  > The most relevant snakemake arguments are:
+  > 
+  > + `-n`: dryrun
+  > + `--use-conda`: use rule-specific conda environments to ensure all dependencies are met
+  > + `-c`: maximum number of cores to be used
+  > + `--configfile`: specify a config file to use. The overall workflow already defaults to the config file under `configs/config.yaml`
+  
+  >  For more information on how Snakemake works, please refer to [Snakemake's extensive documentation](https://snakemake.readthedocs.io/en/v7.31.1/index.html).
+
+</details>
 
 When you execute the script (say, we call it `run_pipeline.sh`), you can treat it like a snakemake command and add any additional snakemake arguments you want to use.
-
 A dryrun would be:
 
 ```commandline
 bash run_pipeline.sh -n
 ```
 
-Executing the actual workflow providing 10 cores would be:
+This will show you what Snakemake wants to run.
+Without specifying any rule, the default rules that the pipeline will request are `common_dag` and `common_rulegraph`.
+You can ignore these for now.
 
 ```commandline
-bash run_pipeline.sh -c10
+...
+Building DAG of jobs...
+Job stats:
+job                 count
+----------------  -------
+all                     1
+common_dag              1
+common_rulegraph        1
+total                   3
 ```
 
-#### Specify which subworkflow you want to run
+### Listing all available rules
 
-The pipeline will only run the rule that you explicitly tell it to run.
+The pipeline will only run the target that you explicitly tell it to run.
+A target can be either the name of a Snakemake rule or a file that can be generated by Snakemake (as defined by the Snakefiles).
 You can list all possible rules with:
 
 ```commandline
-snakemake -l
+bash run_pipeline.sh -l
 ```
 
-Given the [config above](#example_config), you can run all rules related to integration.
+Which should give you something like this:
+
+```commandline
+all                            
+batch_analysis_all             
+batch_analysis_batch_pcr 
+batch_analysis_collect           
+batch_analysis_dependency_graph
+batch_analysis_determine_covariates
+batch_analysis_plot        
+clustering_all            
+clustering_cluster            
+clustering_compute_neighbors
+clustering_compute_umap            
+clustering_dependency_graph 
+clustering_merge
+...
+split_data_all
+split_data_dependency_graph
+split_data_link
+split_data_split
+subset_all
+subset_dependency_graph
+subset_subset
+```
+
+All the rules ending with `_all` are callable, i.e. you can use them to specify that their workflow should be run.
+The rest are needed by the pipeline, but can't be called by the user, you can just ignore them.
+
+### Specifying which workflow/rule you want to run
+
+Given the [config above](#example_config), you can call the integration workflow by specifying the `integration_all` target:
 
 ```commandline
 bash run_pipeline.sh integration_all -n
 ```
 
-This will also include all the preprocessing rules that required for integration, but will leave e.g. plots generated by the preprocessing output.
-If you want to include those, you can run the `preprocessing_all` rule as well.
+This should list all the rules with details such as inputs, outputs and parameters, as well as the following summary:
+
+```commandline
+...
+
+Job stats:
+job                                    count
+-----------------------------------  -------
+integration_all                            1
+integration_barplot_per_dataset            3
+integration_benchmark_per_dataset          1
+integration_compute_umap                   6
+integration_plot_umap                      6
+integration_postprocess                    6
+integration_prepare                        1
+integration_run_method                     3
+preprocessing_assemble                     1
+preprocessing_highly_variable_genes        1
+preprocessing_normalize                    1
+preprocessing_pca                          1
+total                                     31
+
+Reasons:
+    (check individual jobs above for details)
+    input files updated by another job:
+        integration_all, integration_barplot_per_dataset, integration_benchmark_per_dataset, integration_compute_umap, integration_plot_umap, integration_postprocess, integration_prepare, integration_run_method, preprocessing_assemble, preprocessing_highly_variable_genes, preprocessing_pca                                                                                             
+    missing output files:
+        integration_benchmark_per_dataset, integration_compute_umap, integration_postprocess, integration_prepare, integration_run_method, preprocessing_assemble, preprocessing_highly_variable_genes, preprocessing_normalize, preprocessing_pca
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+```
+
+Notice, that this also includes preprocessing rules that were defined in the config as input to the integration.
+Since Snakemake only computes the files that are direct dependencies of the target that you define, the workflow does not include preprocessing-specific rules are not used by the integration module.
+If you want to include all preprocessing rules, you need to include it in the command:
 
 ```commandline
 bash run_pipeline.sh preprocessing_all integration_all -n
 ```
 
-The same applies if you want to run the metrics
+Following the same principle, you can call the metrics by including the `metrics_all` rule to the target list:
 
 ```commandline
 bash run_pipeline.sh preprocessing_all integration_all metrics_all -n
 ```
 
-Good luck running your pipeline! :tada:
+If you are happy with the dryrun, you can dispatch the workflow by specifying the number of cores you want to provide for the pipeline.
+
+```commandline
+bash run_pipeline.sh preprocessing_all integration_all metrics_all -c 10
+```
+
+You can also use [Snakemake profiles](#snakemake_profiles) to dispatch your pipeline with extra configurations such as Snakemake presets or [cluster execution](#cluster_execution).
+
+> You have now successfully set up and configured your pipeline!
+> Give it a spin and feel free to edit the configs to your custom workflow! :tada:
 
 
 ## :gear: Advanced configuration
@@ -404,6 +485,7 @@ Under the `defaults` directive, you can set the defaults in the same way as the 
     integration:
       raw_counts: raw/X
       norm_counts: X
+      batch: batch
       methods:
         unintegrated:
         scanorama:
@@ -413,6 +495,8 @@ Under the `defaults` directive, you can set the defaults in the same way as the 
           early_stopping: true
     metrics:
       unintegrated: layers/norm_counts
+      batch: batch
+      label: bulk_labels
       methods:
         - nmi
         - graph_connectivity
