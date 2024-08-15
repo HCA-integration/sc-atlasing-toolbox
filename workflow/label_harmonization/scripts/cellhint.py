@@ -49,12 +49,12 @@ if subsample:
     )
     adata = adata[adata.obs_names.isin(subset_indices)].copy()
 
-# subsample HVGs
-adata, _ = subset_hvg(adata, 'highly_variable')
+subsetted = False
 
 # scale for PCT if not already scaled
 scaled = adata.uns.get('preprocessing', {}).get('scaled', False)
 if use_pct and (force_scale or not scaled):
+    adata, subsetted = subset_hvg(adata, var_column='highly_variable')
     logger.info("Scale .X for PCT")
     sc.pp.scale(adata, max_value=10)
 
