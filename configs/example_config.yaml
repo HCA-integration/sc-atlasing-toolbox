@@ -1,0 +1,46 @@
+  output_dir: data/out
+  images: images
+
+  DATASETS:
+
+    my_dataset: # custom task/workflow name
+
+      # input specification: map of module name to map of input file name to input file path
+      input:
+        preprocessing:
+          file_1: data/pbmc68k.h5ad
+        integration: preprocessing # all outputs of module will automatically be used as input
+        metrics: integration
+      
+      # module configuration
+      preprocessing:
+        highly_variable_genes:
+          n_top_genes: 2000
+        pca:
+          n_comps: 50
+        assemble:
+          - normalize
+          - highly_variable_genes
+          - pca
+      
+      # module configuration
+      integration:
+        raw_counts: raw/X
+        norm_counts: X
+        batch: batch
+        methods:
+          unintegrated:
+          scanorama:
+            batch_size: 100
+          scvi:
+            max_epochs: 10
+            early_stopping: true
+
+      # module configuration
+      metrics:
+        unintegrated: layers/norm_counts
+        batch: batch
+        label: bulk_labels
+        methods:
+          - nmi
+          - graph_connectivity
