@@ -110,7 +110,7 @@ params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
 print(f'Size: {params["size"]}', flush=True)
 print(default_size, flush=True)
 
-for color in colors:
+for color in set(colors):
     logging.info(f'Plot color "{color}"...')
     palette = None
     if color in adata.obs.columns:
