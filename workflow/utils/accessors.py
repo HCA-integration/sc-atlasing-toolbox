@@ -84,7 +84,7 @@ def subset_hvg(
         adata._inplace_subset_var(adata.var_names[adata.var[var_column]])
     
     if compute_dask:
-        print('Compute dask array...', flush=True)
+        print(f'Compute dask array for layers {to_memory}', flush=True)
         adata = dask_compute(adata, layers=to_memory)
     else:
         adata = adata_to_memory(

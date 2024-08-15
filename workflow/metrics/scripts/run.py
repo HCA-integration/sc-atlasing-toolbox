@@ -65,7 +65,7 @@ if input_type == 'embed':
 if input_type == 'full':
     kwargs |= {'X': 'X', 'var': 'var'}
 
-logger.info(f'Read {input_file} ...')
+logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
 print(adata, flush=True)
 adata_raw = None
