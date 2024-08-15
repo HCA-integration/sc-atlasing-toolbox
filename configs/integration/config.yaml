@@ -9,7 +9,7 @@ defaults:
       unintegrated:
       bbknn:
       combat:
-      harmony:
+      harmonypy:
       scanorama:
       scgen:
         max_epochs: 10
