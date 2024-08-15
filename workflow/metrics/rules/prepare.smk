@@ -30,27 +30,22 @@ use rule cluster from clustering as metrics_cluster with:
     input:
         zarr=rules.prepare.output.zarr,
     output:
-        tsv=mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'cluster_resolutions' / '{resolution}.tsv',
-    params:
-        algorithm=lambda wildcards: mcfg.get_from_parameters(
-            wildcards,
-            'cluster_algorithm',
-            default='leiden',
-            wildcards_sub=list(wildcards.keys())
-        ),
+        zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'cluster_resolutions' / '{algorithm}--{resolution}--{level}.zarr'),
     resources:
-        partition=lambda w: mcfg.get_resource(resource_key='partition', profile='gpu'),
-        qos=lambda w: mcfg.get_resource(resource_key='qos', profile='gpu'),
-        gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile='gpu', attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
 
 
 use rule merge from clustering as metrics_cluster_collect with:
     input:
         zarr=rules.prepare.output.zarr,
-        tsv=expand(
-            rules.metrics_cluster.output.tsv,
+        cluster_anno=expand(
+            rules.metrics_cluster.output.zarr,
             resolution=[2 * (x + 1) / 10 for x in range(10)],
+            algorithm='leiden',
+            level=1,
             allow_missing=True,
         ),
     output:

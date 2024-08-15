@@ -84,6 +84,17 @@ if comparison:
     print('adata_raw')
     print(adata_raw, flush=True)
 
+# prepare clustering columns
+def replace_last(source_string, replace_what, replace_with):
+    """
+    https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
+    """
+    head, _sep, tail = source_string.rpartition(replace_what)
+    return head + replace_with + tail
+
+cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
+adata.obs[cluster_columns] = adata.obs[cluster_columns].rename(columns=lambda x: replace_last(x, '_1', ''))
+
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
