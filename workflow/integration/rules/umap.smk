@@ -7,10 +7,10 @@ use rule umap from preprocessing as integration_compute_umap with:
     output:
         zarr=directory(out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
 
 
 def get_colors(wildcards):
@@ -32,7 +32,7 @@ use rule plots from preprocessing as integration_plot_umap with:
         color=get_colors,
         basis='X_umap',
         ncols=1,
-        outlier_factor=10,
+        # outlier_factor=10,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

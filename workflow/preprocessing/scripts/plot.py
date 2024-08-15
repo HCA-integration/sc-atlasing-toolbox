@@ -96,8 +96,7 @@ dask_compute(adata, layers='X')
 adata = adata[adata.obs.sample(frac=1).index].copy()
 
 # remove outliers
-outlier_factor = params.get('outlier_factor', 0)
-params.pop('outlier_factor', None)
+outlier_factor = params.pop('outlier_factor', 0)
 
 adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)

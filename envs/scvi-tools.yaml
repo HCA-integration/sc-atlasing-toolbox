@@ -8,7 +8,7 @@ dependencies:
   - scanpy=1.10
   - scvi-tools
   - jaxlib=*=*cuda*
-  - jax
+  - jax<=0.4.28
   - cuda-version>12.1
   - cuda-nvcc>12.1
   - zarr
