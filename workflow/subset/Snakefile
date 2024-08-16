@@ -38,7 +38,7 @@ rule subset:
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
-        'scripts/{wildcards.strategy}.py'
+        'scripts/run.py'
 
 
 rule all:
