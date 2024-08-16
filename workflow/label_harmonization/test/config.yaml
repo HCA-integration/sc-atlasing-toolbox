@@ -25,6 +25,7 @@ DATASETS:
         preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
         pbmc: test/input/pbmc68k.h5ad
     label_harmonization:
+      recompute_umap: true
       plot_colors:
         - phase
         - bulk_labels
@@ -40,6 +41,7 @@ DATASETS:
       label_harmonization:
         preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     label_harmonization:
+      recompute_neighbors: true
       plot_colors: bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels

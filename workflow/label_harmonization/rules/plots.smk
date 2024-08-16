@@ -1,3 +1,16 @@
+def get_neighbors_file(wildcards):
+    if mcfg.get_from_parameters(wildcards, 'recompute_neighbors', default=False):
+        return rules.label_harmonization_neighbors.output.zarr
+    return mcfg.get_input_file(**wildcards)
+
+
+def get_umap_file(wildcards):
+    if mcfg.get_from_parameters(wildcards, 'recompute_umap', default=False) \
+    or mcfg.get_from_parameters(wildcards, 'recompute_neighbors', default=False):
+        return rules.label_harmonization_umap.output.zarr
+    return get_neighbors_file(wildcards)
+    
+
 def get_plotting_colors(wildcards):
     colors = mcfg.get_from_parameters(wildcards, 'plot_colors', default=[])
     if isinstance(colors, str):
@@ -5,23 +18,6 @@ def get_plotting_colors(wildcards):
     return colors + ['groups', 'reannotation']
 
 
-# embedding plots
-
-use rule plots from preprocessing as label_harmonization_plot_embedding with:
-    input:
-        anndata=rules.cellhint.output.zarr,
-    output:
-        plots=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'embeddings'),
-    params:
-        color=get_plotting_colors,
-        basis=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cellhint').get('use_rep', 'X_pca'),
-    resources:
-        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
-
-
-# umap
 use rule neighbors from preprocessing as label_harmonization_neighbors with:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -41,20 +37,20 @@ use rule neighbors from preprocessing as label_harmonization_neighbors with:
 
 use rule umap from preprocessing as label_harmonization_umap with:
     input:
-        anndata=rules.label_harmonization_neighbors.output.zarr,
-        rep=rules.label_harmonization_neighbors.output.zarr,
+        anndata=get_neighbors_file,
+        rep=get_neighbors_file,
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'umap.zarr'),
     resources:
-        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
-        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
+        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
 
 
 use rule plots from preprocessing as label_harmonization_plot_umap with:
     input:
-        anndata=rules.label_harmonization_umap.output.zarr,
+        anndata=get_umap_file,
     output:
         plots=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'umaps'),
     params:
@@ -112,9 +108,16 @@ rule dotplot_all:
     localrule: True
 
 
+
+rule umap_all:
+    input:
+        mcfg.get_output_files(rules.label_harmonization_plot_umap.output),
+        mcfg.get_output_files(rules.cellhint_umap.output),
+    localrule: True
+
+
 rule plots_all:
     input:
-        mcfg.get_output_files(rules.label_harmonization_plot_embedding.output),
         mcfg.get_output_files(rules.label_harmonization_plot_umap.output),
         mcfg.get_output_files(rules.cellhint_umap.output),
         mcfg.get_output_files(rules.dotplot.output),
