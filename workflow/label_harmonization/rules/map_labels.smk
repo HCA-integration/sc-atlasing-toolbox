@@ -32,13 +32,24 @@ rule cellhint_plots:
     input:
         model=rules.cellhint.output.model,
     output:
-        treeplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot.png',
-        treeplot_ordered=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot_ordered.png',
+        treeplot=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot'),
+        treeplot_ordered=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot_ordered'),
         heatmap=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'heatmap.png',
         # sankeyplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'sankeyplot.pdf',
     params:
         coarse_cell_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),
     conda:
         get_env(config, 'cellhint')
+    retries: 0
+    resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
     script:
         '../scripts/cellhint_plots.py'
+
+
+rule cellhint_all:
+    input:
+        mcfg.get_output_files(rules.cellhint.output),
+        mcfg.get_output_files(rules.cellhint_plots.output)
