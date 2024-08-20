@@ -9,7 +9,7 @@ import scanpy as sc
 from utils.assertions import assert_pca
 from utils.accessors import subset_hvg
 from utils.io import read_anndata, write_zarr_linked
-from utils.processing import compute_neighbors
+from utils.processing import compute_neighbors, _filter_genes
 
 
 def compute_pca(adata, matrix):
@@ -105,27 +105,31 @@ write_zarr_linked(
 )
 
 # unintegrated for comparison metrics
-if output_type != 'knn':  # assuming that there aren't any knn-based metrics that require PCA
-    logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
-    adata_raw = read_anndata(
-        input_file,
-        X=unintegrated_layer,
-        dask=True,
-        backed=True,
-    )    
+# if output_type != 'knn':  # assuming that there aren't any knn-based metrics that require PCA
+logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
+adata_raw = read_anndata(
+    input_file,
+    X=unintegrated_layer,
+    dask=True,
+    backed=True,
+)
 
-    logging.info('Run PCA on unintegrated data...')
-    adata_raw.var = adata.var.copy()
-    hvg_matrix = subset_hvg(adata_raw.copy(), var_column=var_key, compute_dask=True)[0].X
-    compute_pca(adata_raw, matrix=hvg_matrix)
-    del hvg_matrix
+logging.info('Run PCA on unintegrated data...')
+adata_raw.var = adata.var.copy()
+hvg_matrix = subset_hvg(
+    adata_raw.copy(),
+    var_column=new_var_column,
+    compute_dask=True,
+)[0].X
+compute_pca(adata_raw, matrix=hvg_matrix)
+del hvg_matrix
 
-    raw_file = Path(output_file) / 'raw'
-    logging.info(f'Write to {raw_file}...')
-    write_zarr_linked(
-        adata_raw,
-        in_dir=output_file,
-        out_dir=raw_file,
-        files_to_keep=['layers', 'obsm', 'obsp', 'uns', 'var', 'varm', 'varp'],
-        slot_map={'X': unintegrated_layer},
-    )
+raw_file = Path(output_file) / 'raw'
+logging.info(f'Write to {raw_file}...')
+write_zarr_linked(
+    adata_raw,
+    in_dir=output_file,
+    out_dir=raw_file,
+    files_to_keep=['layers', 'obsm', 'obsp', 'uns', 'var', 'varm', 'varp'],
+    slot_map={'X': unintegrated_layer},
+)
