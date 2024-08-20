@@ -34,7 +34,7 @@ adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols]
 
 logging.info('Plot global UMAP...')
 sc.pl.umap(adata, color='group')
-plt.savefig(output_png, bbox_inches='tight', dpi=100)
+plt.savefig(output_png, bbox_inches='tight', dpi=200)
 
 # per group
 for group in adata.obs['group'].unique():
@@ -47,4 +47,4 @@ for group in adata.obs['group'].unique():
         title=f'Group: {group}',
         palette=sc.pl.palettes.default_20 if adata.obs['reannotation_tmp'].nunique() <= 20 else sc.pl.palettes.default_102,
     )
-    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=100)
+    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)
