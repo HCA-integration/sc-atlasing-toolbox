@@ -21,6 +21,7 @@ params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
 
+torch.set_float32_matmul_precision('medium')
 scvi.settings.seed = params.get('seed', 0)
 scvi.settings.progress_bar_style = 'tqdm'
 scvi.settings.num_threads = snakemake.threads
