@@ -45,15 +45,23 @@ g = sns.catplot(
     row=facet_row,
     col=facet_col,
     hue=hue,
+    palette='Paired' if hue else None,
     margin_titles=True,
     kind='bar',
     order=order,
     err_kws={'linewidth': 0.5},
     capsize=0.2,
     dodge=params.get('dodge', False),
+    aspect=1.5,
+    legend_out=False,
 )
 g.set(xlim=xlim, ylim=ylim)
+
+# configure legend
+if hue:
+    sns.move_legend(g, 'upper center', bbox_to_anchor=(0.6, 0))
+
 g.fig.subplots_adjust(top=adjust)
 g.fig.suptitle(f'{title} {description}')
 
-g.savefig(output_png)
+g.savefig(output_png, dpi=200, bbox_inches='tight')
