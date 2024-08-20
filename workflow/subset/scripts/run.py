@@ -13,11 +13,9 @@ n_cell_max = snakemake.params.get('n_cells')
 n_cell_max = np.iinfo(int).max if n_cell_max is None else int(n_cell_max)
 sample_key = snakemake.params.get('sample_key')
 # label_key = snakemake.params.get('label_key')
-backed = snakemake.params.get('backed', True)
-dask = snakemake.params.get('dask', True)
 
 logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, backed=backed, dask=dask)
+adata = read_anndata(input_file, backed=True, dask=True)
 logging.info(f'Shape before filtering: {adata.shape}')
 
 try:
@@ -42,7 +40,9 @@ adata = adata[subset_mask].copy()
 adata.uns['subset'] = strategy
 logging.info(adata.__str__())
 
+logging.info('Compute dask array...')
+dask_compute(adata)
+
 # save
 logging.info('Write...')
-dask_compute(adata)
 adata.write_zarr(output_file)

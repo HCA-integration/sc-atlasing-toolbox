@@ -10,7 +10,7 @@ module_name = 'subset'
 mcfg = ModuleConfig(
     module_name,
     config,
-    config_params=['n_cells', 'sample', 'label', 'backed', 'dask'],
+    config_params=['n_cells', 'sample', 'label'],
     # wildcard_names=['strategy'], # TODO manage wildcards in ModuleConfig
 )
 paramspace = mcfg.get_paramspace()
