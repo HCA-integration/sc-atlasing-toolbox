@@ -35,22 +35,18 @@ output_type = read_anndata(input_file, uns='uns').uns.get('output_type', 'full')
 
 logger.info(f'Read {input_file} ...')
 kwargs = dict(
+    X=unintegrated_layer,
     obs='obs',
     obsm='obsm',
     obsp='obsp',
     var='var',
-    varm='varm',
     uns='uns',
+    dask=True,
+    backed=True,
 )
 if output_type == 'full':
     kwargs |= {'X': corrected_layer}
 adata = read_anndata(input_file, **kwargs)
-
-# set HVGs
-var_key = 'highly_variable' # TODO make configurable
-if var_key not in adata.var.columns:
-    logging.info(f'{var_key} key not in adata var, setting all to True')
-    adata.var[var_key] = True
 
 # remove cells without labels
 n_obs = adata.n_obs
@@ -63,9 +59,25 @@ n_obs = adata.n_obs
 #     adata = adata.copy()
 force_neighbors = n_obs > adata.n_obs
 
+# set HVGs
+var_key = 'highly_variable' # TODO make configurable
+new_var_column = 'metrics_features'
+if var_key not in adata.var.columns:
+    logging.info(f'{var_key} key not in adata var, setting all to True')
+    adata.var[new_var_column] = True
+else:
+    adata.var[new_var_column] = adata.var[var_key]
+
+logging.info('Filter all zero genes...')
+all_zero_genes = _filter_genes(adata, min_cells=1)
+adata.var[new_var_column] = adata.var[new_var_column] & ~adata.var_names.isin(all_zero_genes)
+
 if output_type == 'full':
-    logging.info('Run PCA on corrected counts...')
-    hvg_matrix = subset_hvg(adata.copy(), var_column=var_key, compute_dask=True)[0].X
+    hvg_matrix = subset_hvg(
+        adata.copy(),
+        var_column=new_var_column,
+        compute_dask=True,
+    )[0].X
     compute_pca(adata, matrix=hvg_matrix)
     del hvg_matrix
     force_neighbors = True
