@@ -5,6 +5,7 @@ from dask import array as da
 
 from .io import to_memory
 from .misc import dask_compute
+from .processing import _filter_genes
 
 
 # deprecated
@@ -56,6 +57,7 @@ def subset_hvg(
     var_column: str = 'highly_variable',
     compute_dask: bool = True,
     add_column: str = 'highly_variable',
+    min_cells: int = 0,
 ) -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
@@ -71,6 +73,11 @@ def subset_hvg(
     
     if add_column is not None and add_column != var_column:
         adata.var[add_column] = adata.var[var_column]
+    
+    if min_cells > 0:
+        print(f'Filter to genes that are in at least {min_cells} cells...', flush=True)
+        low_count_genes = _filter_genes(adata, min_cells=min_cells)
+        adata.var[var_column] = adata.var[var_column] & ~adata.var_names.isin(low_count_genes)
     
     if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
