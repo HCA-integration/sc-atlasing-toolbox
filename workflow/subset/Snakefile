@@ -10,7 +10,7 @@ module_name = 'subset'
 mcfg = ModuleConfig(
     module_name,
     config,
-    config_params=['n_cells', 'sample', 'label', 'backed', 'dask'],
+    config_params=['n_cells', 'sample', 'label'],
     # wildcard_names=['strategy'], # TODO manage wildcards in ModuleConfig
 )
 paramspace = mcfg.get_paramspace()
@@ -25,7 +25,7 @@ rule subset:
     input:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')  # TODO: remove from wildcards and use as params
     resources:
         mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
         disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
@@ -38,7 +38,7 @@ rule subset:
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
-        'scripts/{wildcards.strategy}.py'
+        'scripts/run.py'
 
 
 rule all:
