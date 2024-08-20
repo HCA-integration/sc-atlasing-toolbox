@@ -1,4 +1,4 @@
-def by_sample(adata, n_cell_max, sample_key, random_state=42):
+def by_sample(adata, n_cell_max, sample_key, random_state=42, min_cells_per_sample=100):
     """
     Randomly subset complete samples until the maximum number of cells is reached
     """
@@ -10,6 +10,9 @@ def by_sample(adata, n_cell_max, sample_key, random_state=42):
     for sample, count in shuffled_samples.items():
         if len(samples) > 0 and n_cells > n_cell_max:
             break
+        if count < min_cells_per_sample:
+            # skip samples that are too small
+            continue
         n_cells += count
         samples.append(sample)
 
