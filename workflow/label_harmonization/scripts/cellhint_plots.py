@@ -22,11 +22,15 @@ output_treeplot_ordered.mkdir(parents=True, exist_ok=True)
 logging.info(f'Load cell type alignment from {input_file}...')
 alignment = cellhint.DistanceAlignment.load(input_file)
 
-for group in np.unique(alignment.groups):
+groups = list(np.unique(alignment.groups))
+for group in groups + ['all']:
     logging.info(f'Treeplots or group={group}...')
     try:
-        algn = alignment.relation[alignment.groups == group]
-        print(algn, flush=True)
+        if group == 'all':
+            algn = alignment.relation
+        else:
+            algn = alignment.relation[alignment.groups == group]
+            print(algn, flush=True)
         cellhint.treeplot(
             algn,
             order_dataset=False,
