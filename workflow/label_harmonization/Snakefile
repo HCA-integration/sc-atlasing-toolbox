@@ -42,14 +42,10 @@ include: 'rules/preprocess.smk'
 include: 'rules/map_labels.smk'
 include: 'rules/plots.smk'
 
-rule cellhint_all:
-    input:
-        mcfg.get_output_files(rules.cellhint.output),
-        mcfg.get_output_files(rules.cellhint_plots.output)
 
 rule all:
     input:
-        rules.cellhint_all.input,
+        mcfg.get_output_files(rules.cellhint.output),
         rules.plots_all.input,
     default_target: True
     localrule: True

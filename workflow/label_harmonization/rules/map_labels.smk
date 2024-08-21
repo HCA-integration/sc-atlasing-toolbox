@@ -7,7 +7,7 @@ rule cellhint:
     output:
         zarr=directory(out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.zarr'),
         reannotation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation.tsv',
-        relation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
+        relation=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
         model=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
     params:
         author_label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),

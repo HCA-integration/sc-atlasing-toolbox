@@ -1,6 +1,5 @@
 import logging
 logging.basicConfig(level=logging.INFO)
-from pathlib import Path
 from typing import MutableMapping
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -28,18 +27,11 @@ def mapping_to_dict(mapping: MutableMapping) -> dict:
 
 
 input_file = snakemake.input[0]
-input_group_assignment = snakemake.input.group_assignment
 output_file = snakemake.output[0]
-output_per_group = Path(snakemake.output.per_group)
-output_per_group.mkdir(exist_ok=True)
+group = snakemake.wildcards.group
 
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
-
-
-logging.info(f'Read group assignment from {input_group_assignment}...')
-group_assignment = pd.read_table(input_group_assignment, index_col=0)
-print(group_assignment, flush=True)
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -50,11 +42,6 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
-
-# add group assignment to adata
-group_cols = ['group', 'reannotation', 'reannotation_index']
-adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols].astype(str)
-print(adata.obs[group_cols])
 
 # match marker genes and var_names
 logging.info(adata.var)
@@ -83,31 +70,34 @@ adata = dask_compute(adata)
 adata = ensure_dense(adata)
 logging.info(adata.__str__())
 
-logging.info('Plotting...')
+if group == 'all':
+    logging.info('Plotting global dotplot...')
+    sc.pl.dotplot(
+        adata,
+        groupby='group',
+        var_names=marker_genes,
+        show=False,
+        title=f'Markers vs groups for {snakemake.wildcards.dataset}',
+        swap_axes=False,
+        # swap_axes=n_marker_genes > adata.obs['group'].nunique(),
+        **kwargs,
+    )
+    plt.savefig(output_file, bbox_inches='tight', dpi=200)
+    exit()
+
+adata = adata[adata.obs['group'] == group]
+if adata.n_obs == 0:
+    logging.info('No cells, skip...')
+    plt.savefig(output_file, bbox_inches='tight', dpi=200)
+    exit()
+
+logging.info(f'Plotting for group={group}...')
 sc.pl.dotplot(
     adata,
-    groupby='group',
-    var_names=marker_genes,
+    groupby=['reannotation_index', 'reannotation'],
+    var_names=filter_markers(marker_genes, adata.var_names),
     show=False,
-    title=f'Markers vs groups for {snakemake.wildcards.dataset}',
-    swap_axes=False,
-    # swap_axes=n_marker_genes > adata.obs['group'].nunique(),
+    title=f'Group: {group}',
     **kwargs,
 )
 plt.savefig(output_file, bbox_inches='tight', dpi=200)
-
-# per group
-for group in adata.obs['group'].unique():
-    ad = adata[adata.obs['group'] == group]
-    if ad.n_obs == 0: continue
-
-    logging.info(f'Plotting for {group}...')
-    sc.pl.dotplot(
-        ad,
-        groupby=['reannotation_index', 'reannotation'],
-        var_names=filter_markers(marker_genes, ad.var_names),
-        show=False,
-        title=f'Group: {group}',
-        **kwargs,
-    )
-    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)

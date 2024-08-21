@@ -5,17 +5,11 @@ def get_neighbors_file(wildcards):
 
 
 def get_umap_file(wildcards):
+    wildcards = {k: wildcards[k] for k in ('dataset', 'file_id')}
     if mcfg.get_from_parameters(wildcards, 'recompute_umap', default=False) \
     or mcfg.get_from_parameters(wildcards, 'recompute_neighbors', default=False):
         return rules.label_harmonization_umap.output.zarr
     return get_neighbors_file(wildcards)
-    
-
-def get_plotting_colors(wildcards):
-    colors = mcfg.get_from_parameters(wildcards, 'plot_colors', default=[])
-    if isinstance(colors, str):
-        colors = [colors]
-    return colors + ['groups', 'reannotation']
 
 
 use rule neighbors from preprocessing as label_harmonization_neighbors with:
