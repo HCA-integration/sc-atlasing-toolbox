@@ -33,8 +33,6 @@ rule subset:
         n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells', as_type=int, check_query_keys=False),
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', check_query_keys=False),
-        backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=True, as_type=bool, check_query_keys=False),
-        dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=True, as_type=bool, check_query_keys=False),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:

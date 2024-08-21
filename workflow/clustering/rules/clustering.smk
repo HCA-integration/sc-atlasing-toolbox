@@ -30,10 +30,10 @@ use rule neighbors from preprocessing as clustering_compute_neighbors with:
             exclude=['algorithm', 'resolution'],
         ),
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        mem_mb=mcfg.get_resource(profile='gpu',resource_key='mem_mb'),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
 
 
 use rule cluster from clustering as clustering_cluster with:
@@ -48,7 +48,7 @@ use rule cluster from clustering as clustering_cluster with:
     threads:
         lambda wildcards: 5 * int(wildcards.level) - 4
     resources:
-        partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
-        gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),

@@ -4,7 +4,7 @@ rule prepare:
         Prepare: Prepare dataset={wildcards.dataset} with file_id={wildcards.file_id} and var_mask={wildcards.var_mask}
         input: {input}
         output: {output}
-        params: norm_counts={params.norm_counts} raw_counts={params.raw_counts} save_subset={params.save_subset}
+        params: batches={params.batches} norm_counts={params.norm_counts} raw_counts={params.raw_counts} save_subset={params.save_subset}
         """
     input:
         anndata=lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id)
