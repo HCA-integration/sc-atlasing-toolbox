@@ -3,13 +3,14 @@
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
 - [:rocket: Getting Started](#🚀-getting-started)
+- [:gear: Configure Your Workflow](#⚙️-configure-your-workflow)
 - [:gear: Advanced Configuration](#⚙️-advanced-configuration)
 - [:hammer_and_wrench: Trouble Shooting](#🛠️-troubleshooting)
 
 This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
 This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
 
-## What modules does the toolbox support?
+## :toolbox: Which Modules does the Toolbox Support?
 
 The modules are located under `workflow/` and can be run independently or combined into a more complex workflow.
 
@@ -32,14 +33,17 @@ The modules are located under `workflow/` and can be run independently or combin
 | `label_transfer`       | Work in progress                                                          |
 | `sample_representation`| Work in progress                                                          |
 
-## TL;DR What does a full workflow look like?
+## :eyes: TL;DR What does a full workflow look like?
 
 The heart of the configuration is captured in a YAML (or JSON) configuration file.
-Here is an example of a workflow containing the `preprocessing`, `integration` and `metrics` modules:
+Here is an example of a workflow configuration in `configs/example_config.yaml` containing the `preprocessing`, `integration` and `metrics` modules:
 
 ```yaml
-output_dir: /path/to/output/directory
-images: /path/to/image/directory
+output_dir: data/out
+images: images
+
+os: intel
+use_gpu: true
 
 DATASETS:
 
@@ -87,11 +91,49 @@ DATASETS:
         - graph_connectivity
 ```
 
-:sparkling_heart: Beautiful, right? [Read more](#configure-your-workflow) on how configuration works.
+Which allows you to call the pipeline as follows:
+
+```commandline
+snakemake --configfile configs/example_config.yaml --snakefile workflow/Snakefile --use-conda -nq
+```
+
+giving you the following dryrun output:
+
+```commandline
+Job stats:
+job                                    count
+-----------------------------------  -------
+integration_all                            1
+integration_barplot_per_dataset            3
+integration_benchmark_per_dataset          1
+integration_compute_umap                   6
+integration_plot_umap                      6
+integration_postprocess                    6
+integration_prepare                        1
+integration_run_method                     3
+preprocessing_assemble                     1
+preprocessing_highly_variable_genes        1
+preprocessing_normalize                    1
+preprocessing_pca                          1
+total                                     31
+
+Reasons:
+    (check individual jobs above for details)
+    input files updated by another job:
+        integration_all, integration_barplot_per_dataset, integration_benchmark_per_dataset, integration_compute_umap, integration_plot_umap, integration_postprocess, integration_prepare, integration_run_method, preprocessing_assemble, preprocessing_highly_variable_genes, preprocessing_pca                                                                                             
+    missing output files:
+        integration_benchmark_per_dataset, integration_compute_umap, integration_postprocess, integration_prepare, integration_run_method, preprocessing_assemble, preprocessing_highly_variable_genes, preprocessing_normalize, preprocessing_pca
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+```
+
+:sparkling_heart: Beautiful, right? Read on to learn how to set up your own workflow!
 
 ## :rocket: Getting started
 
-### Clone the repository
+### 1. Installation
+
+#### Clone the repository
 
 Depending on whether you have set up SSH or HTTPS with [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens), you can clone the repository with
 
@@ -105,7 +147,7 @@ HTTPS:
 git clone https://github.com/HCA-integration/hca_integration_toolbox.git
 ```
 
-### Requirements
+#### Requirements
 
 * Linux (preferred) or MacOS on Intel (not rigorously tested, some bioconda dependencies might not work)
 * conda e.g. via [miniforge](https://github.com/conda-forge/miniforge)(recommended) or [miniconda](https://docs.anaconda.com/free/miniconda/index.html)
@@ -116,7 +158,7 @@ The modules are tested and developed using task-specific conda environments, whi
 > :memo: **Note** If you use conda, but have never used mamba, consider installing the mamba package into your base environment and use it for all installation commands.
 You can still replace all mamba commands with conda commands if you don't want to install mamba.
 
-### Install conda environments
+#### Install conda environments
 
 The different parts of the workflow (modules, rules) require specific conda environments.
 The simplest way to install all environments is to run the following script:
@@ -139,14 +181,82 @@ mamba env create -f envs/snakemake.yaml
 mamba env create -f envs/<env_name>.yaml
 ```
 
-### Configure your workflow
+### 2. Call the example pipeline
+
+Activate the snakemake environment
+
+```commandline
+conda activate snakemake
+```
+
+Call the pipeline with  `-n` for a dry run and `-q` for reduced output:
+
+```commandline
+bash run_example -nq
+```
+
+If the dryrun was successful, you can let Snakemake compute the different steps of the workflow with e.g. 10 cores:
+
+```commandline
+bash run_example -c 10
+```
+
+> You have now successfully called the example pipeline! :tada:
+> Read on to learn how to configure your own workflow.
+
+## :gear: Configure Your Workflow
 
 Configuring your workflow requires configuring global settings as well as subworkflows consisting of modules.
 The global configuration allows you to set output locations, computational resources and other settings that are used across all modules, while module settings affect the behaviour of a module in the scope of a given task
 
+> :memo: **Note** The recommended way to manage your workflow configuration files is to save them outside of the toolbox directory in a directory dedicated to your project. That way you can guarantee the separatation of the toolbox and your own configuration.
+
 You can find example configuration files under `configs/`.
 
-#### Input configuration
+### 1. Global configuration: Output settings
+
+You can specify pipeline output as follows.
+Intermediate and large files will be stored under `output_dir`, while images and smaller outputs that are used for understanding the outputs will be stored under `images`.
+If you use relative paths, you need to make them relative to where you call the pipeline (not the config file itself).
+The directories will be created if they don't yet exist.
+
+```yaml
+# Note: relative paths must be relative to the project root, not the directory of the config file.
+output_dir: data/out
+images: images
+```
+
+Another setting is the output file pattern map.
+By default, the final output pattern of a rule follows the pattern of
+`<out_dir>/<module>/<wildcard>~{<wildcard>}/<more wildcards>.zarr`.
+For some modules the final output pattern differs from that default and needs to be specified explicitly in the `output_map`.
+In future, this shouldn't be necessary.
+
+```yaml
+output_map:
+  sample_representation: data/out/sample_representation/dataset~{dataset}/file_id~{file_id}/pseudobulk.h5ad
+  subset: data/out/subset/dataset~{dataset}/file_id~{file_id}/by_sample.zarr
+  pca: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/pca.zarr
+  neighbors: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/neighbors.zarr
+  preprocessing: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/preprocessed.zarr
+  metrics: data/out/metrics/results/per_dataset/{dataset}_metrics.tsv
+```
+
+The default output settings under `configs/outputs.yaml` should work out of the box.
+
+### 2. Global configuration: Computational settings
+
+Depending on the hardware you have available, you can configure the workflow to make use of them.
+If you have a GPU, you can set `use_gpu` to `true` and the pipeline will try to use the GPU for all modules that support it.
+The same applies if you have an Intel CPU.
+In the backend, this affects which conda environment Snakemake uses, whenever hardware-accelerated environments are specified in a rule.
+
+```yaml
+os: intel
+use_gpu: true
+```
+
+### 3. Input configuration
 
 You can select and combine modules to create a custom workflow by specifying the input and module configuration in a YAML file.
 Each instance of a workflow needs a unique task name and it can take any number of inputs consist of modules.
@@ -169,7 +279,7 @@ DATASETS: # TODO: rename to TASKS
 
 > :warning: **Warning** There can only be one instance of a module as a key in the input mapping (in the backend this is a dictionary). But you can reuse the same module output as input for multiple other modules. The order of the entries in the input mapping doesn't matter. 
 
-#### Module configuration
+### 4. Module configuration
 
 You can configure the behaviour of each module by specifying their parameters under the same dataset name.
  ```yaml
@@ -215,53 +325,7 @@ DATASETS:
 Each module has a specific set of parameters that can be configured.
 Read more about the specific parameters in the README of the module you want to use.
 
-> :memo: **Note** The recommended way to manage your workflow configuration files is to save them outside of the toolbox directory in a directory dedicated to your project. That way you can guarantee the separatation of the toolbox and your own configuration.
-
-
-#### Global configuration: Output settings
-
-You can specify pipeline output as follows.
-Intermediate and large files will be stored under `output_dir`, while images and smaller outputs that are used for understanding the outputs will be stored under `images`.
-If you use relative paths, you need to make them relative to where you call the pipeline (not the config file itself).
-The directories will be created if they don't yet exist.
-
-```yaml
-# Note: relative paths must be relative to the project root, not the directory of the config file.
-output_dir: data/out
-images: images
-```
-
-Another setting is the output file pattern map.
-By default, the final output pattern of a rule follows the pattern of
-`<out_dir>/<module>/<wildcard>~{<wildcard>}/<more wildcards>.zarr`.
-For some modules the final output pattern differs from that default and needs to be specified explicitly in the `output_map`.
-In future, this shouldn't be necessary.
-
-```yaml
-output_map:
-  sample_representation: data/out/sample_representation/dataset~{dataset}/file_id~{file_id}/pseudobulk.h5ad
-  subset: data/out/subset/dataset~{dataset}/file_id~{file_id}/by_sample.zarr
-  pca: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/pca.zarr
-  neighbors: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/neighbors.zarr
-  preprocessing: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/preprocessed.zarr
-  metrics: data/out/metrics/results/per_dataset/{dataset}_metrics.tsv
-```
-
-The default output settings under `configs/outputs.yaml` should work out of the box.
-
-#### Global configuration: Computational settings
-
-Depending on the hardware you have available, you can configure the workflow to make use of them.
-If you have a GPU, you can set `use_gpu` to `true` and the pipeline will try to use the GPU for all modules that support it.
-The same applies if you have an Intel CPU.
-In the backend, this affects which conda environment Snakemake uses, whenever hardware-accelerated environments are specified in a rule.
-
-```yaml
-os: intel
-use_gpu: true
-```
-
-### Create a wrapper script (recommended)
+### 5. Create a wrapper script (recommended)
 
 Next, you can create a wrapper script that will call the pipeline with the correct profile and configuration file(s).
 This way, it is easier to call the pipeline and you can avoid having to remember all the flags and options.
@@ -273,7 +337,7 @@ Below is an example of a wrapper script that you can use to call the pipeline.
 set -e -x
 
 # assuming that the toolbox is on the same level of the directory you're calling the script from
-pipeline="$(realpath ../hca_integration_toolbox)"
+pipeline="$(realpath ../hca_integration_toolbox)"   # adjust depending on location of wrapper script
 
 snakemake \
   --configfile <my_config_file>.yaml \
@@ -303,7 +367,7 @@ snakemake \
 
 > :bulb: **Tip** Check out the [snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cli.html) for more commandline arguments.
 
-### Calling the pipeline
+### 6. Call the Snakemake pipeline
 
 Before running the pipeline, you need to activate your Snakemake environment.
 
@@ -331,6 +395,8 @@ conda activate snakemake
 
 </details>
 
+#### First dry run
+
 When you execute the script (say, we call it `run_pipeline.sh`), you can treat it like a snakemake command and add any additional snakemake arguments you want to use.
 A dryrun would be:
 
@@ -354,7 +420,7 @@ common_rulegraph        1
 total                   3
 ```
 
-### Listing all available rules
+#### List all available rules
 
 The pipeline will only run the target that you explicitly tell it to run.
 A target can be either the name of a Snakemake rule or a file that can be generated by Snakemake (as defined by the Snakefiles).
@@ -393,7 +459,7 @@ subset_subset
 All the rules ending with `_all` are callable, i.e. you can use them to specify that their workflow should be run.
 The rest are needed by the pipeline, but can't be called by the user, you can just ignore them.
 
-### Specifying which workflow/rule you want to run
+#### Specify which workflow/rule you want to run
 
 Given the [config above](#example_config), you can call the integration workflow by specifying the `integration_all` target:
 
@@ -446,6 +512,8 @@ Following the same principle, you can call the metrics by including the `metrics
 ```commandline
 bash run_pipeline.sh preprocessing_all integration_all metrics_all -n
 ```
+
+#### Execute the workflow
 
 If you are happy with the dryrun, you can dispatch the workflow by specifying the number of cores you want to provide for the pipeline.
 
