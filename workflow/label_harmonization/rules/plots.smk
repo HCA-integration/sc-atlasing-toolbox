@@ -39,7 +39,36 @@ use rule plots from preprocessing as label_harmonization_plot_umap with:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
 
 
-rule cellhint_umap:
+
+checkpoint split_cellhint_groups:
+    input:
+        zarr=rules.cellhint.output.zarr,
+    output:
+        group_setup=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'cellhint' / 'groups'),
+    conda:
+        get_env(config, 'scanpy')
+    script:
+        '../scripts/split_cellhint_groups.py'
+
+
+def get_checkpoint_output(wildcards):
+    return f'{checkpoints.split_cellhint_groups.get(**wildcards).output[0]}/{{group}}.yaml'
+
+
+def get_from_checkpoint(wildcards, pattern=None):
+    checkpoint_output = get_checkpoint_output(wildcards)
+    print('pattern:', pattern)
+    if pattern is None:
+        pattern = checkpoint_output
+    print('pattern:', pattern)
+    return expand(
+        pattern,
+        group=glob_wildcards(checkpoint_output).group,
+        allow_missing=True
+    )
+
+
+rule cellhint_umap_per_group:
     input:
         anndata=get_umap_file,
         group_assignment=rules.cellhint.output.reannotation,
