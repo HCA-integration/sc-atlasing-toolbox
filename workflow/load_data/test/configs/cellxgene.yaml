@@ -6,19 +6,9 @@ images: test/images
 
 env_mode: local # from_yaml
 
-filter_per_organ:
-  blood:
-    cells_per_sample:
-      min: 50
-      max: 10000
-    mito_pct: 30
-    remove_by_colum:
-      dataset:
-        - Lee2020_2
-
 filter_per_study:
   SchulteSchrepping2020:
-    remove_by_colum:
+    remove_by_column:
       sample:
         - Schulte-Schrepping_C2P01H_d0
         - Schulte-Schrepping_C2P05F_d0

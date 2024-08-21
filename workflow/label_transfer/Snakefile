@@ -93,6 +93,7 @@ rule all:
             **get_wildcards(parameters, ['dataset', 'file_id', 'method', 'model'])
         )
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -102,3 +103,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

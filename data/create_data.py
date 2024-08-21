@@ -23,9 +23,13 @@ adata.layers['normcounts'] = adata.X.copy()
 # add column with NA columns
 adata.obs['na_column'] = adata.obs['bulk_labels'].astype(str)
 adata.obs.loc[adata.obs['na_column'] == 'Dendritic', 'na_column'] = np.nan
+adata.obs['na_str_column'] = adata.obs['na_column'].astype(str)
 
 # add bolean columns
 adata.obs['is_cd14_mono'] = adata.obs['bulk_labels'] == 'CD14+ Monocyte'
+
+# add var mask
+adata.var['highly_variable_2'] = adata.var['highly_variable'].copy()
 
 # add raw
 adata.raw = AnnData(
@@ -35,6 +39,10 @@ adata.raw = AnnData(
 )
 
 print(adata)
+
+# add umap
+sc.pp.neighbors(adata)
+sc.tl.umap(adata)
 
 out_file = Path(__file__).parent / 'pbmc68k.h5ad'
 print(f'writing to {out_file}...')

@@ -40,7 +40,7 @@ rule batch_pcr:
         n_permute=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False),
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
     conda:
-        get_env(config, 'scib_accel')
+        get_env(config, 'scib')
     threads:
         lambda wildcards: max(1, min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', default=10, check_query_keys=False)))
     resources:

@@ -1,8 +1,10 @@
 import warnings
 import numpy as np
 import anndata as ad
+from dask import array as da
 
 from .io import to_memory
+from .misc import dask_compute
 
 
 # deprecated
@@ -48,34 +50,67 @@ def select_neighbors(adata, output_type):
     return adata
 
 
-def subset_hvg(adata, to_memory: [str, list] = 'X', hvgs: list = None) -> (ad.AnnData, bool):
+def subset_hvg(
+    adata: ad.AnnData,
+    to_memory: [str, list, bool] = 'X',
+    var_column: str = 'highly_variable',
+    compute_dask: bool = True,
+    add_column: str = 'highly_variable',
+) -> (ad.AnnData, bool):
     """
     Subset to highly variable genes
     :param adata: anndata object
     :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
-    if hvgs is None:
-        if 'highly_variable' not in adata.var.columns:
-            raise ValueError('No highly_variable column in adata.var')
-        hvgs = adata.var_names[adata.var['highly_variable']]
-    if adata.var_names.isin(hvgs).all():
+    if var_column is None or var_column == 'None':
+        var_column = 'mask'
+        adata.var[var_column] = True
+    assert var_column in adata.var.columns, f'Column {var_column} not found in adata.var'
+    assert adata.var[var_column].dtype == bool, f'Column {var_column} is not boolean'
+    
+    if add_column is not None and add_column != var_column:
+        adata.var[add_column] = adata.var[var_column]
+    
+    if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
         subsetted = False
     else:
         subsetted = True
-        adata = adata[:, hvgs].copy()
-    adata = adata_to_memory(adata, layers=to_memory)
+        print(
+            f'Subsetting to {adata.var[var_column].sum()} features from {var_column}...',
+            flush=True
+        )
+        adata._inplace_subset_var(adata.var_names[adata.var[var_column]])
+    
+    if compute_dask:
+        print(f'Compute dask array for layers {to_memory}', flush=True)
+        adata = dask_compute(adata, layers=to_memory)
+    else:
+        adata = adata_to_memory(
+            adata,
+            layers=to_memory,
+            verbose=False,
+        )
+    
     return adata, subsetted
 
 
-def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData:
-    if layers is None:
+def adata_to_memory(
+    adata: ad.AnnData,
+    layers: [str, list, bool] = None,
+    verbose: bool = False,
+) -> ad.AnnData:
+    if layers is None or layers is True:
         layers = ['X', 'raw'] + list(adata.layers.keys())
     elif isinstance(layers, str):
         layers = [layers]
+    elif layers is False:
+        return adata
     
     for layer in layers:
+        if verbose:
+            print(f'Convert {layer} to memory...', flush=True)
         if layer in adata.layers:
             adata.layers[layer] = to_memory(adata.layers[layer])
         elif layer == 'X':
@@ -86,4 +121,6 @@ def adata_to_memory(adata: ad.AnnData, layers: [str, list] = None) -> ad.AnnData
             adata_raw = adata.raw.to_adata()
             adata_raw.X = to_memory(adata.raw.X)
             adata.raw = adata_raw
+        elif verbose:
+            print(f'Layer {layer} not found, skipping...', flush=True)
     return adata

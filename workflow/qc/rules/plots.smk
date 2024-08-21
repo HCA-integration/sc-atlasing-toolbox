@@ -32,3 +32,4 @@ rule plots_all:
     input:
         mcfg.get_output_files(rules.plot_joint.output),
         mcfg.get_output_files(rules.plot_removed.output),
+    localrule: True

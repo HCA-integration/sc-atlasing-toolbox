@@ -1,13 +1,14 @@
+import torch
 import scvi
 from pprint import pformat
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
-    SCVI_MODEL_PARAMS
-from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils import plot_model_history
+from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
+    SCVI_MODEL_PARAMS, plot_model_history
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -28,10 +29,19 @@ model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
     model_params=SCVI_MODEL_PARAMS,
 )
+categorical_covariate_keys = model_params.pop('categorical_covariate_keys', [])
+if isinstance(categorical_covariate_keys, str):
+    categorical_covariate_keys = [categorical_covariate_keys]
+continuous_covariate_keys = model_params.pop('continuous_covariate_keys', [])
+if isinstance(continuous_covariate_keys, str):
+    continuous_covariate_keys = [continuous_covariate_keys]
 logging.info(
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
 )
+
+# check GPU
+print(f'GPU available: {torch.cuda.is_available()}', flush=True)
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
@@ -40,15 +50,22 @@ adata = read_anndata(
     var='var',
     obs='obs',
     uns='uns',
+    dask=True,
+    backed=True,
 )
 
-# prepare data for model
-adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
+# subset features
+adata, _ = subset_hvg(adata, var_column='integration_features')
+
+if isinstance(categorical_covariate_keys, list):
+    for cov in categorical_covariate_keys:
+        adata.obs[cov] = adata.obs[cov].astype('str')
 
 scvi.model.SCVI.setup_anndata(
     adata,
-    # categorical_covariate_keys=[batch], # Does not work with scArches
     batch_key=batch_key,
+    categorical_covariate_keys=categorical_covariate_keys, # Does not work with scArches
+    continuous_covariate_keys=continuous_covariate_keys,
 )
 
 logging.info(f'Set up scVI with parameters:\n{pformat(model_params)}')

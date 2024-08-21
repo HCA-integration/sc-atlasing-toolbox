@@ -4,9 +4,10 @@ import pandas as pd
 import doubletdetection
 import anndata as ad
 import logging
-logger = logging.getLogger('doubletdetection')
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
+from utils.misc import dask_compute
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
@@ -14,17 +15,19 @@ batch_key = snakemake.params.get('batch_key')
 batch = str(snakemake.wildcards.batch)
 threads = snakemake.threads
 
-logger.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, backed=True, X='X', obs='obs', var='var')
+logging.info(f'Read {input_zarr}...')
+adata = read_anndata(
+    input_zarr,
+    X='X',
+    obs='obs',
+    backed=True,
+    dask=True,
+)
 
-logger.info(f'Subset to batch {batch}...')
+logging.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key].astype(str) == batch, :]
-else:
-    adata = adata
-
-if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-    adata.X = adata.X.to_memory()
+    adata = adata[adata.obs[batch_key].astype(str) == batch, :].copy()
+logging.info(adata.__str__())
 
 if adata.n_obs < 10:
     columns = ['doubletdetection_score', 'doubletdetection_prediction']
@@ -32,8 +35,11 @@ if adata.n_obs < 10:
     df.to_csv(output_tsv, sep='\t')
     exit(0)
 
+# load data to memory
+adata = dask_compute(adata)
+
 # run doubletdetection
-logger.info('Run doubletdetection...')
+logging.info('Run doubletdetection...')
 clf = doubletdetection.BoostClassifier(
     n_iters=10,
     n_top_var_genes=4000,
@@ -45,7 +51,7 @@ labels = clf.fit(adata.X).predict(p_thresh=1e-16, voter_thresh=0.5)
 scores = clf.doublet_score()
 
 # save results
-logger.info('Save results...')
+logging.info('Save results...')
 adata.obs['doubletdetection_score'] = scores
 adata.obs['doubletdetection_prediction'] = labels
 df = adata.obs[['doubletdetection_score', 'doubletdetection_prediction']]

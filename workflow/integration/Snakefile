@@ -13,13 +13,24 @@ mcfg = IntegrationConfig(
     module_name='integration',
     config=config,
     parameters=workflow.source_path('params.tsv'),
-    config_params=['methods', 'batch', 'label', 'norm_counts', 'raw_counts', 'seed', 'threads'],
-    wildcard_names=['method', 'batch', 'label', 'output_type'],
+    config_params=[
+        'methods',
+        'batch',
+        'label',
+        'var_mask',
+        'norm_counts',
+        'raw_counts',
+        'seed',
+        'threads',
+        'save_subset',
+    ],
+    wildcard_names=['method', 'batch', 'label', 'var_mask', 'output_type'],
     rename_config_params={'methods': 'method'},
-    explode_by=['method', 'batch', 'label'],
+    explode_by=['method', 'batch', 'label', 'var_mask'],
     dtypes={
         'seed': int,
         'threads': int,
+        'save_subset': bool,
     }
 )
 
@@ -69,9 +80,6 @@ use rule * from common as common_ *
 include: 'rules/integration.smk'
 include: 'rules/benchmark.smk'
 include: 'rules/umap.smk'
-# include: 'rules/clustering.smk'
-# include: 'rules/marker_genes.smk'
-# include: 'rules/export_files.smk'
 
 rule plots_all:
     input:
@@ -85,6 +93,7 @@ rule all:
         # rules.clustering_all.input,
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -94,3 +103,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

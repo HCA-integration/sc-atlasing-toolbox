@@ -4,26 +4,30 @@ import pandas as pd
 import scanpy as sc
 import anndata as ad
 import logging
-logger = logging.getLogger('Scrublet')
+logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
+from utils.processing import sc, USE_GPU
+from utils.misc import dask_compute
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
 batch_key = snakemake.params.get('batch_key')
 batch = str(snakemake.wildcards.batch)
 
-logger.info(f'Read {input_zarr}...')
-adata = read_anndata(input_zarr, backed=True, X='X', obs='obs')
+logging.info(f'Read {input_zarr}...')
+adata = read_anndata(
+    input_zarr,
+    X='X',
+    obs='obs',
+    backed=True,
+    dask=True,
+)
 
-logger.info(f'Subset to batch {batch}...')
+logging.info(f'Subset to batch {batch}...')
 if batch_key in adata.obs.columns:
-    adata = adata[adata.obs[batch_key].astype(str) == batch, :]
-else:
-    adata = adata
-
-if isinstance(adata.X, (ad.experimental.CSRDataset, ad.experimental.CSCDataset)):
-    adata.X = adata.X.to_memory()
+    adata = adata[adata.obs[batch_key].astype(str) == batch, :].copy()
+logging.info(adata.__str__())
 
 if adata.n_obs < 10:
     columns = ['scrublet_score', 'scrublet_prediction']
@@ -31,9 +35,16 @@ if adata.n_obs < 10:
     df.to_csv(output_tsv, sep='\t')
     exit(0)
 
+# load data to memory
+adata = dask_compute(adata)
+
 # run scrublet
-logger.info('Run scrublet...')
-sc.external.pp.scrublet(
+logging.info('Run scrublet...')
+
+if USE_GPU:
+    sc.get.anndata_to_GPU(adata)
+
+sc.pp.scrublet(
     adata,
     batch_key=None,
     sim_doublet_ratio=2.0,
@@ -55,7 +66,7 @@ sc.external.pp.scrublet(
 )
 
 # save results
-logger.info('Save results...')
+logging.info('Save results...')
 df = adata.obs[['doublet_score', 'predicted_doublet']].rename(
     columns={
         'doublet_score': 'scrublet_score',

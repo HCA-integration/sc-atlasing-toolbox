@@ -52,6 +52,7 @@ rule all:
     input:
         mcfg.get_output_files(rules.relabel.output)
     default_target: True
+    localrule: True
 
 
 module common:
@@ -69,3 +70,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

@@ -1,0 +1,17 @@
+name: harmony_pytorch
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - anndata=0.10
+  - scanpy=1.10
+  - cuda-version>12.1
+  - cuda-nvcc>12.1
+  - zarr
+  - hdf5=1.14.2
+  - dask
+  - dask-ml
+  - sparse
+  - harmony-pytorch
+  - harmonypy

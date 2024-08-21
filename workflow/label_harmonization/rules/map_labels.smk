@@ -1,70 +1,55 @@
-rule celltypist:
+rule cellhint:
     """
     Map author labels of datasets
     """
     input:
-        anndata=lambda wildcards: mcfg.get_input_file(**wildcards),
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        h5ad=mcfg.out_dir / paramspace.wildcard_pattern / 'celltypist' / 'adata.h5ad',
-        reannotation=mcfg.out_dir / paramspace.wildcard_pattern / 'celltypist' / 'reannotation.tsv',
-        relation=mcfg.out_dir / paramspace.wildcard_pattern / 'celltypist' / 'relation.tsv',
-        model=mcfg.out_dir / paramspace.wildcard_pattern / 'celltypist' / 'model.pkl',
+        zarr=directory(out_dir / paramspace.wildcard_pattern / 'cellhint' / 'adata.zarr'),
+        reannotation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'reannotation.tsv',
+        relation=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'relation.tsv',
+        model=out_dir / paramspace.wildcard_pattern / 'cellhint' / 'model.pkl',
     params:
-        author_label_key=lambda w: mcfg.get_for_dataset( w.dataset, query=[mcfg.module_name,'author_label_key']),
-        dataset_key=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'dataset_key']),
-        params=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'celltypist']),
-        subsample=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'subsample']),
-        force_scale=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'force_scale']),
+        author_label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),
+        dataset_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dataset_key'),
+        params=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cellhint', default={}),
+        subsample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'subsample', default=False),
+        force_scale=lambda wildcards: mcfg.get_from_parameters(wildcards, 'force_scale', default=False),
     conda:
-        get_env(config, 'celltypist')
+        get_env(config, 'cellhint')
     resources:
-        partition=mcfg.get_resource(resource_key='partition'),
-        qos=mcfg.get_resource(resource_key='qos'),
-        mem_mb=mcfg.get_resource(resource_key='mem_mb'),
+        partition=lambda w, attempt: mcfg.get_resource(resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb',attempt=attempt),
     script:
-        '../scripts/celltypist.py'
+        '../scripts/cellhint.py'
 
 
-rule celltypist_index_reannotations:
+rule cellhint_plots:
     """
-    Add a column for reannotations (should make relabeling easier)
+    Plots for cellhint output
     """
     input:
-        reannotation=rules.celltypist.output.reannotation
+        model=rules.cellhint.output.model,
     output:
-        reannotation=mcfg.out_dir / paramspace.wildcard_pattern / 'celltypist' / 'reannotation_index.tsv',
-    conda:
-        get_env(config, 'celltypist')
-    resources:
-        partition=mcfg.get_resource(resource_key='partition'),
-        qos=mcfg.get_resource(resource_key='qos'),
-        mem_mb=mcfg.get_resource(resource_key='mem_mb'),
-    script:
-        '../scripts/celltypist_reindex.py'
-
-
-rule celltypist_plots:
-    """
-    Plots for celltypist output
-    """
-    input:
-        model=rules.celltypist.output.model,
-    output:
-        treeplot=mcfg.image_dir / paramspace.wildcard_pattern / 'celltypist--treeplot.png',
-        treeplot_ordered=mcfg.image_dir / paramspace.wildcard_pattern / 'celltypist--treeplot_ordered.png',
-        heatmap=mcfg.image_dir / paramspace.wildcard_pattern / 'celltypist--heatmap.png',
-        # sankeyplot=mcfg.image_dir / paramspace.wildcard_pattern / 'celltypist' / 'sankeyplot.pdf',
+        treeplot=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot'),
+        treeplot_ordered=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'treeplot_ordered'),
+        heatmap=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'heatmap.png',
+        # sankeyplot=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'sankeyplot.pdf',
     params:
-        coarse_cell_type=lambda w: mcfg.get_for_dataset(w.dataset, query=[mcfg.module_name,'author_label_key']),
+        coarse_cell_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'author_label_key'),
     conda:
-        get_env(config, 'celltypist')
+        get_env(config, 'cellhint')
+    retries: 0
+    resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
     script:
-        '../scripts/celltypist_plots.py'
+        '../scripts/cellhint_plots.py'
 
 
-# celltypist_columns = ['dataset', 'dataset_key', 'author_label_key', 'celltypist']
-# try:
-#     celltypist_datasets = parameters[celltypist_columns].dropna()['dataset'].unique()
-# except KeyError:
-#     celltypist_datasets = []
-
+rule cellhint_all:
+    input:
+        mcfg.get_output_files(rules.cellhint.output),
+        mcfg.get_output_files(rules.cellhint_plots.output)

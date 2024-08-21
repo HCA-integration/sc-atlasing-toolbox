@@ -1,7 +1,20 @@
-# from utils_pipeline.misc import ensure_sparse
-from utils_pipeline.annotate import add_wildcards
+# from utils.misc import ensure_sparse
+from utils.annotate import add_wildcards
 import numpy as np
 from scipy import sparse
+
+PCA_PARAMS = [
+    'n_comps',
+    'layer',
+    'zero_center',
+    'svd_solver',
+    'return_info',
+    'mask_var',
+    'use_highly_variable',
+    'dtype',
+    'chunked',
+    'chunk_size',
+]
 
 SCVI_MODEL_PARAMS = [
     'n_hidden',
@@ -35,6 +48,8 @@ SCVI_MODEL_PARAMS = [
     'var_activation',
     'extra_encoder_kwargs',
     'extra_decoder_kwargs',
+    'categorical_covariate_keys',
+    'continuous_covariate_keys',
 ]
 
 SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']
@@ -55,15 +70,6 @@ def add_metadata(adata, wildcards, params, **kwargs):
     :param params:
     :return:
     """
-    # TODO: transfer parameters from .uns['preprocessing']
-
-    adata.uns['dataset'] = wildcards.dataset
-
-    if 'methods' in adata.uns:
-        adata.uns['methods'].append(wildcards.method)
-    else:
-        adata.uns['methods'] = [wildcards.method]
-
     adata.uns['integration'] = {
         'method': wildcards.method,
         'label_key': wildcards.label,
@@ -83,8 +89,8 @@ def remove_slots(adata, output_type, keep_X=False):
         output_type = [output_type]
     
     del adata.layers
-    #if 'X_pca' in adata.obsm:
-    #    del adata.obsm['X_pca']
+    if 'X_pca' in adata.obsm:
+       del adata.obsm['X_pca']
     
     if 'full' in output_type:
         ensure_sparse(adata)

@@ -58,6 +58,9 @@ metrics_tab <- dcast(
 )
 print(metrics_tab)
 
+# remove columns that are all empty
+metrics_tab <- metrics_tab[, .SD, .SDcols = colSums(is.na(metrics_tab)) < nrow(metrics_tab)]
+
 # scores should be already scaled [0,1] - however, we aim to compute the scores based on the min-max scaled metrics
 scaled_metrics_tab <- as.matrix(metrics_tab[, metrics, with=FALSE])
 if (nrow(scaled_metrics_tab) > 1) {
@@ -91,13 +94,21 @@ metrics_tab <- metrics_tab[order(metrics_tab$`Overall Score`,  decreasing = T), 
 cat('Writing output file: ', output_tsv, '\n')
 fwrite(metrics_tab, output_tsv, sep='\t')
 
+# subset data
+metrics_tab <- metrics_tab[1:min(n_top, nrow(metrics_tab))]
+
+# add funkyheatmap data
+metrics_tab[, id := rownames(metrics_tab)]
+row_info <- data.table(id = metrics_tab$id, group = metrics_tab$output_type)
+# metrics_tab[, output_type := NULL]
+
 #add column info metadata for plotting using funkyheatmap
-dt1 <- data.table(id=integration_setup, group="Integration setup", geom='text', palette=NA, hjust=0.5)
-dt2 <- data.table(id="Overall Score", geom="bar", palette="Greens")
-dt3 <- data.table(id="Bio conservation", group="Bio conservation", geom='bar', palette='Blues')
-dt4 <- data.table(id=bio_metrics, group="Bio conservation", geom='funkyrect', palette='Blues')
-dt5 <- data.table(id="Batch Correction", group="Batch correction", geom='bar', palette='Reds')
-dt6 <- data.table(id=batch_metrics, group="Batch correction", geom='circle', palette='Reds')
+dt1 <- data.table(id=integration_setup, group="Integration Setup", geom='text', palette='setup')
+dt2 <- data.table(id="Overall Score", group="Overall", geom="bar", palette="overall")
+dt3 <- data.table(id="Bio Conservation", group="Bio Conservation", geom='bar', palette='bio')
+dt4 <- data.table(id=bio_metrics, group="Bio Conservation", geom='funkyrect', palette='bio')
+dt5 <- data.table(id="Batch Correction", group="Batch Correction", geom='bar', palette='batch')
+dt6 <- data.table(id=batch_metrics, group="Batch Correction", geom='circle', palette='batch')
 column_info <- rbind(dt1, dt2, dt3, dt4, dt5, dt6, fill=TRUE)
 column_info <- column_info[column_info$id %in% colnames(metrics_tab)]
 print("column_info")
@@ -105,10 +116,28 @@ print(column_info)
 
 n_top <- min(n_top, nrow(metrics_tab))
 g <- funky_heatmap(
-  metrics_tab[1:n_top],
+  metrics_tab,
+  # row_info = row_info,
   column_info = column_info,
-  col_annot_offset = 3.5,
-  add_abc = TRUE,
+  column_groups = data.table(
+    group = c("Integration Setup", "Overall", "Bio Conservation", "Batch Correction"),
+    palette = c('setup', 'overall', 'bio', 'batch'),
+    level1 = c("Integration Setup", "Overall", "Bio Conservation", "Batch Correction")
+  ),
+  palettes = list(
+    setup = "Greys",
+    overall = "Greens",
+    bio = "YlOrBr",
+    batch = "Blues"
+  ),
+  legends = list(
+    list(title = "Bio Conservation", palette = "bio", geom = "funkyrect"),
+    list(title = "Batch Correction", palette = "batch", geom = "circle")
+  ),
+  position_args = position_arguments(
+    col_annot_offset = 7,
+    col_annot_angle = 90,
+  ),
   scale_column = FALSE
 )
 ggsave(output_pdf, g, device = cairo_pdf, width = g$width, height = g$height, dpi=300)

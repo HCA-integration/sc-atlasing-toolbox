@@ -11,7 +11,7 @@ def asw_batch(adata, output_type, batch_key, label_key, **kwargs):
     return scib.me.silhouette_batch(
         adata,
         batch_key=batch_key,
-        group_key=label_key,
+        label_key=label_key,
         embed='X_emb' if output_type == 'embed' else 'X_pca',
     )
 
@@ -40,9 +40,10 @@ def asw_label(adata, output_type, batch_key, label_key, **kwargs):
     if output_type == 'knn':
         return np.nan
 
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.silhouette(
         adata,
-        group_key=label_key,
+        label_key=label_key,
         embed='X_emb' if output_type == 'embed' else 'X_pca',
     )
 

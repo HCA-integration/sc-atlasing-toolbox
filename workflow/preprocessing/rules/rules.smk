@@ -26,10 +26,20 @@ rule highly_variable_genes:
         '../scripts/highly_variable_genes.py'
 
 
+rule extra_hvgs:
+    input:
+        zarr='{dataset}.h5ad',
+    output:
+        zarr=directory('{dataset}_extra_hvgs.zarr')
+    conda:
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+    script:
+        '../scripts/extra_hvgs.py'
+
+
 rule pca:
     input:
         zarr='{dataset}.h5ad',
-        counts='{dataset}.h5ad',
     output:
         zarr=directory('{dataset}_pca.zarr')
     conda:

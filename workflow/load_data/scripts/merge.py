@@ -8,9 +8,9 @@ import scanpy as sc
 from anndata.experimental import AnnCollection
 from anndata import AnnData
 
-from utils import SCHEMAS, get_union
-from utils_pipeline.io import read_anndata, link_zarr
-from utils_pipeline.misc import apply_layers
+from load_data_utils import SCHEMAS, get_union
+from utils.io import read_anndata, link_zarr
+from utils.misc import apply_layers
 
 
 def read_adata(file, keep_columns, backed=False, dask=False):

@@ -1,16 +1,17 @@
-name: harmony
+name: cellhint
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - python=3.10
   - anndata=0.10
-  - zarr
+  - scanpy=1.10
   - hdf5=1.14.2
+  - leidenalg
   - dask
   - sparse
-  - harmony-pytorch
-  - harmonypy
+  - zarr
+  - plotly
   - pip
   - pip:
-    - git+https://github.com/scverse/scanpy.git@main
+    - cellhint

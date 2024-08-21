@@ -183,13 +183,27 @@ def ensure_dense(adata, layers: [str, list] = None, **kwargs):
     return apply_layers(adata, func=to_dense, layers=layers, **kwargs)
 
 
-def apply_layers(adata, func, layers:[str, list] = None, **kwargs):
-    if layers is None:
+def dask_compute(adata, layers: [str, list] = None, **kwargs):
+    from dask import array as da
+    return apply_layers(
+        adata,
+        func=lambda x: x.compute() if isinstance(x, da.Array) else x,
+        layers=layers,
+        **kwargs,
+    )
+
+
+def apply_layers(adata, func, layers:[str, list, bool] = None, verbose: bool = False, **kwargs):
+    if layers is None or layers is True:
         layers = ['X', 'raw'] + list(adata.layers.keys())
     elif isinstance(layers, str):
         layers = [layers]
+    elif layers is False:
+        return adata
     
     for layer in layers:
+        if verbose:
+            print(f'Apply function {func.__name__} to {layer}...', flush=True)
         if layer == 'X':
             adata.X = func(adata.X, **kwargs)
         elif layer in adata.layers:
@@ -202,6 +216,8 @@ def apply_layers(adata, func, layers:[str, list] = None, **kwargs):
             adata_raw = adata.raw.to_adata()
             adata_raw.X = func(adata.raw.X, **kwargs)
             adata.raw = adata_raw
+        elif verbose:
+            print(f'Layer {layer} not found, skipping...', flush=True)
     return adata
 
 

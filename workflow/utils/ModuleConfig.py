@@ -357,7 +357,7 @@ class ModuleConfig:
             wildcard_names=wildcard_names,
             **paramspace_kwargs,
         )
-        self.set_default_target(self.default_target)
+        self.set_default_target()
 
 
     def get_profile(self, wildcards: [dict, Wildcards]):
@@ -369,7 +369,9 @@ class ModuleConfig:
         resource_key: str,
         profile: str = 'cpu',
         attempt: int = 1,
-        factor: float = 0.5
+        attempt_to_cpu: int = 1,
+        factor: float = 0.5,
+        verbose: bool = False,
     ) -> [str, int, float]:
         """
         Retrieve resource information from config['resources']
@@ -382,8 +384,11 @@ class ModuleConfig:
         # overwrite profile to cpu if turned off in config
         profile = profile if get_use_gpu(self.config) else 'cpu'
         
-        if attempt > 2:
+        if attempt > attempt_to_cpu:
             profile = 'cpu'
+        
+        if verbose:
+            print(f'profile={profile}, attempt={attempt}')
         
         resources = self.config['resources']
         try:
@@ -397,3 +402,7 @@ class ModuleConfig:
         if resource_key == 'mem_mb':
             return int(res * (1 + factor * (attempt - 1)))
         return res
+
+
+    def copy(self):
+        return self.__class__(**self.__dict__)

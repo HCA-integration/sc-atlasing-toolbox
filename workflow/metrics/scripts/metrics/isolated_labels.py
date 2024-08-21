@@ -2,14 +2,15 @@ import numpy as np
 from .utils import select_neighbors
 
 
-def isolated_label_f1(adata, output_type, batch_key, label_key, **kwargs):
+def isolated_label_f1(adata, output_type, batch_key, label_key, cluster_key, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
     return scib.me.isolated_labels_f1(
-        adata,
+        adata[adata.obs[label_key].notna()],
         label_key=label_key,
         batch_key=batch_key,
+        cluster_key=cluster_key,
         embed=None,
     )
 
@@ -20,8 +21,7 @@ def isolated_label_asw(adata, output_type, batch_key, label_key, **kwargs):
     if output_type == 'knn':
         return np.nan
 
-    adata = select_neighbors(adata, output_type)
-
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.isolated_labels_asw(
         adata,
         label_key=label_key,

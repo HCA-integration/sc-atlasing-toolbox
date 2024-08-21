@@ -26,6 +26,7 @@ from utils.misc import apply_layers, ensure_sparse
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 layer = snakemake.params.get('raw_counts', 'X')
+args = snakemake.params.get('args', {})
 dask = snakemake.params.get('dask', False) and not rapids
 backed = snakemake.params.get('backed', False) and dask and not rapids
 
@@ -61,10 +62,10 @@ if isinstance(adata.X, da.Array):
 if rapids:
     logging.info('Transfer to GPU...')
     # adata.X = adata.X.astype('float32')
-    sc.utils.anndata_to_GPU(adata)
+    sc.get.anndata_to_GPU(adata)
 
-logging.info('normalize_total...')
-sc.pp.normalize_total(adata)
+logging.info('normalize_total with args={args}...')
+sc.pp.normalize_total(adata, **args)
 logging.info('log-transform...')
 sc.pp.log1p(adata)
 
@@ -74,7 +75,9 @@ ensure_sparse(adata, sparse_type=csr_matrix_int64_indptr)
 
 if rapids:
     logging.info('Transfer to CPU...')
-    sc.utils.anndata_to_CPU(adata)
+    sc.get.anndata_to_CPU(adata)
+
+adata.layers['normcounts'] = adata.X
 
 # add preprocessing metadata
 if 'preprocessing' not in adata.uns:
@@ -82,9 +85,8 @@ if 'preprocessing' not in adata.uns:
 
 adata.uns['preprocessing']['normalization'] = 'default'
 adata.uns['preprocessing']['log-transformed'] = True
-
-if input_file.endswith('.h5ad'):
-    adata.layers['normcounts'] = adata.X
+# scanpy.pp.log1p was supposed to add it but it's not saved
+adata.uns["log1p"] = {"base": None}
 
 logging.info(f'Write to {output_file}...')
 logging.info(adata.__str__())
@@ -92,14 +94,14 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'uns'],
+    files_to_keep=['uns', 'layers/normcounts'],
     slot_map={
+        'X': 'layers/normcounts',
+        'layers/counts': layer,
         'raw/X': layer,
         'raw/var': 'var',
-        'layers/counts': layer,
-        'layers/normcounts': 'X',
     },
     in_dir_map={
-        'X': output_file,
+        'layers/normcounts': output_file,
     },
 )

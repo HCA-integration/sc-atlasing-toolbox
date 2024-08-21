@@ -16,7 +16,7 @@ dependencies:
     - torch
     - torchvision
     - torchaudio
-    - git+https://github.com/theislab/scarches.git@main
+    - git+https://github.com/theislab/scarches.git@master
     - jax<0.4.14
     - jaxlib<0.4.14
     - git+https://github.com/scverse/scanpy.git@main

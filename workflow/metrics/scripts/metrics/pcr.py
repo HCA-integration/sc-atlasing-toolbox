@@ -5,63 +5,30 @@ from scipy.sparse import issparse
 
 from utils.accessors import adata_to_memory
 from utils.assertions import assert_pca
+from utils.misc import dask_compute
 
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
 
-def pcr(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
+def pcr(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
     import scib
 
     if output_type == 'knn':
         return np.nan
 
-    assert_pca(adata_raw)
-    embed = 'X_emb' if output_type == 'embed' else 'X_pca'
-    assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+    assert_pca(adata, check_varm=False)
+    assert_pca(adata_raw, check_varm=False)
+    # embed = 'X_emb' if output_type == 'embed' else 'X_pca'
+    # assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
     
-    def pcr_comparison(
-        adata_pre,
-        adata_post,
-        covariate,
-        embed=None,
-        n_comps=50,
-        scale=True,
-        verbose=False,
-    ):
-        pcr_before = scib.me.pcr(
-            adata_pre,
-            covariate=covariate,
-            recompute_pca=False,
-            n_comps=n_comps,
-            verbose=verbose,
-        )
-
-        pcr_after = scib.me.pcr(
-            adata_post,
-            covariate=covariate,
-            embed=embed,
-            recompute_pca=True,
-            n_comps=n_comps,
-            verbose=verbose,
-        )
-
-        if scale:
-            score = (pcr_before - pcr_after) / pcr_before
-            if score < 0:
-                print(
-                    "Warning: Variance contribution increased after integration!\n"
-                    "Setting PCR comparison score to 0."
-                )
-                score = 0
-            return score
-        else:
-            return pcr_after - pcr_before
-    
-    return pcr_comparison(
+    return scib.me.pcr_comparison(
         adata_pre=adata_raw,
         adata_post=adata,
         covariate=batch_key,
-        embed=embed,
+        # embed=embed,  # assume that existing PCA is already computed on correct embedding
+        n_threads=n_threads,
+        linreg_method='numpy',
+        recompute_pca=False,
     )
 
 
@@ -84,7 +51,7 @@ def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     )
 
 
-def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
+def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -100,33 +67,36 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     
     embed = 'X_emb' if output_type == 'embed' else 'X_pca'
     assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
+    adata.obsm['X_emb'] = adata.obsm[embed]
 
-    adata_raw = adata_to_memory(adata_raw)
-    
+    dask_compute(adata_raw)
+
     try:
         # compute cell cycle score per batch
         batch_key = batch_key
         for batch in adata.obs[batch_key].unique():
             scib.pp.score_cell_cycle(
                 adata_raw[adata_raw.obs[batch_key] == batch],
-                organism=organism
+                organism=organism,
             )
     except Exception as e:
         raise ValueError(f'Error in score_cell_cycle: {e}') from e
     
-    try:
-        # compute score
-        score = scib.me.cell_cycle(
-            adata_pre=adata_raw,
-            adata_post=adata,
-            batch_key=batch_key,
-            embed=embed,
-            recompute_cc=False,
-            organism=organism,
-            verbose=False,
-        )
-    except ValueError as e:
-        print(f'Warning: caught error in cell cycle score: {e}')
-        score = np.nan
+    # try:
+    # compute score
+    score = scib.me.cell_cycle(
+        adata_pre=adata_raw,
+        adata_post=adata,
+        batch_key=batch_key,
+        embed='X_emb',
+        recompute_cc=False,
+        organism=organism,
+        verbose=False,
+        linreg_method='sklearn',
+        n_threads=n_threads,
+    )
+    # except ValueError as e:
+    #     print(f'Warning: caught error in cell cycle score: {e}')
+    #     score = np.nan
 
     return score

@@ -4,11 +4,7 @@ defaults:
     - test_integration_clustering
   preprocessing:
     raw_counts: X
-    norm_counts: normcounts
-    batch: study
-    lineage: lineage
     assemble:
-      - counts
       - normalize
       - highly_variable_genes
       - pca
@@ -25,6 +21,7 @@ DATASETS:
       sample: phase
     clustering:
       neighbors_key: neighbors
+      algorithm: leiden
       resolutions:
         - 0.2
         - 0.3
@@ -36,8 +33,8 @@ DATASETS:
   test_integration_clustering:
     input:
       preprocessing: data/pbmc68k.h5ad
-      clustering: preprocessing
-      integration: clustering
+      integration: preprocessing
+      clustering: integration
     preprocessing:
       label: bulk_labels
       batch: phase
@@ -49,8 +46,8 @@ DATASETS:
         - 0.4
         - 0.8
     integration:
-      raw_counts: raw
-      norm_counts: normcounts
+      raw_counts: raw/X
+      norm_counts: layers/normcounts
       batch: phase
       label: louvain_0.4
       methods:

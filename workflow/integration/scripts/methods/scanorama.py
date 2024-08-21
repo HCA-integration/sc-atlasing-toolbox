@@ -4,8 +4,9 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import scanorama
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 
 # TODO: use scanpy/anndata directly
@@ -50,8 +51,13 @@ adata = read_anndata(
     X='layers/norm_counts',
     obs='obs',
     var='var',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 batch_categories = adata.obs[batch_key].unique().tolist()
 adatas = [
@@ -85,5 +91,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'obsm', 'uns'],
+    files_to_keep=['X', 'obsm', 'var', 'uns'],
 )

@@ -7,6 +7,7 @@ import pandas as pd
 import scanpy as sc
 
 from utils.io import read_anndata
+from utils.misc import dask_compute, ensure_dense
 
 
 def filter_markers(markers, _keys):
@@ -35,23 +36,52 @@ output_per_group.mkdir(exist_ok=True)
 kwargs = mapping_to_dict(snakemake.params.kwargs)
 marker_genes = snakemake.params.marker_genes
 
-adata = read_anndata(input_file)
+
+logging.info(f'Read group assignment from {input_group_assignment}...')
 group_assignment = pd.read_table(input_group_assignment, index_col=0)
+print(group_assignment, flush=True)
+
+logging.info(f'Read {input_file}...')
+adata = read_anndata(
+    input_file,
+    obs='obs',
+    var='var',
+    X='X',
+    dask=True,
+    backed=True,
+)
 
 # add group assignment to adata
 group_cols = ['group', 'reannotation', 'reannotation_index']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols].astype(str)
+adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols].astype(str)
+print(adata.obs[group_cols])
 
 # match marker genes and var_names
 logging.info(adata.var)
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name'].astype(str)
 
+# filter marker genes
 logging.info('Marker genes before filtering:')
 logging.info(marker_genes)
 marker_genes = filter_markers(marker_genes, adata.var_names)
+assert len(marker_genes) > 0, 'No marker genes found in data'
 logging.info('Marker genes after filtering:')
 logging.info(marker_genes)
+n_marker_genes = len(marker_genes) if isinstance(marker_genes, list) else sum(len(v) for v in marker_genes.values())
+logging.info(f'Number of marker genes: {n_marker_genes}')
+
+# subset to genes for plotting
+if isinstance(marker_genes, dict):
+    genes_to_plot = set([element for sublist in marker_genes.values() for element in sublist])
+    genes_to_plot = list(genes_to_plot)
+else:
+    genes_to_plot = marker_genes
+logging.info(f'Load {len(genes_to_plot)} genes to memory...')
+adata = adata[:, adata.var_names.isin(genes_to_plot)].copy()
+adata = dask_compute(adata)
+adata = ensure_dense(adata)
+logging.info(adata.__str__())
 
 logging.info('Plotting...')
 sc.pl.dotplot(
@@ -60,6 +90,8 @@ sc.pl.dotplot(
     var_names=marker_genes,
     show=False,
     title=f'Markers vs groups for {snakemake.wildcards.dataset}',
+    swap_axes=False,
+    # swap_axes=n_marker_genes > adata.obs['group'].nunique(),
     **kwargs,
 )
 plt.savefig(output_file, bbox_inches='tight', dpi=200)

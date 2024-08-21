@@ -1,13 +1,15 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 from pathlib import Path
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
+sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
 import warnings
 warnings.filterwarnings("ignore", message="No data for colormapping provided via 'c'. Parameters 'cmap' will be ignored")
 
-from utils.misc import remove_outliers
-
+from utils.io import read_anndata
 
 kwargs = dict(
     frameon=False,
@@ -16,34 +18,27 @@ kwargs = dict(
 
 input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
-input_coordinates = snakemake.input.coordinates
-output_file = snakemake.output[0]
+output_png = snakemake.output[0]
 output_per_group = Path(snakemake.output.per_group)
 output_per_group.mkdir(exist_ok=True)
 
-adata = sc.read(input_file)
-group_assignment = pd.read_table(input_group_assignment, index_col=0)
-umap = np.load(input_coordinates)
-
-# add UMAP coordinates to adata
-adata.obsm['X_umap'] = umap
+logging.info(f'Read {input_file}...')
+adata = read_anndata(input_file, obs='obs', obsm='obsm', var='var')
+print(adata, flush=True)
 
 # add grouq assignment to adata
+logging.info('Add group assignment to adata...')
+group_assignment = pd.read_table(input_group_assignment, index_col=0)
 group_cols = ['group', 'reannotation']
-adata.obs[group_cols] = group_assignment.loc[adata.obs_names, group_cols]
+adata.obs.loc[group_assignment.index, group_cols] = group_assignment[group_cols]
 
-
-# remove outliers
-adata = remove_outliers(adata, 'max')
-adata = remove_outliers(adata, 'min')
-
-# plot
-sc.set_figure_params(frameon=False, vector_friendly=True, fontsize=9)
+logging.info('Plot global UMAP...')
 sc.pl.umap(adata, color='group')
-plt.savefig(output_file, bbox_inches='tight', dpi=200)
+plt.savefig(output_png, bbox_inches='tight', dpi=100)
 
 # per group
 for group in adata.obs['group'].unique():
+    logging.info(f'Plot UMAP for group={group}...')
     adata.obs['reannotation_tmp'] = np.where(adata.obs['group'] == group, adata.obs['reannotation'], '')
     sc.pl.umap(
         adata,
@@ -52,5 +47,4 @@ for group in adata.obs['group'].unique():
         title=f'Group: {group}',
         palette=sc.pl.palettes.default_20 if adata.obs['reannotation_tmp'].nunique() <= 20 else sc.pl.palettes.default_102,
     )
-    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=200)
-    del adata.obs['reannotation_tmp']
+    plt.savefig(output_per_group / f'group~{group}.png', bbox_inches='tight', dpi=100)

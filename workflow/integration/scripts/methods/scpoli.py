@@ -3,9 +3,9 @@ from scarches.models.scpoli import scPoli
 from pprint import pformat
 from pathlib import Path
 
-from utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes
-from utils_pipeline.io import read_anndata, write_zarr_linked
-
+from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, plot_model_history
+from utils.io import read_anndata, write_zarr_linked
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -78,13 +78,23 @@ adata = read_anndata(
     X='layers/raw_counts',
     obs='obs',
     var='var',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 # prepare data for model
 adata.X = adata.X.astype('float32')
-if label_key in adata.obs.columns:
-    adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
+cell_type_keys = model_params.get('cell_type_keys', [])
+if isinstance(cell_type_keys, str):
+    cell_type_keys = [cell_type_keys]
+elif cell_type_keys is None:
+    cell_type_keys = []
+for key in cell_type_keys:
+    adata.obs[key] = adata.obs[key].astype(str).fillna('NA').astype('category')
 
 print(f'Set up scPoli with parameters:\n{pformat(model_params)}', flush=True)
 model = scPoli(adata=adata, **model_params)
@@ -104,9 +114,6 @@ add_metadata(
     params,
     model_history=dict(model.trainer.logs)
 )
-
-# plot model history
-from utils import plot_model_history
 
 plot_model_history(
     title='loss',

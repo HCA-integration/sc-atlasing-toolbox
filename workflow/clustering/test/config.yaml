@@ -2,7 +2,7 @@ output_dir: test/out
 images: test/images
 
 use_gpu: true
-env_mode: from_yaml
+env_mode: local
 
 resources:
   cpu:
@@ -23,32 +23,49 @@ DATASETS:
         test_1: test/input/pbmc68k.h5ad
         test_2: test/input/pbmc68k.h5ad
     clustering:
+      umap_exists: true
       neighbors_key: neighbors
+      algorithm: leiden
       resolutions:
         - 0.2
-        - 0.3
         - 0.4
-        - 0.5
-        - 0.6
-        - 0.7
         - 0.8
+        - 1.0
+        - 1.6
 
   test_single:
     input:
       clustering: test/input/pbmc68k.h5ad
     clustering:
-      neighbors_key: neighbors
+      umap_exists: false
+      recompute_neighbors: true
+      neighbors:
+        n_neighbors: 30
+        use_rep: X_pca
+      algorithm:
+        - leiden
+        # - louvain
       resolutions:
         - 0.2
         - 0.3
         - 0.4
-
-  test_list:
+  test_hierarchical:
     input:
-      clustering:
-        - test/input/pbmc68k.h5ad
-        - test/input/pbmc68k_dup.h5ad
+      clustering: test/input/pbmc68k.h5ad
     clustering:
       neighbors_key: neighbors
+      algorithm: leiden
       resolutions:
-        - 0.2
+        - 0.5
+      hierarchy:
+        1: 0.1
+        3: 0.2
+  test_hierarchical_int:
+    input:
+      clustering: test/input/pbmc68k.h5ad
+    clustering:
+      neighbors_key: neighbors
+      algorithm: leiden
+      resolutions:
+        - 0.5
+      hierarchy: 3

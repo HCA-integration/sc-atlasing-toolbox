@@ -5,6 +5,7 @@ def graph_connectivity(adata, output_type, batch_key, label_key, **kwargs):
     import scib
 
     adata = select_neighbors(adata, output_type)
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.graph_connectivity(
         adata,
         label_key=label_key

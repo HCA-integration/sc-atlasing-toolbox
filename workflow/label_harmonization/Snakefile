@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
+from utils.marker_genes import get_marker_gene_set
 from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
@@ -8,12 +9,34 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='label_harmonization',
     config=config,
-    config_params=['celltypist', 'organ'],
-    wildcard_names=[],
-    rename_config_params={'celltypist': 'module'},
+    config_params=[
+        'cellhint',
+        'dataset_key',
+        'author_label_key',
+        'plot_colors',
+        'subsample',
+        'force_scale',
+        'marker_genes',
+        'recompute_neighbors',
+        'recompute_umap',
+    ],
+    dtypes={
+        'subsample': float,
+        'force_scale': bool,
+        'recompute_neighbors': bool,
+        'recompute_umap': bool,
+    }
 )
 
 paramspace = mcfg.get_paramspace()
+out_dir = mcfg.out_dir
+image_dir = mcfg.image_dir
+
+
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
+
 
 include: 'rules/map_labels.smk'
 include: 'rules/plots.smk'
@@ -21,10 +44,10 @@ include: 'rules/plots.smk'
 
 rule all:
     input:
-        mcfg.get_output_files(rules.celltypist.output),
-        mcfg.get_output_files(rules.celltypist_plots.output),
+        rules.cellhint_all.input,
         rules.plots_all.input,
     default_target: True
+    localrule: True
 
 
 module common:
@@ -42,3 +65,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

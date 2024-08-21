@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import MutableMapping
 import shutil
+import json
 import anndata as ad
 import zarr
 import h5py
@@ -62,6 +63,8 @@ def read_anndata(
     # assert Path(file).exists(), f'File not found: {file}'
     if exclude_slots is None:
         exclude_slots = []
+    elif exclude_slots == 'all':
+        exclude_slots = ['X', 'layers', 'raw']
 
     func, file_type = get_file_reader(file)
     try:
@@ -362,7 +365,7 @@ def link_zarr(
         will update default mapping of same input and output naming
     """
     def prune_nested_links(slot_map, in_dir_map):
-        # determine equivalent classes of slots (top hierarchy)
+        # determine equivalence classes of slots (top hierarchy)
         eq_classes = {}
         for out_slot in slot_map:
             if '/' not in out_slot:
@@ -433,7 +436,14 @@ def link_zarr(
 
     # link all files
     out_dir = Path(out_dir)
-    for out_slot, in_slot in slot_map.items():
+    print_flushed('slot_map:', slot_map)
+    slot_map = sorted(
+        slot_map.items(),
+        key=lambda item: out_dir.name in str(in_dir_map[item[1]]),
+        reverse=False,
+    )
+
+    for out_slot, in_slot in slot_map:
         in_dir = in_dir_map[in_slot]
         in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
         out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
@@ -506,7 +516,10 @@ def write_zarr_linked(
     ]
 
     # For those not keeping, link
-    files_to_link = [f for f in in_dirs if f.split('/', 1)[-1] not in file_to_link_clean]
+    files_to_link = [
+        f for f in in_dirs
+        if f.split('/', 1)[-1] not in file_to_link_clean
+    ]
     
     if slot_map is None:
         slot_map = {}
@@ -520,9 +533,9 @@ def write_zarr_linked(
     }
     
     # remove slots that will be overwritten anyway
-    for slot in files_to_link+extra_slots_to_link:
-        if slot in adata.__dict__:
-            print_flushed(f'remove {slot}...')
+    for slot in set(files_to_link+extra_slots_to_link):
+        if hasattr(adata, slot):
+            print_flushed(f'remove slot to be linked: {slot}')
             delattr(adata, slot)
     
     # write zarr file
@@ -538,3 +551,23 @@ def write_zarr_linked(
         slot_map=slot_map,
         in_dir_map=in_dir_map,
     )
+    
+    # update .zattrs files
+    for slot in ['obs', 'var']:
+        zattrs_file = Path(out_dir) / slot / '.zattrs'
+
+        if not (zattrs_file).exists():
+            continue
+        
+        with open(zattrs_file, 'r') as file:
+            zattrs = json.load(file)
+        
+        # add all columns (otherwise linked columns are not included)
+        columns = [
+            f.name for f in zattrs_file.parent.iterdir()
+            if not f.name.startswith('.') and f.name != zattrs['_index']
+        ]
+        zattrs['column-order'] = sorted(columns)
+        
+        with open(zattrs_file, 'w') as file:
+            json.dump(zattrs, file, indent=4)

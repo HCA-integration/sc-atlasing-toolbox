@@ -4,7 +4,7 @@ Data Loader
 from pathlib import Path
 import pandas as pd
 
-from scripts.utils import get_url
+from scripts.load_data_utils import get_url
 from utils.data import load_dataset_df
 from utils.misc import all_but, unlist_dict
 from utils.config import get_resource
@@ -54,6 +54,10 @@ module common:
 
 use rule * from common as common_ *
 
+module load_data_filter:
+    snakefile: "filter_rules.smk"
+    config: config
+
 module load_data:
     snakefile: "rules.smk"
     config: config
@@ -68,6 +72,7 @@ rule all:
         expand(rules.load_data_merge_organ.output,**get_wildcards(dataset_df,['organ'])),
         # expand(rules.load_data_merge_organ_filter.output,**get_wildcards(dataset_df,['organ'])),
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -77,3 +82,4 @@ rule dependency_graph:
             images=config['images'] + f'/{module_name}',
             target='all'
         )
+    localrule: True

@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.10
   - anndata=0.10
-  - scanpy=1.9.6
+  - scanpy=1.10
   - zarr
   - hdf5=1.14.2
   - dask
@@ -13,5 +13,4 @@ dependencies:
   - pip
   - pip:
     - scikit-learn-intelex
-    - git+https://github.com/theislab/scib.git
-    # - git+https://github.com/scverse/scanpy.git@main
+    - git+https://github.com/theislab/scib.git@optimise_pcr

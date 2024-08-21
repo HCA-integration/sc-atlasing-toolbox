@@ -1,5 +1,6 @@
 from anndata import AnnData
-import scanpy as sc
+from dask import array as da
+import numpy as np
 from pathlib import Path
 from pprint import pformat
 import logging
@@ -7,41 +8,29 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
-from utils.processing import assert_neighbors
-
-
-def read_layer(
-    input_file: [str, Path],
-    layer: str,
-    **kwargs,
-) -> (AnnData, str):
-    """
-    Read anndata with correct count slot
-    :param input_file: input file
-    :param layer: slot in file store to read e.g. 'X', 'raw/X', 'layers/counts'
-    :return: anndata object, var_key, layer
-    """
-    logging.info(f'Read {input_file}...')
-    adata = read_anndata(
-        input_file,
-        X=layer,
-        var='raw/var' if 'raw/' in layer else 'var',
-        **kwargs,
-    )
-    return adata
+from utils.misc import dask_compute
+from utils.processing import assert_neighbors, sc, _filter_genes
 
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
+batch_keys = params.batches
+label_keys = params.labels
+var_mask = snakemake.wildcards.var_mask
+save_subset = params.get('save_subset', False)
+recompute_pca = params.get('recompute_pca', True)
 
 
 def read_and_subset(
     input_file: [str, Path],
     layer_key: str,
+    var_column: str,
     files_to_keep: list,
     slot_map: dict,
-    hvgs: list = None,
+    new_var_column: str = None,
+    filter_zero_genes: bool = True,
+    **kwargs,
 ):
     in_layer = params.get(layer_key, 'X')
     assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
@@ -51,40 +40,72 @@ def read_and_subset(
     adata = read_anndata(
         input_file,
         X=in_layer,
+        obs='obs',
         var='raw/var' if 'raw/' in in_layer else 'var',
-        varm='varm',
-        varp='varp',
         uns='uns',
         backed=True,
+        dask=True,
+        **kwargs
     )
     
-    logging.info('Subset highly variable genes...')
-    adata, subsetted = subset_hvg(adata, hvgs=hvgs)
+    if new_var_column is None:
+        slot_map |= {out_layer: in_layer}
+        return adata, files_to_keep, slot_map
+    
+    logging.info('Determine var_mask...')
+    subsetted = False
+    if var_column not in adata.var:
+        adata.var[new_var_column] = True
+    else:
+        adata.var[new_var_column] = adata.var[var_column]
+    
+    if filter_zero_genes:
+        logging.info('Filter all zero genes...')
+        # filter out which genes are all 0
+        all_zero_genes = _filter_genes(adata, min_cells=1)
+        adata.var[new_var_column] = adata.var[new_var_column] & ~adata.var_names.isin(all_zero_genes)
+    
+    if save_subset:
+        logging.info('Subset HVG...')
+        adata, subsetted = subset_hvg(
+            adata,
+            var_column=new_var_column,
+            to_memory=False,
+            compute_dask=False,
+        )
+        dask_compute(adata, layers=[layer_key], verbose=True)
     
     # determine output
-    if subsetted:
-        files_to_keep.extend(['X', out_layer, 'var', 'varm', 'varp'])
+    if subsetted and save_subset:
+        files_to_keep.append(out_layer)
     else:
         slot_map |= {out_layer: in_layer}
     
     return adata, files_to_keep, slot_map
 
 
-files_to_keep = []
+files_to_keep = ['obs', 'var']
 slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='norm_counts',
+    var_column=var_mask,
+    new_var_column='integration_features',
     files_to_keep=files_to_keep,
     slot_map=slot_map,
+    obsm='obsm',
+    obsp='obsp',
+    varm='varm',
+    varp='varp',
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
     layer_key='raw_counts',
+    var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    hvgs=adata_norm.var_names,
+    filter_zero_genes=False,
 )
 
 assert adata_norm.var_names.equals(adata_raw.var_names), f'\nnorm:\n{adata_norm.var}\nraw:\n{adata_raw.var}'
@@ -110,10 +131,14 @@ if input_file.endswith('.h5ad'):
             'raw_counts': adata_raw.X,
         },
     )
+    files_to_keep.append('X')
 elif input_file.endswith('.zarr'):
+    if save_subset:
+        files_to_keep.extend(['varm', 'varp'])
     adata = AnnData(
-        X=adata_norm.X,
         obs=adata_norm.obs,
+        obsm=adata_norm.obsm,
+        obsp=adata_norm.obsp,
         var=adata_norm.var,
         layers={
             'norm_counts': adata_norm.X,
@@ -124,19 +149,35 @@ elif input_file.endswith('.zarr'):
 else:
     raise ValueError(f'Invalid input file {input_file}')
 
-# preprocess if missing
-if 'X_pca' not in adata.obsm:
-    logging.info('Compute PCA...')
-    sc.pp.pca(adata)
-    files_to_keep.extend(['obsm', 'varm', 'uns'])
+# # preprocess if missing
+# if recompute_pca or 'X_pca' not in adata.obsm:
+#     dask_compute(adata, layers=['norm_counts'], verbose=True)
+#     logging.info('Compute PCA...')
+#     import scanpy
+#     scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
+#     files_to_keep.extend(['obsm', 'uns'])
 
-try:
-    assert_neighbors(adata)
-    logging.info(adata.uns['neighbors'].keys())
-except AssertionError:
-    logging.info('Compute neighbors...')
-    sc.pp.neighbors(adata)
-    files_to_keep.extend(['obsp', 'uns'])
+# try:
+#     assert not recompute_pca, 'PCA was recomputed'
+#     assert_neighbors(adata)
+#     logging.info(adata.uns['neighbors'].keys())
+# except AssertionError as e:
+#     logging.info(f'Compute neighbors due to Assertion Error: {e}...')
+#     sc.pp.neighbors(adata, use_rep='X_pca')
+#     files_to_keep.extend(['obsp', 'uns'])
+
+# fix batch covariate
+for batch_key in batch_keys:
+    assert batch_key in adata.obs, f'Batch key {batch_key} is missing'
+    adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
+
+# fix labels
+for label_key in label_keys:
+    if label_key is None or label_key == 'None':
+        continue
+    assert label_key in adata.obs, f'Label key {label_key} is missing'
+    adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
+
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())

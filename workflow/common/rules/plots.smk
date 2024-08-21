@@ -68,6 +68,7 @@ rule barplot:
         xlim=(-.01, None),
     conda:
         get_env(config, 'plots')
+    localrule: True
     script:
         '../scripts/barplot.py'
 
@@ -86,5 +87,6 @@ rule swarmplot:
         ylim=(-.05, 1.05),
     conda:
         get_env(config, 'plots')
+    localrule: True
     script:
         '../scripts/swarmplot.py'

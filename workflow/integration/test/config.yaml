@@ -20,6 +20,8 @@ defaults:
   integration:
     raw_counts: layers/counts
     norm_counts: layers/normcounts
+    var_mask: highly_variable
+    save_subset: false
   datasets:
     - test
     - multi_wildcards
@@ -36,6 +38,8 @@ DATASETS:
         pbmc68k: test/input/pbmc68k.h5ad
         # unprocessed: test/input/pbmc68k_unprocessed.h5ad
     integration:
+      var_mask:
+        - highly_variable
       threads: 3
       batch: batch
       umap_colors:
@@ -67,6 +71,11 @@ DATASETS:
       output_types:
         - embed
         - knn
+      var_mask:
+        - highly_variable
+        - highly_variable_2
+      neighbors:
+        n_neighbors: 30
 
   preprocessed:
     input:
@@ -88,8 +97,14 @@ DATASETS:
       methods:
         harmonypy:
           sigma: 0.1
-        harmony:
+          key: batch_2
+          n_comps:
+            - 10
+            - 30
+        harmony_pytorch:
           sigma: 0.1
+          batch_key: batch_2
+          n_comps: 30
       umap_colors:
         - phase
 
@@ -144,11 +159,22 @@ DATASETS:
           dispersion:
             - gene
             - gene-batch
-            - gene-label
-            - gene-cell
           use_observed_lib_size: true
-          max_epochs: 10
+          max_epochs: 100
           early_stopping: true
         scanvi:
+          max_epochs: 100
+          early_stopping: true
+          categorical_covariate_keys:
+            -
+            -
+              - batch_2
+            -
+              - batch_2
+              - phase
+          continuous_covariate_keys:
+            - percent_mito
       umap_colors:
+        - bulk_labels
         - phase
+        - percent_mito

@@ -17,29 +17,35 @@ from utils.io import read_anndata
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-dataset = snakemake.wildcards.dataset
-file_id = snakemake.wildcards.file_id
-metric = snakemake.wildcards.metric
+wildcards = snakemake.wildcards
 params = snakemake.params
-batch_key = params.batch_key
-label_key = params.label_key
+threads = snakemake.threads
 
-# metrics_meta = pd.read_table(snakemake.input.metrics_meta, index_col='metric')
+dataset = wildcards.dataset
+file_id = wildcards.file_id
+batch_key = wildcards.batch
+label_key = wildcards.label
+metric = wildcards.metric
+
 metric_type = params.get('metric_type')
 assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
-metric_output_types = params.get('output_types', [])
+allowed_output_types = params.get('output_types')
+input_type = params.get('input_type')
 comparison = params.get('comparison', False)
-metric_function = metric_map.get(metric)
+cluster_key = params.get('cluster_key', 'leiden')
+metric_function = metric_map.get(metric, ValueError(f'No function for metric: {metric}'))
 
 uns = read_anndata(input_file, uns='uns').uns
-data_output_type = uns.get('output_type', 'full') # Same as in prepare.py
-if data_output_type not in metric_output_types:
+output_type = uns.get('output_type', 'full') # Same as in prepare.py
+
+if output_type not in allowed_output_types:
     logging.info(
-        f'Skip metric={metric} for data output type={data_output_type}\nmetrics output types={metric_output_types}'
+        f'Skip metric={metric} for data output type={output_type}\n'
+        f'allowed output types={allowed_output_types}'
     )
     write_metrics(
         scores=[np.nan],
-        output_types=[data_output_type],
+        output_types=[output_type],
         metric=metric,
         metric_type=metric_type,
         batch=batch_key,
@@ -51,44 +57,62 @@ if data_output_type not in metric_output_types:
         )
     exit(0)
 
-logger.info(f'Read {input_file} ...')
-kwargs = dict(
-    obs='obs',
-    obsp='obsp',
-    var='var',
-    uns='uns',
-)
-if 'embed' in metric_output_types:
+kwargs = {'obs': 'obs', 'uns': 'uns'}
+if input_type == 'knn':
+    kwargs |= {'obsp': 'obsp'}
+if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
-if 'full' in metric_output_types:
-    kwargs |= {'X': 'X'}
-if comparison:
-    kwargs |= {'raw': 'raw', 'varm': 'varm', 'obsm': 'obsm'}
+if input_type == 'full':
+    kwargs |= {'X': 'X', 'var': 'var'}
 
+logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
-if comparison:
-    adata_raw = adata.raw.to_adata()
-    adata_raw.obs = adata.obs
-    adata_raw.var = adata.var
-    adata_raw.uns = adata.uns
-    adata_raw.varm = adata.varm
-else:
-    adata_raw = None
+print(adata, flush=True)
+adata_raw = None
 
-data_output_type = adata.uns.get('output_type', 'full')
-logger.info(f'Run metric {metric} for {data_output_type}...')
-adata.obs[label_key] = adata.obs[label_key].astype(str).fillna('NA').astype('category')
+if comparison:
+    adata_raw = read_anndata(
+        input_file,
+        X='raw/X',
+        obs='obs',
+        obsm='raw/obsm',
+        var='raw/var',
+        uns='raw/uns',
+        dask=True,
+        backed=True,
+    )
+    print('adata_raw')
+    print(adata_raw, flush=True)
+
+# prepare clustering columns
+def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'):
+    """
+    adapted from
+    https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
+    """
+    if not source_string.startswith(cluster_key) and source_string.endswith(replace_what):
+        return source_string
+    head, _sep, tail = source_string.rpartition(replace_what)
+    return head + replace_with + tail
+
+cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
+adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
+
+logger.info(f'Run metric {metric} for {output_type}...')
+adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
     adata,
-    data_output_type,
+    output_type,
     batch_key=batch_key,
     label_key=label_key,
     adata_raw=adata_raw,
+    cluster_key=cluster_key,
+    n_threads=threads,
 )
 
 write_metrics(
     scores=[score],
-    output_types=[data_output_type],
+    output_types=[output_type],
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,

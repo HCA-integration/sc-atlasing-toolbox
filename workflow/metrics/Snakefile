@@ -22,7 +22,15 @@ mcfg = ModuleConfig(
     module_name='metrics',
     config=config,
     parameters=workflow.source_path('params.tsv'),
-    config_params=['label', 'batch', 'methods', 'unintegrated', 'corrected', 'overwrite_file_id'],
+    config_params=[
+        'label',
+        'batch',
+        'methods',
+        'unintegrated',
+        'corrected',
+        'overwrite_file_id',
+        'cluster_algorithm',
+    ],
     wildcard_names=['label', 'batch'],
     rename_config_params={'methods': 'metric'},
     explode_by=['metric', 'batch', 'label'],
@@ -43,6 +51,10 @@ wildcard_constraints:
     lineage_specific='((?![/]).)*',
 
 
+module clustering:
+    snakefile: "../../clustering/rules/rules.smk"
+    config: config
+
 module common:
     snakefile: "../common/Snakefile"
     config: config
@@ -51,6 +63,7 @@ module common:
 use rule * from common as common_ *
 
 
+include: 'rules/prepare.smk'
 include: 'rules/metrics.smk'
 include: 'rules/merge.smk'
 include: 'rules/plots.smk'
@@ -62,6 +75,7 @@ rule all:
         rules.merge_metrics_all.input,
         rules.plots_all.input
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -71,3 +85,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

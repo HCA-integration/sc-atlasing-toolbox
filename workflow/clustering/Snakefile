@@ -4,27 +4,36 @@ Clustering
 from pathlib import Path
 import pandas as pd
 
-# from utils.misc import all_but, unique_dataframe
-# from utils.config import get_resource, set_defaults, get_datasets_for_module, get_for_dataset, \
-#     get_input_file, get_input_file_wildcards
 from utils.environments import get_env
-from utils.ModuleConfig import ModuleConfig
+from ClusteringConfig import ClusteringConfig
 
 
-mcfg = ModuleConfig(
+mcfg = ClusteringConfig(
     module_name='clustering',
     config=config,
-    config_params=['neighbors_key', 'resolutions', 'algorithm'],
-    wildcard_names=['neighbors_key', 'resolution'],
+    config_params=[
+        'recompute_neighbors',
+        'neighbors',
+        'umap_exists',
+        'neighbors_key',
+        'resolutions',
+        'hierarchy',
+        'algorithm',
+    ],
+    wildcard_names=['algorithm', 'resolution'],
     rename_config_params={'resolutions': 'resolution'},
-    explode_by='resolution',
+    explode_by=['algorithm', 'resolution'],
+    dtypes={'recompute_neighbors': bool, 'umap_exists': bool, 'resolution': str},
 )
-paramspace = mcfg.get_paramspace(exclude=['neighbors_key', 'resolution'])
-
+paramspace = mcfg.get_paramspace()
 
 wildcard_constraints:
-    dataset='((?![/]).)*',
+    dataset='\w+',
+    file_id='\w+',
 
+module preprocessing:
+    snakefile: "../../preprocessing/rules/rules.smk"
+    config: config
 
 module common:
     snakefile: "../common/Snakefile"
@@ -37,6 +46,7 @@ module clustering:
     config: config
 
 include: 'rules/clustering.smk'
+include: 'rules/postprocessing.smk'
 
 
 rule all:
@@ -44,6 +54,7 @@ rule all:
         mcfg.get_output_files(rules.clustering_merge.output),
         mcfg.get_output_files(rules.clustering_plot_umap.output),
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -53,4 +64,5 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True
 

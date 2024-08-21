@@ -10,8 +10,9 @@ import scanpy as sc
 import numpy as np
 from dask import config as da_config
 
-from utils import SCHEMAS, get_union
-from utils_pipeline.io import read_anndata, to_memory
+from load_data_utils import SCHEMAS, get_union
+from utils.io import read_anndata, to_memory
+from utils.misc import ensure_sparse
 
 in_file = snakemake.input.h5ad
 schema_file = snakemake.input.schema
@@ -29,15 +30,23 @@ logging.info(f'meta:\n{pformat(meta)}')
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
     adata = read_anndata(in_file, backed=backed, dask=dask)
+    adata = ensure_sparse(adata)
 except Exception as e:
     print(e)
     adata = sc.read_loom(in_file, sparse=True)
 logging.info(adata)
 
+# remove all unneeded uns entries
+for key in list(adata.uns.keys()):
+    if key in ['schema_version', 'batch_condition']:
+        continue
+    del adata.uns[key]
+
 # ensure raw counts are kept in .X
 if 'final' not in adata.layers:
     adata.layers['final'] = adata.X
 adata.X = adata.raw.X if isinstance(adata.raw, ad._core.raw.Raw) else adata.X
+del adata.raw
 
 # # plot count distribution -> save to file
 # x = to_memory(adata.X)

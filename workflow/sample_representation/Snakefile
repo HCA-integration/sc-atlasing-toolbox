@@ -27,7 +27,7 @@ rule pseudobulk:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
     output:
-        h5ad=mcfg.out_dir / paramspace.wildcard_pattern / 'pseudobulk.h5ad',
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pseudobulk.zarr'),
     params:
         bulk_by=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample')
     conda:
@@ -72,6 +72,7 @@ rule all:
     input:
         mcfg.get_output_files(rules.pseudobulk.output),
     default_target: True
+    localrule: True
 
 
 rule dependency_graph:
@@ -81,3 +82,4 @@ rule dependency_graph:
             images=mcfg.image_dir,
             target='all'
         )
+    localrule: True

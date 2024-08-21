@@ -28,12 +28,25 @@ DATASETS:
       dask: false
       backed: false
       raw_counts: X
-      batch: dataset
-      lineage: cell_type
       scale: false
+      extra_hvgs:
+        union_over:
+          - disease
+        remove_genes:
+          - test/input/remove_genes.txt
+          - broken/path.txt
+          - https://raw.githubusercontent.com/prabhakarlab/AIDA_Phase1/master/01_QualityControl/list_chrY_nonPAR_genes.txt
+        extra_genes:
+          - CD.*
+          - CCR7
+          - LEF1
+          - CD27
+          - SELL
+          - IL7R
+          - GZMK
       highly_variable_genes:
+        batch_key: dataset
         n_top_genes: 2000
-        subset: true
       assemble:
         - counts
         - normalize
@@ -51,10 +64,11 @@ DATASETS:
         pbmc: test/input/pbmc68k.h5ad
     preprocessing:
       raw_counts: layers/counts
+      normalize:
+        target_sum: 1e4
       scale: true
       highly_variable_genes:
         n_top_genes: 100
-        subset: true
       assemble:
         - counts
         - normalize

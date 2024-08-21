@@ -3,10 +3,10 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from utils import add_metadata, remove_slots
-from utils_pipeline.io import read_anndata, write_zarr_linked
-from utils_pipeline.processing import assert_neighbors
-
+from integration_utils import add_metadata, remove_slots
+from utils.io import read_anndata, write_zarr_linked
+from utils.processing import assert_neighbors
+from utils.accessors import subset_hvg
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -21,8 +21,13 @@ adata = read_anndata(
     obsp='obsp',
     obsm='obsm',
     varm='varm',
-    uns='uns'
+    uns='uns',
+    dask=True,
+    backed=True,
 )
+
+# subset features
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
 # prepare output adata
 files_to_keep = ['obsm', 'uns']
@@ -38,8 +43,8 @@ logging.info(adata.uns.keys())
 try:
     assert_neighbors(adata)
     logging.info(adata.uns['neighbors'].keys())
-except AssertionError:
-    logging.info('Compute neighbors...')
+except AssertionError as e:
+    logging.info(f'Recompute neighbors due to {e}...')
     sc.pp.neighbors(adata)
     print(adata.uns['neighbors'])
     files_to_keep.extend(['obsp', 'uns'])

@@ -16,6 +16,10 @@ adata = read_anndata(input_file, X='X', obs='obs', var='var')
 
 if adata.n_obs == 0:
     logging.info(f'Write empty zarr file to {output_file}...')
+    adata.obs = pd.DataFrame(
+        columns=adata.obs.columns.tolist() \
+            +["n_counts", "n_genes", "percent_mito", "percent_ribo", "percent_hb"]
+    )
     write_zarr_linked(adata, input_file, output_file, files_to_keep=[])
     exit(0)
 

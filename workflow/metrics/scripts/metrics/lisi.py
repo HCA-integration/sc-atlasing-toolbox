@@ -5,11 +5,12 @@ from .utils import select_neighbors, rename_categories
 def clisi(adata, output_type, batch_key, label_key, **kwargs):
     import scib
 
+    adata = adata[adata.obs[label_key].notna()].copy()
     return scib.me.clisi_graph(
         adata,
         batch_key=batch_key,
         label_key=label_key,
-        type_=output_type,
+        type_='knn',
         subsample=0.5 * 100,
         scale=True,
     )
@@ -36,7 +37,7 @@ def ilisi(adata, output_type, batch_key, label_key, **kwargs):
     return scib.me.ilisi_graph(
         adata,
         batch_key=batch_key,
-        type_=output_type,
+        type_='knn',
         subsample=0.5 * 100,
         scale=True,
     )

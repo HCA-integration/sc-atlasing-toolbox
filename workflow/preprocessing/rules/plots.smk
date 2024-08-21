@@ -1,6 +1,6 @@
 use rule plots from preprocessing as preprocessing_plot_pca with:
     input:
-        anndata=rules.pca.output.zarr,
+        anndata=rules.preprocessing_pca.output.zarr,
     output:
         plots=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'pca'),
     params:
@@ -11,7 +11,7 @@ use rule plots from preprocessing as preprocessing_plot_pca with:
 
 use rule plots from preprocessing as preprocessing_plot_umap with:
     input:
-        anndata=rules.umap.output.zarr,
+        anndata=rules.preprocessing_umap.output.zarr,
     output:
         plots=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'umap'),
     params:

@@ -14,43 +14,47 @@ resources:
 
 # defaults:
 #   label_harmonization:
-#     celltypist:
+#     cellhint:
 #       use_rep: 'X_pca'
 #       use_pct: true
 
 DATASETS:
-  test_celltypist:
+  test_cellhint:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/all/pbmc/preprocessed.zarr
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+        pbmc: test/input/pbmc68k.h5ad
     label_harmonization:
+      recompute_umap: true
       plot_colors:
         - phase
         - bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
-      organ: blood
-      celltypist:
+      marker_genes: blood
+      cellhint:
         use_rep: X_pca
         use_pct: false
-  test_celltypist_pct:
+      subsample: 0.8
+  test_cellhint_pct:
     input:
       label_harmonization:
-        pbmc: test/input/preprocessing/all/pbmc/preprocessed.zarr
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     label_harmonization:
+      recompute_neighbors: true
       plot_colors: bulk_labels
       dataset_key: phase
       author_label_key: bulk_labels
-      organ: blood
-      celltypist:
+      marker_genes: blood
+      cellhint:
         use_rep: X_pca
         use_pct: true
+      force_scale: true
 
-ORGANS:
+MARKER_GENES:
   blood:
-    marker_genes:
-      - ITGB2
-      - HES4
-      - CD14
-      - SSU72
-      - S100B
+    - ITGB2
+    - HES4
+    - CD14
+    - SSU72
+    - S100B
