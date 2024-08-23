@@ -1,7 +1,7 @@
 import subprocess
 import scanpy as sc
 
-from utils import get_url
+from load_data_utils import get_url
 
 output_file = snakemake.output.h5ad
 dataset_df = snakemake.params.dataset_df
