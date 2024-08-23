@@ -37,10 +37,8 @@ def get_checkpoint_output(wildcards):
 
 def get_from_checkpoint(wildcards, pattern=None):
     checkpoint_output = get_checkpoint_output(wildcards)
-    print('pattern:', pattern)
     if pattern is None:
         pattern = checkpoint_output
-    print('pattern:', pattern)
     return expand(
         pattern,
         group=glob_wildcards(checkpoint_output).group,
@@ -56,6 +54,8 @@ rule cellhint_umap_per_group:
         splits=checkpoints.split_cellhint_groups.rule.output,
     output:
         png=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'group~{group}' / 'umap.png',
+    params:
+        author_label_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'author_label_key'),
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
@@ -102,6 +102,7 @@ rule cellhint_dotplot:
     output:
         png=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'group~{group}' / 'dotplot.png',
     params:
+        author_label_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'author_label_key'),
         marker_genes=lambda wildcards: get_marker_gene_set(
             mcfg,
             wildcards={k: wildcards[k] for k in ('dataset', 'file_id')}

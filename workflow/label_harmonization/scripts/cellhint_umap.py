@@ -18,6 +18,7 @@ input_file = snakemake.input[0]
 input_group_assignment = snakemake.input.group_assignment
 output_png = snakemake.output[0]
 group = snakemake.wildcards.group
+author_label_key = snakemake.params.author_label_key
 
 logging.info(f'Read {input_file}...')
 adata = read_anndata(input_file, obs='obs', obsm='obsm')
@@ -40,14 +41,16 @@ if group == 'all':
     exit()
 
 logging.info(f'Plot UMAP for group={group}...')
-reanno_to_plot = adata[adata.obs['group'] == group].obs['reannotation'].unique().tolist()
-adata.obs['reannotation'] = np.where(adata.obs['group'] == group, adata.obs['reannotation'], float('nan'))
+# reanno_to_plot = adata[adata.obs['group'] == group].obs['reannotation'].unique().tolist()
+adata.obs[author_label_key] = adata.obs[author_label_key].astype(str)
+adata.obs.loc[adata.obs['group'] != group, ['reannotation', author_label_key]] = float('nan')
 sc.pl.umap(
-    adata,
-    groups=reanno_to_plot,
-    color='reannotation',
+    adata[adata.obs.sample(frac=1).index],
+    # groups=reanno_to_plot,
+    color=['reannotation', author_label_key],
     title=f'Group: {group}',
     palette=sc.pl.palettes.default_20 if adata.obs['reannotation'].nunique() <= 20 else sc.pl.palettes.default_102,
     size=dot_size,
+    ncols=1,
 )
 plt.savefig(output_png, bbox_inches='tight', dpi=200)
