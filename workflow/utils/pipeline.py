@@ -76,33 +76,41 @@ def update_input_files_per_dataset(
     file_map = InputFiles.parse(config['DATASETS'][dataset]['input'][module_name])
     input_files = {}
     for file_name, file_path in file_map.items():
-        if '/' in file_path:
-            # assert Path(file_path).exists(), f'Missing input file "{file_path}"'
-            input_files |= {file_name: file_path}
-            continue
+        if ',' in file_path:
+            # multiple files
+            file_paths = file_path.split(',')
+        else:
+            file_paths = [file_path]
         
-        # get output files for input module
-        input_module = file_path
-        config = update_input_files_per_dataset(
-            dataset=dataset,
-            module_name=input_module,
-            config=config,
-            first_module=first_module,
-            config_class_map=config_class_map,
-        )
-        
-        ModuleConfigClass = config_class_map.get(input_module, ModuleConfig)
-        input_cfg = ModuleConfigClass(
-            module_name=input_module,
-            config=config,
-            warn=False,
-            **config_kwargs.get(input_module, {})
-        )
-        output_files = input_cfg.get_output_files(
-            subset_dict={'dataset': dataset},
-            as_dict=True
-        )
-        input_files |= InputFiles.parse(output_files)
+        for file_path in file_paths:
+            file_path = file_path.strip()
+            if '/' in file_path:
+                # assert Path(file_path).exists(), f'Missing input file "{file_path}"'
+                input_files |= {file_name: file_path}
+                continue
+            
+            # get output files for input module
+            input_module = file_path  # rename for easier readability
+            config = update_input_files_per_dataset(
+                dataset=dataset,
+                module_name=input_module,
+                config=config,
+                first_module=first_module,
+                config_class_map=config_class_map,
+            )
+            
+            ModuleConfigClass = config_class_map.get(input_module, ModuleConfig)
+            input_cfg = ModuleConfigClass(
+                module_name=input_module,
+                config=config,
+                warn=False,
+                **config_kwargs.get(input_module, {})
+            )
+            output_files = input_cfg.get_output_files(
+                subset_dict={'dataset': dataset},
+                as_dict=True
+            )
+            input_files |= InputFiles.parse(output_files)
     
     config['DATASETS'][dataset]['input'][module_name] = input_files
     return config
