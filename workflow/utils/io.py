@@ -556,7 +556,7 @@ def write_zarr_linked(
     for slot in ['obs', 'var']:
         zattrs_file = Path(out_dir) / slot / '.zattrs'
 
-        if not (zattrs_file).exists():
+        if not (zattrs_file).exists() or slot in file_to_link_clean:
             continue
         
         with open(zattrs_file, 'r') as file:

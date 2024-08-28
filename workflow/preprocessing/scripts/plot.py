@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_string_dtype, is_categorical_dtype
 from pprint import pformat
+from tqdm import tqdm
 
 from utils.io import read_anndata, get_file_reader
 from utils.misc import ensure_dense, remove_outliers, dask_compute
@@ -107,10 +108,8 @@ size = params.get('size', default_size)
 if size is None:
     size = default_size
 params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
-print(f'Size: {params["size"]}', flush=True)
-print(default_size, flush=True)
 
-for color in set(colors):
+for color in tqdm(set(colors)):
     logging.info(f'Plot color "{color}"...')
     palette = None
     if color in adata.obs.columns:
