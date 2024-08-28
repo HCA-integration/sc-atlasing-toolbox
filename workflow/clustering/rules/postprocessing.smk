@@ -1,7 +1,7 @@
 def get_umap_file(wildcards):
-    if mcfg.get_from_parameters(wildcards, 'umap_exists', default=False):
-        return mcfg.get_input_file(**wildcards)
-    return rules.clustering_compute_umap.output.zarr
+    if mcfg.get_from_parameters(wildcards, 'recompute_umap', default=False):
+        return rules.clustering_compute_umap.output.zarr
+    return mcfg.get_input_file(**wildcards)
 
 
 use rule umap from preprocessing as clustering_compute_umap with:
