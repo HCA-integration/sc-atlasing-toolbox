@@ -33,6 +33,16 @@ use rule merge from clustering as clustering_merge with:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
 
 
+def get_umap_colors(wildcards):
+    leiden_colors = mcfg.get_output_files(
+        '{algorithm}_{resolution}_{level}',
+        subset_dict=dict(wildcards),
+        all_params=True
+    )
+    user_colors = mcfg.get_from_parameters(wildcards, 'umap_colors', default=[])
+    return leiden_colors + user_colors
+
+
 use rule plots from preprocessing as clustering_plot_umap with:
     input:
         zarr=rules.clustering_merge.output.zarr,
@@ -41,11 +51,7 @@ use rule plots from preprocessing as clustering_plot_umap with:
     params:
         basis='X_umap',
         # color='{algorithm}_{resolution}_{level}',
-        color=lambda wildcards: mcfg.get_output_files(
-            '{algorithm}_{resolution}_{level}',
-            subset_dict=dict(wildcards),
-            all_params=True
-        ),
+        color=get_umap_colors
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),

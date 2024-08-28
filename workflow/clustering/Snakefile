@@ -16,6 +16,7 @@ mcfg = ClusteringConfig(
         'recompute_umap',
         'neighbors',
         'neighbors_key',
+        'umap_colors',
         'resolutions',
         'hierarchy',
         'algorithm',
