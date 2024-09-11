@@ -104,7 +104,33 @@ df = pd.DataFrame.from_records(
     pcr_scores,
     columns=['covariate', 'pcr', 'permuted'],
 )
+
+covariate = df['covariate'].str.split('-', expand=True)[0].astype('category')
+
 df['n_covariates'] = f'n={n_covariate}'
-df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')
+df['covariate'] = covariate
+df['non_perm_z_score'] = np.nan # init z-score column with NaNs
+
+if (~df['permuted']).sum() != 1:
+    print(
+        f'Warning: No non-permuted entries found for covariate: {covariate}.'
+        f'Result will be NaN.'
+    )
+else:
+    perm_scores_mean = np.mean(df.loc[df['permuted'], 'pcr'])
+    perm_scores_std = np.std(df.loc[df['permuted'], 'pcr'])
+
+    if np.isnan(perm_scores_mean) or np.isnan(perm_scores_std) or \
+        perm_scores_std == 0:
+        print(
+            'Warning: Invalid mean or standard deviation. Mean is NaN, or '
+            'standard deviation is zero. Result will be NaN.'
+        )
+    else:
+        non_perm_z_score = (
+            (df.loc[~df['permuted'], 'pcr'] - perm_scores_mean) /
+            perm_scores_std
+        )
+        df['non_perm_z_score'] = f'z={non_perm_z_score.iloc[0].round(2)}'
 
 df.to_csv(output_file, sep='\t', index=False)

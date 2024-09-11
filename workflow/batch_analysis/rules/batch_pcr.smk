@@ -59,7 +59,7 @@ rule collect:
     run:
         dfs = [pd.read_table(file) for file in input.tsv]
         if len(dfs) == 0:
-            df = pd.DataFrame(columns=['covariate', 'pcr', 'permuted', 'n_covariates'])
+            df = pd.DataFrame(columns=['covariate', 'pcr', 'permuted', 'n_covariates', 'non_perm_z_score'])
         else:
             df = pd.concat(dfs, ignore_index=True)
         df.to_csv(output.tsv, sep='\t', index=False)

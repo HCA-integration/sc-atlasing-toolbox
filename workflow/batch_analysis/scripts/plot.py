@@ -43,6 +43,7 @@ g.set(title=f'PCR of covariates for: {dataset} {file_id}')
 grouped_by_covariate = df.groupby('covariate', sort=False)
 bar_labels = grouped_by_covariate['pcr'].first().round(2).astype(str).str.cat(
     grouped_by_covariate['n_covariates'].first(),
+    grouped_by_covariate['non_perm_z_score'].first(),
     sep=', '
 )
 g.bar_label(
