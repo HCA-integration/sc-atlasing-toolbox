@@ -41,37 +41,73 @@ adata = read_anndata(
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
 
-# match marker genes and var_names
-logging.info(pformat({k: len(v) for k, v in markers.items()}))
-markers = {
-    k: adata.var[adata.var_names.isin(v)].index.to_list()
-    for k, v in markers.items()
-}
-logging.info(pformat({k: len(v) for k, v in markers.items()}))
+genes_to_plot = []
+gene_sets = {'markers': {}}
+if isinstance(markers, list):
+    gene_sets['markers']['generic'] = markers
+    genes_to_plot.append(markers)
+elif isinstance(markers, dict):
+    for k, v in markers.items():
+        if isinstance(v, list):
+            gene_sets['markers'][k] = v  # collect in generic markers set
+            genes_to_plot.extend(v)
+        elif isinstance(v, dict):
+            gene_sets[k] = v
+            all_genes = [element for sublist in v.values() for element in sublist]
+            genes_to_plot.extend(all_genes)
+        else:
+            raise ValueError(f'Invalid markers format\n{k}: {v}')
+else:
+    raise ValueError(f'Invalid markers format\n{markers}')
+
+if not gene_sets['markers']:
+    del gene_sets['markers']
 
 # subset to genes for plotting
-genes_to_plot = list(set([element for sublist in markers.values() for element in sublist]))
-logging.info(f'Load {len(genes_to_plot)} genes to memory...')
-adata = adata[:, adata.var_names.isin(genes_to_plot)].copy()
+genes_to_plot = list(set(genes_to_plot))
+logging.info(f'{len(genes_to_plot)} genes requested...')
+gene_mask = adata.var_names.isin(genes_to_plot)
+logging.info(f'{gene_mask.sum()} genes found overlapping...')
+adata = adata[:, gene_mask].copy()
+
+logging.info('Load genes to memory...')
 adata = dask_compute(adata)
 adata = ensure_dense(adata)
 logging.info(adata.__str__())
 
-# if no cells or genes to plot, save empty plots
 if min(adata.shape) == 0:
-    plt.savefig(f'{output_png}/split=0.png')
+    logging.info('No data, exit...')
+    print(adata, flush=True)
     exit()
 
-# partition groups to make plots visualisable
-groups = adata.obs[group_key].unique().to_numpy()
-n_splits = max(1, int(len(groups) / n_groups_per_split))
-splits = np.array_split(groups, n_splits)
+for set_name, gene_set in gene_sets.items():
+    logging.info(f'Processing gene set "{set_name}"...')
+    # match marker genes and var_names
+    print(
+        pformat({k: len(v) for k, v in gene_set.items()}),
+        flush=True
+    )
+    gene_set = {
+        k: adata.var_names[adata.var_names.isin(v)].to_list()
+        for k, v in gene_set.items()
+    }
+    
+    # remove groups without matching genes
+    gene_set = {k: v for k, v in gene_set.items() if len(v) > 0}
+    print(
+        f'matching genes:\n',
+        pformat({k: len(v) for k, v in gene_set.items()}),
+        flush=True
+    )
+    
+    if not gene_set:
+        logging.info(f'No genes in marker gene set {set_name}, skipping...\n{gene_set}')
+        continue
 
-for i, partition_groups in enumerate(splits):
-    logging.info(f'Dotplot for partition {i}...')
+    logging.info('Dotplot...')
     sc.pl.dotplot(
-        adata[adata.obs[group_key].isin(partition_groups)],
-        markers,
+        adata,
+        gene_set,
         groupby=group_key,
         use_raw=False,
         standard_scale='var',
@@ -79,8 +115,4 @@ for i, partition_groups in enumerate(splits):
         show=False,
         swap_axes=False,
     )
-    plt.savefig(
-        f'{output_png}/split={i}.png',
-        dpi=100,
-        bbox_inches='tight'
-    )
+    plt.savefig(f'{output_png}/{set_name}.png', dpi=100, bbox_inches='tight')
