@@ -46,13 +46,14 @@ with open(setup_file, 'r') as f:
 n_permute = snakemake.params.get('n_permute', 0)
 print(f'n_permute: {n_permute}', flush=True)
 
-if sample_key == covariate:
-    print('Sample key is the same as covariate, skipping permutation...', flush=True)
-    n_permute = 0
-
 # PCR for permuted covariates
 print(f'Permutate covariate: "{covariate}"...', flush=True)
 perm_covariates = []
+
+if covariate == sample_key:
+    print('Sample key is the same as covariate, skipping permutation...', flush=True)
+    n_permute = 0
+
 for i in range(n_permute):
     # aggregate and permutate covariate
     cov_per_sample = adata.obs.groupby(sample_key, observed=True).agg({covariate: 'first'})
@@ -81,7 +82,7 @@ def compute_pcr(adata, covariate, is_permuted, n_threads=1):
         n_threads=n_threads,
     )
     print(f'covariate: {covariate}, pcr: {pcr}', flush=True)
-    return (covariate, pcr, is_permuted)
+    return (covariate, is_permuted, pcr)
 
 
 with ProcessPoolExecutor(max_workers=n_threads) as executor:
@@ -100,9 +101,18 @@ with ProcessPoolExecutor(max_workers=n_threads) as executor:
         )
     )
 
+if covariate == sample_key:
+    # when covariate is the same as the group variable, save computations and impute same value as covariate score
+    perm_score = (
+        f'{covariate}-0',
+        True,
+        pcr_scores[0][2]
+    )
+    pcr_scores.append(perm_score)
+
 df = pd.DataFrame.from_records(
     pcr_scores,
-    columns=['covariate', 'pcr', 'permuted'],
+    columns=['covariate', 'permuted', 'pcr'],
 )
 
 covariate = df['covariate'].str.split('-', expand=True)[0].astype('category')
