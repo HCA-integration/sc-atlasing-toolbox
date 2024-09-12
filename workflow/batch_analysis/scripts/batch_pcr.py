@@ -115,11 +115,13 @@ df = pd.DataFrame.from_records(
     columns=['covariate', 'permuted', 'pcr'],
 )
 
-covariate = df['covariate'].str.split('-', expand=True)[0].astype('category')
+# calculate summary stats
+df['covariate'] = df['covariate'].str.split('-', expand=True)[0].astype('category')
+df['n_covariates'] = n_covariate
+df['perm_mean'] = df.loc[df['permuted'], 'pcr'].mean()
+df['perm_std'] = df.loc[df['permuted'], 'pcr'].std()
+df['z_score'] = (df['pcr'] - df['perm_mean']) / df['perm_std']
 
-df['n_covariates'] = f'n={n_covariate}'
-df['covariate'] = covariate
-df['non_perm_z_score'] = np.nan # init z-score column with NaNs
 
 if (~df['permuted']).sum() != 1:
     print(
