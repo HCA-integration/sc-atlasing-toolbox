@@ -131,8 +131,9 @@ else:
                 batch_key=args.get('batch_key'),
             )
             
-            if _ad.n_obs < 2:
-                logging.info(f'Group={group} has less than 2 cells, skipping...')
+            min_cells = 10
+            if _ad.n_obs < min_cells:
+                logging.info(f'Group={group} has fewer than {min_cells} cells, skipping...')
                 continue
             
             if USE_GPU:
