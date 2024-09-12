@@ -6,8 +6,9 @@ Highly variable gene selection
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
+from tqdm import tqdm
 import warnings
-warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
+warnings.filterwarnings("ignore")
 from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
 import anndata as ad
@@ -126,14 +127,11 @@ else:
         
         for group in tqdm(adata.obs['union_over'].unique()):
             _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
-            logging.info(f'{_ad.n_obs} cells, {_ad.n_vars} genes')
-            
-            logging.info('Filter genes...')
             _ad = filter_genes(
                 _ad,
                 min_cells=1,
                 batch_key=args.get('batch_key'),
-            )
+            ).copy()
             
             min_cells = 10
             if _ad.n_obs < min_cells:
@@ -143,7 +141,6 @@ else:
             if USE_GPU:
                 sc.get.anndata_to_GPU(_ad)
 
-            logging.info(f'Select features for group={group} with arguments: {args}...')
             sc.pp.highly_variable_genes(_ad, **args)
             
             # get union of gene sets
