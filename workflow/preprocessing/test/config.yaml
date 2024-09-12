@@ -51,6 +51,7 @@ DATASETS:
         - counts
         - normalize
         - highly_variable_genes
+        - extra_hvgs
         - pca
         - neighbors
       colors:
