@@ -96,7 +96,7 @@ with ProcessPoolExecutor(max_workers=n_threads) as pool:
     for future in as_completed(futures):
         completed_futures += 1
         pcr_scores.append(future.result())
-        print(f'{completed_futures}/{total_futures} covariates completed', flush=True)
+        print(f'{completed_futures}/{total_futures} completed for {covariate}', flush=True)
 
 # Set permuted score when covariate is the same as the group variable
 if covariate == sample_key:
