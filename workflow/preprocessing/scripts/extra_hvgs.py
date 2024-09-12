@@ -114,13 +114,17 @@ else:
         adata = adata[:, ~adata.var_names.isin(remove_genes)].copy()
 
     adata.var['extra_hvgs'] = False
-    # union over groups
+    
     if union_over is not None:
+        logging.info(f'Compute highly variable genes per {union_over} with args={args}...')
         if isinstance(union_over, str):
             union_over = [union_over]
-        adata.obs['union_over'] = adata.obs[union_over].astype(str).apply(lambda x: '--'.join(x), axis=1)
-        for group in adata.obs['union_over'].unique():
-            logging.info(f'Subset to group={group}...')
+        adata.obs['union_over'] = adata.obs[union_over] \
+            .astype(str) \
+            .apply(lambda x: '--'.join(x), axis=1) \
+            .astype('category')
+        
+        for group in tqdm(adata.obs['union_over'].unique()):
             _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
             logging.info(f'{_ad.n_obs} cells, {_ad.n_vars} genes')
             
