@@ -155,9 +155,9 @@ else:
         sc.pp.highly_variable_genes(adata, **args)
         adata.var['extra_hvgs'] = adata.var['highly_variable']
 
+    # set extra_hvgs in full dataset
     var['extra_hvgs'] = False
     var.loc[adata.var_names, 'extra_hvgs'] = adata.var['extra_hvgs']
-    adata = ad.AnnData(var=var, uns=adata.uns)
 
     # add user-provided genes
     if extra_genes:
@@ -171,6 +171,9 @@ else:
         else:
             logging.info(f'Add {len(extra_genes)} user-provided genes...')
             var.loc[extra_genes, 'extra_hvgs'] = True
+    
+    # recreate AnnData object for full feature space
+    adata = ad.AnnData(var=var, uns=adata.uns)
 
 logging.info(f'Write to {output_file}...')
 write_zarr_linked(
