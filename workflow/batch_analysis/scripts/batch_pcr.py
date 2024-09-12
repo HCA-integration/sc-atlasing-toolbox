@@ -4,8 +4,7 @@ import numpy as np
 import scib
 from anndata import AnnData
 import yaml
-from concurrent.futures import ProcessPoolExecutor
-# from multiprocessing.pool import ThreadPool
+from concurrent.futures import ProcessPoolExecutor, as_completed
 try:
     from sklearnex import patch_sklearn
     patch_sklearn()
@@ -37,8 +36,7 @@ if sample_key is None or sample_key == 'None':
 if not isinstance(adata.obsm['X_pca'], np.ndarray):
     adata.obsm['X_pca'] = adata.obsm['X_pca'].toarray()
 
-
-print('Read covariate setup...', flush=True)
+# read setup file
 with open(setup_file, 'r') as f:
     setup = yaml.safe_load(f)
 # n_permute = setup['n_permute']
@@ -46,14 +44,14 @@ with open(setup_file, 'r') as f:
 n_permute = snakemake.params.get('n_permute', 0)
 print(f'n_permute: {n_permute}', flush=True)
 
-# PCR for permuted covariates
-print(f'Permutate covariate: "{covariate}"...', flush=True)
+# Permute covariates
 perm_covariates = []
 
 if covariate == sample_key:
     print('Sample key is the same as covariate, skipping permutation...', flush=True)
     n_permute = 0
 
+series_dict = {}
 for i in range(n_permute):
     # aggregate and permutate covariate
     cov_per_sample = adata.obs.groupby(sample_key, observed=True).agg({covariate: 'first'})
@@ -61,48 +59,48 @@ for i in range(n_permute):
     
     # apply permutation
     covariate_perm = f'{covariate}-{i}'
-    adata.obs[covariate_perm] = adata.obs[sample_key].map(cov_map)
+    series_dict[covariate_perm] = adata.obs[sample_key].map(cov_map)
     perm_covariates.append(covariate_perm)
 
-# defragment adata.obs
-adata.obs = adata.obs.copy()
+# concat new columns to adata to avoid fragmentation
+adata.obs = pd.concat([adata.obs, pd.DataFrame(series_dict)], axis=1).copy()
 
-# PC regression for all covariates
+# Determine all covariates
 covariates = [covariate]+perm_covariates
 
-
-def compute_pcr(adata, covariate, is_permuted, n_threads=1):
-    print(f'PCR for covariate: "{covariate}"', flush=True)
-    pcr = scib.me.pcr(
-        adata,
-        covariate=covariate,
-        recompute_pca=False,
-        verbose=False,
-        linreg_method='numpy',
-        n_threads=n_threads,
-    )
-    print(f'covariate: {covariate}, pcr: {pcr}', flush=True)
-    return (covariate, is_permuted, pcr)
-
-
-with ProcessPoolExecutor(max_workers=n_threads) as executor:
-# with ThreadPool(processes=n_threads) as pool:
-    chunk_size = max(1, 2 * int(n_permute / n_threads))
-    print(f'chunk_size: {chunk_size}', flush=True)
-    n_covariates = len(covariates)
-    pcr_scores = list(
-        executor.map(
-            compute_pcr,
-            [adata] * n_covariates,
-            covariates,
-            [x in perm_covariates for x in covariates],
-            # [chunk_size] * n_covariates,
-            chunksize=chunk_size,
+with ProcessPoolExecutor(max_workers=n_threads) as pool:
+    def compute_pcr(adata, covariate, is_permuted, n_threads=1):
+        pcr = scib.me.pcr(
+            adata,
+            covariate=covariate,
+            recompute_pca=False,
+            verbose=False,
+            linreg_method='numpy',
+            n_threads=n_threads,
         )
-    )
+        return (covariate, is_permuted, pcr)
 
+    futures = [
+        pool.submit(
+            compute_pcr,
+            adata,
+            covariate=c,
+            is_permuted=c in perm_covariates
+        )
+        for c in covariates
+    ]
+    pcr_scores = []
+    completed_futures = 0
+    total_futures = len(futures)
+    
+    for future in as_completed(futures):
+        completed_futures += 1
+        pcr_scores.append(future.result())
+        print(f'{completed_futures}/{total_futures} covariates completed', flush=True)
+
+# Set permuted score when covariate is the same as the group variable
 if covariate == sample_key:
-    # when covariate is the same as the group variable, save computations and impute same value as covariate score
+    # permutations wouln't change values in this case, impute same value as covariate score
     perm_score = (
         f'{covariate}-0',
         True,
