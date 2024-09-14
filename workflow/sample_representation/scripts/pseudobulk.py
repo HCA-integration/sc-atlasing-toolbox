@@ -19,13 +19,15 @@ bulk_by = snakemake.params.get('bulk_by')
 dataset = snakemake.wildcards.file_id
 
 logging.info(f'Read "{input_zarr}"...')
+n_obs = read_anndata(input_zarr, obs='obs').n_obs
 adata = read_anndata(
     input_zarr,
     X='X',
     obs='obs',
     var='var',
-    backed=False,
-    dask=False,
+    backed=n_obs > 1e6,
+    dask=n_obs > 1e6,
+    stride=int(n_obs / 5),
 )
 
 # normalize counts
