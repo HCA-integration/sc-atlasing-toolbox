@@ -122,7 +122,7 @@ def filter_genes(adata, batch_key=None, **kwargs):
     return adata
 
 
-def get_pseudobulks(adata, group_key, agg='sum'):
+def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
     from dask import array as da
     
     def aggregate(x, agg):
@@ -133,7 +133,7 @@ def get_pseudobulks(adata, group_key, agg='sum'):
         else:
             raise ValueError(f'invalid aggregation method "{agg}"')
     
-    def _get_pseudobulk_matrix(adata, group_key, agg):
+    def _get_pseudobulk_matrix(adata, group_key, agg, dtype=dtype):
         X = adata.X
         value_counts = adata.obs[group_key].value_counts()
         
@@ -141,25 +141,41 @@ def get_pseudobulks(adata, group_key, agg='sum'):
         value_counts = value_counts[value_counts >= 2]
         groups = value_counts.index
         
-        print(f'Aggregate {len(groups)} pseudobulks...')
+        print(f'Aggregate {len(groups)} pseudobulks...', flush=True)
         
         if isinstance(X, da.Array):
+            from dask import config as dask_config
             from tqdm.dask import TqdmCallback
             
-            # sort cells by group_key
-            df = adata.obs.reset_index(drop=True).query(f'{group_key} in @groups')
+            df = adata.obs[[group_key]].reset_index(drop=True).query(f'{group_key} in @groups')
             df[group_key] = pd.Categorical(df[group_key], categories=groups, ordered=True)
-            sorted_groups = df.sort_values(by=group_key)
+            # X = X[df.index, :] # subset to dask array to filtered groups
             
-            # sort dask array by group_key and rechunk by size of groups
-            # the result should be a dask chunk per pseudobulk group
-            X = X[sorted_groups.index.values].rechunk((tuple(value_counts.values), -1))
-            pseudobulks = X.map_blocks(lambda x: aggregate(x, agg))
+            # # determine shuffling index
+            # obs_chunks = X.chunks[0]
+            # df['dask_chunk'] = np.repeat(np.arange(len(obs_chunks)), obs_chunks)
+            # df['chunk_reorder'] = np.empty(df.shape[0], dtype=int)
+            # df.loc[df[group_key].sort_values().index, 'chunk_reorder'] = np.arange(df.shape[0], dtype=int)
+            # per_chunk_order = df.groupby('dask_chunk')['chunk_reorder'].apply(list).tolist()
             
-            miniters = max(10, len(pseudobulks.dask) // 100)
-            mininterval = min(max(1, len(groups) / 500), 10)
-            with TqdmCallback(desc="Aggregate Dask array", miniters=miniters, mininterval=mininterval):
-                pseudobulks = pseudobulks.compute()
+            # # shuffle data by group_key
+            # X = shuffle(X, indexer=per_chunk_order, axis=0)
+            # X = X.rechunk((tuple(value_counts.values), -1))
+
+            print(f'Sort and rechunk dask array by "{group_key}"...', flush=True)
+            with dask_config.set(**{'array.slicing.split_large_chunks': False}):
+                # sort dask array by group_key and rechunk by size of groups
+                # the result should be a dask chunk per pseudobulk group
+                X = X[df.sort_values(by=group_key).index.values] # also subsets for exclued groups
+                X = X.rechunk((tuple(value_counts.values), -1))
+            
+            print(f'Compute dask array...', flush=True)
+            with TqdmCallback(
+                bar_format='{percentage:3.0f}% |{bar}| {elapsed}<{remaining}\n',
+                mininterval=10,
+                delay=10,
+            ):
+                pseudobulks = X.map_blocks(lambda x: aggregate(x, agg), dtype=dtype).compute()
 
         elif isinstance(X, (scipy.sparse.spmatrix, np.ndarray)):
             import scanpy as sc
