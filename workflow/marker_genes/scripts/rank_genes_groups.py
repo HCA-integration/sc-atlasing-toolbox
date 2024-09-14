@@ -25,6 +25,12 @@ sample_key = snakemake.params.sample
 args = snakemake.params.get('args', {})
 pseudobulk = sample_key is not None
 
+# determine how to read the data
+obs = read_anndata(input_file, obs='obs').obs[[group_key, sample_key]]
+n_obs = obs.shape[0]
+n_groups = obs.drop_duplicates().nunique()
+dask = pseudobulk or n_obs > 1e6 or n_groups > 5e4
+
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
     input_file,
@@ -32,8 +38,9 @@ adata = read_anndata(
     obs='obs',
     var='var',
     uns='uns',
-    # dask=pseudobulk,
-    # backed=pseudobulk,
+    dask=dask,
+    backed=dask,
+    stride=int(n_obs / 5),
 )
 logging.info(adata.__str__())
 
@@ -43,8 +50,8 @@ logging.info(adata.__str__())
 
 # pseudobulk if sample key is set
 if pseudobulk:
-    logging.info(f'Creating pseudobulks for sample={sample_key} and group={group_key}...')
     adata.obs['pseudo_group'] = adata.obs[group_key].astype(str) + '_' + adata.obs[sample_key].astype(str)
+    logging.info(f'Creating pseudobulks for sample={sample_key} and group={group_key}...')
     adata = get_pseudobulks(adata, group_key='pseudo_group', agg='sum')
 
     # compute for all genes, because sample size is way more manageable
