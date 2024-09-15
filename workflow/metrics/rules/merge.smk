@@ -17,10 +17,11 @@ rule merge_metrics:
         wildcards_string=mcfg.get_wildcards(as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
     conda:
         get_env(config, 'scanpy')
-    localrule: True
     resources:
         mem_mb=1000,
         disk_mb=500
+    group:
+        'metrics_merge'
     script: '../scripts/merge.py'
 
 
@@ -39,6 +40,8 @@ use rule merge_metrics as merge_metrics_per_dataset with:
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True, wildcard_names=metric_wildcards),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='dataset', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
+    group:
+        'metrics_merge'
 
 
 use rule merge_metrics as merge_metrics_per_batch with:
@@ -56,6 +59,8 @@ use rule merge_metrics as merge_metrics_per_batch with:
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True, wildcard_names=metric_wildcards),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='batch', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
+    group:
+        'metrics_merge'
 
 
 use rule merge_metrics as merge_metrics_per_label with:
@@ -73,6 +78,8 @@ use rule merge_metrics as merge_metrics_per_label with:
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True, wildcard_names=metric_wildcards),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='label', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
+    group:
+        'metrics_merge'
 
 
 use rule merge_metrics as merge_metrics_per_file with:
@@ -90,6 +97,8 @@ use rule merge_metrics as merge_metrics_per_file with:
     params:
         wildcards=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True, wildcard_names=metric_wildcards),
         wildcards_string=lambda wildcards: mcfg.get_wildcards(subset_dict=wildcards, exclude='file_id', as_df=True, wildcard_names=metric_wildcards).to_string(index=False),
+    group:
+        'metrics_merge'
 
 
 rule merge_metrics_all:
