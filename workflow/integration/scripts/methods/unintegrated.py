@@ -35,7 +35,6 @@ files_to_keep = ['obsm', 'uns']
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
     sc.pp.pca(adata)
-    files_to_keep.extend(['varm'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 
 logging.info(adata.__str__())

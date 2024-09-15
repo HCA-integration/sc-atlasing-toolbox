@@ -88,26 +88,29 @@ if 'color' in params:
                 # adata.obs[color] = column.codes if len(column.categories) > 102 else column
     del params['color']
 
-
-# subset to requested genes
-adata = adata[:, adata.var_names.isin(colors)].copy()
-dask_compute(adata, layers='X')
-
-# shuffle cells
-adata = adata[adata.obs.sample(frac=1).index].copy()
-
-# remove outliers
+logging.info('Remove outliers...')
 outlier_factor = params.pop('outlier_factor', 0)
-
 adata = remove_outliers(adata, 'max', factor=outlier_factor, rep=basis)
 adata = remove_outliers(adata, 'min', factor=outlier_factor, rep=basis)
 
+logging.info('Shuffle cells...')
+n_cells = adata.n_obs # save original number of cells
+if n_cells > 1e6:
+    adata = adata[adata.obs.sample(frac=0.7).index]
+
+logging.info('Subset to requested genes...')
+adata = adata[:, adata.var_names.isin(colors)].copy()
+if adata.var_names.isin(colors).sum() > 0:
+    dask_compute(adata, layers='X')
+
 # set minimum point size
-default_size = 120_000 / adata.n_obs
+default_size = 200_000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
+params['size'] = np.min([np.max([size, 0.4, default_size]), 200])
+
+logging.info('Parameters:\n' + pformat(params))
 
 for color in tqdm(set(colors)):
     logging.info(f'Plot color "{color}"...')
@@ -133,7 +136,7 @@ for color in tqdm(set(colors)):
             palette=palette,
             **params
         )
-        fig.suptitle(f'{wildcards_string}\nn={adata.n_obs}')
+        fig.suptitle(f'{wildcards_string}\nn={n_cells}')
         legend = fig.get_axes()[0].get_legend()
         if palette == 'turbo':
             legend.remove()

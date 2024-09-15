@@ -22,7 +22,7 @@ use rule barplot from plots as metrics_barplot with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics_plots'
+        'metrics_merge'
 
 
 use rule barplot from plots as metrics_barplot_per_dataset with:
@@ -39,7 +39,7 @@ use rule barplot from plots as metrics_barplot_per_dataset with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics_plots'
+        'metrics_merge'
 
 
 use rule barplot from plots as metrics_barplot_per_file with:
@@ -56,7 +56,7 @@ use rule barplot from plots as metrics_barplot_per_file with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics_plots'
+        'metrics_merge'
 
 
 # swarm plots
@@ -75,7 +75,7 @@ use rule swarmplot from plots as metrics_swarmplot with:
         title='Metrics',
         description=wildcards_to_str,
     group:
-        'metrics_plots'
+        'metrics_merge'
 
 
 use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
@@ -92,7 +92,7 @@ use rule swarmplot from plots as metrics_swarmplot_per_dataset with:
         description=wildcards_to_str,
         dodge=True,
     group:
-        'metrics_plots'
+        'metrics_merge'
 
 
 use rule swarmplot from plots as metrics_swarmplot_per_file with:
@@ -143,7 +143,8 @@ rule funkyheatmap:
         get_env(config, 'funkyheatmap')  # TODO: use post-deployment script https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#providing-post-deployment-scripts
     singularity:
         'docker://ghcr.io/dynverse/funky_heatmap:latest'
-    localrule: True
+    group:
+        'metrics_merge'
     script:
         '../scripts/plots/funkyheatmap.R'
 
@@ -162,6 +163,8 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         weight_batch=0.4,
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
+    group:
+        'metrics_merge'
 
 
 use rule funkyheatmap as funkyheatmap_per_batch with:
@@ -178,6 +181,8 @@ use rule funkyheatmap as funkyheatmap_per_batch with:
         weight_batch=0.4,
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
+    group:
+        'metrics_merge'
 
 
 use rule funkyheatmap as funkyheatmap_per_label with:
@@ -194,6 +199,8 @@ use rule funkyheatmap as funkyheatmap_per_label with:
         weight_batch=0.4,
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
+    group:
+        'metrics_merge'
 
 
 use rule funkyheatmap as funkyheatmap_per_file with:
@@ -210,6 +217,8 @@ use rule funkyheatmap as funkyheatmap_per_file with:
         weight_batch=0.4,
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
+    group:
+        'metrics_merge'
 
 
 rule funkyheatmap_standalone:
