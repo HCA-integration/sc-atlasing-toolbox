@@ -161,22 +161,49 @@ def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
             # # shuffle data by group_key
             # X = shuffle(X, indexer=per_chunk_order, axis=0)
             # X = X.rechunk((tuple(value_counts.values), -1))
-
+            
             print(f'Sort and rechunk dask array by "{group_key}"...', flush=True)
             with dask_config.set(**{'array.slicing.split_large_chunks': False}):
                 # sort dask array by group_key and rechunk by size of groups
                 # the result should be a dask chunk per pseudobulk group
                 X = X[df.sort_values(by=group_key).index.values] # also subsets for exclued groups
                 X = X.rechunk((tuple(value_counts.values), -1))
+                pseudobulks = X.map_blocks(lambda x: aggregate(x, agg), dtype=dtype)
+            # else:
+            #     import sparse
+            #
+            #     def sparse_indicator(groubpy):                
+            #         n = len(groubpy)
+            #         A = sparse.COO(
+            #             coords=[groubpy.cat.codes, np.arange(n)],
+            #             data=np.broadcast_to(1, n), # weight
+            #             shape=(len(groubpy.cat.categories), n)
+            #         )
+            #         return da.from_array(A)
+
+            #     print(f'Subset and convert dask array to Pydata sparse matrix...', flush=True)
+            #     with dask_config.set(**{'array.slicing.split_large_chunks': False}):
+            #         X = X.map_blocks(sparse.COO, dtype=dtype)
+            #     indicator_matrix = sparse_indicator(groubpy=adata.obs[group_key])
+
+            #     if agg == 'sum':
+            #         pseudobulks = indicator_matrix @ X
+            #     elif agg == 'mean':
+            #         _sum = indicator_matrix @ X
+            #         pseudobulks = _sum / _sum.sum(axis=1)
+            #     else:
+            #         raise ValueError(f'invalid aggregation method "{agg}"')
+                
+            #     pseudobulks = pseudobulks.map_blocks(lambda x: x.tocsr(), dtype=dtype)
             
-            print(f'Compute dask array...', flush=True)
+            print(f'Compute aggregation...', flush=True)
             with TqdmCallback(
                 bar_format='{percentage:3.0f}% |{bar}| {elapsed}<{remaining}\n',
                 mininterval=10,
                 delay=10,
             ):
-                pseudobulks = X.map_blocks(lambda x: aggregate(x, agg), dtype=dtype).compute()
-
+                pseudobulks = pseudobulks.compute()
+                        
         elif isinstance(X, (scipy.sparse.spmatrix, np.ndarray)):
             import scanpy as sc
 
@@ -186,7 +213,7 @@ def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
                 func=[agg]
             )
             pbulk_adata = pbulk_adata[pbulk_adata.obs[group_key].isin(groups)].copy()
-            pseudobulks = pbulk_adata.layers[agg]
+            pseudobulks = scipy.sparse.csr_matrix(pbulk_adata.layers[agg])
             groups = pbulk_adata.obs_names
             # miniters = max(10, len(value_counts) // 100)
             # pseudobulks = []
@@ -198,7 +225,7 @@ def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
         else:
             raise ValueError(f'invalid type "{type(x)}"')
         
-        return scipy.sparse.csr_matrix(pseudobulks), groups
+        return pseudobulks, groups
 
 
     pbulks, groups = _get_pseudobulk_matrix(adata, group_key=group_key, agg=agg)
