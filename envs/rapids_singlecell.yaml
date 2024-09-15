@@ -24,4 +24,5 @@ dependencies:
   - pip
   - pip:
     - torch
+    - harmonypy
     - rapids-singlecell
