@@ -149,7 +149,6 @@ def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
             
             df = adata.obs[[group_key]].reset_index(drop=True).query(f'{group_key} in @groups')
             df[group_key] = pd.Categorical(df[group_key], categories=groups, ordered=True)
-            # X = X[df.index, :] # subset to dask array to filtered groups
             
             # # determine shuffling index
             # obs_chunks = X.chunks[0]
