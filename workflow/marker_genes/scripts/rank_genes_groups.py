@@ -29,7 +29,7 @@ pseudobulk = sample_key is not None
 obs = read_anndata(input_file, obs='obs').obs[[group_key, sample_key]]
 n_obs = obs.shape[0]
 n_groups = obs.drop_duplicates().nunique()
-dask = pseudobulk or n_obs > 1e6 or n_groups > 5e4
+dask = pseudobulk or n_obs > 1e6 or n_groups > 1e5
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
