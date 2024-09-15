@@ -108,7 +108,9 @@ default_size = 200_000 / adata.n_obs
 size = params.get('size', default_size)
 if size is None:
     size = default_size
-params['size'] = np.min([np.max([size, 0.2, default_size]), 200])
+params['size'] = np.min([np.max([size, 0.4, default_size]), 200])
+
+logging.info('Parameters:\n' + pformat(params))
 
 for color in tqdm(set(colors)):
     logging.info(f'Plot color "{color}"...')
