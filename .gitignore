@@ -13,6 +13,7 @@ slurm*
 **out/
 .DS_Store
 *.h5ad
+*.zarr/
 .idea/
 
 # snakemake
