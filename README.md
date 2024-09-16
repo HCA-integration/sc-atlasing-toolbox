@@ -193,13 +193,13 @@ Call the pipeline with  `-n` for a dry run and `-q` for reduced output.
 Here's the command for running preprocessing, integration and metrics
 
 ```commandline
-bash run_example.sh preprocessing_all integrationg_all metrics_all -nq
+bash run_example.sh preprocessing_all integration_all metrics_all -nq
 ```
 
 If the dryrun was successful, you can let Snakemake compute the different steps of the workflow with e.g. 10 cores:
 
 ```commandline
-bash run_example.sh preprocessing_all integrationg_all metrics_all -c 10
+bash run_example.sh preprocessing_all integration_all metrics_all -c 10
 ```
 
 > You have now successfully called the example pipeline! :tada:
