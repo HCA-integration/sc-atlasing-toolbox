@@ -1,19 +1,6 @@
 import pandas as pd
 
 
-ALL_SLOTS = [
-    'X',
-    'layers',
-    'raw',
-    'obs',
-    'obsm',
-    'obsp',
-    'var',
-    'varm',
-    'varp',
-    'uns',
-]
-
 def get_same_columns(adatas):
     _ad1 = next(iter(adatas.values()))
     # collect obs columns that exist in all files

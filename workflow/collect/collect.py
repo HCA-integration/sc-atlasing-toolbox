@@ -6,7 +6,7 @@ import pandas as pd
 
 from utils.io import read_anndata, write_zarr_linked
 from utils.misc import dask_compute
-from collect_utils import get_same_columns, merge_df, ALL_SLOTS
+from collect_utils import get_same_columns, merge_df
 
 
 dataset = snakemake.wildcards.dataset
@@ -48,6 +48,8 @@ print('same slots:', same_obs_columns)
 # TODO: link slots with new slot names for merge_slots
 
 slots = dict()
+slot_link_map = dict()
+in_dir_map = dict()
 file_to_link = None
 
 for file_id, _ad in adatas.items():
@@ -58,6 +60,8 @@ for file_id, _ad in adatas.items():
 
     for slot_name in merge_slots:
         slot = _ad.__dict__.get(f'_{slot_name}')
+        update_slot_link_map = dict()
+
         if isinstance(slot, pd.DataFrame):
             slots[slot_name] = merge_df(
                 df_current=slot,
@@ -67,27 +71,36 @@ for file_id, _ad in adatas.items():
                 sep=sep,
                 obs_index_col=obs_index_col.get(file_id),
             )
+        elif slot_name == 'X':
+            if file_name.endswith('.zarr'):
+                update_slot_link_map[f'layers/{slot_name}{sep}{file_id}'] = f'{slot_name}'
+            else:
+                new_slot = {f'{slot_name}{sep}{file_id}': slot}
+                slots['layers'] = slots.get('layers', {}) | new_slot
         elif hasattr(slot, 'items'):
-            new_slot = {
-                f'{key}{sep}{file_id}': value
-                for key, value in slot.items()
-            }
-            slots[slot_name] = slots.get(slot_name, {}) | new_slot
-        elif slot_name in ['X', 'raw']:
-            new_slot = {
-                f'{slot_name}{sep}{file_id}': _ad.__dict__.get(f'_{slot_name}')
-            }
-            slots['layers'] = slots.get('layers', {}) | new_slot
+            if file_name.endswith('.zarr'):
+                update_slot_link_map = {
+                    f'{slot_name}/{key}{sep}{file_id}': f'{slot_name}/{key}'
+                    for key in slot.keys()
+                }
+            else:
+                new_slot = {
+                    f'{key}{sep}{file_id}': value
+                    for key, value in slot.items()
+                }
+                slots[slot_name] = slots.get(slot_name, {}) | new_slot
         else:
             raise NotImplementedError(f'Slot "{slot}" not supported')
+        
+        slot_link_map |= update_slot_link_map
+        in_dir_map |= {
+            f'{slot_name}/{key}': file_name for key in update_slot_link_map.keys()
+        }
 
 # deal with same slots
 files_to_keep = []
 if file_to_link:
-    files_to_keep = [
-        slot for slot in ALL_SLOTS
-        if slot not in same_slots
-    ]
+    files_to_keep = [slot for slot in slots]
 else:
     for slot_name in same_slots:
         slots[slot_name] = _ad.__dict__.get(f'_{slot_name}')
@@ -105,4 +118,6 @@ write_zarr_linked(
     in_dir=file_to_link,
     out_dir=output_file,
     files_to_keep=files_to_keep,
+    slot_map=slot_link_map,
+    in_dir_map=in_dir_map,
 )
