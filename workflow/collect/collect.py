@@ -3,8 +3,9 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import anndata as ad
 import pandas as pd
+from scipy.sparse import csr_matrix
 
-from utils.io import read_anndata, write_zarr_linked
+from utils.io import read_anndata, get_file_reader, write_zarr_linked
 from utils.misc import dask_compute
 from collect_utils import get_same_columns, merge_df
 
@@ -33,9 +34,20 @@ if len(files) == 1:
         adata.write_zarr(output_file)
     exit(0)
 
+def read_file(file, **kwargs):
+    if file.endswith('.zarr'):
+        kwargs.pop('X', None)
+        kwargs.pop('layers', None)
+        adata = read_anndata(file, **kwargs)
+        func, _ = get_file_reader(file)
+        layers_keys = func(file, 'r').get('layers', {}).keys()
+        adata.layers = {key: csr_matrix(adata.shape) for key in layers_keys}
+        return adata
+    return read_anndata(file, **kwargs)
+
 logging.info('Read AnnData objects...')
 adatas = {
-    file_id: read_anndata(file, **kwargs, dask=True, backed=True)
+    file_id: read_file(file, **kwargs, dask=True, backed=True)
     for file_id, file in files.items()
 }
 
@@ -55,7 +67,8 @@ file_to_link = None
 for file_id, _ad in adatas.items():
 
     file_name = files[file_id]
-    if file_name.endswith('.zarr'):
+    # intialize file_to_link
+    if not file_to_link and file_name.endswith('.zarr'):
         file_to_link = file_name
 
     for slot_name in merge_slots:
