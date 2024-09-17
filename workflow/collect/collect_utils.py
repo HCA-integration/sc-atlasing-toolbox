@@ -25,7 +25,7 @@ def get_same_columns(adatas):
     obs_to_remove = []
     for col in same_obs_columns:
         same_across = all(
-            _ad1.obs[col].equals(_ad.obs[col])
+            _ad1.obs[col].sort_values().equals(_ad.obs[col].sort_values())
             for _ad in adatas.values()
         )
         if not same_across:
@@ -53,8 +53,11 @@ def merge_df(
             }
         )
     
-    assert df_current.index.equals(df_previous.index), \
-        f'Index must be the same\n {df_current.index}\n{df_previous.index}'
+    idx_diff = df_current.index.difference(df_previous.index).sort_values()
+    n_diff = len(idx_diff)
+    assert n_diff == 0, \
+        f'Index must be the same\n {n_diff} differing indices: {idx_diff}\n' \
+        f'current index: {df_current.index.sort_values()} \nprevious index: {df_previous.index.sort_values()}'
     unique_columns = [col for col in df_current.columns if col not in same_columns]
     df_current = df_current[unique_columns].rename(
         columns={col: f'{col}{sep}{file_id}' for col in unique_columns}
