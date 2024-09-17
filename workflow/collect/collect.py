@@ -13,10 +13,15 @@ dataset = snakemake.wildcards.dataset
 files = snakemake.input
 output_file = snakemake.output.zarr
 sep = snakemake.params.get('sep', '--')
+obs_index_col = snakemake.params.get('obs_index_col', {})
 same_slots = snakemake.params.get('same_slots', [])
 merge_slots = snakemake.params.get('merge_slots', [])
 kwargs = {k: k for k in same_slots+merge_slots}
 
+# parse obs index
+if isinstance(obs_index_col, str):
+    obs_index_col = {file_id: obs_index_col for file_id in files}
+assert isinstance(obs_index_col, dict), 'obs_index_col must be a dict'
 
 if len(files) == 1:
     logging.info('Single file, write unmodified...')
@@ -60,6 +65,7 @@ for file_id, _ad in adatas.items():
                 df_previous=slots.get(slot_name),
                 same_columns=same_obs_columns,
                 sep=sep,
+                obs_index_col=obs_index_col.get(file_id),
             )
         elif hasattr(slot, 'items'):
             new_slot = {

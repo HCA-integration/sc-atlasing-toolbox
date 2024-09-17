@@ -3,11 +3,11 @@ images: test/images
 
 
 DATASETS:
-  Lee2020:
+  SchulteSchrepping2020:
     input:
       collect:
-        file_1: test/input/load_data/harmonize_metadata/Lee2020.zarr
-        file_2: test/input/load_data/harmonize_metadata/Lee2020.zarr
+        file_1: test/input/load_data/download/SchulteSchrepping2020.h5ad
+        file_2: test/input/load_data/harmonize_metadata/SchulteSchrepping2020_local.zarr
     collect:
       same_slots:
         - X
@@ -15,6 +15,8 @@ DATASETS:
       merge_slots:
         - obs
         - obsm
+      obs_index_col:
+        file_2: barcode
   test:
     input:
       collect:

@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 ALL_SLOTS = [
     'X',
     'layers',
@@ -43,7 +44,11 @@ def merge_df(
     df_previous,
     same_columns,
     sep='_',
+    obs_index_col=None,
 ):
+    if obs_index_col is not None:
+        assert obs_index_col in df_current.columns, f'Index column "{obs_index_col}" not found for {file_id}\n{df_current}'
+        df_current = df_current.set_index(obs_index_col)
     if df_previous is None:
         return df_current.rename(
             columns={
