@@ -14,7 +14,7 @@ def get_majority_reference(df, reference_key, query_key, **kwargs):
     map_majority = pd.crosstab(df[reference_key], df[query_key], **kwargs).idxmax(axis=0)
     return pd.Categorical(
         df[query_key].map(map_majority),
-        categories=map_majority.unique(),
+        categories=map_majority.dropna().unique(),
     )
 
 def get_majority_consensus(df, columns, new_key='majority_consensus'):
@@ -27,7 +27,7 @@ def get_majority_consensus(df, columns, new_key='majority_consensus'):
     
     check_same_categories(df, columns)
     
-    categories = reduce(pd.Index.union, [df[col].cat.categories for col in columns])
+    categories = reduce(pd.Index.union, [df[col].cat.categories.dropna() for col in columns])
     cat_dtype = pd.CategoricalDtype(categories=categories)
     df_cat = df[columns].astype(cat_dtype).apply(lambda x: x.cat.codes)
     
@@ -68,7 +68,6 @@ if __name__ == '__main__':
     output_plots.mkdir(parents=True, exist_ok=True)
     majority_reference = snakemake.params.get('majority_reference')
     majority_consensus = snakemake.params.get('majority_consensus')
-
 
     logging.info('Read adata...')
     adata = read_anndata(input_file, obs='obs')
