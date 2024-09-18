@@ -5,8 +5,8 @@ rule majority_voting:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
         plots=directory(mcfg.image_dir / f'{paramspace.wildcard_pattern}'),
     params:
-        majority_reference=lambda wildcards: mcfg.get_from_parameters(wildcards, 'majority_reference', default={}),
-        majority_consensus=lambda wildcards: mcfg.get_from_parameters(wildcards, 'majority_consensus', default={}),
+        majority_reference=lambda wildcards: mcfg.get_from_parameters(wildcards, 'majority_reference'),
+        majority_consensus=lambda wildcards: mcfg.get_from_parameters(wildcards, 'majority_consensus'),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
