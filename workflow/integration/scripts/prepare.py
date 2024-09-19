@@ -89,7 +89,7 @@ slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
-    layer_key='norm_counts',
+    layer_key='normcounts',
     var_column=var_mask,
     new_var_column='integration_features',
     files_to_keep=files_to_keep,
@@ -101,7 +101,7 @@ adata_norm, files_to_link, slot_map = read_and_subset(
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
-    layer_key='raw_counts',
+    layer_key='counts',
     var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
@@ -127,8 +127,8 @@ if input_file.endswith('.h5ad'):
         obsp=adata.obsp,
         uns=adata.uns,
         layers={
-            'norm_counts': adata_norm.X,
-            'raw_counts': adata_raw.X,
+            'normcounts': adata_norm.X,
+            'counts': adata_raw.X,
         },
     )
     files_to_keep.append('X')
@@ -141,8 +141,8 @@ elif input_file.endswith('.zarr'):
         obsp=adata_norm.obsp,
         var=adata_norm.var,
         layers={
-            'norm_counts': adata_norm.X,
-            'raw_counts': adata_raw.X,
+            'normcounts': adata_norm.X,
+            'counts': adata_raw.X,
         },
         uns=adata_norm.uns,
     )
@@ -151,10 +151,10 @@ else:
 
 # # preprocess if missing
 # if recompute_pca or 'X_pca' not in adata.obsm:
-#     dask_compute(adata, layers=['norm_counts'], verbose=True)
+#     dask_compute(adata, layers=['normcounts'], verbose=True)
 #     logging.info('Compute PCA...')
 #     import scanpy
-#     scanpy.pp.pca(adata, layer='norm_counts', mask_var='highly_variable')
+#     scanpy.pp.pca(adata, layer='normcounts', mask_var='highly_variable')
 #     files_to_keep.extend(['obsm', 'uns'])
 
 # try:
@@ -181,7 +181,7 @@ for label_key in label_keys:
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())
-slot_map |= {'X': 'layers/norm_counts'}
+slot_map |= {'X': 'layers/normcounts'}
 write_zarr_linked(
     adata,
     input_file,
@@ -189,6 +189,6 @@ write_zarr_linked(
     files_to_keep=files_to_keep,
     slot_map=slot_map,
     in_dir_map={
-        'layers/norm_counts': output_file
+        'layers/normcounts': output_file
     },
 )

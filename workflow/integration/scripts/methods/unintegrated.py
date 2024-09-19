@@ -15,7 +15,7 @@ params = snakemake.params
 
 adata = read_anndata(
     input_file,
-    X='layers/norm_counts',
+    X='layers/normcounts',
     obs='obs',
     var='var',
     obsp='obsp',
@@ -59,5 +59,5 @@ write_zarr_linked(
     input_file,
     output_file,
     files_to_keep=files_to_keep,
-    slot_map={'X': 'layers/norm_counts'},
+    slot_map={'X': 'layers/normcounts'},
 )
