@@ -14,15 +14,15 @@ dataset = snakemake.wildcards.dataset
 files = snakemake.input
 output_file = snakemake.output.zarr
 sep = snakemake.params.get('sep', '--')
-obs_index_col = snakemake.params.get('obs_index_col', {})
+obs_index_col_map = snakemake.params.get('obs_index_col', {})
 same_slots = snakemake.params.get('same_slots', [])
 merge_slots = snakemake.params.get('merge_slots', [])
 kwargs = {k: k for k in same_slots+merge_slots}
 
 # parse obs index
-if isinstance(obs_index_col, str):
-    obs_index_col = {file_id: obs_index_col for file_id in files}
-assert isinstance(obs_index_col, dict), 'obs_index_col must be a dict'
+if isinstance(obs_index_col_map, str):
+    obs_index_col_map = {file_id: obs_index_col_map for file_id in files}
+assert isinstance(obs_index_col_map, dict), 'obs_index_col_map must be a dict'
 
 if len(files) == 1:
     logging.info('Single file, write unmodified...')
@@ -52,7 +52,15 @@ adatas = {
 }
 
 if 'obs' in merge_slots:
+    for file_id, _ad in adatas.items():
+        obs_index_column = obs_index_col_map.get(file_id)
+        if obs_index_column is not None:
+            logging.info(f'Set obs index "{obs_index_column}" for file_id={file_id}...')
+            assert obs_index_column in _ad.obs.columns, \
+                f'Index column "{obs_index_column}" not found for {file_id}\n{_ad.obs}'
+            adatas[file_id].obs = _ad.obs.set_index(obs_index_column)
     same_obs_columns = get_same_columns(adatas)
+    logging.info(f'Same columns: {same_obs_columns}')
 else:
     same_obs_columns = []
 print('same slots:', same_obs_columns)
@@ -82,7 +90,6 @@ for file_id, _ad in adatas.items():
                 df_previous=slots.get(slot_name),
                 same_columns=same_obs_columns,
                 sep=sep,
-                obs_index_col=obs_index_col.get(file_id),
             )
         elif slot_name == 'X':
             if file_name.endswith('.zarr'):
