@@ -1,77 +1,20 @@
 output_dir: test/out
 images: test/images
 
-resources:
-  cpu:
-    partition: cpu_p
-    qos: icb
-    gpu: 0
-  gpu:
-    partition: gpu_p
-    qos: gpu
-    gpu: 1
-
-defaults:
-  label_transfer:
-    celltypist:
-      - Healthy_COVID19_PBMC
-      - Immune_All_Low
-  datasets:
-    - test
 
 DATASETS:
-  Lee2020:
-    input:
-      label_transfer: test/out/load_data/filtered/Lee2020.h5ad
-    adata_file: test/out/load_data/filtered/Lee2020.h5ad
-    label: cell_type
-    label_transfer:
-      celltypist:
-        - Healthy_COVID19_PBMC
-  blood:
-    input:
-      label_transfer: test/out/load_data/merged/organ/blood.h5ad
-    adata_file: test/out/load_data/merged/organ/blood.h5ad
-    label: cell_type
-    label_transfer:
-      celltypist:
-        - Healthy_COVID19_PBMC
   test:
     input:
-      label_transfer: ../../data/pbmc68k.h5ad
-    adata_file: ../../data/pbmc68k.h5ad
-    label: bulk_labels
-
-### new config
-
-# defaults:
-#   label_transfer:
-#     methods:
-#       celltypist:
-#         - Healthy_COVID19_PBMC
-#         - Immune_All_Low
-#   datasets:
-#     - test
-
-# DATASETS:
-#   Lee2020:
-#     input:
-#       label_transfer: test/out/load_data/filtered/Lee2020.h5ad
-#     label_transfer:
-#       label: cell_type
-#       methods:
-#         celltypist:
-#           - Healthy_COVID19_PBMC
-#   blood:
-#     input:
-#       label_transfer: test/out/load_data/merged/organ/blood.h5ad
-#     label_transfer:
-#       label: cell_type
-#       methods:
-#         celltypist:
-#           - Healthy_COVID19_PBMC
-#   test:
-#     input:
-#         label_transfer: ../../data/pbmc68k.h5ad
-#     label_transfer:
-#       label: bulk_labels
+      label_transfer:
+        file_1: test/input/pbmc68k.h5ad
+    label_transfer:
+      majority_reference:
+        reference_key: bulk_labels
+        query_key: louvain
+        crosstab_kwargs:
+          dropna: False
+      majority_consensus:
+        columns:
+          - bulk_labels
+          - na_column
+          - na_str_column

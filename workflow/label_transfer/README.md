@@ -1,30 +1,25 @@
 # Label transfer
 
-## Input
-Anndata object with:
+```yaml
+DATASETS:
+  test:
+    input:
+      label_transfer:
+        file_1: test/input/pbmc68k.h5ad
+        file_2: test/input/pbmc68k.h5ad
+    label_transfer:
+      majority_reference:
+        reference_key: bulk_labels
+        query_key: louvain
+      majority_consensus:
+        columns:
+          - bulk_labels
+          - na_column
+          - na_str_column
+```
 
-* `.X`
-* label key in `.obs`, specified in `config[DATASETS][<dataset>][label]`
-* file name specified in `config[DATASETS][<dataset>][adata_file]`
-* label transfer setup specified in `config[DATASETS][<dataset>][label_transfer]`
-  * keys: methods e.g. `celltypist, scarches`
-  * values: method specific model names e.g. `[Healthy_COVID19_PBMC, Immune_All_Low]`
-
-TODO: Preprocessed anndata
-
-## Output
-
-* TSV file with predictions matched to barcodes
-* File of Anndata that has been predicted on
-
-
-## Methods
-
-* CellTypist
-* scArches
-
-
-## Steps
-
-1. get/prepare model
-2. predict from model
+* `majority_reference`: Majority voting to assign reference labels to query clusters.
+  * `reference_key`: The key in the reference dataset that contains the labels to be transferred.
+  * `query_key`: The key in the query dataset that contains the clusters that will be assigned.
+* `majority_consensus`: Majority voting per cell across different clustering assignments.
+  * `columns`: The keys in the query dataset containing the same label set.
