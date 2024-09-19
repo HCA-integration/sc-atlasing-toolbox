@@ -48,7 +48,7 @@ hyperparams = {'seed': params.get('seed', 0)} | hyperparams
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
-    X='layers/norm_counts',
+    X='layers/normcounts',
     obs='obs',
     var='var',
     uns='uns',

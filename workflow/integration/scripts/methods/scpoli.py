@@ -75,7 +75,7 @@ print(f'GPU available: {torch.cuda.is_available()}', flush=True)
 print(f'Read {input_file}...', flush=True)
 adata = read_anndata(
     input_file,
-    X='layers/raw_counts',
+    X='layers/counts',
     obs='obs',
     var='var',
     uns='uns',

@@ -43,7 +43,7 @@ logging.info(f'GPU available: {torch.cuda.is_available()}')
 logging.info(f'Read {input_file}...')
 adata = read_anndata(
     input_file,
-    X='layers/norm_counts',
+    X='layers/normcounts',
     obs='obs',
     var='var',
     uns='uns',
