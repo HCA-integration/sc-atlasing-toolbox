@@ -49,7 +49,10 @@ config_kwargs = {
     ),
     'merge': dict(
         mandatory_wildcards=['dataset'],
-    )
+    ),
+    'collect': dict(
+        mandatory_wildcards=['dataset'],
+    ),
 }
 
 config_classes = {
@@ -93,6 +96,10 @@ module filtering:
 
 module merge:
     snakefile: "merge/Snakefile"
+    config: config
+
+module collect:
+    snakefile: "collect/Snakefile"
     config: config
 
 module exploration:
@@ -160,6 +167,7 @@ use rule * from common as common_ *
 use rule * from load_data as load_data_ *
 use rule * from filtering as filter_ *
 use rule * from merge as merge_ *
+use rule * from collect as collect_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *

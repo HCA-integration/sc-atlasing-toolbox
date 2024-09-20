@@ -97,7 +97,9 @@ def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'
     head, _sep, tail = source_string.rpartition(replace_what)
     return head + replace_with + tail
 
+# subset obs columns for metrics
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
+adata.obs = adata.obs[cluster_columns+[batch_key, label_key]].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 
 logger.info(f'Run metric {metric} for {output_type}...')

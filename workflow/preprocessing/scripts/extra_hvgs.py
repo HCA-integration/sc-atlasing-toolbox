@@ -6,8 +6,9 @@ Highly variable gene selection
 from pathlib import Path
 import logging
 logging.basicConfig(level=logging.INFO)
+from tqdm import tqdm
 import warnings
-warnings.filterwarnings("ignore", message="The frame.append method is deprecated and will be removed from pandas in a future version.")
+warnings.filterwarnings("ignore")
 from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
 import anndata as ad
@@ -114,31 +115,32 @@ else:
         adata = adata[:, ~adata.var_names.isin(remove_genes)].copy()
 
     adata.var['extra_hvgs'] = False
-    # union over groups
+    
     if union_over is not None:
+        logging.info(f'Compute highly variable genes per {union_over} with args={args}...')
         if isinstance(union_over, str):
             union_over = [union_over]
-        adata.obs['union_over'] = adata.obs[union_over].astype(str).apply(lambda x: '--'.join(x), axis=1)
-        for group in adata.obs['union_over'].unique():
-            logging.info(f'Subset to group={group}...')
+        adata.obs['union_over'] = adata.obs[union_over] \
+            .astype(str) \
+            .apply(lambda x: '--'.join(x), axis=1) \
+            .astype('category')
+        
+        for group in tqdm(adata.obs['union_over'].unique()):
             _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
-            logging.info(f'{_ad.n_obs} cells, {_ad.n_vars} genes')
-            
-            logging.info('Filter genes...')
             _ad = filter_genes(
                 _ad,
                 min_cells=1,
                 batch_key=args.get('batch_key'),
-            )
+            ).copy()
             
-            if _ad.n_obs < 2:
-                logging.info(f'Group={group} has less than 2 cells, skipping...')
+            min_cells = 10
+            if _ad.n_obs < min_cells:
+                logging.info(f'Group={group} has fewer than {min_cells} cells, skipping...')
                 continue
             
             if USE_GPU:
                 sc.get.anndata_to_GPU(_ad)
 
-            logging.info(f'Select features for group={group} with arguments: {args}...')
             sc.pp.highly_variable_genes(_ad, **args)
             
             # get union of gene sets
@@ -154,9 +156,9 @@ else:
         sc.pp.highly_variable_genes(adata, **args)
         adata.var['extra_hvgs'] = adata.var['highly_variable']
 
+    # set extra_hvgs in full dataset
     var['extra_hvgs'] = False
     var.loc[adata.var_names, 'extra_hvgs'] = adata.var['extra_hvgs']
-    adata = ad.AnnData(var=var, uns=adata.uns)
 
     # add user-provided genes
     if extra_genes:
@@ -170,6 +172,9 @@ else:
         else:
             logging.info(f'Add {len(extra_genes)} user-provided genes...')
             var.loc[extra_genes, 'extra_hvgs'] = True
+    
+    # recreate AnnData object for full feature space
+    adata = ad.AnnData(var=var, uns=adata.uns)
 
 logging.info(f'Write to {output_file}...')
 write_zarr_linked(

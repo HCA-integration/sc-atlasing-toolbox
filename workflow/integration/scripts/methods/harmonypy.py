@@ -20,7 +20,8 @@ try:
     USE_GPU = True
 except ImportError as e:
     from scanpy.external.pp import harmony_integrate
-    logging.info('Importing rapids failed, using scanpy...')
+    logging.info(f'Importing rapids failed due to:\n{e}')
+    logging.info('Importing scanpy...')
     USE_GPU = False
 
 from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
@@ -60,7 +61,7 @@ logging.info
 (f'Read {input_file}...')
 adata = read_anndata(
     input_file,
-    X='layers/norm_counts',
+    X='layers/normcounts',
     obs='obs',
     var='var',
     uns='uns',

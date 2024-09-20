@@ -15,7 +15,7 @@ params = snakemake.params
 
 adata = read_anndata(
     input_file,
-    X='layers/norm_counts',
+    X='layers/normcounts',
     obs='obs',
     var='var',
     obsp='obsp',
@@ -35,7 +35,6 @@ files_to_keep = ['obsm', 'uns']
 if 'X_pca' not in adata.obsm:
     logging.info('Compute PCA...')
     sc.pp.pca(adata)
-    files_to_keep.extend(['varm'])
 adata.obsm['X_emb'] = adata.obsm['X_pca']
 
 logging.info(adata.__str__())
@@ -60,5 +59,5 @@ write_zarr_linked(
     input_file,
     output_file,
     files_to_keep=files_to_keep,
-    slot_map={'X': 'layers/norm_counts'},
+    slot_map={'X': 'layers/normcounts'},
 )
