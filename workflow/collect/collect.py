@@ -97,6 +97,7 @@ for file_id, _ad in adatas.items():
         file_to_link = file_name
 
     for slot_name in merge_slots:
+        logging.info(f'Merge slot "{slot_name}" for file_id={file_id}...')
         slot = _ad.__dict__.get(f'_{slot_name}')
         update_slot_link_map = dict()
 
@@ -127,7 +128,7 @@ for file_id, _ad in adatas.items():
                 }
                 slots[slot_name] = slots.get(slot_name, {}) | new_slot
         else:
-            raise NotImplementedError(f'Slot "{slot}" not supported')
+            raise NotImplementedError(f'Slot "{slot_name}" not supported')
         
         slot_link_map |= update_slot_link_map
         in_dir_map |= {
