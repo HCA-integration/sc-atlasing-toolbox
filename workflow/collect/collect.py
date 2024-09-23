@@ -35,18 +35,34 @@ if len(files) == 1:
         adata.write_zarr(output_file)
     exit(0)
 
+
 def read_file(file, **kwargs):
+    logging.info(f'Read {file}...')
     if file.endswith('.zarr'):
-        kwargs.pop('X', None)
-        kwargs.pop('layers', None)
+        large_slots = ['layers', 'obsm', 'obsp', 'uns']
+        kwargs = {k: v for k, v in kwargs.items() if k not in large_slots+['X']}
+        
         adata = read_anndata(file, **kwargs)
         func, _ = get_file_reader(file)
-        layers_keys = func(file, 'r').get('layers', {}).keys()
-        adata.layers = {key: csr_matrix(adata.shape) for key in layers_keys}
+        
+        default_values = [
+            csr_matrix(adata.shape),
+            csr_matrix((adata.n_obs, 0)),
+            csr_matrix((adata.n_obs, adata.n_obs)),
+            None
+        ]
+        for slot_name, value in zip(large_slots, default_values):
+            slot_keys = func(file, 'r').get(slot_name, {}).keys()
+            setattr(
+                adata,
+                f'_{slot_name}',
+                {key: value for key in slot_keys}
+            )
+        
         return adata
     return read_anndata(file, **kwargs)
 
-logging.info('Read AnnData objects...')
+
 adatas = {
     file_id: read_file(file, **kwargs, dask=True, backed=True)
     for file_id, file in files.items()
