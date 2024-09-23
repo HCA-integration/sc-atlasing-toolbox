@@ -1,6 +1,9 @@
 output_dir: test/out
 images: test/images
 
+defaults:
+  datasets:
+    - test
 
 DATASETS:
   blood:
@@ -8,10 +11,18 @@ DATASETS:
       sample_representation:
         blood: test/input/SchulteSchrepping2020.zarr
     sample_representation:
-      sample: sample
+      sample_key: sample
+      cell_type_key: cell_type
+      min_cells_per_sample: 300
+      min_cells_per_cell_type: 0
+      use_rep: X_pca
   test:
     input:
       sample_representation:
         test: test/input/pbmc68k.h5ad
     sample_representation:
-      sample: batch
+      sample_key: batch
+      cell_type_key: bulk_labels
+      min_cells_per_sample: 100
+      min_cells_per_cell_type: 10
+      use_rep: X_pca
