@@ -132,7 +132,7 @@ for file_id, _ad in adatas.items():
         
         slot_link_map |= update_slot_link_map
         in_dir_map |= {
-            f'{slot_name}/{key}': file_name for key in update_slot_link_map.keys()
+            key: file_name for key in update_slot_link_map.keys()
         }
 
 # deal with same slots
