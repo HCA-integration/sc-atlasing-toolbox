@@ -222,7 +222,7 @@ def get_pseudobulks(adata, group_key, agg='sum', dtype='float32'):
             #     pseudobulks.append(row_agg)
             # pseudobulks = np.stack(pseudobulks, axis=0)
         else:
-            raise ValueError(f'invalid type "{type(x)}"')
+            raise ValueError(f'invalid type "{type(X)}"')
         
         return pseudobulks, groups
 
