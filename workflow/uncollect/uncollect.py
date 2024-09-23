@@ -8,19 +8,6 @@ from scipy.sparse import csr_matrix
 from utils.io import read_anndata, get_file_reader, write_zarr_linked
 from utils.misc import dask_compute
 
-ALL_SLOTS = [
-    'X',
-    'obs',
-    'obsm',
-    'obsp',
-    'var',
-    'varm',
-    'varp',
-    'uns',
-    'layers',
-    'raw',
-]
-
 
 def check_slot_name(slot_name, new_file_id, sep):
     splits = slot_name.split(sep)
@@ -39,31 +26,40 @@ new_file_id = snakemake.wildcards.new_file_id
 sep = snakemake.params.get('sep', '--')
 
 
-def read_file(file, **kwargs):
-    if file.endswith('.zarr'):
-        kwargs.pop('X', None)
-        kwargs.pop('layers', None)
-        adata = read_anndata(file, **kwargs)
-        func, _ = get_file_reader(file)
-        layers_keys = func(file, 'r').get('layers', {}).keys()
-        adata.layers = {key: csr_matrix(adata.shape) for key in layers_keys}
-        return adata
-    return read_anndata(file, **kwargs)
+logging.info(f'Read {input_file}...')
+func, _ = get_file_reader(input_file)
+slots_in_file = func(input_file, 'r').keys()
 
+kwargs = dict(dask=True, backed=True)
+kwargs |= {k: k for k in slots_in_file}
 
-logging.info('Read AnnData objects...')
-adata = read_file(
-    input_file,
-    **{x: x for x in ALL_SLOTS},
-    dask=True,
-    backed=True
-)
+if input_file.endswith('.zarr'):
+    large_slots = ['layers', 'obsm', 'obsp', 'uns']
+    kwargs = {k: v for k, v in kwargs.items() if k not in large_slots+['X']}
+    
+    adata = read_anndata(input_file, **kwargs)
+    default_values = [
+        csr_matrix(adata.shape),
+        csr_matrix((adata.n_obs, 0)),
+        csr_matrix((adata.n_obs, adata.n_obs)),
+        None
+    ]
+    for slot_name, value in zip(large_slots, default_values):
+        slot_keys = func(input_file, 'r').get(slot_name, {}).keys()
+        setattr(
+            adata,
+            f'_{slot_name}',
+            {key: value for key in slot_keys}
+        )
+else:
+    adata = read_anndata(input_file, **kwargs)
 
 slots = dict()
 slot_link_map = dict()
 files_to_keep = []
 
-for slot_name in ALL_SLOTS:
+for slot_name in slots_in_file:
+    logging.info(f'Process slot "{slot_name}"...')
     slot = getattr(adata, slot_name)
     
     if isinstance(slot, pd.DataFrame):
