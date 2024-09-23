@@ -3,6 +3,7 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import anndata as ad
 import pandas as pd
+from pprint import pformat
 from scipy.sparse import csr_matrix
 
 from utils.io import read_anndata, get_file_reader, write_zarr_linked
@@ -59,11 +60,11 @@ if 'obs' in merge_slots:
             assert obs_index_column in _ad.obs.columns, \
                 f'Index column "{obs_index_column}" not found for {file_id}\n{_ad.obs}'
             adatas[file_id].obs = _ad.obs.set_index(obs_index_column)
-    same_obs_columns = get_same_columns(adatas)
-    logging.info(f'Same columns: {same_obs_columns}')
+    logging.info('Determine which columns are the same...')
+    same_obs_columns = get_same_columns(adatas, n_threads=snakemake.threads)
+    logging.info(f'Same columns:\n{pformat(same_obs_columns)}')
 else:
     same_obs_columns = []
-print('same slots:', same_obs_columns)
 
 # TODO: link slots with new slot names for merge_slots
 
