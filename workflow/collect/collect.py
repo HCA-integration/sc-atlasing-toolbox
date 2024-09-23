@@ -6,7 +6,7 @@ import pandas as pd
 from pprint import pformat
 from scipy.sparse import csr_matrix
 
-from utils.io import read_anndata, get_file_reader, write_zarr_linked
+from utils.io import read_anndata, get_file_reader, write_zarr_linked, link_file
 from utils.misc import dask_compute
 from collect_utils import get_same_columns, merge_df
 
@@ -136,10 +136,7 @@ for file_id, _ad in adatas.items():
         }
 
 # deal with same slots
-files_to_keep = []
-if file_to_link:
-    files_to_keep = [slot for slot in slots]
-else:
+if not file_to_link:
     for slot_name in same_slots:
         slots[slot_name] = _ad.__dict__.get(f'_{slot_name}')
 
@@ -155,7 +152,13 @@ write_zarr_linked(
     adata=adata,
     in_dir=file_to_link,
     out_dir=output_file,
-    files_to_keep=files_to_keep,
-    slot_map=slot_link_map,
-    in_dir_map=in_dir_map,
+    files_to_keep=[slot for slot in merge_slots if slot != 'X'],
+    # slot_map=slot_link_map,
+    # in_dir_map=in_dir_map,
 )
+
+# workaround hack - need to fix bug in write_zarr_linked
+# print('in_dir_map', pformat(in_dir_map), flush=True)
+for slot, file in in_dir_map.items():
+    logging.info(f'Link {slot} to {file}/{slot_link_map[slot]}...')
+    link_file(in_file=f'{file}/{slot_link_map[slot]}', out_file=f'{output_file}/{slot}')

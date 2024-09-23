@@ -343,6 +343,26 @@ def write_zarr(adata, file):
     adata.write_zarr(file) # doesn't seem to work with dask array
 
 
+def link_file(in_file, out_file, relative_path=True, overwrite=False):
+    in_file = Path(in_file).resolve(True)
+    out_file = Path(out_file)
+    out_dir = out_file.parent.resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    
+    if relative_path:
+        in_file = Path(os.path.relpath(in_file, out_dir))
+    
+    if overwrite and out_file.exists():
+        if out_file.is_dir() and not out_file.is_symlink():
+            print_flushed(f'replace {out_file}...')
+            shutil.rmtree(out_file)
+        else:
+            out_file.unlink()
+    
+    out_file.symlink_to(in_file)
+    assert out_file.exists(), f'Linking failed for {out_file.resolve()} -> {in_file}'
+
+
 def link_zarr(
     in_dir: [str, Path],
     out_dir: [str, Path],
@@ -392,24 +412,6 @@ def link_zarr(
             del slot_map[out_slot]
         return slot_map, in_dir_map
     
-    def link_file(in_file, out_file, relative_path=True):
-        in_file = in_file.resolve(True)
-        out_dir = out_file.parent.resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
-        
-        if relative_path:
-            in_file = Path(os.path.relpath(in_file, out_dir))
-        
-        if overwrite and out_file.exists():
-            if out_file.is_dir() and not out_file.is_symlink():
-                print_flushed(f'replace {out_file}...')
-                shutil.rmtree(out_file)
-            else:
-                out_file.unlink()
-        
-        out_file.symlink_to(in_file)
-        assert out_file.exists(), f'Linking failed for {out_file.resolve()} -> {in_file}'
-    
     if file_names is None:
         file_names = [] if in_dir is None else [f.name for f in Path(in_dir).iterdir()]
     file_names = [
@@ -451,7 +453,8 @@ def link_zarr(
         link_file(
             in_file=in_dir / in_slot,
             out_file=out_dir / out_slot,
-            relative_path=relative_path
+            relative_path=relative_path,
+            overwrite=overwrite,
         )
 
 
