@@ -11,12 +11,18 @@ from utils.misc import dask_compute
 
 def check_slot_name(slot_name, new_file_id, sep):
     splits = slot_name.split(sep)
-    return len(splits) == 1 or new_file_id in splits
+    return len(splits) == 1 or all(x in splits for x in new_file_id.split(sep))
 
 
-def remove_file_id(slot_name, new_file_id, sep):
-    splits = slot_name.split(sep)
-    return sep.join([x for x in splits if x != new_file_id])
+def remove_file_id(slot_name, new_file_id, sep, verbose=False):
+    # split new_file_id, in case sep is in new_file_id
+    slot_name_splits = [
+        x for x in slot_name.split(sep)
+        if x not in new_file_id.split(sep)
+    ]
+    if verbose:
+        print(f'{slot_name} -> {sep.join(slot_name_splits)}', flush=True)
+    return sep.join(slot_name_splits)
 
 
 dataset = snakemake.wildcards.dataset
@@ -83,6 +89,7 @@ for slot_name in slots_in_file:
                 files_to_keep.append(slot_name)
         else:
             for key in list(slot.keys()):
+                new_key = remove_file_id(key, new_file_id, sep)
                 value = slot.pop(key)
                 if not check_slot_name(key, new_file_id, sep):
                     slot[new_key] = value
