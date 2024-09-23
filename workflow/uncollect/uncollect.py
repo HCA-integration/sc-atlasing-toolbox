@@ -72,10 +72,11 @@ for slot_name in slots_in_file:
         )
         files_to_keep.append(slot_name)
     
-    elif hasattr(slot, 'items'):
+    elif hasattr(slot, 'keys'):
         if input_file.endswith('.zarr'):
             for key in slot.keys():
                 if not check_slot_name(key, new_file_id, sep):
+                    print('Skip', key, flush=True)
                     continue
                 new_key = remove_file_id(key, new_file_id, sep)
                 slot_link_map |= {f'{slot_name}/{new_key}': f'{slot_name}/{key}'}
