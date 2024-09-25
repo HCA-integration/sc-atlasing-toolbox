@@ -55,6 +55,23 @@ rule composition:
         'scripts/composition.py'
 
 
+rule cell_type_pseudobulk:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'cell_type_pseudobulk.zarr'),
+    params:
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
+        cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
+        use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_rep')    
+    conda:
+        get_env(config, 'sample_representation')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+    script:
+        'scripts/cell_type_pseudobulk.py'
+
+
 # pca_1_2=mcfg.image_dir / paramspace.wildcard_pattern / 'pc_1_2.png',
 # pca_2_3=mcfg.image_dir / paramspace.wildcard_pattern / 'pca_2_3.png',
 # pca_scree=mcfg.image_dir / paramspace.wildcard_pattern / 'pca_screeplot.png',
@@ -90,6 +107,7 @@ rule all:
     input:
         mcfg.get_output_files(rules.pseudobulk.output),
         mcfg.get_output_files(rules.composition.output),
+        mcfg.get_output_files(rules.cell_type_pseudobulk.output),
     default_target: True
     localrule: True
 
