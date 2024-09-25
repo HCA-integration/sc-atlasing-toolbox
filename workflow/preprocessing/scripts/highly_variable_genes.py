@@ -17,8 +17,8 @@ from utils.processing import filter_genes, sc, USE_GPU
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 args = snakemake.params.get('args', {})
-dask = snakemake.params.get('dask', False) and not USE_GPU
-backed = snakemake.params.get('backed', False) and dask and not USE_GPU
+# dask = snakemake.params.get('dask', False) and not USE_GPU
+# backed = snakemake.params.get('backed', False) and dask and not USE_GPU
 
 if args is None:
     args = {}
@@ -28,7 +28,7 @@ elif isinstance(args, dict):
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=backed, dask=dask)
+kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=True, dask=True)
 # if subset_to_hvg:
 #     kwargs |= dict(layers='layers')
 adata = read_anndata(input_file, **kwargs)
