@@ -251,9 +251,9 @@ class ModuleConfig:
                     return f'{self.module_name}:{wildcard_value}'
             return f'{self.module_name}_{wildcard_name}={wildcard_value}'
         
-        def shorten_name(name):
+        def shorten_name(name, max_length=200):
             split_values = name.split(f'--{self.module_name}_', 1)
-            if len(split_values) > 1 and len(name) > 200:
+            if len(split_values) > 1 and len(name) > max_length:
                 name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
             return name
         
@@ -268,6 +268,7 @@ class ModuleConfig:
             for w in zip(*wildcard_values)
         ]
         task_names = [shorten_name(name) for name in task_names]
+        # TODO: save shortened name to full name mapping
         
         if as_dict:
             targets = dict(zip(task_names, targets))
