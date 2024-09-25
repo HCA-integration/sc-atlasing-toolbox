@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.10
+  - python=3.11.9
   - anndata=0.10
   - scanpy=1.10
   - hdf5=1.14.2
@@ -13,5 +13,7 @@ dependencies:
   - sparse
   - zarr
   - pip
+  - rpy2  # Required by PILOT. Should be installed by it, but MacOS can lack some of system dependencies, which are installed this way
   - pip:
     - git+https://github.com/lueckenlab/patient_representation.git@main
+    - git+https://github.com/CostaLab/PILOT#egg=pilotpy
