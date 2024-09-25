@@ -1,4 +1,4 @@
-# HCA Integration Toolbox :toolbox:
+# Single Cell Atlassing Toolbox :toolbox:
 
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
@@ -139,12 +139,12 @@ Depending on whether you have set up SSH or HTTPS with [PAT](https://docs.github
 
 SSH:
 ```commandline
-git clone git@github.com:HCA-integration/hca_integration_toolbox.git
+git clone git@github.com:HCA-integration/sc-atlassing-toolbox.git
 ```
 
 HTTPS:
 ``` clone
-git clone https://github.com/HCA-integration/hca_integration_toolbox.git
+git clone https://github.com/HCA-integration/sc-atlassing-toolbox.git
 ```
 
 #### Requirements
@@ -338,7 +338,7 @@ Below is an example of a wrapper script that you can use to call the pipeline.
 set -e -x
 
 # assuming that the toolbox is on the same level of the directory you're calling the script from
-pipeline="$(realpath ../hca_integration_toolbox)"   # adjust depending on location of wrapper script
+pipeline="$(realpath ../sc-atlassing-toolbox)"   # adjust depending on location of wrapper script
 
 snakemake \
   --configfile <my_config_file>.yaml \
@@ -357,7 +357,7 @@ If your config file becomes very big, you can split the workflows into separate 
 #!/usr/bin/env bash
 set -e -x
 
-pipeline="$(realpath ../hca_integration_toolbox)"
+pipeline="$(realpath ../sc-atlassing-toolbox)"
 
 snakemake \
   --configfile \
@@ -715,7 +715,7 @@ This will force Snakemake to use the CPU versions of an environment.
 ### FAQs
 
 Below are some scenarios that can occur when starting with the pipeline.
-If you have any additional questions or encounter any bugs, please open up a [github issue](https://github.com/HCA-integration/hca_integration_toolbox/issues).
+If you have any additional questions or encounter any bugs, please open up a [github issue](https://github.com/HCA-integration/sc-atlassing-toolbox/issues).
 If you want to contribute to improving the pipeline, check out the [contribution guidelines](CONTRIBUTING.md).
 
 #### I configured my pipeline and the dry run doesn't fail, but it doesn't want to run the modules I configured. What do I do?
