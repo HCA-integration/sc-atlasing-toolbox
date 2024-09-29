@@ -1,4 +1,4 @@
-# Single Cell Atlassing Toolbox :toolbox:
+# Single Cell Atlasing Toolbox :toolbox:
 
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
