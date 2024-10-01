@@ -10,7 +10,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='sample_representation',
     config=config,
-    config_params=['sample_key', 'cell_type_key', 'use_rep'],
+    config_params=['sample_key', 'cell_type_key', 'use_rep', 'n_epochs'],
 )
 
 paramspace = mcfg.get_paramspace()
@@ -88,6 +88,23 @@ rule pilot:
     script:
         'scripts/pilot.py'
 
+rule scpoli:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'scpoli.zarr'),
+    params:
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
+        cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
+        use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_rep'),
+        n_epochs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_epochs')  
+    conda:
+        get_env(config, 'sample_representation')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+    script:
+        'scripts/scpoli.py'
+
 
 # pca_1_2=mcfg.image_dir / paramspace.wildcard_pattern / 'pc_1_2.png',
 # pca_2_3=mcfg.image_dir / paramspace.wildcard_pattern / 'pca_2_3.png',
@@ -126,6 +143,7 @@ rule all:
         mcfg.get_output_files(rules.composition.output),
         mcfg.get_output_files(rules.cell_type_pseudobulk.output),
         mcfg.get_output_files(rules.pilot.output),
+        mcfg.get_output_files(rules.scpoli.output),
     default_target: True
     localrule: True
 
