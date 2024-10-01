@@ -16,6 +16,8 @@ output_zarr = snakemake.output.zarr
 sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
 use_rep = snakemake.params.get('use_rep')
+n_epochs = snakemake.params.get('n_epochs')
+
 
 logging.info(f'Read "{input_zarr}"...')
 n_obs = read_anndata(input_zarr, obs='obs').n_obs
@@ -31,8 +33,10 @@ adata = read_anndata(
     stride=int(n_obs / 5),
 )
 
-logging.info(f'Calculating PILOT representation for "{cell_type_key}", using cell features from "{use_rep}"')
-representation_method = pr.tl.PILOT(sample_key=sample_key, cells_type_key=cell_type_key, layer=use_rep, patient_state_col=sample_key)
+logging.info(adata.__str__())
+
+logging.info(f'Calculating scPoli representation for "{cell_type_key}", using cell features from "{use_rep}"')
+representation_method = pr.tl.SCPoli(sample_key=sample_key, cells_type_key=cell_type_key, layer=use_rep, n_epochs=n_epochs)
 representation_method.prepare_anndata(adata)
 distances = representation_method.calculate_distance_matrix(force=True)
 
@@ -40,7 +44,6 @@ distances = representation_method.calculate_distance_matrix(force=True)
 samples_df = pd.DataFrame(index=representation_method.samples)
 
 output_adata = sc.AnnData(X=distances, var=samples_df, obs=samples_df)
-output_adata.obsm[f'{cell_type_key}_composition'] = representation_method.patient_representations
 
 logging.info(output_adata.__str__())
 
