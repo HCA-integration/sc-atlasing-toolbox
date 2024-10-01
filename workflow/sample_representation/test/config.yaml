@@ -16,6 +16,7 @@ DATASETS:
       min_cells_per_sample: 300
       min_cells_per_cell_type: 0
       use_rep: X_pca
+      n_epochs: 50
   test:
     input:
       sample_representation:
@@ -26,3 +27,4 @@ DATASETS:
       min_cells_per_sample: 100
       min_cells_per_cell_type: 10
       use_rep: X_pca
+      n_epochs: 1
