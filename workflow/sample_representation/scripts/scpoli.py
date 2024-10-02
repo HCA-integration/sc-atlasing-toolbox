@@ -17,6 +17,7 @@ sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
 use_rep = snakemake.params.get('use_rep')
 n_epochs = snakemake.params.get('n_epochs')
+layer = snakemake.params.get('raw_counts', 'X')
 
 
 logging.info(f'Read "{input_zarr}"...')
@@ -24,7 +25,7 @@ n_obs = read_anndata(input_zarr, obs='obs').n_obs
 dask = n_obs > 2e6
 adata = read_anndata(
     input_zarr,
-    X='X',
+    X=layer,
     obs='obs',
     var='var',
     obsm='obsm',

@@ -28,3 +28,5 @@ DATASETS:
       min_cells_per_cell_type: 10
       use_rep: X_pca
       n_epochs: 1
+      raw_counts: layers/counts
+      norm_counts: layers/normcounts

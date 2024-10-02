@@ -10,7 +10,14 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='sample_representation',
     config=config,
-    config_params=['sample_key', 'cell_type_key', 'use_rep', 'n_epochs'],
+    config_params=[
+        'sample_key',
+        'cell_type_key',
+        'use_rep',
+        'n_epochs',
+        'norm_counts',
+        'raw_counts',
+    ],
 )
 
 paramspace = mcfg.get_paramspace()
@@ -97,7 +104,8 @@ rule scpoli:
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
         cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
         use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_rep'),
-        n_epochs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_epochs')  
+        n_epochs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_epochs'),
+        layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts')
     conda:
         get_env(config, 'sample_representation')
     resources:
