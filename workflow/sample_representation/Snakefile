@@ -148,10 +148,31 @@ rule gloscope:
         seed=0,
     conda:
         get_env(config, 'gloscope')
+    threads: 10
     resources:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
     script:
         'scripts/gloscope.R'
+
+
+rule scitd:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'scitd.zarr'),
+    params:
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
+        cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
+        use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts'),
+        seed=0,
+        cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
+    conda:
+        get_env(config, 'scitd')
+    threads: 10
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+    script:
+        'scripts/scitd.R'
 
 
 # pca_1_2=mcfg.image_dir / paramspace.wildcard_pattern / 'pc_1_2.png',
@@ -194,6 +215,7 @@ rule all:
         mcfg.get_output_files(rules.scpoli.output),
         mcfg.get_output_files(rules.mrvi.output),
         mcfg.get_output_files(rules.gloscope.output),
+        mcfg.get_output_files(rules.scitd.output),
     default_target: True
     localrule: True
 
