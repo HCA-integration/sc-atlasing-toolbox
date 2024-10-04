@@ -17,24 +17,28 @@ sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
 use_rep = snakemake.params.get('use_rep')
 n_epochs = snakemake.params.get('n_epochs')
-
+n_epochs = int(n_epochs) if n_epochs is not None else n_epochs
 
 logging.info(f'Read "{input_zarr}"...')
 n_obs = read_anndata(input_zarr, obs='obs').n_obs
 dask = n_obs > 2e6
 adata = read_anndata(
     input_zarr,
-    X='X',
+    X=use_rep,
     obs='obs',
     var='var',
-    obsm='obsm',
     backed=dask,
     dask=dask,
     stride=int(n_obs / 5),
 )
 
 logging.info(f'Calculating MrVI representation for "{cell_type_key}", using cell features from "{use_rep}"')
-representation_method = pr.tl.MrVI(sample_key=sample_key, cells_type_key=cell_type_key, layer=use_rep, n_epochs=n_epochs)
+representation_method = pr.tl.MrVI(
+    sample_key=sample_key,
+    cells_type_key=cell_type_key,
+    layer='X',
+    max_epochs=n_epochs
+)
 representation_method.prepare_anndata(adata)
 distances = representation_method.calculate_distance_matrix(force=True)
 
