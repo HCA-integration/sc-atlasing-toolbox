@@ -108,7 +108,10 @@ rule scpoli:
     conda:
         get_env(config, 'sample_representation')
     resources:
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
     script:
         'scripts/scpoli.py'
 
@@ -121,13 +124,34 @@ rule mrvi:
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
         cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
         use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts'),
-        n_epochs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_epochs')  
+        n_epochs=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_epochs'),
     conda:
         get_env(config, 'sample_representation')
     resources:
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
     script:
         'scripts/mrvi.py'
+
+
+rule gloscope:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'gloscope.zarr'),
+    params:
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
+        use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_rep'),
+        k=25,
+        seed=0,
+    conda:
+        get_env(config, 'gloscope')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
+    script:
+        'scripts/gloscope.R'
 
 
 # pca_1_2=mcfg.image_dir / paramspace.wildcard_pattern / 'pc_1_2.png',
@@ -169,6 +193,7 @@ rule all:
         mcfg.get_output_files(rules.pilot.output),
         mcfg.get_output_files(rules.scpoli.output),
         mcfg.get_output_files(rules.mrvi.output),
+        mcfg.get_output_files(rules.gloscope.output),
     default_target: True
     localrule: True
 
