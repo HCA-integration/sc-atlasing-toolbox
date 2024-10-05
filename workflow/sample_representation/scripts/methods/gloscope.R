@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
   library(anndata)
 })
 io <- import('utils.io')
-ad <- import('anndata')
+sc <- import('scanpy')
 
 input_file <- snakemake@input$zarr
 prepare_file <- snakemake@input$prepare
@@ -50,7 +50,7 @@ message(paste(c("Distance matrix dimensions:", paste(dim(dist_matrix), collapse=
 
 # create new anndata object
 message("Creating new anndata object...")
-adata <- ad$AnnData(
+adata <- sc$AnnData(
     obs = sample_dt,
     obsm = list(distances = dist_matrix)
 )

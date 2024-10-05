@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
   library(anndata)
 })
 io <- import('utils.io')
-ad <- import('anndata')
+sc <- import('scanpy')
 
 
 run_scITD <- function(
@@ -146,7 +146,7 @@ pairwise_distances <- dist(results$scores, method = "euclidean")
 message("Creating new anndata object...")
 obs_dt <- data.table(adata$obs)
 sample_dt <- obs_dt[, lapply(.SD, first), by = sample_key]
-adata <- ad$AnnData(
+adata <- sc$AnnData(
     obs = sample_dt,
     obsm = list(distances = dist_matrix)
 )
