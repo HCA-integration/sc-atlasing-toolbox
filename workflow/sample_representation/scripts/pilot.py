@@ -6,6 +6,8 @@ import pandas as pd
 import scanpy as sc
 
 from utils.io import read_anndata
+from utils.processing import aggregate_obs
+
 
 warnings.simplefilter("ignore", UserWarning)
 logging.basicConfig(level=logging.INFO)
@@ -36,8 +38,11 @@ representation_method = pr.tl.PILOT(sample_key=sample_key, cells_type_key=cell_t
 representation_method.prepare_anndata(adata)
 distances = representation_method.calculate_distance_matrix(force=True)
 
-# Create empty dataframe to put sample names to obs_names and var_names
-samples_df = pd.DataFrame(index=representation_method.samples)
+samples_df = aggregate_obs(
+    adata,
+    group_key=sample_key,
+    groups=representation_method.samples
+)
 
 output_adata = sc.AnnData(X=distances, var=samples_df, obs=samples_df)
 output_adata.obsm[f'{cell_type_key}_composition'] = representation_method.patient_representations
