@@ -108,10 +108,10 @@ rule scpoli:
     conda:
         get_env(config, 'sample_representation')
     resources:
-        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
-        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
-        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt,attempt_to_cpu=2),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt,attempt_to_cpu=2),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt,attempt_to_cpu=2),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt,attempt_to_cpu=2),
     script:
         'scripts/scpoli.py'
 
@@ -215,7 +215,7 @@ rule all:
         mcfg.get_output_files(rules.scpoli.output),
         mcfg.get_output_files(rules.mrvi.output),
         mcfg.get_output_files(rules.gloscope.output),
-        mcfg.get_output_files(rules.scitd.output),
+        # mcfg.get_output_files(rules.scitd.output),
     default_target: True
     localrule: True
 
