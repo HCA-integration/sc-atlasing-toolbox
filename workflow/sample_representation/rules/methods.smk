@@ -1,6 +1,7 @@
 rule pseudobulk:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pseudobulk.zarr'),
     params:
@@ -45,7 +46,8 @@ rule pseudobulk:
 
 rule composition:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'composition.zarr'),
     params:
@@ -62,7 +64,8 @@ rule composition:
 
 rule cell_type_pseudobulk:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'cell_type_pseudobulk.zarr'),
     params:
@@ -79,7 +82,8 @@ rule cell_type_pseudobulk:
 
 rule pilot:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'pilot.zarr'),
     params:
@@ -95,7 +99,8 @@ rule pilot:
 
 rule scpoli:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'scpoli.zarr'),
     params:
@@ -115,7 +120,8 @@ rule scpoli:
 
 rule mrvi:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'mrvi.zarr'),
     params:
@@ -136,7 +142,8 @@ rule mrvi:
 
 rule gloscope:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'gloscope.zarr'),
     params:
@@ -155,7 +162,8 @@ rule gloscope:
 
 rule scitd:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        prepare=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'scitd.zarr'),
     params:

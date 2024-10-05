@@ -11,6 +11,7 @@ io <- import('utils.io')
 ad <- import('anndata')
 
 input_file <- snakemake@input$zarr
+prepare_file <- snakemake@input$prepare
 output_file <- snakemake@output$zarr
 
 use_rep <- snakemake@params$use_rep
@@ -50,16 +51,18 @@ message(paste(c("Distance matrix dimensions:", paste(dim(dist_matrix), collapse=
 # create new anndata object
 message("Creating new anndata object...")
 adata <- ad$AnnData(
-    X = dist_matrix,
     obs = sample_dt,
-    var = sample_dt,
+    obsm = list(distances = dist_matrix)
 )
-print(adata)
+
+# compute kNN graph
+sc$pp$neighbors(adata, use_rep = 'distances', metric = 'precomputed')
 
 message(paste("Writing to", output_file, "..."))
+print(adata)
 io$write_zarr_linked(
     adata,
-    in_dir=input_file,
+    in_dir=prepare_file,
     out_dir=output_file,
-    files_to_keep=c('X', 'layers' ,'obs', 'var', 'obsm', 'varm', 'obsp', 'varp', 'uns'),
+    files_to_keep=c('obsm', 'obsp', 'uns'),
 )

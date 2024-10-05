@@ -21,6 +21,7 @@ mcfg = ModuleConfig(
 )
 paramspace = mcfg.get_paramspace()
 
+include: "rules/prepare.smk"
 include: "rules/methods.smk"
 
 
