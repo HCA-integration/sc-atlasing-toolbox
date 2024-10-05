@@ -1,5 +1,6 @@
 import logging
 import warnings
+import torch
 
 import patient_representation as pr
 import pandas as pd
@@ -19,6 +20,9 @@ use_rep = snakemake.params.get('use_rep')
 n_epochs = snakemake.params.get('n_epochs')
 n_epochs = int(n_epochs) if n_epochs is not None else n_epochs
 
+use_gpu = torch.cuda.is_available()
+print(f'GPU available: {use_gpu}', flush=True)
+
 logging.info(f'Read "{input_zarr}"...')
 n_obs = read_anndata(input_zarr, obs='obs').n_obs
 dask = n_obs > 2e6
@@ -37,7 +41,8 @@ representation_method = pr.tl.MrVI(
     sample_key=sample_key,
     cells_type_key=cell_type_key,
     layer='X',
-    max_epochs=n_epochs
+    max_epochs=n_epochs,
+    accelerator='gpu' if use_gpu else 'auto',
 )
 representation_method.prepare_anndata(adata)
 distances = representation_method.calculate_distance_matrix(force=True)
