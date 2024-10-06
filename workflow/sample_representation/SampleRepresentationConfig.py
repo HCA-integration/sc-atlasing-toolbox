@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from snakemake.rules import Rule
 
-from IntegrationConfig import IntegrationConfig
+from integration.IntegrationConfig import IntegrationConfig
 from utils.ModuleConfig import ModuleConfig
 from utils.WildcardParameters import WildcardParameters
 from utils.config import _get_or_default_from_config
