@@ -22,13 +22,18 @@ threads <- snakemake@threads
 
 
 message("Read data...")
+n_obs <- io$read_anndata(input_file, obs='obs')$n_obs
+dask <- n_obs > 2e6
 adata <- io$read_anndata(
     input_file,
+    X=use_rep,
     obs='obs',
-    obsm='obsm',
+    backed=dask,
+    dask=dask,
+    stride=as.integer(n_obs / 5)
 )
 
-embedding <- adata$obsm[[use_rep]]
+embedding <- adata$X
 rownames(embedding) <- adata$obs_names
 sample_ids <- adata$obs[[sample_key]] # TOOD: is this correct?
 obs_dt <- data.table(adata$obs)

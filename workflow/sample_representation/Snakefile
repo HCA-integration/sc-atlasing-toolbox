@@ -5,19 +5,24 @@ from pathlib import Path
 import pandas as pd
 
 from utils.environments import get_env
-from utils.ModuleConfig import ModuleConfig
+from SampleRepresentationConfig import SampleRepresentationConfig
 
-mcfg = ModuleConfig(
+mcfg = SampleRepresentationConfig(
     module_name='sample_representation',
     config=config,
+    parameters=workflow.source_path('params.tsv'),
     config_params=[
+        'methods',
         'sample_key',
         'cell_type_key',
         'use_rep',
-        'n_epochs',
+        'var_mask',
         'norm_counts',
         'raw_counts',
     ],
+    wildcard_names=['method', 'input_type', 'use_rep', 'var_mask'],
+    rename_config_params={'methods': 'method'},
+    explode_by=['method', 'use_rep', 'var_mask'],
 )
 paramspace = mcfg.get_paramspace()
 
@@ -27,14 +32,7 @@ include: "rules/methods.smk"
 
 rule all:
     input:
-        mcfg.get_output_files(rules.pseudobulk.output),
-        mcfg.get_output_files(rules.composition.output),
-        mcfg.get_output_files(rules.cell_type_pseudobulk.output),
-        mcfg.get_output_files(rules.pilot.output),
-        mcfg.get_output_files(rules.scpoli.output),
-        mcfg.get_output_files(rules.mrvi.output),
-        mcfg.get_output_files(rules.gloscope.output),
-        # mcfg.get_output_files(rules.scitd.output),
+        mcfg.get_output_files(rules.run_method.output),
     default_target: True
     localrule: True
 

@@ -78,24 +78,32 @@ var_scale_power <- 2
 scale_var <- TRUE
 
 message("Read data...")
+n_obs <- io$read_anndata(input_file, obs='obs')$n_obs
+dask <- n_obs > 2e6
 adata <- io$read_anndata(
     input_file,
     X=use_rep,
     obs='obs',
-    var='var',
+    backed=dask,
+    dask=dask,
+    stride=as.integer(n_obs / 5)
+)
+
+if (use_rep == 'X' | grepl('^layers/|^raw/', use_rep)) {
+    adata$var <- io$read_anndata(input_file, var='var')$var
+}
+
+message("Prepare data and parameters...")
+param_list <- initialize_params(
+    ctypes_use = as.character(unique(adata$obs[[cell_type_key]])),
+    ncores = threads,
+    rand_seed = seed
 )
 rownames(adata$X) <- adata$obs_names
 colnames(adata$X) <- adata$var_names
 rownames(adata$obs) <- adata$obs_names
 adata$obs[['donors']] <- adata$obs[[sample_key]]
 adata$obs[['ctypes']] <- adata$obs[[cell_type_key]]
-
-message("Initializing parameters...")
-param_list <- initialize_params(
-    ctypes_use = as.character(unique(adata$obs[[cell_type_key]])),
-    ncores = threads,
-    rand_seed = seed
-)
 
 message("Create data container...")
 data_container <-  make_new_container(

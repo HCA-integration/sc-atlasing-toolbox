@@ -9,13 +9,13 @@ warnings.simplefilter("ignore", UserWarning)
 logging.basicConfig(level=logging.INFO)
 
 sc.set_figure_params(dpi=100, frameon=False)
-input_zarr = snakemake.input.zarr
+input_file = snakemake.input.zarr
 prepare_zarr = snakemake.input.prepare
-output_zarr = snakemake.output.zarr
+output_file = snakemake.output.zarr
 
-logging.info(f'Read "{input_zarr}"...')
+logging.info(f'Read "{input_file}"...')
 adata = read_anndata(
-    input_zarr,
+    prepare_zarr,
     X='X',
     obs='obs',
     var='var',
@@ -27,11 +27,11 @@ sc.pp.log1p(adata)
 sc.pp.pca(adata)
 sc.pp.neighbors(adata, use_rep='X_pca')
 
-logging.info(f'Write "{output_zarr}"...')
+logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())
 write_zarr_linked(
     adata,
     in_dir=prepare_zarr,
-    out_dir=output_zarr,
+    out_dir=output_file,
     files_to_keep=['obsm', 'obsp', 'uns']
 )
