@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 sc.set_figure_params(dpi=100, frameon=False)
 input_file = snakemake.input.zarr
-prepare_zarr = snakemake.input.prepare
+prepare_file = snakemake.input.prepare
 output_file = snakemake.output.zarr
 sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
@@ -53,6 +53,8 @@ adata = sc.AnnData(
         for i, cell_type in enumerate(representation_method.cell_types)
     }
 )
+samples = read_anndata(prepare_file, obs='obs').obs_names
+adata = adata[samples].copy()
 
 # compute kNN graph
 sc.pp.neighbors(
@@ -65,7 +67,7 @@ logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())
 write_zarr_linked(
     adata,
-    in_dir=prepare_zarr,
+    in_dir=prepare_file,
     out_dir=output_file,
     files_to_keep=['obsm', 'obsp', 'uns']
 )

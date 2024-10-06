@@ -59,6 +59,8 @@ adata <- sc$AnnData(
     obs = sample_dt,
     obsm = list(distances = dist_matrix)
 )
+samples <- io$read_anndata(prepare_file, obs='obs')$obs_names
+adata <- adata[samples]
 
 # compute kNN graph
 sc$pp$neighbors(adata, use_rep = 'distances', metric = 'precomputed')
