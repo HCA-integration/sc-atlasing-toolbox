@@ -24,12 +24,13 @@ DATASETS:
     sample_representation:
       sample_key: batch
       cell_type_key: bulk_labels
-      min_cells_per_sample: 100
+      min_cells_per_sample: 50
       min_cells_per_cell_type: 10
       use_rep:
         - obsm/X_pca
         - X
       raw_counts: layers/counts
+      norm_counts: layers/normcounts
       var_mask: highly_variable
       methods:
         pseudobulk:

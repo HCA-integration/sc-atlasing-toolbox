@@ -4,10 +4,14 @@ rule prepare:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / 'dataset~{dataset}' / 'file_id~{file_id}' / 'var_mask~{var_mask}.zarr'),
     params:
-        bulk_by=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
-        aggregate='mean'
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
+        cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
+        norm_counts=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', default='X'),
+        min_cells_per_sample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'min_cells_per_sample', default=1),
+        min_cells_per_cell_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'min_cells_per_cell_type', default=1),
+        aggregate=lambda wildcards: mcfg.get_from_parameters(wildcards, 'aggregate', default='sum'),
     conda:
-        get_env(config, 'scanpy')
+        get_env(config, 'sample_representation')
     resources:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt)
     script:
