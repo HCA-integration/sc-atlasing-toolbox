@@ -7,9 +7,9 @@ import scanpy as sc
 
 from utils.io import read_anndata, write_zarr_linked
 
-
 warnings.simplefilter("ignore", UserWarning)
 logging.basicConfig(level=logging.INFO)
+
 
 sc.set_figure_params(dpi=100, frameon=False)
 input_file = snakemake.input.zarr
@@ -30,7 +30,7 @@ adata = read_anndata(
     dask=dask,
     stride=int(n_obs / 5),
 )
-adata.obsm['use_rep'] = adata.X.todense()
+adata.obsm['use_rep'] = adata.X.todense() if hasattr(adata.X, 'todense') else adata.X
 
 logging.info(f'Calculating PILOT representation for "{cell_type_key}", using cell features from "{use_rep}"')
 representation_method = pr.tl.PILOT(
