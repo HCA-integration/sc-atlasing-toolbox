@@ -16,6 +16,7 @@ rule run_method:
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample_key'),
         cell_type_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cell_type_key'),
         use_rep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_rep'),
+        var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask'),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict'),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env'),
         script_suffix=lambda wildcards: mcfg.get_from_parameters(wildcards, 'script_suffix'),

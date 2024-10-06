@@ -15,6 +15,7 @@ suppressPackageStartupMessages({
   library(anndata)
 })
 io <- import('utils.io')
+misc <- import('utils.misc')
 sc <- import('scanpy')
 
 
@@ -67,9 +68,10 @@ input_file <- snakemake@input$zarr
 prepare_file <- snakemake@input$prepare
 output_file <- snakemake@output$zarr
 
-use_rep <- snakemake@params$use_rep
 sample_key <- snakemake@params$sample_key
 cell_type_key <- snakemake@params$cell_type_key
+use_rep <- snakemake@params$use_rep
+var_mask <- snakemake@params$var_mask
 threads <- snakemake@params$threads
 seed <- snakemake@params$seed
 norm_method <- 'trim'
@@ -79,7 +81,7 @@ scale_var <- TRUE
 
 message("Read data...")
 n_obs <- io$read_anndata(input_file, obs='obs')$n_obs
-dask <- n_obs > 2e6
+dask <- n_obs > 1e6
 adata <- io$read_anndata(
     input_file,
     X=use_rep,
@@ -92,6 +94,12 @@ adata <- io$read_anndata(
 if (use_rep == 'X' | grepl('^layers/|^raw/', use_rep)) {
     adata$var <- io$read_anndata(input_file, var='var')$var
 }
+
+# subset HVGs
+if (!is.null(var_mask)){
+    adata <- adata[, adata$var[var_mask]$values]
+}
+misc$dask_compute(adata)
 
 message("Prepare data and parameters...")
 param_list <- initialize_params(

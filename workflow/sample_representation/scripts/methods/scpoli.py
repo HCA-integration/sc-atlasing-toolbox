@@ -6,6 +6,7 @@ import pandas as pd
 import scanpy as sc
 
 from utils.io import read_anndata, write_zarr_linked
+from utils.misc import dask_compute
 
 
 warnings.simplefilter("ignore", UserWarning)
@@ -18,12 +19,13 @@ output_file = snakemake.output.zarr
 sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
 use_rep = snakemake.params.get('use_rep')
+var_mask = snakemake.params.get('var_mask')
 n_epochs = snakemake.params.get('hyperparams', {}).get('n_epochs', 100)
 
 
 logging.info(f'Read "{input_file}"...')
 n_obs = read_anndata(input_file, obs='obs').n_obs
-dask = n_obs > 2e6
+dask = n_obs > 1e6
 adata = read_anndata(
     input_file,
     X=use_rep,
@@ -32,6 +34,12 @@ adata = read_anndata(
     dask=dask,
     stride=int(n_obs / 5),
 )
+
+# subset HVGs
+if var_mask is not None:
+    adata.var = read_anndata(input_file, var='var').var
+    adata = adata[:, adata.var[var_mask]].copy()
+dask_compute(adata)
 
 adata.X = adata.X.astype('int32')
 adata.obs[cell_type_key] = adata.obs[cell_type_key].astype(str).fillna('NA').astype('category')
