@@ -53,13 +53,9 @@ distances = representation_method.calculate_distance_matrix(
 )
 
 # create new AnnData object for patient representations
-adata = sc.AnnData(
-    obs=pd.DataFrame(index=representation_method.samples),
-    obsm={
-        'distances': distances,
-        f'{cell_type_key}_composition': representation_method.patient_representations
-    }
-)
+adata = sc.AnnData(obs=pd.DataFrame(index=representation_method.samples))
+adata.obsm['distances'] = distances
+adata.obsm[cell_type_key] = representation_method.patient_representations
 samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 

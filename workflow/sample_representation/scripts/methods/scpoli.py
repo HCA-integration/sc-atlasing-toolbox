@@ -54,14 +54,9 @@ representation_method = pr.tl.SCPoli(
 )
 representation_method.prepare_anndata(adata)
 
-# compute distances
-distances = representation_method.calculate_distance_matrix(force=True)
-
 # create new AnnData object for patient representations
-adata = sc.AnnData(
-    obs=pd.DataFrame(index=representation_method.samples),
-    obsm={'distances': distances}
-)
+adata = sc.AnnData(obs=pd.DataFrame(index=representation_method.samples))
+adata.obsm['distances'] = representation_method.calculate_distance_matrix(force=True)
 samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 
