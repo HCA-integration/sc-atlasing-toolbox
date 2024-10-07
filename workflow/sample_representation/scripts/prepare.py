@@ -37,19 +37,19 @@ adata = read_anndata(
     stride=int(n_obs / 5),
 )
 
-# filter small samples and cell types
-adata = pr.pp.filter_small_samples(
-    adata,
-    sample_key,
-    sample_size_threshold=min_cells_per_sample,
-)
-if cell_type_key is not None:
-    adata = pr.pp.filter_small_cell_types(
-        adata,
-        sample_key,
-        cell_type_key,
-        cluster_size_threshold=min_cells_per_cell_type,
-    )
+# # filter small samples and cell types
+# adata = pr.pp.filter_small_samples(
+#     adata,
+#     sample_key,
+#     sample_size_threshold=min_cells_per_sample,
+# )
+# if cell_type_key is not None:
+#     adata = pr.pp.filter_small_cell_types(
+#         adata,
+#         sample_key,
+#         cell_type_key,
+#         cluster_size_threshold=min_cells_per_cell_type,
+#     )
 
 logging.info(f'Pseudobulk by "{sample_key}"...')
 adata_bulk = get_pseudobulks(adata, group_key=sample_key, agg=aggregate)
