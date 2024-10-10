@@ -160,10 +160,8 @@ pairwise_distances <- dist(results$scores, method = "euclidean")
 
 # create new anndata object
 message("Creating new anndata object...")
-obs_dt <- data.table(adata$obs)
-sample_dt <- obs_dt[, lapply(.SD, first), by = sample_key]
 adata <- sc$AnnData(
-    obs = sample_dt,
+    obs = data.frame(row.names = unique(sample_ids)),
     obsm = list(distances = dist_matrix)
 )
 samples <- io$read_anndata(prepare_file, obs='obs')$obs_names

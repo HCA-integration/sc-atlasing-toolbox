@@ -45,8 +45,8 @@ misc$dask_compute(adata)
 embedding <- adata$X
 rownames(embedding) <- adata$obs_names
 sample_ids <- adata$obs[[sample_key]] # TOOD: is this correct?
-obs_dt <- data.table(adata$obs)
-sample_dt <- obs_dt[, lapply(.SD, first), by = sample_key]
+# obs_dt <- data.table(adata$obs)
+# sample_dt <- obs_dt[, lapply(.SD, first), by = sample_key]
 
 message(paste(c("Data dimensions:", paste(dim(embedding), collapse=', '))))
 message(paste("Number of IDs:", uniqueN(sample_ids)))
@@ -65,7 +65,7 @@ message(paste(c("Distance matrix dimensions:", paste(dim(dist_matrix), collapse=
 # create new anndata object
 message("Creating new anndata object...")
 adata <- sc$AnnData(
-    obs = sample_dt,
+    obs = data.frame(row.names = unique(sample_ids)),
     obsm = list(distances = dist_matrix)
 )
 samples <- io$read_anndata(prepare_file, obs='obs')$obs_names
