@@ -10,8 +10,9 @@ module_name = 'subset'
 mcfg = ModuleConfig(
     module_name,
     config,
-    config_params=['n_cells', 'sample', 'label'],
-    # wildcard_names=['strategy'], # TODO manage wildcards in ModuleConfig
+    config_params=['strategy', 'n_cells', 'sample', 'label', 'per_sample'],
+    explode_by='strategy',
+    wildcard_names=['strategy'],
 )
 paramspace = mcfg.get_paramspace()
 
@@ -22,17 +23,25 @@ module common:
 use rule * from common as common_ *
 
 rule subset:
+    message:
+        """
+        Subsetting data
+        input: {input}
+        output: {output}
+        params: {params}
+        """
     input:
         lambda wildcards: mcfg.get_input_file(wildcards.dataset, wildcards.file_id),
     output:
-        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / '{strategy}.zarr')  # TODO: remove from wildcards and use as params
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')  # TODO: remove from wildcards and use as params
     resources:
         mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
         disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     params:
-        n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells', as_type=int, check_query_keys=False),
-        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample', check_query_keys=False),
-        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', check_query_keys=False),
+        n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells'),
+        sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample'),
+        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        per_sample=lambda wildcards: mcfg.get_from_parameters(wildcards, 'per_sample'),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     script:
@@ -41,10 +50,7 @@ rule subset:
 
 rule all:
     input:
-        expand(
-            expand(rules.subset.output, zip, **mcfg.get_input_file_wildcards(), allow_missing=True),
-            strategy=['by_sample', 'within_sample']
-        )
+        mcfg.get_output_files(rules.subset.output)
     default_target: True
     localrule: True
 

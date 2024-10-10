@@ -58,6 +58,11 @@ config_kwargs = {
     'collect': dict(
         mandatory_wildcards=['dataset'],
     ),
+    'subset': dict(
+        config_params=['strategy', 'n_cells', 'sample', 'label', 'per_sample'],
+        explode_by='strategy',
+        wildcard_names=['strategy'],
+    )
 }
 
 config_classes = {
