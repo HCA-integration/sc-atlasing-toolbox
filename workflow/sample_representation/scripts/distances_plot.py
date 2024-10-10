@@ -17,18 +17,8 @@ histplot_path = snakemake.output.histplot_path
 method_name = snakemake.wildcards.method
 
 logging.info(f'Read "{input_zarr}"...')
-n_obs = read_anndata(input_zarr, obs='obs').n_obs
-dask = n_obs > 2e6
-adata = read_anndata(
-    input_zarr,
-    obs='obs',
-    obsp='obsp',
-    backed=dask,
-    dask=dask,
-    stride=int(n_obs / 5),
-)
+dist_max = read_anndata(input_zarr, X='obsp/distances').X
 
-dist_max = adata.obsp["distances"]
 if scipy.sparse.issparse(dist_max):
     dist_max = dist_max.toarray()
 nnz = (dist_max > 0).sum()

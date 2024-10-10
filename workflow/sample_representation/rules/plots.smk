@@ -1,6 +1,6 @@
 rule plot:
     input:
-        zarr=lambda wildcards: mcfg.get_input_file(**wildcards)
+        zarr=rules.run_method.output.zarr
     output:
         histplot_path=mcfg.image_dir / paramspace.wildcard_pattern / 'distances_histplot.png'
     conda:
