@@ -36,11 +36,15 @@ class SampleRepresentationConfig(IntegrationConfig, ModuleConfig):
         # prune entries depending on input type
         wildcards_df = self.parameters.wildcards_df
         # set use_rep to embedding or counts depending on input type
-        wildcards_df['use_rep'] = np.where(
-            wildcards_df['input_type'] == 'embed',
-            wildcards_df['use_rep'],
-            wildcards_df['raw_counts'] # TODO: case for normalized counts
-        )
+        conditions = [
+            (wildcards_df['input_type'] == 'feature'),
+            (wildcards_df['input_type'] == 'embed'),
+        ]
+        choices = [
+            wildcards_df['raw_counts'], # TODO: case for normalized counts
+            wildcards_df['use_rep']
+        ]
+        wildcards_df['use_rep'] = np.select(conditions, choices, default='None')
         # set var_mask only for counts representations
         wildcards_df['var_mask'] = np.where(
             (

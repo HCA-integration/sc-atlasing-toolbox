@@ -17,7 +17,6 @@ prepare_file = snakemake.input.prepare
 output_file = snakemake.output.zarr
 sample_key = snakemake.params.get('sample_key')
 cell_type_key = snakemake.params.get('cell_type_key')
-use_rep = snakemake.params.get('use_rep')
 var_mask = snakemake.params.get('var_mask')
 
 logging.info(f'Read "{input_file}"...')
@@ -25,7 +24,6 @@ n_obs = read_anndata(input_file, obs='obs').n_obs
 dask = n_obs > 1e6
 adata = read_anndata(
     input_file,
-    X=use_rep,
     obs='obs',
     backed=dask,
     dask=dask,
@@ -42,7 +40,6 @@ logging.info(f'Calculating composition representation for "{cell_type_key}"')
 representation_method = pr.tl.CellTypesComposition(
     sample_key=sample_key,
     cells_type_key=cell_type_key,
-    layer='X',
 )
 representation_method.prepare_anndata(adata)
 
