@@ -17,6 +17,8 @@ output_file = snakemake.output[0]
 params = snakemake.params
 batch_keys = params.batches
 label_keys = params.labels
+norm_count_layer = params.get('norm_counts', 'X')
+raw_count_layer = params.get('raw_counts', 'X')
 var_mask = snakemake.wildcards.var_mask
 save_subset = params.get('save_subset', False)
 recompute_pca = params.get('recompute_pca', True)
@@ -24,7 +26,8 @@ recompute_pca = params.get('recompute_pca', True)
 
 def read_and_subset(
     input_file: [str, Path],
-    layer_key: str,
+    in_layer: str,
+    out_layer: str,
     var_column: str,
     files_to_keep: list,
     slot_map: dict,
@@ -32,9 +35,7 @@ def read_and_subset(
     filter_zero_genes: bool = True,
     **kwargs,
 ):
-    in_layer = params.get(layer_key, 'X')
-    assert in_layer is not None, f'Please specify a layer key in the config under {layer_key}'
-    out_layer = f'layers/{layer_key}'
+    assert in_layer is not None, f'Please specify a layer key in the config under {in_layer}'
     
     logging.info(f'Read {input_file}...')
     adata = read_anndata(
@@ -49,7 +50,7 @@ def read_and_subset(
     )
     
     if new_var_column is None:
-        slot_map |= {out_layer: in_layer}
+        slot_map |= {f'layers/{out_layer}': in_layer}
         return adata, files_to_keep, slot_map
     
     logging.info('Determine var_mask...')
@@ -73,7 +74,7 @@ def read_and_subset(
             to_memory=False,
             compute_dask=False,
         )
-        dask_compute(adata, layers=[layer_key], verbose=True)
+        dask_compute(adata, layers=[in_layer], verbose=True)
     
     # determine output
     if subsetted and save_subset:
@@ -89,7 +90,8 @@ slot_map = {}
 
 adata_norm, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
-    layer_key='normcounts',
+    in_layer=norm_count_layer,
+    out_layer='normcounts',
     var_column=var_mask,
     new_var_column='integration_features',
     files_to_keep=files_to_keep,
@@ -101,7 +103,8 @@ adata_norm, files_to_link, slot_map = read_and_subset(
 )
 adata_raw, files_to_link, slot_map = read_and_subset(
     input_file=input_file,
-    layer_key='counts',
+    in_layer=raw_count_layer,
+    out_layer='counts',
     var_column=var_mask,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
@@ -188,7 +191,7 @@ write_zarr_linked(
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    in_dir_map={
-        'layers/normcounts': output_file
-    },
+    # in_dir_map={
+    #     'layers/normcounts': output_file
+    # },
 )

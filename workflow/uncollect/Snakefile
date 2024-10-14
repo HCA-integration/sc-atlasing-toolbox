@@ -1,0 +1,61 @@
+from pathlib import Path
+import pandas as pd
+
+from utils.ModuleConfig import ModuleConfig
+from utils.environments import get_env
+
+
+mcfg = ModuleConfig(
+    module_name='uncollect',
+    config=config,
+    config_params=[
+        'sep',
+        'new_file_ids',
+    ],
+    wildcard_names=['new_file_id'],
+    rename_config_params={'new_file_ids': 'new_file_id'},
+    explode_by=['new_file_id'],
+)
+params = mcfg.get_paramspace()
+print(params.wildcard_pattern)
+
+wildcard_constraints:
+    dataset=r'[^/]+',
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+
+rule uncollect:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+    output:
+        zarr=directory(mcfg.out_dir / f'{params.wildcard_pattern}.zarr'),
+    params:
+        sep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sep', default='--'),
+    conda:
+        get_env(config, 'scanpy', env_dir='envs')
+    resources:
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+    script:
+        'uncollect.py'
+
+
+rule all:
+    input:
+        mcfg.get_output_files(rules.uncollect.output)
+    default_target: True
+    localrule: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )
+    localrule: True

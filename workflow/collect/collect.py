@@ -3,9 +3,10 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import anndata as ad
 import pandas as pd
+from pprint import pformat
 from scipy.sparse import csr_matrix
 
-from utils.io import read_anndata, get_file_reader, write_zarr_linked
+from utils.io import read_anndata, get_file_reader, write_zarr_linked, link_file
 from utils.misc import dask_compute
 from collect_utils import get_same_columns, merge_df
 
@@ -34,18 +35,34 @@ if len(files) == 1:
         adata.write_zarr(output_file)
     exit(0)
 
+
 def read_file(file, **kwargs):
+    logging.info(f'Read {file}...')
     if file.endswith('.zarr'):
-        kwargs.pop('X', None)
-        kwargs.pop('layers', None)
+        large_slots = ['layers', 'obsm', 'obsp', 'uns']
+        kwargs = {k: v for k, v in kwargs.items() if k not in large_slots+['X']}
+        
         adata = read_anndata(file, **kwargs)
         func, _ = get_file_reader(file)
-        layers_keys = func(file, 'r').get('layers', {}).keys()
-        adata.layers = {key: csr_matrix(adata.shape) for key in layers_keys}
+        
+        default_values = [
+            csr_matrix(adata.shape),
+            csr_matrix((adata.n_obs, 0)),
+            csr_matrix((adata.n_obs, adata.n_obs)),
+            None
+        ]
+        for slot_name, value in zip(large_slots, default_values):
+            slot_keys = func(file, 'r').get(slot_name, {}).keys()
+            setattr(
+                adata,
+                f'_{slot_name}',
+                {key: value for key in slot_keys}
+            )
+        
         return adata
     return read_anndata(file, **kwargs)
 
-logging.info('Read AnnData objects...')
+
 adatas = {
     file_id: read_file(file, **kwargs, dask=True, backed=True)
     for file_id, file in files.items()
@@ -59,11 +76,11 @@ if 'obs' in merge_slots:
             assert obs_index_column in _ad.obs.columns, \
                 f'Index column "{obs_index_column}" not found for {file_id}\n{_ad.obs}'
             adatas[file_id].obs = _ad.obs.set_index(obs_index_column)
-    same_obs_columns = get_same_columns(adatas)
-    logging.info(f'Same columns: {same_obs_columns}')
+    logging.info('Determine which columns are the same...')
+    same_obs_columns = get_same_columns(adatas, n_threads=snakemake.threads)
+    logging.info(f'Same columns:\n{pformat(same_obs_columns)}')
 else:
     same_obs_columns = []
-print('same slots:', same_obs_columns)
 
 # TODO: link slots with new slot names for merge_slots
 
@@ -80,6 +97,7 @@ for file_id, _ad in adatas.items():
         file_to_link = file_name
 
     for slot_name in merge_slots:
+        logging.info(f'Merge slot "{slot_name}" for file_id={file_id}...')
         slot = _ad.__dict__.get(f'_{slot_name}')
         update_slot_link_map = dict()
 
@@ -110,18 +128,15 @@ for file_id, _ad in adatas.items():
                 }
                 slots[slot_name] = slots.get(slot_name, {}) | new_slot
         else:
-            raise NotImplementedError(f'Slot "{slot}" not supported')
+            raise NotImplementedError(f'Slot "{slot_name}" not supported')
         
         slot_link_map |= update_slot_link_map
         in_dir_map |= {
-            f'{slot_name}/{key}': file_name for key in update_slot_link_map.keys()
+            key: file_name for key in update_slot_link_map.keys()
         }
 
 # deal with same slots
-files_to_keep = []
-if file_to_link:
-    files_to_keep = [slot for slot in slots]
-else:
+if not file_to_link:
     for slot_name in same_slots:
         slots[slot_name] = _ad.__dict__.get(f'_{slot_name}')
 
@@ -137,7 +152,13 @@ write_zarr_linked(
     adata=adata,
     in_dir=file_to_link,
     out_dir=output_file,
-    files_to_keep=files_to_keep,
-    slot_map=slot_link_map,
-    in_dir_map=in_dir_map,
+    files_to_keep=[slot for slot in merge_slots if slot != 'X'],
+    # slot_map=slot_link_map,
+    # in_dir_map=in_dir_map,
 )
+
+# workaround hack - need to fix bug in write_zarr_linked
+# print('in_dir_map', pformat(in_dir_map), flush=True)
+for slot, file in in_dir_map.items():
+    logging.info(f'Link {slot} to {file}/{slot_link_map[slot]}...')
+    link_file(in_file=f'{file}/{slot_link_map[slot]}', out_file=f'{output_file}/{slot}')

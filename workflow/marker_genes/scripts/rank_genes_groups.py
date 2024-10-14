@@ -23,12 +23,13 @@ output_tsv = snakemake.output.tsv
 group_key = snakemake.wildcards.group
 sample_key = snakemake.params.sample
 args = snakemake.params.get('args', {})
-pseudobulk = sample_key is not None
+pseudobulk = not sample_key is None
 
 # determine how to read the data
-obs = read_anndata(input_file, obs='obs').obs[[group_key, sample_key]]
+obs_cols = [group_key, sample_key] if pseudobulk else [group_key]
+obs = read_anndata(input_file, obs='obs').obs[obs_cols]
 n_obs = obs.shape[0]
-n_groups = obs.drop_duplicates().nunique()
+n_groups = obs.drop_duplicates().shape[0]
 dask = pseudobulk or n_obs > 1e6 or n_groups > 1e5
 
 logging.info(f'Reading {input_file}...')
