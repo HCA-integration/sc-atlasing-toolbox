@@ -52,16 +52,13 @@ distances = representation_method.calculate_distance_matrix(
 # create new AnnData object for patient representations
 adata = sc.AnnData(obs=pd.DataFrame(index=representation_method.samples))
 adata.obsm['distances'] = distances
-adata.obsm[cell_type_key] = representation_method.patient_representations
+adata.obsm['X_emb'] = representation_method.patient_representations
 samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 
 # compute kNN graph
-sc.pp.neighbors(
-    adata,
-    use_rep='distances',
-    metric='precomputed'
-)
+sc.pp.neighbors(adata, use_rep='distances', metric='precomputed', transformer='sklearn')
+sc.pp.neighbors(adata, use_rep='X_emb', key_added='X_emb')
 
 logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())

@@ -1,6 +1,7 @@
 import logging
 import warnings
 import torch
+import scvi
 
 import patient_representation as pr
 import pandas as pd
@@ -12,8 +13,12 @@ from utils.misc import dask_compute
 
 warnings.simplefilter("ignore", UserWarning)
 logging.basicConfig(level=logging.INFO)
-
 sc.set_figure_params(dpi=100, frameon=False)
+
+torch.set_float32_matmul_precision('medium')
+scvi.settings.progress_bar_style = 'tqdm'
+scvi.settings.num_threads = snakemake.threads
+
 input_file = snakemake.input.zarr
 prepare_file = snakemake.input.prepare
 output_file = snakemake.output.zarr
@@ -43,6 +48,8 @@ adata = read_anndata(
 if var_mask is not None:
     adata.var = read_anndata(input_file, var='var').var
     adata = adata[:, adata.var[var_mask]].copy()
+logging.info(f'Number of genes: {adata.n_vars}')
+
 dask_compute(adata)
 
 logging.info(f'Calculating MrVI representation for "{cell_type_key}", using cell features from "{use_rep}"')
@@ -58,15 +65,12 @@ representation_method.prepare_anndata(adata)
 # create new AnnData object for patient representations
 adata = sc.AnnData(obs=pd.DataFrame(index=representation_method.samples))
 adata.obsm['distances'] = representation_method.calculate_distance_matrix(force=True)
+# adata.obsm['X_emb'] = representation_method.patient_representations # TODO: needs to be computed
 samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 
 # compute kNN graph
-sc.pp.neighbors(
-    adata,
-    use_rep='distances',
-    metric='precomputed'
-)
+sc.pp.neighbors(adata, use_rep='distances', metric='precomputed', transformer='sklearn')
 
 logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())

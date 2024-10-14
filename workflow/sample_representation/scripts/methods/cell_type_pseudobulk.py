@@ -2,6 +2,7 @@ import logging
 import warnings
 
 import patient_representation as pr
+import numpy as np
 import pandas as pd
 import scanpy as sc
 
@@ -58,16 +59,13 @@ adata = sc.AnnData(obs=pd.DataFrame(index=representation_method.samples))
 adata.obsm['distances'] = distances
 for i, cell_type in enumerate(representation_method.cell_types):
     adata.obsm[cell_type]: representation_method.patient_representations[i]
-
+adata.obsm['X_emb'] = np.hstack(representation_method.patient_representations)
 samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 
 # compute kNN graph
-sc.pp.neighbors(
-    adata,
-    use_rep='distances',
-    metric='precomputed'
-)
+sc.pp.neighbors(adata, use_rep='distances', metric='precomputed', transformer='sklearn')
+# sc.pp.neighbors(adata, use_rep='X_emb', key_added='X_emb')
 
 logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())
