@@ -24,7 +24,7 @@ n_obs = read_anndata(input_file, obs='obs').n_obs
 dask = n_obs > 1e6
 adata = read_anndata(
     input_file,
-    X='X',
+    X=use_rep,
     obs='obs',
     backed=dask,
     dask=dask,
