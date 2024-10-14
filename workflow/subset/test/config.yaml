@@ -20,6 +20,7 @@ DATASETS:
     subset:
       sample: batch
       label: bulk_labels
+      per_sample: 50
       strategy:
         - by_sample
         - within_sample

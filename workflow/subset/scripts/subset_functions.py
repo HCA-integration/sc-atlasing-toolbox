@@ -25,6 +25,7 @@ def by_sample(
         n_cells += count
         samples.append(sample)
 
+    print(f'Subset n_cell_max: {n_cell_max}, n_samples: {len(samples)}', flush=True)
     return adata.obs[sample_key].isin(samples)
 
 
@@ -45,19 +46,25 @@ def within_sample(
     if n_cells_per_sample is None:
         n_samples = adata.obs[sample_key].nunique()
         n_cells_per_sample = int(n_cell_max / n_samples)
+        
+    print(f'Subset n_cell_max: {n_cell_max}, n_cells_per_sample: {n_cells_per_sample}', flush=True)
     
-    shuffled_samples = adata.obs[sample_key].sample(frac=1, random_state=random_state)
+    shuffled_samples = np.random.permutation(adata.obs[sample_key].unique())
     subset_indices = []
     n_cells_flagged = 0
     for sample in shuffled_samples:
         # subset to sample
-        sample_mask = adata.obs[sample_key] == sample
-        # turn mask into subset index
-        sample_indices = adata.obs.loc[sample_mask].index
+        sampled_indices = adata.obs.loc[adata.obs[sample_key] == sample].index
         
         # subset to n_cells_per_sample random cells
-        n_cells = min(len(sample_indices), n_cells_per_sample)
-        sampled_indices = sample_indices.to_series().sample(n_cells, random_state=random_state)
+        if len(sampled_indices) < n_cells_per_sample:
+            continue
+        n_cells = min(len(sampled_indices), n_cells_per_sample)
+        sampled_indices = sampled_indices.to_series().sample(
+            n_cells,
+            random_state=random_state,
+            replace=False
+        )
 
         subset_indices.append(sampled_indices)
         n_cells_flagged += len(sampled_indices)
