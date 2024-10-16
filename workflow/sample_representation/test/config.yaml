@@ -1,9 +1,9 @@
 output_dir: test/out
 images: test/images
 
-defaults:
-  datasets:
-    - test
+# defaults:
+#   datasets:
+#     - test
 
 DATASETS:
   blood:
@@ -15,8 +15,15 @@ DATASETS:
       cell_type_key: cell_type
       min_cells_per_sample: 300
       min_cells_per_cell_type: 0
-      use_rep: X_pca
-      n_epochs: 50
+      raw_counts: X
+      methods:
+        pseudobulk:
+        composition:
+        cell_type_pseudobulk:
+        scpoli:
+          n_epochs: 1
+        mrvi:
+          max_epochs: 1
   test:
     input:
       sample_representation:
@@ -43,3 +50,12 @@ DATASETS:
           max_epochs: 1
         gloscope:
         # scitd:
+  test_minimal:
+    input:
+      sample_representation:
+        test: test/input/pbmc68k.h5ad
+    sample_representation:
+      sample_key: bulk_labels
+      raw_counts: layers/counts
+      methods:
+        pseudobulk:
