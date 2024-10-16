@@ -24,8 +24,8 @@ title = f'Marker genes for file_id={file_id} group={group_key}'
 args = snakemake.params.get('args', {})
 marker_gene_key = f'marker_genes_group={group_key}'
 args['key'] = marker_gene_key
-n_groups_per_split = args.pop('n_groups_per_split', 10)
 n_genes = args.get('n_genes', 10)
+n_groups_per_split = args.pop('n_groups_per_split', int(100 / n_genes))
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(

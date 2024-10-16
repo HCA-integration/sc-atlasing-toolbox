@@ -1,0 +1,14 @@
+output_dir: test/out
+images: test/images
+
+
+DATASETS:
+  test:
+    input:
+      uncollect: test/input/collect/dataset~test.zarr
+    uncollect:
+      sep: --
+      new_file_ids:
+        - file_1
+        - file_2
+        - file_3

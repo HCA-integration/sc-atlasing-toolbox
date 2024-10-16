@@ -12,7 +12,7 @@ print(cluster_df, flush=True)
 
 kwargs = dict() if input_zarr.endswith('.h5ad') else dict(obs='obs', uns='uns')
 adata = read_anndata(input_zarr, **kwargs)
-adata.obs = adata.obs.merge(cluster_df, left_index=True, right_index=True, how='left')
+adata.obs[cluster_df.columns] = cluster_df.loc[adata.obs_names]
 adata.uns['clustering'] = {
     'neighbors_key': snakemake.params.get('neighbors_key', 'neighbors'),
 }

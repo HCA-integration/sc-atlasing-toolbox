@@ -2,11 +2,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from pathlib import Path
 import pandas as pd
+from pprint import pformat
 import anndata
-from anndata.experimental import read_elem
-import zarr
 
-from utils.io import read_anndata, link_zarr_partial
+from utils.io import read_anndata, write_zarr_linked, link_zarr_partial
 
 input_file = snakemake.input.anndata
 input_new_cols = snakemake.input.get('new_columns')
@@ -52,7 +51,11 @@ if input_new_cols is not None:
         
         # apply mapping
         map_dict = df.set_index(label_key)[mapping_label].to_dict()
+        logging.info(f'Mapping:\n{pformat(map_dict)}')
         adata.obs[mapping_label] = pd.Series(adata.obs[label_key].map(map_dict), dtype="category")
+        
+        logging.info(f'Number of unmapped entries: {adata.obs[mapping_label].isna().sum()}')
+        logging.info(pformat(adata.obs[[mapping_label, label_key]].value_counts(dropna=False, sort=False)))
 
         # set current mapping label as new label key
         # label_key = mapping_label
@@ -77,6 +80,10 @@ if input_merge_cols is not None:
             lambda x: sep.join(x.values.astype(str)), axis=1
         )
 
-logging.info('Write to {output_file}...')
-adata.write_zarr(output_file)
-link_zarr_partial(input_file, output_file, files_to_keep=['obs'])
+logging.info(f'Write to {output_file}...')
+write_zarr_linked(
+    adata,
+    in_dir=input_file,
+    out_dir=output_file,
+    files_to_keep=['obs']
+)

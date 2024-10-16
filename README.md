@@ -1,11 +1,11 @@
-# HCA Integration Toolbox :toolbox:
+# Single Cell Atlasing Toolbox :toolbox:
 
 **Toolbox of Snakemake pipelines for easy-to-use analyses and benchmarks for building integrated atlases**
 
-- [:rocket: Getting Started](#🚀-getting-started)
-- [:gear: Configure Your Workflow](#⚙️-configure-your-workflow)
-- [:gear: Advanced Configuration](#⚙️-advanced-configuration)
-- [:hammer_and_wrench: Trouble Shooting](#🛠️-troubleshooting)
+- [:rocket: Getting Started](#getting-started)
+- [:gear: Configure Your Workflow](#configure-your-workflow)
+- [:gear: Advanced Configuration](#advanced-configuration)
+- [:hammer_and_wrench: Troubleshooting](#troubleshooting)
 
 This toolbox provides multiple modules that can be easily combined into custom workflows that leverage the file management of [Snakemake](https://snakemake.readthedocs.io/en/v7.31.1/).
 This allows for an efficient and scalable way to run analyses on large datasets that can be easily configured by the user.
@@ -19,7 +19,7 @@ The modules are located under `workflow/` and can be run independently or combin
 | `load_data`            | Loading datasets from URLs and converting them to AnnData objects         |
 | `exploration`          | Exploration and quality control of datasets                               |
 | `batch_analysis`       | Exploration and quality control of batches within datasets                |
-| `qc`                   | Quality control of datasets                                               |
+| `qc`                   | Semi-automaetd quality control of datasets using [sctk AutoQC](https://teichlab.github.io/sctk/notebooks/automatic_qc.html) |
 | `doublets`             | Identifying and handling doublets in datasets                             |
 | `merge`                | Merging datasets                                                          |
 | `filter`               | Filtering datasets based on specified criteria                            |
@@ -28,10 +28,13 @@ The modules are located under `workflow/` and can be run independently or combin
 | `split_data`           | Splitting datasets into training and testing sets                         |
 | `preprocessing`        | Preprocessing of datasets (normalization, feature selection, PCA, kNN graph, UMAP) |
 | `integration`          | Running single cell batch correction methods on datasets                  |
-| `metrics`              | Calculating scIB metrics, mainly for benchmarking of integration methods  |
-| `label_harmonisation` | Providing alignment between unharmonized labels using CellHint             |
-| `label_transfer`       | Work in progress                                                          |
-| `sample_representation`| Work in progress                                                          |
+| `metrics`              | Calculating [scIB metrics](https://scib.readthedocs.io/en/latest/), mainly for benchmarking of integration methods  |
+| `label_harmonization`  | Providing alignment between unharmonized labels using [CellHint](https://cellhint.readthedocs.io/en/latest) |
+| `label_transfer`       | Transfer annotations of annotated cells to annotated cells e.g. via majority voting |
+| `sample_representation`| Methods for aggregating cells to sample level e.g. pseudobulk             |
+| `collect`              | Collect multiple input anndata objects into a single anndata object       |
+| `uncollect`            | Distribute slots of an anndata object to multiple anndata objects         |
+| `cell_type_prediction` | Predict cell types from reference model e.g. celltypist                   |
 
 ## :eyes: TL;DR What does a full workflow look like?
 
@@ -130,6 +133,7 @@ This was a dry-run (flag -n). The order of jobs does not reflect the order of ex
 :sparkling_heart: Beautiful, right? Read on to learn how to set up your own workflow!
 
 ## :rocket: Getting started
+<a name="getting-started"></a>
 
 ### 1. Installation
 
@@ -139,12 +143,12 @@ Depending on whether you have set up SSH or HTTPS with [PAT](https://docs.github
 
 SSH:
 ```commandline
-git clone git@github.com:HCA-integration/hca_integration_toolbox.git
+git clone git@github.com:HCA-integration/sc-atlassing-toolbox.git
 ```
 
 HTTPS:
 ``` clone
-git clone https://github.com/HCA-integration/hca_integration_toolbox.git
+git clone https://github.com/HCA-integration/sc-atlassing-toolbox.git
 ```
 
 #### Requirements
@@ -206,6 +210,7 @@ bash run_example.sh preprocessing_all integration_all metrics_all -c 10
 > Read on to learn how to configure your own workflow.
 
 ## :gear: Configure Your Workflow
+<a name="configure-your-workflow"></a>
 
 Configuring your workflow requires configuring global settings as well as subworkflows consisting of modules.
 The global configuration allows you to set output locations, computational resources and other settings that are used across all modules, while module settings affect the behaviour of a module in the scope of a given task
@@ -338,7 +343,7 @@ Below is an example of a wrapper script that you can use to call the pipeline.
 set -e -x
 
 # assuming that the toolbox is on the same level of the directory you're calling the script from
-pipeline="$(realpath ../hca_integration_toolbox)"   # adjust depending on location of wrapper script
+pipeline="$(realpath ../sc-atlassing-toolbox)"   # adjust depending on location of wrapper script
 
 snakemake \
   --configfile <my_config_file>.yaml \
@@ -357,7 +362,7 @@ If your config file becomes very big, you can split the workflows into separate 
 #!/usr/bin/env bash
 set -e -x
 
-pipeline="$(realpath ../hca_integration_toolbox)"
+pipeline="$(realpath ../sc-atlassing-toolbox)"
 
 snakemake \
   --configfile \
@@ -529,6 +534,7 @@ You can also use [Snakemake profiles](#snakemake_profiles) to dispatch your pipe
 
 
 ## :gear: Advanced configuration
+<a name="advanced-configuration"></a>
 
 ### Set defaults
 
@@ -677,6 +683,7 @@ If you don't have have GPU nodes, you can configure the gpu resources to be the 
 You can find detailed information on cluster execution in the [Snakemake documentation](https://snakemake.readthedocs.io/en/v7.31.1/executing/cluster.html).
 
 ## :hammer_and_wrench: Troubleshooting
+<a name="troubleshooting"></a>
 
 ### Working with GPUs
 
@@ -715,7 +722,7 @@ This will force Snakemake to use the CPU versions of an environment.
 ### FAQs
 
 Below are some scenarios that can occur when starting with the pipeline.
-If you have any additional questions or encounter any bugs, please open up a [github issue](https://github.com/HCA-integration/hca_integration_toolbox/issues).
+If you have any additional questions or encounter any bugs, please open up a [github issue](https://github.com/HCA-integration/sc-atlassing-toolbox/issues).
 If you want to contribute to improving the pipeline, check out the [contribution guidelines](CONTRIBUTING.md).
 
 #### I configured my pipeline and the dry run doesn't fail, but it doesn't want to run the modules I configured. What do I do?

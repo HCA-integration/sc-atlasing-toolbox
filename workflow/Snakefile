@@ -52,17 +52,26 @@ config_kwargs = {
         explode_by=['metric', 'batch'],
         paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
     ),
+    'subset': dict(
+        config_params=['strategy', 'n_cells', 'sample', 'label', 'per_sample'],
+        explode_by='strategy',
+        wildcard_names=['strategy'],
+    ),
     'merge': dict(
         mandatory_wildcards=['dataset'],
     ),
     'collect': dict(
         mandatory_wildcards=['dataset'],
     ),
-    'subset': dict(
-        config_params=['strategy', 'n_cells', 'sample', 'label', 'per_sample'],
-        explode_by='strategy',
-        wildcard_names=['strategy'],
-    )
+    'uncollect': dict(
+        config_params=[
+            'sep',
+            'new_file_ids',
+        ],
+        wildcard_names=['new_file_id'],
+        rename_config_params={'new_file_ids': 'new_file_id'},
+        explode_by=['new_file_id'],
+    ),
 }
 
 config_classes = {
@@ -111,6 +120,10 @@ module merge:
 
 module collect:
     snakefile: "collect/Snakefile"
+    config: config
+
+module uncollect:
+    snakefile: "uncollect/Snakefile"
     config: config
 
 module exploration:
@@ -179,6 +192,7 @@ use rule * from load_data as load_data_ *
 use rule * from filtering as filter_ *
 use rule * from merge as merge_ *
 use rule * from collect as collect_ *
+use rule * from uncollect as uncollect_ *
 use rule * from preprocessing as preprocessing_ *
 use rule * from clustering as clustering_ *
 use rule * from exploration as exploration_ *
