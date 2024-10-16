@@ -37,7 +37,7 @@ use rule plots from preprocessing as sample_representation_plot_mds with:
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
 
 
-use rule umap from preprocessing as clustering_compute_umap with:
+use rule umap from preprocessing as sample_representation_compute_umap with:
     input:
         zarr=rules.run_method.output.zarr,
         rep=rules.run_method.output.zarr,
@@ -52,7 +52,7 @@ use rule umap from preprocessing as clustering_compute_umap with:
 
 use rule plots from preprocessing as sample_representation_plot_umap with:
     input:
-        zarr=rules.clustering_compute_umap.output.zarr,
+        zarr=rules.sample_representation_compute_umap.output.zarr,
     output:
         plots=directory(mcfg.image_dir / paramspace.wildcard_pattern / 'umap')
     params:
