@@ -8,10 +8,8 @@ output_map:
   merge: data/out/merge/dataset~{dataset}.zarr
   # qc: data/out/qc/dataset~{dataset}/file_id~{file_id}.zarr
   clustering: data/out/clustering/dataset~{dataset}/file_id~{file_id}.zarr
-  sample_representation: data/out/sample_representation/dataset~{dataset}/file_id~{file_id}/pseudobulk.zarr
   split_data: data/out/split_data/dataset~{dataset}/file_id~{file_id}/key~{key}/value~{value}.zarr
   relabel: data/out/relabel/dataset~{dataset}/file_id~{file_id}.zarr
-  subset: data/out/subset/dataset~{dataset}/file_id~{file_id}/by_sample.zarr
   pca: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/pca.zarr
   neighbors: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/neighbors.zarr
   preprocessing: data/out/preprocessing/dataset~{dataset}/file_id~{file_id}/preprocessed.zarr

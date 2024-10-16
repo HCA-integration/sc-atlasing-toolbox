@@ -2,25 +2,25 @@ output_dir: test/out
 dataset_meta: test/datasets.tsv
 images: test/images
 
-defaults:
-  subset:
-    n_cells: 1000
-
 DATASETS:
   blood:
     input:
       subset: test/input/load_data/merged/organ/blood.zarr
     subset:
-      batch: study
       sample: sample
       label: cell_type
       n_cells: 1000
       per_sample: 50
+      strategy:
+        - by_sample
+        - within_sample
   test:
     input:
       subset: ../../data/pbmc68k.h5ad
     subset:
       sample: batch
       label: bulk_labels
-      n_cells: 1000
       per_sample: 50
+      strategy:
+        - by_sample
+        - within_sample
