@@ -38,7 +38,7 @@ class SampleRepresentationConfig(IntegrationConfig, ModuleConfig):
         
         # set script names
         wildcards_df['script'] = '../scripts/methods/' + wildcards_df['method'] + '.' +  wildcards_df['script_suffix']
-        
+
         # set use_rep to embedding or counts depending on input type
         conditions = [
             (wildcards_df['input_type'] == 'feature'),
@@ -49,6 +49,13 @@ class SampleRepresentationConfig(IntegrationConfig, ModuleConfig):
             wildcards_df['use_rep']
         ]
         wildcards_df['use_rep'] = np.select(conditions, choices, default='None')
+        
+        # filter cases where input_type is 'embed' but no 'use_rep' is specified
+        wildcards_df = wildcards_df[
+            (wildcards_df['input_type'] != 'embed') |
+            (wildcards_df['use_rep'] != 'None')
+        ].copy()
+        
         # set var_mask only for counts representations
         wildcards_df['var_mask'] = np.where(
             (
@@ -58,6 +65,7 @@ class SampleRepresentationConfig(IntegrationConfig, ModuleConfig):
             wildcards_df['var_mask'],
             'None'
         )
+        
         # drop duplicates
         wildcards_df = wildcards_df.drop_duplicates(
             ['dataset', 'file_id', 'method', 'input_type', 'use_rep', 'var_mask', 'hyperparams']
