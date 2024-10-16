@@ -10,6 +10,7 @@ rule run_method:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
         prepare=rules.prepare.output.zarr,
+        script=lambda wildcards: mcfg.get_from_parameters(wildcards, 'script')
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
@@ -19,7 +20,7 @@ rule run_method:
         var_mask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'var_mask'),
         hyperparams=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hyperparams_dict'),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env'),
-        script_suffix=lambda wildcards: mcfg.get_from_parameters(wildcards, 'script_suffix'),
+        script=lambda wildcards: mcfg.get_from_parameters(wildcards, 'script'),
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
     conda:
         lambda wildcards, params: get_env(config, params.env)
@@ -32,7 +33,7 @@ rule run_method:
         gpu=lambda w, attempt: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2),
         time="2-00:00:00",
     script:
-        '../scripts/methods/{wildcards.method}.{params.script_suffix}'
+        '../{params.script}'
 
 
 rule run_method_all:

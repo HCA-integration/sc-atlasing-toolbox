@@ -35,6 +35,10 @@ class SampleRepresentationConfig(IntegrationConfig, ModuleConfig):
 
         # prune entries depending on input type
         wildcards_df = self.parameters.wildcards_df
+        
+        # set script names
+        wildcards_df['script'] = 'scripts/methods/' + wildcards_df['method'] + '.' +  wildcards_df['script_suffix']
+        
         # set use_rep to embedding or counts depending on input type
         conditions = [
             (wildcards_df['input_type'] == 'feature'),
