@@ -54,8 +54,9 @@ samples = read_anndata(prepare_file, obs='obs').obs_names
 adata = adata[samples].copy()
 
 # compute kNN graph
-sc.pp.neighbors(adata, use_rep='distances', metric='precomputed', transformer='sklearn')
-sc.pp.neighbors(adata, use_rep='X_emb', key_added='X_emb')
+# sc.pp.neighbors(adata, use_rep='distances', metric='precomputed', transformer='sklearn')
+# sc.pp.neighbors(adata, use_rep='X_emb', key_added='X_emb')
+sc.pp.neighbors(adata, use_rep='X_emb')
 
 logging.info(f'Write "{output_file}"...')
 logging.info(adata.__str__())
