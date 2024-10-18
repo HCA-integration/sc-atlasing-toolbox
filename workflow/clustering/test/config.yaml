@@ -65,6 +65,7 @@ DATASETS:
       umap_colors:
         - bulk_labels
         - batch
+        - n_genes
   test_hierarchical_int:
     input:
       clustering: test/input/pbmc68k.h5ad
