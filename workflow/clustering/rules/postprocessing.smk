@@ -9,7 +9,7 @@ use rule umap from preprocessing as clustering_compute_umap with:
         zarr=get_neighbors_file,
         rep=get_neighbors_file,
     output:
-        zarr=directory(mcfg.out_dir / 'umap' / 'dataset~{dataset}' / 'file_id~{file_id}.zarr'),
+        zarr=directory(mcfg.out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
     resources:
@@ -28,6 +28,6 @@ use rule merge from clustering as clustering_merge with:
             all_params=True
         ),
     output:
-        zarr=directory(mcfg.out_dir / 'dataset~{dataset}/file_id~{file_id}.zarr')
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),

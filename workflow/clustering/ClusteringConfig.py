@@ -47,5 +47,5 @@ class ClusteringConfig(ModuleConfig):
         
         self.update_parameters(
             wildcards_df=wildcards_df,
-            wildcard_names=self.parameters.wildcard_names+['level'],
+            wildcard_names=self.parameters.wildcard_names#+['level'],
         )
