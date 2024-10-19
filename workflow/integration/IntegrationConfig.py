@@ -107,9 +107,10 @@ class IntegrationConfig(ModuleConfig):
         )
         
         # write to file 
-        unique_dataframe(
-            self.hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
-        ).to_csv(self.out_dir / 'hyperparams.tsv', sep='\t', index=False)
+        if self.out_dir.exists():
+            unique_dataframe(
+                self.hyperparams_df[['method', 'hyperparams', 'hyperparams_dict']]
+            ).to_csv(self.out_dir / 'hyperparams.tsv', sep='\t', index=False)
         
         # merge to wildcards
         self.parameters.wildcards_df = self.parameters.wildcards_df.merge(
