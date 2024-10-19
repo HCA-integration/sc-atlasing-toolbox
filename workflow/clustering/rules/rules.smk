@@ -24,3 +24,14 @@ rule merge:
         get_env(config, 'scanpy')
     script:
         '../scripts/merge.py'
+
+
+rule plot_evaluation:
+    input:
+        zarr='dataset.h5ad',
+    output:
+        plots=directory('evaluation')
+    conda:
+        get_env(config, 'scanpy')
+    script:
+        '../scripts/plot_enrichment.py'

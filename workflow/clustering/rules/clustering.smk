@@ -21,7 +21,7 @@ use rule neighbors from preprocessing as clustering_compute_neighbors with:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
-        zarr=directory(mcfg.out_dir / 'neighbors' / f'{paramspace.wildcard_pattern}.zarr'),
+        zarr=directory(mcfg.out_dir / 'neighbors' / paramspace.wildcard_pattern / 'algorithm~{algorithm}' /  'resolution~{resolution}' / 'level~{level}.zarr'),
     params:
         args=lambda wildcards: mcfg.get_from_parameters(
             {k: v for k, v in wildcards.items() if k not in ['algorithm', 'resolution']},
@@ -40,7 +40,7 @@ use rule cluster from clustering as clustering_cluster with:
     input:
         zarr=get_neighbors_file,
     output:
-        zarr=directory(mcfg.out_dir / 'resolutions' / f'{paramspace.wildcard_pattern}.zarr'),
+        zarr=directory(mcfg.out_dir / 'resolutions' / paramspace.wildcard_pattern / 'algorithm~{algorithm}' / 'resolution~{resolution}' / 'level~{level}.zarr'),
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
         neighbors_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors', default={}),

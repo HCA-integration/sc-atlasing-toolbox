@@ -9,7 +9,7 @@ use rule umap from preprocessing as clustering_compute_umap with:
         zarr=get_neighbors_file,
         rep=get_neighbors_file,
     output:
-        zarr=directory(mcfg.out_dir / 'umap' / 'dataset~{dataset}' / 'file_id~{file_id}.zarr'),
+        zarr=directory(mcfg.out_dir / 'umap' / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
     resources:
@@ -28,30 +28,6 @@ use rule merge from clustering as clustering_merge with:
             all_params=True
         ),
     output:
-        zarr=directory(mcfg.out_dir / 'dataset~{dataset}/file_id~{file_id}.zarr')
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
         neighbors_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'neighbors_key', default='neighbors'),
-
-
-def get_umap_colors(wildcards):
-    leiden_colors = mcfg.get_output_files(
-        '{algorithm}_{resolution}_{level}',
-        subset_dict=dict(wildcards),
-        all_params=True
-    )
-    user_colors = mcfg.get_from_parameters(wildcards, 'umap_colors', default=[])
-    return leiden_colors + user_colors
-
-
-use rule plots from preprocessing as clustering_plot_umap with:
-    input:
-        zarr=rules.clustering_merge.output.zarr,
-    output:
-        plots=directory(mcfg.image_dir / 'dataset~{dataset}' / 'file_id~{file_id}')
-    params:
-        basis='X_umap',
-        # color='{algorithm}_{resolution}_{level}',
-        color=get_umap_colors
-    resources:
-        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
-        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
