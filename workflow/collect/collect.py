@@ -158,7 +158,7 @@ write_zarr_linked(
 )
 
 # workaround hack - need to fix bug in write_zarr_linked
-# print('in_dir_map', pformat(in_dir_map), flush=True)
+print('in_dir_map\n', pformat(in_dir_map), flush=True)
 for slot, file in in_dir_map.items():
-    logging.info(f'Link {slot} to {file}/{slot_link_map[slot]}...')
+    # logging.info(f'Link {slot} to {file}/{slot_link_map[slot]}...')
     link_file(in_file=f'{file}/{slot_link_map[slot]}', out_file=f'{output_file}/{slot}')
