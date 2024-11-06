@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata, write_zarr_linked
 
-input_files = snakemake.input
+input_files = snakemake.input.dfs
 output_file = snakemake.output.zarr
 
 

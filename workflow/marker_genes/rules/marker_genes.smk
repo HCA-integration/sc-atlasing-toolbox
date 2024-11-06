@@ -53,11 +53,12 @@ rule plot:
 
 rule collect:
     input:
-        lambda wildcards: mcfg.get_output_files(
+        dfs=lambda wildcards: mcfg.get_output_files(
             rules.rank_genes_groups.output.zarr,
             subset_dict=dict(wildcards),
             all_params=True,
-        )
+        ),
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     conda:
