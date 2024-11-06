@@ -2,15 +2,24 @@ import glob
 import warnings
 from pprint import pprint
 import numpy as np
+import anndata as ad
 from anndata.experimental import read_elem
 import zarr
 import logging
 logging.basicConfig(level=logging.INFO)
 
+from utils.io import read_anndata
+
+
+# check first prepare output linking
+prep_file = glob.glob('test/out/integration/prepare/dataset~preprocessed/file_id~*/var_mask~*.zarr')[0]
+print(prep_file)
+ad.read_zarr(prep_file)
+read_anndata(prep_file)
 
 # direct integration outputs
-outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~*/adata.zarr')
-outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/method~*--output_type~*.zarr')
+outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/var_mask~*/method~*/adata.zarr')
+outputs = glob.glob('test/out/integration/dataset~*/file_id~*/batch~*/var_mask~*/method~*--output_type~*.zarr')
 if len(outputs) == 0:
     warnings.warn('No integration outputs found')
 
