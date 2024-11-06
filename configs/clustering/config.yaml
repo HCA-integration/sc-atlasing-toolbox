@@ -20,6 +20,7 @@ DATASETS:
       batch: phase
       sample: phase
     clustering:
+      recompute_umap: true
       neighbors_key: neighbors
       algorithm: leiden
       resolutions:
@@ -40,6 +41,7 @@ DATASETS:
       batch: phase
       sample: phase
     clustering:
+      recompute_umap: true
       neighbors_key: neighbors
       algorithm: louvain
       resolutions:
