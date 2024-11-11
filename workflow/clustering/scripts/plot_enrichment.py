@@ -7,6 +7,7 @@ import pandas.api.types as ptypes
 from matplotlib import pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
+import traceback
 
 from utils.io import read_anndata
 from utils.plots import plot_stacked_bar, plot_violin
@@ -52,9 +53,10 @@ for covariate in tqdm(covariates):
                     covariate_key=covariate,
                 )
             else:
-                raise ValueError(f'Invalid covariate type: {obs_df[covariate].dtype}')
+                raise ValueError(f'Invalid covariate type: {obs_df[covariate].dtype}, must be category or numeric')
         except TypeError as e:
             logging.error(f'Error plotting {cluster_key}--{covariate}: {e}')
+            traceback.print_exc()
             continue
         plt.savefig(output_dir / f'{cluster_key}--{covariate}.png', bbox_inches='tight')
         plt.show()

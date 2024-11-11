@@ -43,6 +43,8 @@ use rule plot_evaluation from clustering as clustering_plot_evaluation with:
         covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'umap_colors', default=[])
     conda:
         get_env(config, 'scanpy')
+    resources:
+        mem_mb=lambda w, attempt: attempt * 32000,
 
 
 rule plots_all:
