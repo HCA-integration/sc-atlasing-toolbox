@@ -80,6 +80,8 @@ def plot_stacked_bar(
     
     title = f'{count_type.capitalize()} of {covariate_key} by {category_key}{title_suffix}'
     ax.set_title(title)
+    
+    return plt.gcf()
 
 
 def plot_violin(df, category_key, covariate_key):
@@ -100,3 +102,5 @@ def plot_violin(df, category_key, covariate_key):
     plt.title(f'Distribution of {covariate_key} by {category_key}')
     plt.xlabel(covariate_key)
     plt.ylabel(category_key)
+    
+    return plt.gcf()
