@@ -12,7 +12,14 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='marker_genes',
     config=config,
-    config_params=['groups', 'rank_genes_groups', 'plot', 'sample', 'marker_genes'],
+    config_params=[
+        'groups',
+        'rank_genes_groups',
+        'plot',
+        'sample',
+        'marker_genes',
+        'layer',
+    ],
     rename_config_params={'groups': 'group'},
     explode_by='group',
 )
@@ -31,6 +38,7 @@ module common:
 use rule * from common as common_ *
 
 include: 'rules/marker_genes.smk'
+include: 'rules/plots.smk'
 
 
 rule all:

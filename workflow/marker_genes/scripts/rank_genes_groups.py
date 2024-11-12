@@ -22,6 +22,7 @@ output_file = snakemake.output.zarr
 output_tsv = snakemake.output.tsv
 group_key = snakemake.wildcards.group
 sample_key = snakemake.params.sample
+layer = snakemake.params.layer
 args = snakemake.params.get('args', {})
 pseudobulk = not sample_key is None
 
@@ -35,7 +36,7 @@ dask = pseudobulk or n_obs > 1e6 or n_groups > 1e5
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
     input_file,
-    X='X',
+    X=layer,
     obs='obs',
     var='var',
     uns='uns',
@@ -96,6 +97,7 @@ write_zarr_linked(
     in_dir=input_file,
     out_dir=output_file,
     files_to_keep=['uns'],
+    slot_map={'X': layer}
 )
 
 
