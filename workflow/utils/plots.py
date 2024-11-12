@@ -101,6 +101,7 @@ def plot_violin(
 ):
     total_counts = df[category_key].value_counts(dropna=False).sort_values(ascending=True)
     clusters = total_counts.index.values
+
     grouped_data = [
         df[df[category_key] == cluster][covariate_key]
         for cluster in clusters
@@ -110,6 +111,7 @@ def plot_violin(
     fig_height = max(fig_height_min, num_categories * 0.3)
     plt.figure(figsize=(fig_width, fig_height))
     
+
     plt.violinplot(
         grouped_data,
         showmeans=False,
