@@ -92,14 +92,24 @@ def plot_stacked_bar(
     return plt.gcf()
 
 
-def plot_violin(df, category_key, covariate_key):
-    clusters = sorted(df[category_key].unique())
+def plot_violin(
+    df,
+    category_key,
+    covariate_key,
+    fig_width=8,
+    fig_height_min=5,
+):
+    total_counts = df[category_key].value_counts(dropna=False).sort_values(ascending=True)
+    clusters = total_counts.index.values
     grouped_data = [
         df[df[category_key] == cluster][covariate_key]
         for cluster in clusters
     ]
+    
     num_categories = len(grouped_data)
-    plt.figure(figsize=(8, max(5, num_categories * 0.3)))
+    fig_height = max(fig_height_min, num_categories * 0.3)
+    plt.figure(figsize=(fig_width, fig_height))
+    
     plt.violinplot(
         grouped_data,
         showmeans=False,
@@ -110,5 +120,19 @@ def plot_violin(df, category_key, covariate_key):
     plt.title(f'Distribution of {covariate_key} by {category_key}')
     plt.xlabel(covariate_key)
     plt.ylabel(category_key)
+    
+    ax = plt.gca()
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    
+    # add labels for cluster sizes
+    for i, count in enumerate(total_counts):
+        plt.text(
+            plt.xlim()[1],
+            i + 1,
+            f'n={human_format(count)}',
+            va='center',
+            ha='left',
+        )
     
     return plt.gcf()
