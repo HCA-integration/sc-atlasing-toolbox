@@ -80,7 +80,7 @@ def read_and_subset(
     if subsetted and save_subset:
         files_to_keep.append(out_layer)
     else:
-        slot_map |= {out_layer: in_layer}
+        slot_map |= {f'layers/{out_layer}': in_layer}
     
     return adata, files_to_keep, slot_map
 
@@ -184,14 +184,11 @@ for label_key in label_keys:
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())
-slot_map |= {'X': 'layers/normcounts'}
+slot_map |= {'X': norm_count_layer}
 write_zarr_linked(
     adata,
     input_file,
     output_file,
     files_to_keep=files_to_keep,
     slot_map=slot_map,
-    # in_dir_map={
-    #     'layers/normcounts': output_file
-    # },
 )

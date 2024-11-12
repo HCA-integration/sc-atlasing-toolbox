@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e -x
 
-pipeline="$(realpath ../hca_integration_toolbox)"
+pipeline="$(realpath ../sc-atlasing-toolbox)"
 
 snakemake \
   --profile .profiles/local \

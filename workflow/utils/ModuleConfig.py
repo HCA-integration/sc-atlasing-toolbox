@@ -251,7 +251,7 @@ class ModuleConfig:
                     return f'{self.module_name}:{wildcard_value}'
             return f'{self.module_name}_{wildcard_name}={wildcard_value}'
         
-        def shorten_name(name, max_length=200):
+        def shorten_name(name, max_length=205):
             split_values = name.split(f'--{self.module_name}_', 1)
             if len(split_values) > 1 and len(name) > max_length:
                 name = f'{split_values[0]}--{self.module_name}={create_hash(split_values[1])}'
