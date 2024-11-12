@@ -18,7 +18,8 @@ sep = snakemake.params.get('sep', '--')
 obs_index_col_map = snakemake.params.get('obs_index_col', {})
 same_slots = snakemake.params.get('same_slots', [])
 merge_slots = snakemake.params.get('merge_slots', [])
-kwargs = {k: k for k in same_slots+merge_slots}
+skip_slots = snakemake.params.get('skip_slots', [])
+kwargs = {k: k for k in same_slots+merge_slots if k not in skip_slots}
 
 # parse obs index
 if isinstance(obs_index_col_map, str):
@@ -152,7 +153,7 @@ write_zarr_linked(
     adata=adata,
     in_dir=file_to_link,
     out_dir=output_file,
-    files_to_keep=[slot for slot in merge_slots if slot != 'X'],
+    files_to_keep=merge_slots+skip_slots,
     # slot_map=slot_link_map,
     # in_dir_map=in_dir_map,
 )

@@ -29,7 +29,6 @@ DATASETS:
         - layers
         - obs
         - var
-        - obsm
         - uns
   test_same_slots:
     input:
@@ -45,4 +44,18 @@ DATASETS:
       merge_slots:
         - obs
         - obsm
+        - uns
+  test_skip_slots:
+    input:
+      collect:
+        file_1: test/input/pbmc68k.h5ad
+        file_2: test/input/pbmc68k_modified.zarr
+    collect:
+      sep: '-'
+      same_slots:
+        - var
+      merge_slots:
+        - obs
+      skip_slots:
+        - X
         - uns
