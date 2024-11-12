@@ -3,6 +3,15 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 
+def human_format(num):  # https://stackoverflow.com/a/45846841
+    num = float('{:.3g}'.format(num))
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+
 def plot_stacked_bar(
     df,
     category_key,
@@ -39,7 +48,7 @@ def plot_stacked_bar(
     # create plot
     num_categories = counts_df[category_key].nunique()
     fig_height = max(fig_height_min, num_categories * 0.3)
-    plt.figure(figsize=(fig_width, fig_height))
+    fig = plt.figure(figsize=(fig_width, fig_height))
     
     ax = counts_df.pivot(
         index=category_key,
@@ -56,10 +65,9 @@ def plot_stacked_bar(
     ax.spines['top'].set_visible(False)
     
     longest_label = 0
-    for y_position, (category, total_value) in enumerate(total_counts.items()):
-        x_position = 1 if count_type == 'proportion' else total_value
-        label = f'{total_value:.2e}' if total_value >= 1000 else str(int(total_value))
-        # label = '1.23e+06'  # for debugging
+    for y_position, count in enumerate(total_counts):
+        x_position=plt.xlim()[1]
+        label=f'n={human_format(count)}'
         ax.text(
             x_position,
             y_position,
@@ -72,8 +80,8 @@ def plot_stacked_bar(
         
     if df[covariate_key].nunique() < 30:
         # adjust figure size to avoid overlapping labels with legend
-        label_length_factor = longest_label * 0.06
-        plt.gcf().set_size_inches(fig_width + label_length_factor, fig_height)
+        label_length_factor = longest_label * 0.13
+        fig.set_size_inches(fig_width + label_length_factor, fig_height)
         ax.legend(loc='center left', bbox_to_anchor=(1 + label_length_factor / fig_width, 0.5))
     else:
         ax.legend_ = None
