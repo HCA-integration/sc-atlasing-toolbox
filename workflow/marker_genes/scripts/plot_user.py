@@ -24,13 +24,14 @@ group_key = wildcards.group
 file_id = wildcards.file_id
 title = f'Marker genes for file_id={file_id} group={group_key}'
 
+layer = snakemake.params.layer
 args = snakemake.params.get('args', {})
 n_groups_per_split = args.pop('n_groups_per_split', 10)
 
 logging.info(f'Reading {input_file}...')
 adata = read_anndata(
     input_file,
-    X='X',
+    X=layer,
     obs='obs',
     var='var',
     uns='uns',
