@@ -174,8 +174,10 @@ bash envs/install_all_environments.sh
 
 > :memo: **Notes**
 > 1. The script will create new environments for each file in the `envs` directory if they don't yet exist and update any pre-existing environments.
-> 2. If an environment creation fails, the script will skip that environment and you might need to troubleshoot the installation manually.
-> 3. The environment names correspond the their respective file names and are documented under the `name:` directive in the `envs/<env_name>.yaml` file.
+> 2. The environment names correspond the their respective file names and are documented under the `name:` directive in the `envs/<env_name>.yaml` file.
+> 3. If an environment creation fails, the script will skip that environment and you might need to troubleshoot the installation manually.
+> 4. Some environments require the channel priority to be set to `flexible`.
+> If your installation command fails, try setting `conda config --set channel_priority flexible` before restarting the command.
 
 If you know you only need certain environments (you can get that information from the README of the module you intend to use), you can install that environment directly.
 You will at least require the snakemake environment.
