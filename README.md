@@ -685,6 +685,15 @@ You can find detailed information on cluster execution in the [Snakemake documen
 ## :hammer_and_wrench: Troubleshooting
 <a name="troubleshooting"></a>
 
+### Conda environment installation fails
+For some environments (e.g. `envs/rapids_singlecell.yaml`) you need to set the channel priority to flexible in order for conda to properly resolve the environment.
+
+```
+conda config --set channel_priority flexible
+```
+
+After setting the flag and calling the installation command, the environment should resolve.
+
 ### Working with GPUs
 
 Some scripts can run faster if their dependencies are installed with GPU support.
