@@ -107,5 +107,5 @@ rule merge_metrics_all:
         mcfg.get_output_files(rules.merge_metrics_per_dataset.output, wildcard_names=['dataset']),
         mcfg.get_output_files(rules.merge_metrics_per_batch.output, wildcard_names=['batch']),
         mcfg.get_output_files(rules.merge_metrics_per_label.output, wildcard_names=['label']),
-        mcfg.get_output_files(rules.merge_metrics_per_file.output, wildcard_names=['file_id']),
+        # mcfg.get_output_files(rules.merge_metrics_per_file.output, wildcard_names=['file_id']),
     localrule: True
