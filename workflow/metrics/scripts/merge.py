@@ -77,6 +77,12 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
         metrics_df.loc[row, key] = value
         ex_columns.add(key)
 
+    # truncate file_name if too long
+    max_len = 20
+    if len(metrics_df.loc[row, 'file_name']) > max_len:
+        metrics_df.loc[row, 'file_name'] = metrics_df.loc[row, 'file_name'][:max_len] + '...'
+
+
 ex_columns = sorted(ex_columns)
 print(metrics_df[ex_columns].drop_duplicates(), flush=True)
 
