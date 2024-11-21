@@ -71,16 +71,19 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1,
 
     dask_compute(adata_raw)
 
-    try:
-        # compute cell cycle score per batch
-        batch_key = batch_key
-        for batch in adata.obs[batch_key].unique():
-            scib.pp.score_cell_cycle(
-                adata_raw[adata_raw.obs[batch_key] == batch],
-                organism=organism,
-            )
-    except Exception as e:
-        raise ValueError(f'Error in score_cell_cycle: {e}') from e
+    # compute cell cycle score per batch
+    batch_key = batch_key
+    for batch in adata.obs[batch_key].unique():
+        batch_mask = adata_raw.obs[batch_key] == batch
+        try:
+            ad_sub = adata_raw[batch_mask].copy()
+            scib.pp.score_cell_cycle(ad_sub, organism=organism)
+            adata_raw.obs.loc[batch_mask, 'S_score'] = ad_sub.obs['S_score']
+            adata_raw.obs.loc[batch_mask, 'G2M_score'] = ad_sub.obs['G2M_score']
+        except Exception as e:
+            print(f'Error in score_cell_cycle for batch={batch}:\n{e}', flush=True)
+            adata_raw.obs.loc[batch_mask, 'S_score'] = 0
+            adata_raw.obs.loc[batch_mask, 'G2M_score'] = 0
     
     # try:
     # compute score
