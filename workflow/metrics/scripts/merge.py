@@ -39,26 +39,6 @@ metrics_df = metrics_df.merge(benchmark_df).drop_duplicates()
 # parse any extra entries in file_id
 expanded_file_ids = metrics_df['file_id'].str.split('--', expand=True)
 
-# for col in expanded_file_ids.columns:
-#     if expanded_file_ids[col].str.contains('=').any():
-#         exp_col = expanded_file_ids[col].str.split('=', expand=True)
-#     else:
-#         exp_col = expanded_file_ids[col].str.rsplit(':', n=1, expand=True)
-#     non_empty = exp_col[0].apply(lambda x: isinstance(x, str))
-#     col_name = exp_col[non_empty].iloc[0,0]
-#     ex_columns.append(col_name)
-#     # reassign value to column
-#     expanded_file_ids[col] = exp_col.iloc[:,-1]
-# # rename expanded columns
-# expanded_file_ids.columns = ex_columns
-# # sort columns by name
-# ex_columns.sort()
-# expanded_file_ids = expanded_file_ids[ex_columns]
-# # merge extra columns to metrics
-# if 'file_id' in expanded_file_ids.columns:
-#     del metrics_df['file_id']
-# metrics_df = pd.concat([metrics_df, expanded_file_ids], axis=1)
-
 
 def check_existing(df, row, key):
     return key in df.columns \
@@ -67,29 +47,41 @@ def check_existing(df, row, key):
 
 
 for row, _dict in expanded_file_ids.to_dict('index').items():
+    # skip file_id if overwrite_file_id is True
+    if not metrics_df.loc[row, 'overwrite_file_id']:
+        key = 'file_name'
+        metrics_df.loc[row, key] = metrics_df.loc[row, 'file_id']
+        ex_columns.add(key)
+        # continue
+    
     for _, value in _dict.items():
         if value is None:
             continue
         
-        # split key, value
-        if '=' in value:
+        if '=' in value: # split key, value
             key, value = value.split('=', maxsplit=1)
         elif ':' in value:
             key, value = 'file_name', value.split(':')[-1]
         else:
             key = 'file_name'
 
-        entry_exists = check_existing(metrics_df, row, key)
-        if entry_exists and key == 'file_name':
-            # collect any unassigned values to file_name
-            value = metrics_df.loc[row, key] + '--' + value
-        elif entry_exists or metrics_df.loc[row, 'overwrite_file_id'] == False:
-            # don't overwrite existing values
-            continue
+        if check_existing(metrics_df, row, key):
+            if key == 'file_name' and metrics_df.loc[row, key] != value:
+                # collect any unassigned values to file_name
+                value = metrics_df.loc[row, key] + '--' + value
+            else:
+                # don't overwrite existing values
+                continue
         
         # add extra metadata
         metrics_df.loc[row, key] = value
         ex_columns.add(key)
+
+    # truncate file_name if too long
+    max_len = 20
+    if len(metrics_df.loc[row, 'file_name']) > max_len:
+        metrics_df.loc[row, 'file_name'] = metrics_df.loc[row, 'file_name'][:max_len] + '...'
+
 
 ex_columns = sorted(ex_columns)
 print(metrics_df[ex_columns].drop_duplicates(), flush=True)

@@ -47,7 +47,7 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: louvain
-      overwrite_file_id: false
+      overwrite_file_id: true
 
     test_no_name:
       input:
@@ -61,15 +61,15 @@ DATASETS:
   test_integration:
     input:
       metrics:
-        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
-        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
-        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
-        bbknn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~bbknn--hyperparams~25cb428a38--label~None--output_type~knn.zarr
-        harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/var_mask~highly_variable/method~harmony--hyperparams~71ed6f69c1--label~None--output_type~embed.zarr
-        scanorama_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~full.zarr
-        scanorama_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~embed.zarr
+        unintegrated_full_with_long_name: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+        bbknn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~bbknn--hyperparams~25cb428a38--label~None--output_type~knn.zarr
+        harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/var_mask~highly_variable/method~harmonypy--hyperparams~a494363475--label~None--output_type~embed.zarr
+        # scanorama_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~full.zarr
+        scanorama_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~embed.zarr
     metrics:
-      unintegrated: layers/norm_counts
+      unintegrated: layers/normcounts
       corrected: X
       label:
         - bulk_labels
@@ -87,9 +87,9 @@ DATASETS:
   scib_metrics:
     input:
       metrics:
-        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
-        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
-        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
     metrics:
       label: bulk_labels
       batch: batch

@@ -15,6 +15,7 @@ from utils.processing import compute_neighbors, _filter_genes
 def compute_pca(adata, matrix):
     X_pca, _, variance_ratio, variance = sc.tl.pca(matrix, return_info=True)
     adata.obsm['X_pca'] = X_pca
+    adata.obsm['X_emb'] = X_pca
     adata.uns['pca'] = {
         'variance_ratio': variance_ratio,
         'variance': variance,
@@ -32,6 +33,7 @@ corrected_layer = params.get('corrected_layer', 'X')
 # determine output types
 # default output type is 'full'
 output_type = read_anndata(input_file, uns='uns').uns.get('output_type', 'full')
+slot_map = {}
 
 logger.info(f'Read {input_file} ...')
 kwargs = dict(
@@ -46,6 +48,7 @@ kwargs = dict(
 )
 if output_type == 'full':
     kwargs |= {'X': corrected_layer}
+    slot_map |= {'X': corrected_layer}
 adata = read_anndata(input_file, **kwargs)
 
 # remove cells without labels
@@ -101,7 +104,7 @@ write_zarr_linked(
     in_dir=input_file,
     out_dir=output_file,
     files_to_keep=['obsm', 'obsp', 'raw', 'uns', 'var'],
-    slot_map={'X': corrected_layer},
+    slot_map=slot_map,
 )
 
 # unintegrated for comparison metrics
@@ -110,12 +113,14 @@ logging.info(f'Prepare unintegrated data from layer={unintegrated_layer}...')
 adata_raw = read_anndata(
     input_file,
     X=unintegrated_layer,
+    var='var',
     dask=True,
     backed=True,
 )
 
 logging.info('Run PCA on unintegrated data...')
-adata_raw.var = adata.var.copy()
+adata_raw.var[new_var_column] = adata.var[new_var_column]
+adata_raw.var[new_var_column] = adata_raw.var[new_var_column].fillna(False)
 hvg_matrix = subset_hvg(
     adata_raw.copy(),
     var_column=new_var_column,
