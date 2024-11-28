@@ -9,7 +9,7 @@ def pcr_random(adata, output_type, batch_key, label_key, adata_raw, var_key='met
     adata.obs['random'] = np.random.normal(size=adata.n_obs)
 
     try:
-        return scib.metrics.pcr(adata, vals='random')
+        return scib.metrics.pcr(adata, covariate='random')
     except ZeroDivisionError:
         return float('nan')
     
