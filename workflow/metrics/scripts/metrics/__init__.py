@@ -6,7 +6,9 @@ from .lisi import clisi, clisi_y, ilisi, ilisi_y
 from .nmi import nmi, nmi_kmeans_y, nmi_leiden_y
 from .pcr import cell_cycle, pcr, pcr_y
 from .kbet import kbet_y
-from .morans_i import morans_i
+from .morans_i import morans_i_batch, morans_i_label, morans_i_random
+from .morans_i_gene_scores import *
+from .principle_component_regression import pcr_batch, pcr_label, pcr_random
 
 
 metric_map = {
@@ -36,5 +38,13 @@ metric_map = {
     'pcr': pcr,
     'pcr_y': pcr_y,
     'kbet_y': kbet_y,
-    'morans_i': morans_i,
+    'morans_i_random': morans_i_random,
+    'morans_i_batch': morans_i_batch,
+    'morans_i_label': morans_i_label,
+    'pcr_random': pcr_random,
+    'pcr_batch': pcr_batch,
+    'pcr_label': pcr_label,
+    'morans_i_platlets': morans_i_platlets,
+    'morans_i_rbc': morans_i_rbc,
+    'morans_i_plasma_cells': morans_i_plasma_cells,
 }
