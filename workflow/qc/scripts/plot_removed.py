@@ -5,21 +5,26 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from pprint import pformat
 import logging
+from tqdm import tqdm
+import traceback
+import concurrent.futures
+
 logging.basicConfig(level=logging.INFO)
 
 from utils.io import read_anndata
 from qc_utils import parse_parameters
 
 
-def get_fraction_removed(df, group, key='qc_status'):
-    grouped_counts = df.groupby([group, key], observed=False).size().reset_index(name='Counts')
-    grouped_frac = grouped_counts.pivot(index=group, columns=key, values='Counts')
+def get_fraction_removed(df, group_key, key='qc_status'):
+    grouped_counts = df.groupby([group_key, key], observed=False).size().reset_index(name='Counts')
+    grouped_frac = grouped_counts.pivot(index=group_key, columns=key, values='Counts')
     grouped_frac['fraction_removed'] = (grouped_frac['failed'] / grouped_frac.sum(axis=1)).round(2)
     return grouped_frac
 
 
 input_zarr = snakemake.input.zarr
 output_plots = snakemake.output.plots
+threads = snakemake.threads
 
 output_plots = Path(output_plots)
 output_plots.mkdir(parents=True, exist_ok=True)
@@ -59,21 +64,20 @@ plt.savefig(output_plots / 'cells_passed_all.png', bbox_inches='tight')
 plt.close()
 
 
-# Plot composition of removed cells
-for group in groups:
-    n_groups = adata.obs[group].nunique()
+def plot_composition(adata, group_key, plot_dir):
+    n_groups = adata.obs[group_key].nunique()
     if n_groups > 100:
-        logging.info(f'Group {group} has too many unique values, skipping...')
-        continue
+        logging.info(f'Group {group_key} has too many unique values, skipping...')
+        return
     
-    grouped_frac = get_fraction_removed(adata.obs, group=group, key='qc_status')
+    grouped_frac = get_fraction_removed(adata.obs, group_key=group_key, key='qc_status')
     order = grouped_frac.sort_values('fraction_removed', ascending=False).index
-    adata.obs[group] = pd.Categorical(adata.obs[group], categories=order)
+    adata.obs[group_key] = pd.Categorical(adata.obs[group_key], categories=order)
 
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(14, 5 * (1 + n_groups/50)))
     sns.histplot(
         data=adata.obs,
-        y=group,
+        y=group_key,
         hue='qc_status',
         palette='muted', # 'Set2',
         edgecolor='white',
@@ -89,7 +93,7 @@ for group in groups:
     sns.barplot(
         data=grouped_frac,
         x='fraction_removed',
-        y=group,
+        y=group_key,
         order=order,
         ax=ax2,
     )
@@ -102,10 +106,31 @@ for group in groups:
         ax2.spines[pos].set_visible(False)
     f.suptitle(f'Cells that passed QC\n{dataset}')
     f.tight_layout()
-    f.savefig(output_plots / f'by={group}.png', bbox_inches='tight')
+    f.savefig(plot_dir / f'by={group_key}.png', bbox_inches='tight')
     plt.close()
 
-# Violin plots per QC metric
+
+logging.info('Plot compositions...')
+# for group_key in tqdm(groups):
+#     plot_composition(adata, group_key, plot_dir=output_plots)
+
+with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
+    futures = [
+        executor.submit(
+            plot_composition,
+            adata,
+            group_key=group_key,
+            plot_dir=output_plots
+        ) for group_key in groups
+    ]
+    for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+        try:
+            future.result()
+        except Exception as e:
+            logging.error(f"Exception occurred: {e}")
+            traceback.print_exc()
+
+logging.info('Plot violin plots per QC metric...')
 n_cols = len(threshold_keys)
 fig, axes = plt.subplots(1, n_cols, figsize=(4 * n_cols, 6))
 plt.grid(False)
