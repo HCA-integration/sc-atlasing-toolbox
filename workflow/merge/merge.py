@@ -3,10 +3,24 @@ logging.basicConfig(level=logging.INFO)
 import gc
 import faulthandler
 faulthandler.enable()
+from scipy.sparse import issparse
+import tqdm.dask as tdask
+from tqdm import tqdm
 import pandas as pd
 import scanpy as sc
 from anndata.experimental import AnnCollection
 from anndata import AnnData
+from dask import array as da
+from dask import config as da_config
+# from dask.diagnostics import ProgressBar
+
+da_config.set(
+    **{
+        'num_workers': snakemake.threads,
+        'array.slicing.split_large_chunks': False
+    }
+)
+logging.info(f"Dask using {da_config.get('num_workers')} workers")
 
 from utils.io import read_anndata, link_zarr
 from utils.misc import apply_layers, dask_compute
@@ -49,6 +63,7 @@ merge_strategy = snakemake.params.get('merge_strategy', 'inner')
 keep_all_columns = snakemake.params.get('keep_all_columns', False)
 backed = snakemake.params.get('backed', False)
 dask = snakemake.params.get('dask', False)
+stride = snakemake.params.get('stride', 10_000)
 
 if len(files) == 1:
     link_zarr(in_dir=files[0], out_dir=out_file)
@@ -70,18 +85,22 @@ if len(files) == 0:
 adatas = []
 
 if dask:
-    from dask import array as da
-    from dask import config as da_config
-
-    da_config.set(
-        **{
-            'num_workers': snakemake.threads,
-            'array.slicing.split_large_chunks': True
-        }
-    )
     logging.info('Read all files with dask...')
-    logging.info(f'n_threads: {snakemake.threads}')
-    adatas = [read_adata(file, backed, dask) for file in files]
+    
+    for file_id, file_path in files.items():
+        _ad = read_adata(
+            file_path,
+            file_id=file_id,
+            backed=backed,
+            dask=dask,
+            stride=stride
+        )
+        logging.info(f'{file_id} shape: {_ad.shape}')
+        
+        #with tdask.TqdmCallback(desc='Persist'):
+            # _ad = apply_layers(_ad, func=lambda x: x.persist())
+        
+        adatas.append(_ad)
     
     # concatenate
     adata = sc.concat(adatas, join=merge_strategy)
@@ -165,8 +184,8 @@ adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(
 adata.uns['dataset'] = dataset
 logging.info(adata.__str__())
 
-logging.info('Compute matrix...')
-adata = dask_compute(adata)
-
 logging.info(f'Write to {out_file}...')
-adata.write_zarr(out_file)
+with tdask.TqdmCallback():
+    if isinstance(adata.X, da.Array):
+        print(adata.X.dask, flush=True)
+    adata.write_zarr(out_file)
