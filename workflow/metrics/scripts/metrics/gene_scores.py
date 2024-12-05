@@ -27,7 +27,7 @@ def morans_i_platlets(adata, output_type, batch_key, label_key, adata_raw, var_k
     gene_signature = ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
 
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) # if adata is not None else float('nan')
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Moran's I for red blood cells -> baseline
@@ -35,7 +35,7 @@ def morans_i_rbc(adata, output_type, batch_key, label_key, adata_raw, var_key='m
     gene_signature = ["HBA1", "HBA2", "HBB"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Moran's I for plasma cells
@@ -44,7 +44,7 @@ def morans_i_plasma_cells(adata, output_type, batch_key, label_key, adata_raw, v
                       "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Moran's I for T CD4 CTL cells
@@ -53,7 +53,7 @@ def morans_i_t_cd4_ctl(adata, output_type, batch_key, label_key, adata_raw, var_
                       "GZMH", "ITGB1", "KLRB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Moran's I for NK cells
@@ -62,7 +62,7 @@ def morans_i_nk_cells(adata, output_type, batch_key, label_key, adata_raw, var_k
                       "NKG7", "TYROBP"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Moran' I for the IFN gene signature (specific for the data set by Yoshida et al.)
@@ -74,7 +74,7 @@ def morans_i_ifn_signature(adata, output_type, batch_key, label_key, adata_raw, 
                       "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score']) if adata is not None else float('nan')
 
 
 # Principle Component Regression for platlets -> baseline
@@ -82,7 +82,7 @@ def pcr_platlets(adata, output_type, batch_key, label_key, adata_raw, var_key='m
     gene_signature = ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
 
 
 # Principle Component Regression for red blood cells -> baseline
@@ -90,7 +90,7 @@ def pcr_rbc(adata, output_type, batch_key, label_key, adata_raw, var_key='metric
     gene_signature = ["HBA1", "HBA2", "HBB"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
 
 
 # Principle Component Regression for plasma cells
@@ -99,7 +99,7 @@ def pcr_plasma_cells(adata, output_type, batch_key, label_key, adata_raw, var_ke
                       "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
 
 
 # Principle Component Regression for T CD4 CTL cells
@@ -108,7 +108,7 @@ def pcr_t_cd4_ctl(adata, output_type, batch_key, label_key, adata_raw, var_key='
                       "GZMH", "ITGB1", "KLRB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
 
 
 # Principle Component Regression for NK cells
@@ -117,7 +117,7 @@ def pcr_nk_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='m
                       "NKG7", "TYROBP"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
 
 
 # Principle Component Regression for the IFN gene signature (specific for the data set by Yoshida et al.)
@@ -129,4 +129,4 @@ def pcr_ifn_signature(adata, output_type, batch_key, label_key, adata_raw, var_k
                       "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False) if adata is not None else float('nan')
