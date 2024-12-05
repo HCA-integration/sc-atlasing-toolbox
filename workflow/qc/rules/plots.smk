@@ -7,6 +7,8 @@ rule plot_joint:
         dataset=lambda wildcards: wildcards.file_id,
         hue=lambda wildcards: mcfg.get_from_parameters(wildcards, 'hue', default=[]),
         thresholds=lambda wildcards: mcfg.get_from_parameters(wildcards, 'thresholds', default={}),
+    threads:
+        lambda wildcards: max(1, min(5, len(mcfg.get_from_parameters(wildcards, 'hue', default=[]))))
     conda:
         get_env(config, 'plots')
     script:

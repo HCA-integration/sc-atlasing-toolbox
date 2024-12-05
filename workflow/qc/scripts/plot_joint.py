@@ -4,9 +4,13 @@ from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
 # from matplotlib.axes import Axes
 import seaborn as sns
+from tqdm import tqdm
+import traceback
+import concurrent.futures
 import scanpy as sc
 from pprint import pformat
 import logging
+
 logging.basicConfig(level=logging.INFO)
 sns.set_theme(style='white')
 sc.set_figure_params(frameon=False, fontsize=10, dpi_save=200, vector_friendly=True)
@@ -26,13 +30,101 @@ adata = read_anndata(input_zarr, obs='obs', uns='uns')
 
 # get parameters
 file_id = snakemake.wildcards.file_id
+threads = snakemake.threads
 dataset, hues = parse_parameters(adata, snakemake.params)
 hues = hues+['percent_mito', 'qc_status']
+
 
 # if no cells filtered out, save empty plots
 if adata.obs.shape[0] == 0:
     logging.info('No data, skip plotting...')
     exit()
+
+
+def create_figure(df, png_file, density_png, joint_title, **kwargs):
+    g = plot_qc_joint(df, **kwargs)
+    
+    # adjust legend position
+    if g.ax_joint.legend_ is not None:
+        sns.move_legend(g.ax_joint, 'right')
+    
+    # save plot temporarily
+    plt.tight_layout()
+    plt.savefig(png_file, bbox_inches='tight')
+    plt.close('all')
+    
+    # assemble figure and update plot
+    f, axes = plt.subplots(1, 2, figsize=(20, 10))
+    axes[0].imshow(mpimg.imread(png_file))
+    axes[1].imshow(mpimg.imread(density_png))
+    for ax in axes.ravel():
+        ax.set_axis_off()
+    plt.suptitle(joint_title, fontsize=16)
+    
+    # save final plot
+    plt.tight_layout()
+    plt.savefig(png_file, bbox_inches='tight')
+    plt.close('all')
+
+
+def call_plot(df, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png):
+    # logging.info(f'Joint QC plots for hue={hue}...') 
+    joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
+       
+    plot_path = output_joint / f'hue={hue}'
+    plot_path.mkdir(exist_ok=True)
+
+    # determine plotting parameters
+    if is_numeric_dtype(df[hue]):
+        palette = 'plasma'
+        legend = 'brief'
+    else:
+        palette = None # if df[hue].nunique() < 50 else 'plasma'
+        legend = df[hue].nunique() <= 30
+    
+    scatter_plot_kwargs |= dict(
+        palette=palette,
+        legend=legend,
+        marginal_kwargs=dict(palette=palette, legend=False),
+    )
+    
+    # plot joint QC on regular scale
+    create_figure(
+        df,
+        png_file=plot_path / f'{x}_vs_{y}.png',
+        density_png=density_png,
+        joint_title=joint_title,
+        x=x,
+        y=y,
+        hue=hue,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title='',
+        **scatter_plot_kwargs,
+    )
+
+    # plot in log scale 
+    log_x_prefix = f'log_{log_x}_' if log_x > 1 else ''
+    log_y_prefix = f'log_{log_y}_' if log_y > 1 else ''
+    
+    create_figure(
+        df,
+        png_file=plot_path / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}.png',
+        density_png=density_png,
+        joint_title=joint_title,
+        x=x,
+        y=y,
+        log_x=log_x,
+        log_y=log_y,
+        hue=hue,
+        marginal_hue=hue,
+        x_threshold=thresholds[x],
+        y_threshold=thresholds[y],
+        title='',
+        **scatter_plot_kwargs,
+    )
+
 
 thresholds = get_thresholds(
     threshold_keys=['n_counts', 'n_genes', 'percent_mito'],
@@ -40,14 +132,6 @@ thresholds = get_thresholds(
     user_thresholds=snakemake.params.get('thresholds'),
 )
 logging.info(f'\n{pformat(thresholds)}')
-
-# subset to max of 100k cells due to high computational cost
-density_data = adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42)
-
-coordinates = [
-    ('n_counts', 'n_genes', 10, 10),
-    ('n_genes', 'percent_mito', 2, 1),
-]
 
 scatter_plot_kwargs = dict(
     s=4,
@@ -61,12 +145,22 @@ kde_plot_kwargs = dict(
     alpha=.8,
 )
 
+coordinates = [
+    ('n_counts', 'n_genes', 10, 10),
+    ('n_genes', 'percent_mito', 2, 1),
+]
+
+# subset to max of 100k cells due to high computational cost
+density_data = adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42)
+
 for x, y, log_x, log_y in coordinates:
     logging.info(f'Joint QC plots per {x} vs {y}...')
     
+    # temporary files
     density_png = output_joint / f'{x}_vs_{y}_density.png'
     density_log_png = output_joint / f'log_{x}_vs_{y}_density.png'
     
+    logging.info('Plotting density...')
     plot_qc_joint(
         density_data,
         x=x,
@@ -81,6 +175,7 @@ for x, y, log_x, log_y in coordinates:
     plt.tight_layout()
     plt.savefig(density_png, bbox_inches='tight')
     
+    logging.info('Plotting density for log scale...')
     plot_qc_joint(
         density_data,
         x=x,
@@ -96,90 +191,22 @@ for x, y, log_x, log_y in coordinates:
     plt.tight_layout()
     plt.savefig(density_log_png, bbox_inches='tight')
 
-    for hue in hues:
-        logging.info(f'Joint QC plots for hue={hue}...')
+    # for hue in hues:
+    #     call_plot(adata.obs, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png)
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
+        tasks = [
+            (adata.obs, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png)
+            for hue in hues
+        ]
+        futures = [executor.submit(call_plot, *task) for task in tasks]
         
-        plot_path = output_joint / f'hue={hue}'
-        plot_path.mkdir(exist_ok=True)
-        
-        joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
-        
-        # determine plotting parameters
-        if is_numeric_dtype(adata.obs[hue]):
-            palette = 'plasma'
-            legend = 'brief'
-        else:
-            palette = None # if adata.obs[hue].nunique() < 50 else 'plasma'
-            legend = adata.obs[hue].nunique() <= 30
-        scatter_plot_kwargs |= dict(
-            palette=palette,
-            legend=legend,
-            marginal_kwargs=dict(palette=palette, legend=False),
-        )
-        
-        # plot joint QC on regular scale
-        png_file = plot_path / f'{x}_vs_{y}.png'
-        g = plot_qc_joint(
-            adata.obs,
-            x=x,
-            y=y,
-            hue=hue,
-            marginal_hue=hue,
-            x_threshold=thresholds[x],
-            y_threshold=thresholds[y],
-            title='',
-            **scatter_plot_kwargs,
-        )
-        if g.ax_joint.legend_ is not None:
-            sns.move_legend(g.ax_joint, 'right')
-        plt.tight_layout()
-        plt.savefig(png_file, bbox_inches='tight')
-        plt.close()
-        
-        # assemble figure
-        f, axes = plt.subplots(1, 2, figsize=(20, 10))
-        axes[0].imshow(mpimg.imread(png_file))
-        axes[1].imshow(mpimg.imread(density_png))
-        for ax in axes.ravel():
-            ax.set_axis_off()
-        plt.suptitle(joint_title, fontsize=16)
-        plt.tight_layout()
-        plt.savefig(png_file, bbox_inches='tight')
-        plt.close()
-
-        # plot in log scale 
-        log_x_prefix = f'log_{log_x}_' if log_x > 1 else ''
-        log_y_prefix = f'log_{log_y}_' if log_y > 1 else ''
-        png_file = plot_path / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}.png'
-        g = plot_qc_joint(
-            adata.obs,
-            x=x,
-            y=y,
-            log_x=log_x,
-            log_y=log_y,
-            hue=hue,
-            marginal_hue=hue,
-            x_threshold=thresholds[x],
-            y_threshold=thresholds[y],
-            title='',
-            **scatter_plot_kwargs,
-        )
-        if g.ax_joint.legend_ is not None:
-           sns.move_legend(g.ax_joint, 'lower left')
-        plt.tight_layout()
-        plt.savefig(png_file, bbox_inches='tight')
-        plt.close('all')
-        
-        # assemble figure
-        f, axes = plt.subplots(1, 2, figsize=(20, 10))
-        axes[0].imshow(mpimg.imread(png_file))
-        axes[1].imshow(mpimg.imread(density_log_png))
-        for ax in axes.ravel():
-            ax.set_axis_off()
-        plt.suptitle(joint_title, fontsize=16)
-        plt.tight_layout()
-        plt.savefig(png_file, bbox_inches='tight')
-        plt.close('all')
+        for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+            try:
+                future.result()
+            except Exception as e:
+                logging.error(f"Exception occurred: {e}")
+                traceback.print_exc()
     
     # remove redundant plots
     density_png.unlink()
