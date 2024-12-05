@@ -45,6 +45,7 @@ clf = doubletdetection.BoostClassifier(
     n_top_var_genes=4000,
     n_components=np.min([adata.n_obs, adata.n_vars, 30]),
     clustering_algorithm="leiden",
+    clustering_kwargs=dict(flavor='igraph', n_iterations=2),
     n_jobs=threads,
 )
 labels = clf.fit(adata.X).predict(p_thresh=1e-16, voter_thresh=0.5)
