@@ -11,6 +11,7 @@ from utils.misc import dask_compute
 
 input_zarr = snakemake.input.zarr
 output_tsv = snakemake.output.tsv
+layer = snakemake.params.get('layer', 'X')
 batch_key = snakemake.params.get('batch_key')
 batch = str(snakemake.wildcards.batch)
 threads = snakemake.threads
@@ -18,7 +19,7 @@ threads = snakemake.threads
 logging.info(f'Read {input_zarr}...')
 adata = read_anndata(
     input_zarr,
-    X='X',
+    X=layer,
     obs='obs',
     backed=True,
     dask=True,
