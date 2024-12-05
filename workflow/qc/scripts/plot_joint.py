@@ -98,6 +98,10 @@ for x, y, log_x, log_y in coordinates:
 
     for hue in hues:
         logging.info(f'Joint QC plots for hue={hue}...')
+        
+        plot_path = output_joint / f'hue={hue}'
+        plot_path.mkdir(exist_ok=True)
+        
         joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
         
         # determine plotting parameters
@@ -114,7 +118,7 @@ for x, y, log_x, log_y in coordinates:
         )
         
         # plot joint QC on regular scale
-        png_file = output_joint / f'{x}_vs_{y}_hue={hue}.png'
+        png_file = plot_path / f'{x}_vs_{y}.png'
         g = plot_qc_joint(
             adata.obs,
             x=x,
@@ -146,7 +150,7 @@ for x, y, log_x, log_y in coordinates:
         # plot in log scale 
         log_x_prefix = f'log_{log_x}_' if log_x > 1 else ''
         log_y_prefix = f'log_{log_y}_' if log_y > 1 else ''
-        png_file = output_joint / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}_hue={hue}.png'
+        png_file = plot_path / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}.png'
         g = plot_qc_joint(
             adata.obs,
             x=x,
