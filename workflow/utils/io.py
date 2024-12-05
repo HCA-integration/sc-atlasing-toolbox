@@ -277,9 +277,13 @@ def _read_slot_default(group, slot, force_sparse_types, force_slot_sparse, backe
 
 
 def csr_matrix_int64_indptr(x):
-    x = csr_matrix(x)
-    x.indptr = x.indptr.astype(np.int64)
-    x.indices = x.indices.astype(np.int64) # seems to be necessary to avoid "ValueError: Output dtype not compatible with inputs."
+    if not isinstance(x, csr_matrix):
+        x = csr_matrix(x)
+    if isinstance(x.indptr, np.int32):
+        x.indptr = x.indptr.astype(np.int64)
+    isinstance(x.indices, np.int32):
+        # seems to be necessary to avoid "ValueError: Output dtype not compatible with inputs."
+        x.indices = x.indices.astype(np.int64)
     return x
 
 
