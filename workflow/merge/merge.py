@@ -35,6 +35,12 @@ def read_adata(
     return adata
 
 
+def remove_slots(adata):
+    for slot in ['X', 'layers', 'obsm', 'obsp', 'varm', 'varp']:
+        if hasattr(adata, slot):
+            delattr(adata, slot)
+
+
 dataset = snakemake.wildcards.dataset
 files = snakemake.input
 out_file = snakemake.output.zarr
@@ -56,7 +62,7 @@ files = {
     if read_anndata(file, obs='obs', verbose=False).n_obs > 0
 }
 
-if len(adatas) == 0:
+if len(files) == 0:
     logging.info('All adatas are empty, skip concatenation...')
     AnnData().write_zarr(out_file)
     exit(0)
@@ -79,6 +85,16 @@ if dask:
     
     # concatenate
     adata = sc.concat(adatas, join=merge_strategy)
+    print(adata, flush=True)
+
+    for _ad in adatas:
+        remove_slots(_ad)
+        gc.collect()
+    
+    #if backed:
+    #    with tdask.TqdmCallback(desc='Persist'): # ProgressBar():
+    #        adata = apply_layers(adata, func=lambda x: x.rechunk((stridee, -1)).persist() if isinstance(x, da.Array) else x)
+    #         adata = apply_layers(adata, func=lambda x: x.persist() if isinstance(x, da.Array) else x)
     
 elif backed:
     logging.info('Read all files in backed mode...')
@@ -98,6 +114,10 @@ elif backed:
     logging.info('Subset AnnDataCollection, returning a View...')
     adata = dc[:].to_adata()
     assert adata.X is not None
+    
+    for _ad in adatas:
+        remove_slots(_ad)
+        gc.collect()
 
 else:
 
@@ -115,7 +135,8 @@ else:
         adata = sc.concat([adata, _ad], join=merge_strategy)
         logging.info(f'after merge:\n{adata}')
 
-        del _adata
+        remove_slots(_ad)
+        adatas.append(_ad)
         gc.collect()
 
 
