@@ -144,14 +144,21 @@ kde_plot_kwargs = dict(
     cmap='plasma',
     alpha=.8,
 )
+# adjust parameters for large datasets
+if adata.n_obs > 1e5:
+    kde_plot_kwargs |= dict(
+        bw_adjust=2,
+        gridsize=50,
+    )
 
 coordinates = [
     ('n_counts', 'n_genes', 10, 10),
     ('n_genes', 'percent_mito', 2, 1),
 ]
 
-# subset to max of 100k cells due to high computational cost
-density_data = adata.obs.sample(n=int(min(1e5, adata.n_obs)), random_state=42)
+# # subset to max of 300k cells due to high computational cost
+density_data = adata.obs.sample(n=int(min(300_000, adata.n_obs)), random_state=42)
+density_data = adata.obs
 
 for x, y, log_x, log_y in coordinates:
     logging.info(f'Joint QC plots per {x} vs {y}...')
