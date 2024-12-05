@@ -56,8 +56,9 @@ def read_anndata(
     backed: bool = False,
     fail_on_missing: bool = True,
     exclude_slots: list = None,
-    chunks: [int, tuple] = ('auto', -1),
+    chunks: [int, tuple] = None,
     stride: int = 1000,
+    verbose: bool = True,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -102,6 +103,7 @@ def read_anndata(
         backed=backed,
         chunks=chunks,
         stride=stride,
+        verbose=verbose,
         **kwargs
     )
     if not backed and file_type == 'h5py':
@@ -143,6 +145,8 @@ def read_partial(
         force_sparse_slots = [force_sparse_slots]
     force_sparse_slots.extend(['X', 'layers/', 'raw/X'])
     
+    if chunks is None:
+        chunks = (stride, -1)
     print_flushed(f'dask: {dask}, backed: {backed}')
     if dask:
         print_flushed('chunks:', chunks)
