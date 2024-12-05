@@ -4,6 +4,7 @@ checkpoint split_batches:
     output:
         batches=directory(mcfg.out_dir / 'scatter' /  params.wildcard_pattern / '_batches'),
     params:
+        layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'counts', default='X'),
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key'),
     conda:
         get_env(config, 'scanpy')

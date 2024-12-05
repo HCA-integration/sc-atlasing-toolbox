@@ -10,9 +10,15 @@ from utils.io import read_anndata, write_zarr_linked
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-gauss_threshold = snakemake.params.get('gauss_threshold', 0.1)
+gauss_threshold = snakemake.params['gauss_threshold']
+layer = snakemake.params['layer']
 
-adata = read_anndata(input_file, X='X', obs='obs', var='var')
+adata = read_anndata(
+    input_file,
+    X=layer,
+    obs='obs',
+    var='var'
+)
 
 if adata.n_obs == 0:
     logging.info(f'Write empty zarr file to {output_file}...')

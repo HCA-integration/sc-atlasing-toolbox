@@ -15,6 +15,7 @@ mcfg = ModuleConfig(
     module_name='qc',
     config=config,
     config_params=[
+        'counts',
         'hue',
         'thresholds',
         'alternative_thresholds',

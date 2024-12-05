@@ -11,7 +11,10 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='doublets',
     config=config,
-    config_params=['batch'],
+    config_params=[
+        'counts',
+        'batch'
+    ],
     rename_config_params={'batch': 'batch_key'}
 )
 params = mcfg.get_paramspace()

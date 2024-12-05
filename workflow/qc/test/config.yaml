@@ -9,6 +9,7 @@ DATASETS:
         Lee2020: test/input/load_data/harmonize_metadata/Lee2020.zarr
         Lee2020_autoqc: test/input/load_data/harmonize_metadata/Lee2020.zarr
     qc:
+      counts: X
       hue:
         - donor
         - development_stage
@@ -22,6 +23,7 @@ DATASETS:
         test3: test/input/pbmc68k.h5ad
         empty: test/input/empty.zarr
     qc:
+      counts: layers/counts
       hue:
         - phase
         - bulk_labels
