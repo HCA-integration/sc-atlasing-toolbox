@@ -33,7 +33,7 @@ allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
-metric_function = metric_map.get(metric, ValueError(f'No function for metric: {metric}'))
+metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
 output_type = uns.get('output_type', 'full') # Same as in prepare.py
@@ -90,8 +90,10 @@ def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'
     adapted from
     https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
     """
-    if not source_string.startswith(cluster_key) and source_string.endswith(replace_what):
+    if not source_string.startswith(cluster_key):
         return source_string
+    if not source_string.endswith(replace_what):
+        return source_string + '_orig'
     head, _sep, tail = source_string.rpartition(replace_what)
     return head + replace_with + tail
 
@@ -99,6 +101,9 @@ def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
 adata.obs = adata.obs[cluster_columns+[batch_key, label_key]].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
+
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name']
 
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
