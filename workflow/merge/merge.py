@@ -12,17 +12,26 @@ from utils.io import read_anndata, link_zarr
 from utils.misc import apply_layers, dask_compute
 
 
-def read_adata(file, backed=False, dask=False):
+def read_adata(
+    file,
+    file_id=None,
+    backed=False,
+    dask=False,
+    stride=10_000,
+    chunks=(-1, -1),
+):
+    if file_id is None:
+        file_id = file
     logging.info(f'Read {file}...')
     adata = read_anndata(
         file,
         backed=backed,
         dask=dask,
-        X='X',
-        obs='obs',
-        var='var',
-        uns='uns',
+        stride=stride,
+        chunks=chunks,
+        verbose=False,
     )
+    adata.obs['file_id'] = file_id
     return adata
 
 
@@ -39,16 +48,20 @@ if len(files) == 1:
     link_zarr(in_dir=files[0], out_dir=out_file)
     exit(0)
 
-adatas = [read_anndata(file, obs='obs', var='var', uns='uns') for file in files]
-
 # subset to non-empty datasets
-files = [file for file, adata in zip(files, adatas) if adata.n_obs > 0]
-adatas = [adata for adata in adatas if adata.n_obs > 0]
+files = {
+    file_id: file
+    for file_id, file
+    in zip(files.keys(), files)
+    if read_anndata(file, obs='obs', verbose=False).n_obs > 0
+}
 
 if len(adatas) == 0:
     logging.info('All adatas are empty, skip concatenation...')
     AnnData().write_zarr(out_file)
     exit(0)
+
+adatas = []
 
 if dask:
     from dask import array as da
@@ -69,7 +82,10 @@ if dask:
     
 elif backed:
     logging.info('Read all files in backed mode...')
-    adatas = [read_adata(file, backed, dask) for file in files]
+    adatas = [
+        read_adata(file_path, file_id=file_id, backed=backed, dask=dask)
+        for file_id, file_path in files.items()
+    ]
     dc = AnnCollection(
         adatas,
         join_obs='outer',
@@ -84,17 +100,19 @@ elif backed:
     assert adata.X is not None
 
 else:
-    logging.info(f'Read first file {files[0]}...')
-    adata = read_adata(files[0], backed=backed, dask=dask)
-    logging.info(adata.__str__())
 
-    for file in files[1:]:
-        logging.info(f'Read {file}...')
-        _adata = read_adata(file, backed=backed, dask=dask)
-        logging.info(f'{file}:\n{_adata}')
+    adata = None
+    for file_id, file_path in tqdm(files.items()):
+        logging.info(f'Read {file_path}...')
+        _ad = read_adata(file_path, file_id=file_id, backed=backed, dask=dask)
+        logging.info(f'{file_id} shape: {_ad.shape}')
+        
+        if adata is None:
+            adata = _ad
+            continue
         
         # merge adata
-        adata = sc.concat([adata, _adata], join=merge_strategy)
+        adata = sc.concat([adata, _ad], join=merge_strategy)
         logging.info(f'after merge:\n{adata}')
 
         del _adata
