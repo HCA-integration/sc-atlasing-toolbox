@@ -2,8 +2,6 @@ import anndata as ad
 import scanpy as sc
 import numpy as np
 
-from utils.accessors import subset_hvg
-
 def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
     import itertools
 
@@ -32,16 +30,6 @@ def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
 
 # Moran's I for a random normal distribution (used as a negative baseline)
 def morans_i_random(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    adata = ad.AnnData(X=adata_raw.X, var=adata_raw.var, obs=adata.obs, obsp=adata.obsp, uns=adata.uns)
-
-    # Yoshida specific?
-    if 'feature_name' in adata.var.columns:
-        adata.var_names = adata.var['feature_name']
-
-    # Subset to highly variable genes
-    adata.var[var_key] = adata.var[var_key]
-    adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
-
     try:
         return sc.metrics.morans_i(adata, vals=np.random.normal(size=adata.n_obs))
     except ZeroDivisionError:
@@ -49,34 +37,9 @@ def morans_i_random(adata, output_type, batch_key, label_key, adata_raw, var_key
 
 # Moran's I for the batch (using permutations)
 def morans_i_batch(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    adata = ad.AnnData(X=adata_raw.X, var=adata_raw.var, obs=adata.obs, obsp=adata.obsp, uns=adata.uns)
+    return get_morans_i_for_category_mean(adata, batch_key)
 
-    # Yoshida specific?
-    if 'feature_name' in adata.var.columns:
-        adata.var_names = adata.var['feature_name']
-
-    # Subset to highly variable genes
-    adata.var[var_key] = adata.var[var_key]
-    adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
-
-    try:
-        return get_morans_i_for_category_mean(adata, batch_key)
-    except ZeroDivisionError:
-        return float('nan')
 
 #  Moran's I for the label/cell type (using permutations)
 def morans_i_label(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    adata = ad.AnnData(X=adata_raw.X, var=adata_raw.var, obs=adata.obs, obsp=adata.obsp, uns=adata.uns)
-
-    # Yoshida specific?
-    if 'feature_name' in adata.var.columns:
-        adata.var_names = adata.var['feature_name']
-
-    # Subset to highly variable genes
-    adata.var[var_key] = adata.var[var_key]
-    adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
-
-    try:
-        return get_morans_i_for_category_mean(adata, label_key)
-    except ZeroDivisionError:
-        return float('nan')
+    return get_morans_i_for_category_mean(adata, label_key)
