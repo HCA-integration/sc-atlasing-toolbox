@@ -10,7 +10,7 @@ import h5py
 import numpy as np
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
-from functools import partial
+from pprint import pformat
 from dask import array as da
 
 
@@ -540,17 +540,18 @@ def write_zarr_linked(
     # Unique the list
     files_to_keep = list(set(files_to_keep))
 
-    # Make a list of existing subpaths to keep                    
-    file_to_link_clean = [
-        x.split('/')[0] if not x.startswith('/')  # take top level directory
-        else x.split('/')[1]  # take first directory after root /
-        for x in files_to_keep
-    ]
+    def get_top_level_path(file):
+        if file.startswith('/'):
+            return file.split('/')[1] # take first directory after root
+        return file.split('/')[0] # take top level directory
 
+    # Make a list of existing subpaths to keep
+    file_to_link_clean = [get_top_level_path(f) for f in files_to_keep]
+    
     # For those not keeping, link
     files_to_link = [
         f for f in in_dirs
-        if f.split('/', 1)[-1] not in file_to_link_clean
+        if get_top_level_path(f) not in file_to_link_clean
     ]
     
     if slot_map is None:
@@ -588,7 +589,7 @@ def write_zarr_linked(
     for slot in ['obs', 'var']:
         zattrs_file = Path(out_dir) / slot / '.zattrs'
 
-        if not (zattrs_file).exists() or slot in file_to_link_clean:
+        if not (zattrs_file).exists() or slot in files_to_link:
             continue
         
         with open(zattrs_file, 'r') as file:
