@@ -191,15 +191,23 @@ for x, y, log_x, log_y in coordinates:
     plt.tight_layout()
     plt.savefig(density_log_png, bbox_inches='tight')
 
-    # for hue in hues:
+    # for hue in tqdm(hues):
     #     call_plot(adata.obs, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png)
     
     with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-        tasks = [
-            (adata.obs, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png)
-            for hue in hues
+        futures = [
+            executor.submit(
+                call_plot,
+                df=adata.obs,
+                x=x,
+                y=y,
+                log_x=log_x,
+                log_y=log_y,
+                hue=hue,
+                scatter_plot_kwargs=scatter_plot_kwargs,
+                density_png=density_png
+            ) for hue in hues
         ]
-        futures = [executor.submit(call_plot, *task) for task in tasks]
         
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
             try:
