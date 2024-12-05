@@ -5,6 +5,7 @@ rule autoqc:
         zarr=directory(mcfg.out_dir / 'autoqc' / f'{params.wildcard_pattern}.zarr')
     params:
         gauss_threshold=0.05,
+        layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'counts', default='X'),
     conda:
         get_env(config, 'qc')
     resources:
