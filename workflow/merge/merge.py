@@ -3,27 +3,56 @@ logging.basicConfig(level=logging.INFO)
 import gc
 import faulthandler
 faulthandler.enable()
+from scipy.sparse import issparse
+import tqdm.dask as tdask
+from tqdm import tqdm
 import pandas as pd
 import scanpy as sc
 from anndata.experimental import AnnCollection
 from anndata import AnnData
+from dask import array as da
+from dask import config as da_config
+# from dask.diagnostics import ProgressBar
+
+da_config.set(
+    **{
+        'num_workers': snakemake.threads,
+        'array.slicing.split_large_chunks': False
+    }
+)
+logging.info(f"Dask using {da_config.get('num_workers')} workers")
 
 from utils.io import read_anndata, link_zarr
 from utils.misc import apply_layers, dask_compute
 
 
-def read_adata(file, backed=False, dask=False):
+def read_adata(
+    file,
+    file_id=None,
+    backed=False,
+    dask=False,
+    stride=10_000,
+    chunks=(-1, -1),
+):
+    if file_id is None:
+        file_id = file
     logging.info(f'Read {file}...')
     adata = read_anndata(
         file,
         backed=backed,
         dask=dask,
-        X='X',
-        obs='obs',
-        var='var',
-        uns='uns',
+        stride=stride,
+        chunks=chunks,
+        verbose=False,
     )
+    adata.obs['file_id'] = file_id
     return adata
+
+
+def remove_slots(adata):
+    for slot in ['X', 'layers', 'obsm', 'obsp', 'varm', 'varp']:
+        if hasattr(adata, slot):
+            delattr(adata, slot)
 
 
 dataset = snakemake.wildcards.dataset
@@ -34,42 +63,64 @@ merge_strategy = snakemake.params.get('merge_strategy', 'inner')
 keep_all_columns = snakemake.params.get('keep_all_columns', False)
 backed = snakemake.params.get('backed', False)
 dask = snakemake.params.get('dask', False)
+stride = snakemake.params.get('stride', 10_000)
 
 if len(files) == 1:
     link_zarr(in_dir=files[0], out_dir=out_file)
     exit(0)
 
-adatas = [read_anndata(file, obs='obs', var='var', uns='uns') for file in files]
-
 # subset to non-empty datasets
-files = [file for file, adata in zip(files, adatas) if adata.n_obs > 0]
-adatas = [adata for adata in adatas if adata.n_obs > 0]
+files = {
+    file_id: file
+    for file_id, file
+    in zip(files.keys(), files)
+    if read_anndata(file, obs='obs', verbose=False).n_obs > 0
+}
 
-if len(adatas) == 0:
+if len(files) == 0:
     logging.info('All adatas are empty, skip concatenation...')
     AnnData().write_zarr(out_file)
     exit(0)
 
-if dask:
-    from dask import array as da
-    from dask import config as da_config
+adatas = []
 
-    da_config.set(
-        **{
-            'num_workers': snakemake.threads,
-            'array.slicing.split_large_chunks': True
-        }
-    )
+if dask:
     logging.info('Read all files with dask...')
-    logging.info(f'n_threads: {snakemake.threads}')
-    adatas = [read_adata(file, backed, dask) for file in files]
+    
+    for file_id, file_path in files.items():
+        _ad = read_adata(
+            file_path,
+            file_id=file_id,
+            backed=backed,
+            dask=dask,
+            stride=stride
+        )
+        logging.info(f'{file_id} shape: {_ad.shape}')
+        
+        #with tdask.TqdmCallback(desc='Persist'):
+            # _ad = apply_layers(_ad, func=lambda x: x.persist())
+        
+        adatas.append(_ad)
     
     # concatenate
     adata = sc.concat(adatas, join=merge_strategy)
+    print(adata, flush=True)
+
+    for _ad in adatas:
+        remove_slots(_ad)
+        gc.collect()
+    
+    #if backed:
+    #    with tdask.TqdmCallback(desc='Persist'): # ProgressBar():
+    #        adata = apply_layers(adata, func=lambda x: x.rechunk((stridee, -1)).persist() if isinstance(x, da.Array) else x)
+    #         adata = apply_layers(adata, func=lambda x: x.persist() if isinstance(x, da.Array) else x)
     
 elif backed:
     logging.info('Read all files in backed mode...')
-    adatas = [read_adata(file, backed, dask) for file in files]
+    adatas = [
+        read_adata(file_path, file_id=file_id, backed=backed, dask=dask)
+        for file_id, file_path in files.items()
+    ]
     dc = AnnCollection(
         adatas,
         join_obs='outer',
@@ -82,22 +133,29 @@ elif backed:
     logging.info('Subset AnnDataCollection, returning a View...')
     adata = dc[:].to_adata()
     assert adata.X is not None
+    
+    for _ad in adatas:
+        remove_slots(_ad)
+        gc.collect()
 
 else:
-    logging.info(f'Read first file {files[0]}...')
-    adata = read_adata(files[0], backed=backed, dask=dask)
-    logging.info(adata.__str__())
 
-    for file in files[1:]:
-        logging.info(f'Read {file}...')
-        _adata = read_adata(file, backed=backed, dask=dask)
-        logging.info(f'{file}:\n{_adata}')
+    adata = None
+    for file_id, file_path in tqdm(files.items()):
+        logging.info(f'Read {file_path}...')
+        _ad = read_adata(file_path, file_id=file_id, backed=backed, dask=dask)
+        logging.info(f'{file_id} shape: {_ad.shape}')
+        
+        if adata is None:
+            adata = _ad
+            continue
         
         # merge adata
-        adata = sc.concat([adata, _adata], join=merge_strategy)
+        adata = sc.concat([adata, _ad], join=merge_strategy)
         logging.info(f'after merge:\n{adata}')
 
-        del _adata
+        remove_slots(_ad)
+        adatas.append(_ad)
         gc.collect()
 
 
@@ -126,8 +184,8 @@ adata.obs_names = dataset + '-' + adata.obs.reset_index(drop=True).index.astype(
 adata.uns['dataset'] = dataset
 logging.info(adata.__str__())
 
-logging.info('Compute matrix...')
-adata = dask_compute(adata)
-
 logging.info(f'Write to {out_file}...')
-adata.write_zarr(out_file)
+with tdask.TqdmCallback():
+    if isinstance(adata.X, da.Array):
+        print(adata.X.dask, flush=True)
+    adata.write_zarr(out_file)

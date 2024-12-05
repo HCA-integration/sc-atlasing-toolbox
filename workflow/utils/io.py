@@ -10,10 +10,15 @@ import h5py
 import numpy as np
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
-from functools import partial
+from pprint import pformat
 from dask import array as da
 
-print_flushed = partial(print, flush=True)
+
+def print_flushed(*args, **kwargs):
+    kwargs |= dict(flush=True)
+    verbose = kwargs.pop('verbose', True)
+    if verbose:
+        print(*args, **kwargs)
 
 
 zarr.default_compressor = zarr.Blosc(shuffle=zarr.Blosc.SHUFFLE)
@@ -51,8 +56,9 @@ def read_anndata(
     backed: bool = False,
     fail_on_missing: bool = True,
     exclude_slots: list = None,
-    chunks: [int, tuple] = ('auto', -1),
+    chunks: [int, tuple] = None,
     stride: int = 1000,
+    verbose: bool = True,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -97,6 +103,7 @@ def read_anndata(
         backed=backed,
         chunks=chunks,
         stride=stride,
+        verbose=verbose,
         **kwargs
     )
     if not backed and file_type == 'h5py':
@@ -113,6 +120,7 @@ def read_partial(
     stride: int = 1000,
     force_sparse_types: [str, list] = None,
     force_sparse_slots: [str, list] = None,
+    verbose: bool = False,
     **kwargs
 ) -> ad.AnnData:
     """
@@ -137,13 +145,15 @@ def read_partial(
         force_sparse_slots = [force_sparse_slots]
     force_sparse_slots.extend(['X', 'layers/', 'raw/X'])
     
+    if chunks is None:
+        chunks = (stride, -1)
     print_flushed(f'dask: {dask}, backed: {backed}')
     if dask:
         print_flushed('chunks:', chunks)
     
     slots = {}
     for to_slot, from_slot in kwargs.items():
-        print_flushed(f'Read slot "{from_slot}", store as "{to_slot}"...')
+        print_flushed(f'Read slot "{from_slot}", store as "{to_slot}"...', verbose=verbose)
         force_slot_sparse = any(from_slot.startswith((x, f'/{x}')) for x in force_sparse_slots)
         if from_slot in ['layers', '/layers', 'raw', '/raw']:
             slots[to_slot] = {
@@ -156,6 +166,7 @@ def read_partial(
                     dask=dask,
                     chunks=chunks,
                     stride=stride,
+                    verbose=verbose,
                 )
                 for sub_slot in group[from_slot]
             }
@@ -169,6 +180,7 @@ def read_partial(
                 dask=dask,
                 chunks=chunks,
                 stride=stride,
+                verbose=verbose,
             )
 
     return ad.AnnData(**slots)
@@ -183,6 +195,7 @@ def read_slot(
     dask: bool,
     chunks: [int, tuple],
     stride: int,
+    verbose: bool,
 ):
     if slot not in group:
         warnings.warn(f'Slot "{slot}" not found, skip...')
@@ -197,13 +210,15 @@ def read_slot(
             stride=stride,
             chunks=chunks,
             backed=backed,
+            verbose=verbose,
         )
     return _read_slot_default(
         group,
         slot,
         force_sparse_types,
         force_slot_sparse,
-        backed
+        backed=backed,
+        verbose=verbose,
     )
 
 
@@ -214,8 +229,15 @@ def _read_slot_dask(
     force_slot_sparse,
     stride,
     chunks,
-    backed
+    backed,
+    verbose,
 ):
+    """
+    :param group: h5py.Group or zarr.Group
+    :param slot: slot name
+    :stride: stride parameter for creating backed dask array, ignored when backed=False
+    :chunks: chunks parameter for creating dask array ignored when backed=True
+    """
     from .sparse_dask import sparse_dataset_as_dask, read_as_dask_array
     
     elem = group[slot]
@@ -223,42 +245,49 @@ def _read_slot_dask(
     
     if iospec.encoding_type in ("csr_matrix", "csc_matrix"):
         if backed:
-            print_flushed(f'Read {slot} as backed sparse dask array...')
+            print_flushed(f'Read {slot} as backed sparse dask array...', verbose=verbose)
             elem = sparse_dataset(elem)
             return sparse_dataset_as_dask(elem, stride=stride)
-        print_flushed(f'Read {slot} as sparse dask array...')
+        print_flushed(f'Read {slot} as sparse dask array...', verbose=verbose)
         elem = read_as_dask_array(elem, chunks=chunks)
         return elem.map_blocks(csr_matrix_int64_indptr, dtype=elem.dtype)
+    
     elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
-        print_flushed(f'Read {slot} as dask array and convert blocks to csr_matrix...')
+        print_flushed(f'Read {slot} as dask array and convert blocks to csr_matrix...', verbose=verbose)
         elem = read_as_dask_array(elem, chunks=chunks)
         return elem.map_blocks(csr_matrix_int64_indptr, dtype=elem.dtype)
+    
     elif iospec.encoding_type == "array":
-        print_flushed(f'Read {slot} as dask array...')
+        print_flushed(f'Read {slot} as dask array...', verbose=verbose)
         return read_as_dask_array(elem, chunks=chunks)
+    
     return read_elem(elem)
 
 
-def _read_slot_default(group, slot, force_sparse_types, force_slot_sparse, backed):
+def _read_slot_default(group, slot, force_sparse_types, force_slot_sparse, backed, verbose):
     elem = group[slot]
     iospec = ad._io.specs.get_spec(elem)
     
     if iospec.encoding_type in ("csr_matrix", "csc_matrix"):
         if backed:
-            print_flushed(f'Read {slot} as backed sparse matrix...')
+            print_flushed(f'Read {slot} as backed sparse matrix...', verbose=verbose)
             return sparse_dataset(elem)
         return read_elem(elem)
     elif iospec.encoding_type in force_sparse_types or force_slot_sparse:
-        print_flushed(f'Read {slot} and convert to csr matrix...')
+        print_flushed(f'Read {slot} and convert to csr matrix...', verbose=verbose)
         return csr_matrix(read_elem(elem))
     else:
         return read_elem(elem)
 
 
 def csr_matrix_int64_indptr(x):
-    x = csr_matrix(x)
-    x.indptr = x.indptr.astype(np.int64)
-    x.indices = x.indices.astype(np.int64) # seems to be necessary to avoid "ValueError: Output dtype not compatible with inputs."
+    if not isinstance(x, csr_matrix):
+        x = csr_matrix(x)
+    if isinstance(x.indptr, np.int32):
+        x.indptr = x.indptr.astype(np.int64)
+    if isinstance(x.indices, np.int32):
+        # seems to be necessary to avoid "ValueError: Output dtype not compatible with inputs."
+        x.indices = x.indices.astype(np.int64)
     return x
 
 
@@ -438,12 +467,12 @@ def link_zarr(
 
     # link all files
     out_dir = Path(out_dir)
-    print_flushed('slot_map:', slot_map)
     slot_map = sorted(
         slot_map.items(),
         key=lambda item: out_dir.name in str(in_dir_map[item[1]]),
         reverse=False,
     )
+    print_flushed('slot_map:', pformat(slot_map))
 
     for out_slot, in_slot in slot_map:
         in_dir = in_dir_map[in_slot]
@@ -511,17 +540,18 @@ def write_zarr_linked(
     # Unique the list
     files_to_keep = list(set(files_to_keep))
 
-    # Make a list of existing subpaths to keep                    
-    file_to_link_clean = [
-        x.split('/')[0] if not x.startswith('/')  # take top level directory
-        else x.split('/')[1]  # take first directory after root /
-        for x in files_to_keep
-    ]
+    def get_top_level_path(file):
+        if file.startswith('/'):
+            return file.split('/')[1] # take first directory after root
+        return file.split('/')[0] # take top level directory
 
+    # Make a list of existing subpaths to keep
+    file_to_link_clean = [get_top_level_path(f) for f in files_to_keep]
+    
     # For those not keeping, link
     files_to_link = [
         f for f in in_dirs
-        if f.split('/', 1)[-1] not in file_to_link_clean
+        if get_top_level_path(f) not in file_to_link_clean
     ]
     
     if slot_map is None:
@@ -559,7 +589,7 @@ def write_zarr_linked(
     for slot in ['obs', 'var']:
         zattrs_file = Path(out_dir) / slot / '.zattrs'
 
-        if not (zattrs_file).exists() or slot in file_to_link_clean:
+        if not (zattrs_file).exists() or slot in files_to_link:
             continue
         
         with open(zattrs_file, 'r') as file:

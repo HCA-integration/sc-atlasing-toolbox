@@ -8,11 +8,18 @@ from utils.environments import get_env
 mcfg = ModuleConfig(
     module_name='merge',
     config=config,
-    config_params=['merge_strategy', 'dask', 'backed'],
+    config_params=[
+        'merge_strategy',
+        'dask',
+        'backed',
+        'threads',
+        'stride',
+    ],
     mandatory_wildcards=['dataset'],
     dtypes=dict(
         dask=bool,
-        backed=bool
+        backed=bool,
+        threads=int,
     ),
 )
 params = mcfg.get_paramspace()
@@ -37,8 +44,11 @@ rule merge:
         merge_strategy=lambda wildcards: mcfg.get_from_parameters(wildcards, 'merge_strategy', default='inner'),
         dask=lambda wildcards: mcfg.get_from_parameters(wildcards, 'dask', default=False),
         backed=lambda wildcards: mcfg.get_from_parameters(wildcards, 'backed', default=False),
+        stride=lambda wildcards: mcfg.get_from_parameters(wildcards, 'stride', default=500_000),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
+    threads:
+        lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', default=1))
     resources:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=3),
     script:
