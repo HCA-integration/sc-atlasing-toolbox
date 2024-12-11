@@ -5,79 +5,111 @@ import scib
 
 from utils.accessors import subset_hvg
 
-def get_anndata_for_gene_score(_adata, _adata_raw, _gene_signature, _var_key) -> float:
-    _ad = ad.AnnData(X=_adata_raw.X, var=_adata_raw.var, obs=_adata.obs, obsp=_adata.obsp, uns=_adata.uns)
+def get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key) -> float:
+    adata = ad.AnnData(
+        X=adata_raw.X,
+        var=adata_raw.var,
+        obs=adata.obs,
+        obsp=adata.obsp,
+        uns=adata.uns
+    )
 
-    # TODO: is this needed?
-    if 'feature_name' in _ad.var.columns:
-        _ad.var_names = _ad.var['feature_name']
+    gene_signature = [g for g in gene_signature if g in adata.var_names]
 
-    _gene_signature = [g for g in _gene_signature if g in _ad.var_names]
-    _ad.var[_var_key] = _ad.var[_var_key]
+    adata.var.loc[adata.var_names.isin(gene_signature), var_key] = True
+    adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
 
-    _ad.var.loc[_ad.var_names.isin(_gene_signature), _var_key] = True
-    _ad, _ = subset_hvg(_ad, var_column=_var_key, min_cells=1, compute_dask=True)
+    sc.tl.score_genes(adata, gene_list=gene_signature, score_name='gene_score')
+    return adata
 
-    sc.tl.score_genes(_ad, gene_list=_gene_signature, score_name='gene_score')
-    return _ad
 
-# Moran's I for platlets -> baseline
-def morans_i_platlets(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    gene_signature = ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
+def get_bootstrap_adata(adata, size):
+    # TODO: X_pca nicht immer da?
+    # ValueError: Did not find X_pca in `.obsm.keys()`. You need to compute it first.
+
+    rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
+    adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
+    sc.pp.neighbors(adata_bootstrap, use_rep='X_pca')   # Recalculation is important as kNN graph is input for Moran's I
+    return adata_bootstrap
+
+
+def get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, size):
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
 
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    morans_values = []
+    for _ in range(5):
+        ad = get_bootstrap_adata(adata, size)
+        morans_values.append(sc.metrics.morans_i(ad, vals=ad.obs['gene_score']))
+    
+    return morans_values
+
+
+# Moran's I for platlets -> baseline
+def morans_i_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    gene_signature = ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
+    
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Moran's I for red blood cells -> baseline
-def morans_i_rbc(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def morans_i_rbc(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["HBA1", "HBA2", "HBB"]
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Moran's I for plasma cells
-def morans_i_plasma_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def morans_i_plasma_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["CD79A", "DERL3", "IGHA1", "ITM2C", "JCHAIN",
                       "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"]
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Moran's I for T CD4 CTL cells
-def morans_i_t_cd4_ctl(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def morans_i_t_cd4_ctl(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["CCL5", "FGFBP2", "GZMA", "GNLY", "GZMB",
                       "GZMH", "ITGB1", "KLRB1"]
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Moran's I for NK cells
-def morans_i_nk_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def morans_i_nk_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["GNLY", "KLRB1", "KLRD1", "NCAM1", "NCR1",
                       "NKG7", "TYROBP"]
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+
+
+# Moran's I for ILC cells
+def morans_i_ilc_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    gene_signature = ["KIT", "KLRB1", "LINC01229", "TNFRSF4", "TNFRSF18",
+                      "TRDC", "TTLL10"]
+    
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+
+
+# Moran's I for Monocyte CD14 cells
+def morans_i_monocytes_cd14(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    gene_signature = ["CD14", "CSF3R", "S100A12", "S100A8", "S100A9"]
+    
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Moran' I for the IFN gene signature (specific for the data set by Yoshida et al.)
-def morans_i_ifn_signature(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def morans_i_ifn_signature(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
                       "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
                       "OAS2", "OAS1", "MX2", "MX1", "LY6E",
                       "ISG15", "IFIT3", "IFI6", "IFI44L", "IFI35",
                       "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"]
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
-    return sc.metrics.morans_i(adata, vals=adata.obs['gene_score'])
+    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
 
 
 # Principle Component Regression for platlets -> baseline
-def pcr_platlets(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
@@ -85,7 +117,7 @@ def pcr_platlets(adata, output_type, batch_key, label_key, adata_raw, var_key='m
 
 
 # Principle Component Regression for red blood cells -> baseline
-def pcr_rbc(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_rbc(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["HBA1", "HBA2", "HBB"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
     
@@ -93,7 +125,7 @@ def pcr_rbc(adata, output_type, batch_key, label_key, adata_raw, var_key='metric
 
 
 # Principle Component Regression for plasma cells
-def pcr_plasma_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_plasma_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["CD79A", "DERL3", "IGHA1", "ITM2C", "JCHAIN",
                       "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
@@ -102,7 +134,7 @@ def pcr_plasma_cells(adata, output_type, batch_key, label_key, adata_raw, var_ke
 
 
 # Principle Component Regression for T CD4 CTL cells
-def pcr_t_cd4_ctl(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_t_cd4_ctl(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["CCL5", "FGFBP2", "GZMA", "GNLY", "GZMB",
                       "GZMH", "ITGB1", "KLRB1"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
@@ -111,7 +143,7 @@ def pcr_t_cd4_ctl(adata, output_type, batch_key, label_key, adata_raw, var_key='
 
 
 # Principle Component Regression for NK cells
-def pcr_nk_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_nk_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["GNLY", "KLRB1", "KLRD1", "NCAM1", "NCR1",
                       "NKG7", "TYROBP"]
     adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
@@ -119,8 +151,25 @@ def pcr_nk_cells(adata, output_type, batch_key, label_key, adata_raw, var_key='m
     return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
 
 
+# Principle Component Regression for ILC cells
+def pcr_ilc_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    gene_signature = ["KIT", "KLRB1", "LINC01229", "TNFRSF4", "TNFRSF18",
+                      "TRDC", "TTLL10"]
+    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
+    
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+
+
+# Principle Component Regression for Monocyte CD14 cells
+def pcr_monocytes_cd14(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    gene_signature = ["CD14", "CSF3R", "S100A12", "S100A8", "S100A9"]
+    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
+    
+    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+
+
 # Principle Component Regression for the IFN gene signature (specific for the data set by Yoshida et al.)
-def pcr_ifn_signature(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
+def pcr_ifn_signature(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     gene_signature = ["IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
                       "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
                       "OAS2", "OAS1", "MX2", "MX1", "LY6E",

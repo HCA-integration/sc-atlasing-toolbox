@@ -28,18 +28,46 @@ def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
     return np.mean(morans)
 
 
+def get_bootstrap_adata(adata, size):
+    rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
+    adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
+    sc.pp.neighbors(adata_bootstrap, use_rep='X_pca')   # Recalculation is important as kNN graph is input for Moran's I
+    return adata_bootstrap
+
+
 # Moran's I for a random normal distribution (used as a negative baseline)
-def morans_i_random(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    try:
-        return sc.metrics.morans_i(adata, vals=np.random.normal(size=adata.n_obs))
-    except ZeroDivisionError:
-        return float('nan')
+def morans_i_random(adata, output_type, **kwargs):
+    morans_values = []
+
+    for _ in range(5):
+        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
+        try:
+            value = sc.metrics.morans_i(ad, vals=np.random.normal(size=ad.n_obs))
+        except ZeroDivisionError:
+            value = float('nan')
+
+        morans_values.append(value)
+    
+    return morans_values
+
 
 # Moran's I for the batch (using permutations)
-def morans_i_batch(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    return get_morans_i_for_category_mean(adata, batch_key)
+def morans_i_batch(adata, output_type, batch_key, **kwargs):
+    morans_values = []
+
+    for _ in range(5):
+        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
+        morans_values.append(get_morans_i_for_category_mean(ad, batch_key))
+    
+    return morans_values
 
 
 #  Moran's I for the label/cell type (using permutations)
-def morans_i_label(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', n_threads=1, **kwargs):
-    return get_morans_i_for_category_mean(adata, label_key)
+def morans_i_label(adata, output_type, label_key, **kwargs):
+    morans_values = []
+
+    for _ in range(5):
+        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
+        morans_values.append(get_morans_i_for_category_mean(ad, label_key))
+    
+    return morans_values

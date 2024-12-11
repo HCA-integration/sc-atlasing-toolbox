@@ -117,15 +117,29 @@ score = metric_function(
     n_threads=threads,
 )
 
-write_metrics(
-    scores=[score],
-    output_types=[output_type],
-    metric=metric,
-    metric_type=metric_type,
-    batch=batch_key,
-    label=label_key,
-    file_id=file_id,
-    dataset=dataset,
-    filename=output_file,
-    **adata.uns.get('wildcards', {}),
-)
+if isinstance(score, list):
+    write_metrics(
+        scores=score,
+        output_types=[output_type for _ in range(len(score))],
+        metric=metric,
+        metric_type=metric_type,
+        batch=batch_key,
+        label=label_key,
+        file_id=file_id,
+        dataset=dataset,
+        filename=output_file,
+        **adata.uns.get('wildcards', {}),
+    )
+else:
+    write_metrics(
+        scores=[score],
+        output_types=[output_type],
+        metric=metric,
+        metric_type=metric_type,
+        batch=batch_key,
+        label=label_key,
+        file_id=file_id,
+        dataset=dataset,
+        filename=output_file,
+        **adata.uns.get('wildcards', {}),
+    )
