@@ -10,7 +10,7 @@ from utils.misc import dask_compute
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
 
-def pcr(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
+def pcr_comparison(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -103,3 +103,39 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1,
     #     score = np.nan
 
     return score
+
+
+def pcr_random(adata, output_type, **kwargs):
+    import scib
+
+    if output_type == 'knn':
+        return np.nan
+
+    assert_pca(adata, check_varm=False)
+
+    # Add column full of random values and use it as input for the PCR
+    adata.obs['random'] = np.random.normal(size=adata.n_obs)
+
+    return scib.metrics.pcr(adata, covariate='random', recompute_pca=False)
+    
+
+def pcr_batch(adata, output_type, batch_key, **kwargs):
+    import scib
+
+    if output_type == 'knn':
+        return np.nan
+
+    assert_pca(adata, check_varm=False)
+
+    return scib.metrics.pcr(adata, covariate=batch_key, recompute_pca=False)
+    
+
+def pcr_label(adata, output_type, label_key, **kwargs):
+    import scib
+
+    if output_type == 'knn':
+        return np.nan
+
+    assert_pca(adata, check_varm=False)
+
+    return scib.metrics.pcr(adata, covariate=label_key, recompute_pca=False)
