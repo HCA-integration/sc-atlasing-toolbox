@@ -103,7 +103,8 @@ adata.obs = adata.obs[cluster_columns+[batch_key, label_key]].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 
 if 'feature_name' in adata.var.columns:
-    adata.var_names = adata.var['feature_name']
+    adata.var_names = adata.var['feature_name'].astype(str)
+    adata_raw.var_names = adata_raw.var['feature_name'].astype(str)
 
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
