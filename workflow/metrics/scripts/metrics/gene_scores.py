@@ -13,24 +13,31 @@ def get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key) -> flo
         obsp=adata.obsp,
         uns=adata.uns
     )
+    # TODO: maybe add this to run.py
+    #   -> but not before presentation as the whole pipeline would run again and that takes forever!
+    adata.var_names = adata.var_names.astype(str)
 
     gene_signature = [g for g in gene_signature if g in adata.var_names]
-
     adata.var.loc[adata.var_names.isin(gene_signature), var_key] = True
+
     adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
 
+    # TODO: Hier ein Problem (ValueError: No valid genes were passed for scoring.)
     sc.tl.score_genes(adata, gene_list=gene_signature, score_name='gene_score')
     return adata
 
 
 def get_bootstrap_adata(adata, size):
-    # TODO: X_pca nicht immer da?
-    # ValueError: Did not find X_pca in `.obsm.keys()`. You need to compute it first.
-
     rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
     adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
-    sc.pp.neighbors(adata_bootstrap, use_rep='X_pca')   # Recalculation is important as kNN graph is input for Moran's I
-    return adata_bootstrap
+    # Recalculation is important as kNN graph is input for Moran's I
+    try: 
+        adata_bootstrap.obsm['distances'] = adata_bootstrap.obsp['distances']
+        sc.pp.neighbors(adata_bootstrap, use_rep='distances', metric='precomputed', transformer='sklearn')   
+    except ValueError:
+        sc.pp.neighbors(adata_bootstrap, use_rep='X_emb')   
+    finally:  
+        return adata_bootstrap
 
 
 def get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, size):

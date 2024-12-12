@@ -59,7 +59,7 @@ if output_type not in allowed_output_types:
 
 kwargs = {'obs': 'obs', 'uns': 'uns'}
 if input_type == 'knn':
-    kwargs |= {'obsp': 'obsp'}
+    kwargs |= {'obsp': 'obsp', 'obsm': 'obsm'}
 if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
 if input_type == 'full':

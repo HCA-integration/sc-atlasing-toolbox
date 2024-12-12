@@ -31,8 +31,14 @@ def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
 def get_bootstrap_adata(adata, size):
     rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
     adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
-    sc.pp.neighbors(adata_bootstrap, use_rep='X_pca')   # Recalculation is important as kNN graph is input for Moran's I
-    return adata_bootstrap
+    # Recalculation is important as kNN graph is input for Moran's I
+    try: 
+        adata_bootstrap.obsm['distances'] = adata_bootstrap.obsp['distances']
+        sc.pp.neighbors(adata_bootstrap, use_rep='distances', metric='precomputed', transformer='sklearn')   
+    except ValueError:
+        sc.pp.neighbors(adata_bootstrap, use_rep='X_emb')   
+    finally:  
+        return adata_bootstrap
 
 
 # Moran's I for a random normal distribution (used as a negative baseline)
