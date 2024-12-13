@@ -3,7 +3,6 @@ import pandas as pd
 import logging
 logger = logging.getLogger('Run metric')
 logger.setLevel(logging.INFO)
-
 try:
     from sklearnex import patch_sklearn
     patch_sklearn()
@@ -67,9 +66,11 @@ if input_type == 'full':
 
 logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name'].astype(str)
 print(adata, flush=True)
-adata_raw = None
 
+adata_raw = None
 if comparison:
     adata_raw = read_anndata(
         input_file,
@@ -81,7 +82,9 @@ if comparison:
         dask=True,
         backed=True,
     )
-    print('adata_raw')
+    if 'feature_name' in adata_raw.var.columns:
+        adata_raw.var_names = adata_raw.var['feature_name'].astype(str)
+    print('adata_raw', flush=True)
     print(adata_raw, flush=True)
 
 # prepare clustering columns
@@ -102,10 +105,6 @@ cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_ke
 adata.obs = adata.obs[cluster_columns+[batch_key, label_key]].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 
-if 'feature_name' in adata.var.columns:
-    adata.var_names = adata.var['feature_name'].astype(str)
-    adata_raw.var_names = adata_raw.var['feature_name'].astype(str)
-
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
 score = metric_function(
@@ -118,29 +117,18 @@ score = metric_function(
     n_threads=threads,
 )
 
-if isinstance(score, list):
-    write_metrics(
-        scores=score,
-        output_types=[output_type for _ in range(len(score))],
-        metric=metric,
-        metric_type=metric_type,
-        batch=batch_key,
-        label=label_key,
-        file_id=file_id,
-        dataset=dataset,
-        filename=output_file,
-        **adata.uns.get('wildcards', {}),
-    )
-else:
-    write_metrics(
-        scores=[score],
-        output_types=[output_type],
-        metric=metric,
-        metric_type=metric_type,
-        batch=batch_key,
-        label=label_key,
-        file_id=file_id,
-        dataset=dataset,
-        filename=output_file,
-        **adata.uns.get('wildcards', {}),
-    )
+if not isinstance(score, list):
+    score = [score]
+
+write_metrics(
+    scores=score,
+    output_types=[output_type]*len(score),
+    metric=metric,
+    metric_type=metric_type,
+    batch=batch_key,
+    label=label_key,
+    file_id=file_id,
+    dataset=dataset,
+    filename=output_file,
+    **adata.uns.get('wildcards', {}),
+)
