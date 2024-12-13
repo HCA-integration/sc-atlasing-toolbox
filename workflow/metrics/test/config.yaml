@@ -28,13 +28,14 @@ defaults:
       - graph_connectivity
       - isolated_label_asw
       - isolated_label_f1
-      - pcr
+      - pcr_comparison
       # - pcr_y  # broken function
   datasets:
     - test_metrics
     - test_no_name
     - test_integration
     - scib_metrics
+    - morans_i
 
 
 DATASETS:
@@ -79,7 +80,7 @@ DATASETS:
         - batch_2
       methods:
         - nmi
-        - pcr
+        - pcr_comparison
         - asw_batch
         - graph_connectivity
         - cell_cycle
@@ -112,3 +113,36 @@ DATASETS:
         - kbet_y
         - graph_connectivity_y
         # - pcr_y
+
+  morans_i:
+    input:
+      metrics:
+        test: test/input/pbmc68k.h5ad
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+    metrics:
+      label: bulk_labels
+      batch: batch
+      methods:
+        - nmi
+        - ari
+        - asw_label
+        - asw_batch 
+        - cell_cycle
+        - clisi
+        - ilisi
+        - graph_connectivity
+        - isolated_label_asw
+        - isolated_label_f1
+        - pcr_comparison
+        - morans_i_batch
+        - morans_i_label
+        - morans_i_random
+        - morans_i_random_genes
+        - morans_i_ifn_signature
+        - pcr_batch
+        - pcr_label
+        - pcr_random
+        - pcr_random_genes
+        - pcr_ifn_signature

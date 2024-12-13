@@ -3,7 +3,6 @@ import pandas as pd
 import logging
 logger = logging.getLogger('Run metric')
 logger.setLevel(logging.INFO)
-
 try:
     from sklearnex import patch_sklearn
     patch_sklearn()
@@ -33,7 +32,7 @@ allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
-metric_function = metric_map.get(metric, ValueError(f'No function for metric: {metric}'))
+metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
 output_type = uns.get('output_type', 'full') # Same as in prepare.py
@@ -59,7 +58,7 @@ if output_type not in allowed_output_types:
 
 kwargs = {'obs': 'obs', 'uns': 'uns'}
 if input_type == 'knn':
-    kwargs |= {'obsp': 'obsp'}
+    kwargs |= {'obsp': 'obsp', 'obsm': 'obsm'}
 if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
 if input_type == 'full':
@@ -67,9 +66,11 @@ if input_type == 'full':
 
 logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
+if 'feature_name' in adata.var.columns:
+    adata.var_names = adata.var['feature_name'].astype(str)
 print(adata, flush=True)
-adata_raw = None
 
+adata_raw = None
 if comparison:
     adata_raw = read_anndata(
         input_file,
@@ -81,7 +82,9 @@ if comparison:
         dask=True,
         backed=True,
     )
-    print('adata_raw')
+    if 'feature_name' in adata_raw.var.columns:
+        adata_raw.var_names = adata_raw.var['feature_name'].astype(str)
+    print('adata_raw', flush=True)
     print(adata_raw, flush=True)
 
 # prepare clustering columns
@@ -90,8 +93,10 @@ def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'
     adapted from
     https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
     """
-    if not source_string.startswith(cluster_key) and source_string.endswith(replace_what):
+    if not source_string.startswith(cluster_key):
         return source_string
+    if not source_string.endswith(replace_what):
+        return source_string + '_orig'
     head, _sep, tail = source_string.rpartition(replace_what)
     return head + replace_with + tail
 
@@ -112,9 +117,12 @@ score = metric_function(
     n_threads=threads,
 )
 
+if not isinstance(score, list):
+    score = [score]
+
 write_metrics(
-    scores=[score],
-    output_types=[output_type],
+    scores=score,
+    output_types=[output_type]*len(score),
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,
