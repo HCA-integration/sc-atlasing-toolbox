@@ -2,7 +2,22 @@ import anndata as ad
 import scanpy as sc
 import numpy as np
 
-def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
+from .bootstrap import bootstrap_metric
+
+
+def morans_i(*args, **kwargs):
+    """
+    Moran's I wrapper
+    Ensure the value is positive
+    """
+    # try:
+    score = sc.metrics.morans_i(*args, **kwargs)
+    return max(score, 0)
+    # except ZeroDivisionError:
+    #     return float('nan')
+
+
+def morans_i_categorical(_ad, _cov, num_mappings=10) -> float:
     import itertools
 
     # Extract unique categories from the covariate column
@@ -22,58 +37,46 @@ def get_morans_i_for_category_mean(_ad, _cov, num_mappings=10) -> float:
     for perm in unique_permutations:
         mapping_dict = dict(zip(unique_categories, perm))
         mapped_values = _ad.obs[_cov].map(mapping_dict).values
-        morans.append(sc.metrics.morans_i(_ad, vals=mapped_values))
+        score = morans_i(_ad, vals=mapped_values)
+        morans.append(score)
     
     # Calculate and return the mean of all Moran's I values
     return np.mean(morans)
 
 
-def get_bootstrap_adata(adata, size):
-    rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
-    adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
-    # Recalculation is important as kNN graph is input for Moran's I
-    try: 
-        adata_bootstrap.obsm['distances'] = adata_bootstrap.obsp['distances']
-        sc.pp.neighbors(adata_bootstrap, use_rep='distances', metric='precomputed', transformer='sklearn')   
-    except ValueError:
-        sc.pp.neighbors(adata_bootstrap, use_rep='X_emb')   
-    finally:  
-        return adata_bootstrap
+def morans_i_random(adata, output_type, n_bootstraps=5, bootstrap_size=None, **kwargs):
+    """
+    Moran's I for a random normal distribution (used as a negative baseline)
+    """
+    return bootstrap_metric(
+        adata,
+        metric_function=lambda _ad: morans_i(_ad, vals=np.random.normal(size=_ad.n_obs)),
+        n_bootstraps=n_bootstraps,
+        size=bootstrap_size,
+    )
 
 
-# Moran's I for a random normal distribution (used as a negative baseline)
-def morans_i_random(adata, output_type, **kwargs):
-    morans_values = []
-
-    for _ in range(5):
-        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
-        try:
-            value = sc.metrics.morans_i(ad, vals=np.random.normal(size=ad.n_obs))
-        except ZeroDivisionError:
-            value = float('nan')
-
-        morans_values.append(value)
-    
-    return morans_values
+def morans_i_batch(adata, output_type, batch_key, n_bootstraps=5, bootstrap_size=None, **kwargs):
+    """
+    Moran's I for the batch (using permutations)
+    """
+    return bootstrap_metric(
+        adata,
+        metric_function=morans_i_categorical,
+        n_bootstraps=n_bootstraps,
+        size=bootstrap_size,
+        _cov=batch_key,
+    )
 
 
-# Moran's I for the batch (using permutations)
-def morans_i_batch(adata, output_type, batch_key, **kwargs):
-    morans_values = []
-
-    for _ in range(5):
-        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
-        morans_values.append(get_morans_i_for_category_mean(ad, batch_key))
-    
-    return morans_values
-
-
-#  Moran's I for the label/cell type (using permutations)
-def morans_i_label(adata, output_type, label_key, **kwargs):
-    morans_values = []
-
-    for _ in range(5):
-        ad = get_bootstrap_adata(adata, int(0.9*adata.n_obs))
-        morans_values.append(get_morans_i_for_category_mean(ad, label_key))
-    
-    return morans_values
+def morans_i_label(adata, output_type, label_key, n_bootstraps=5, bootstrap_size=None, **kwargs):
+    """
+    Moran's I for the label/cell type (using permutations)
+    """
+    return bootstrap_metric(
+        adata,
+        metric_function=morans_i_categorical,
+        n_bootstraps=n_bootstraps,
+        size=bootstrap_size,
+        _cov=label_key,
+    )

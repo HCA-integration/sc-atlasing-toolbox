@@ -4,8 +4,13 @@ import numpy as np
 import scib
 
 from utils.accessors import subset_hvg
+from .bootstrap import bootstrap_metric
+from .morans_i import morans_i
 
+
+# TODO: get from user config file
 dict_marker_genes = {
+    # IFN gene signature (specific for the data set by Yoshida et al.)
     "ifn_signature": ["IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
                         "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
                         "OAS2", "OAS1", "MX2", "MX1", "LY6E",
@@ -20,7 +25,8 @@ dict_marker_genes = {
     "monocytes_cd14":["CD14", "CSF3R", "S100A12", "S100A8", "S100A9"]
 }
 
-def get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key) -> float:
+
+def get_gene_score(adata, adata_raw, gene_signature, var_key):
     adata = ad.AnnData(
         X=adata_raw.X,
         var=adata_raw.var,
@@ -28,158 +34,128 @@ def get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key) -> flo
         obsp=adata.obsp,
         uns=adata.uns
     )
-    adata.var_names = adata.var_names.astype(str)
 
     gene_signature = [g for g in gene_signature if g in adata.var_names]
+    # also include genes of interest to subset
     adata.var.loc[adata.var_names.isin(gene_signature), var_key] = True
 
+    # subset to HVGs (used for control genes) + genes of interest
     adata, _ = subset_hvg(adata, var_column=var_key, min_cells=1, compute_dask=True)
     
-    sc.tl.score_genes(adata, gene_list=gene_signature, score_name='gene_score')
-    return adata
+    # calculate gene score
+    sc.tl.score_genes(adata, gene_list=gene_signature)
+    
+    return adata.obs['score']
 
 
-def get_bootstrap_adata(adata, size):
-    rand_indices = np.random.choice(adata.obs.index, size=size, replace=False)
-    adata_bootstrap = adata[adata.obs.index.isin(rand_indices)]
-    # Recalculation is important as kNN graph is input for Moran's I
-    try: 
-        adata_bootstrap.obsm['distances'] = adata_bootstrap.obsp['distances']
-        sc.pp.neighbors(adata_bootstrap, use_rep='distances', metric='precomputed', transformer='sklearn')   
+def morans_i_gene_score(
+    adata,
+    adata_raw,
+    var_key,
+    gene_signature,
+    n_bootstraps=5,
+    bootstrap_size=None,
+):
+    """
+    Moran's I for gene score
+    """
+    try :
+        gene_scores = get_gene_score(adata, adata_raw, gene_signature, var_key)
     except ValueError:
-        sc.pp.neighbors(adata_bootstrap, use_rep='X_emb')   
-    finally:  
-        return adata_bootstrap
+        return float('nan')
+
+    return bootstrap_metric(
+        adata,
+        metric_function=lambda _ad, vals: morans_i(_ad, vals=vals[_ad.obs_names]),
+        n_bootstraps=n_bootstraps,
+        size=bootstrap_size,
+        vals=gene_scores,
+    )
 
 
-def get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, size):
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
 
-    morans_values = []
-    for _ in range(5):
-        ad = get_bootstrap_adata(adata, size)
-        morans_values.append(sc.metrics.morans_i(ad, vals=ad.obs['gene_score']))
-    
-    return morans_values
-
-
-# Moran's I for platlets -> baseline
 def morans_i_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("platlets")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["platlets"])
 
 
 # Moran's I for red blood cells -> baseline
 def morans_i_rbc(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("rbc")
-
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["rbc"])
 
 
 # Moran's I for plasma cells
 def morans_i_plasma_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("plasma_cells")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["plasma_cells"])
 
 
 # Moran's I for T CD4 CTL cells
 def morans_i_t_cd4_ctl(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("t_cd4_ctl")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["t_cd4_ctl"])
 
 
 # Moran's I for NK cells
 def morans_i_nk_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("nk_cells")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["nk_cells"])
 
 
-# Moran's I for ILC cells
 def morans_i_ilc_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("ilc")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["ilc"])
 
 
-# Moran's I for Monocyte CD14 cells
 def morans_i_monocytes_cd14(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("monocytes_cd14")
-    
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["monocytes_cd14"])
 
 
-# Moran' I for the IFN gene signature (specific for the data set by Yoshida et al.)
 def morans_i_ifn_signature(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("ifn_signature")
+    return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["ifn_signature"])
+
+
+def pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature):
+    """   
+    Principle Component Regression for gene score
+    """
+    if output_type == 'knn':
+        return float('nan')
     
-    return get_morans_i_gene_score_bt(adata, adata_raw, gene_signature, var_key, int(0.9*adata.n_obs))
+    try:
+        adata.obs['gene_score'] = get_gene_score(adata, adata_raw, gene_signature, var_key)
+    except ValueError:
+        return float('nan')
+    
+    return scib.metrics.pcr(
+        adata,
+        covariate='gene_score',
+        recompute_pca=False
+    )
 
 
-# Principle Component Regression for platlets -> baseline
 def pcr_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("platlets")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['platlets'])
 
 
-# Principle Component Regression for red blood cells -> baseline
 def pcr_rbc(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("rbc")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['rbc'])
 
 
-# Principle Component Regression for plasma cells
 def pcr_plasma_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("plasma_cells")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['plasma_cells'])
 
 
-# Principle Component Regression for T CD4 CTL cells
 def pcr_t_cd4_ctl(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("t_cd4_ctl")
-
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['t_cd4_ctl'])
 
 
-# Principle Component Regression for NK cells
 def pcr_nk_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("nk_cells")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['nk_cells'])
 
 
-# Principle Component Regression for ILC cells
 def pcr_ilc_cells(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("ilc")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['ilc'])
 
 
-# Principle Component Regression for Monocyte CD14 cells
 def pcr_monocytes_cd14(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("monocytes_cd14")
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['monocytes_cd14'])
 
 
-# Principle Component Regression for the IFN gene signature (specific for the data set by Yoshida et al.)
 def pcr_ifn_signature(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
-    gene_signature = dict_marker_genes.get("ifn_signature")
-
-    adata = get_anndata_for_gene_score(adata, adata_raw, gene_signature, var_key)
-    
-    return scib.metrics.pcr(adata, covariate='gene_score', recompute_pca=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=dict_marker_genes['ifn_signature'])
