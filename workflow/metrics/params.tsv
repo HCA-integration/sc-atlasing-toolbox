@@ -14,6 +14,7 @@ kbet	batch_correction	full,embed,knn	knn	False	False	scib	cpu	1
 morans_i_batch	batch_correction	full,embed,knn	knn	False	False	scib	cpu	10
 morans_i_label	bio_conservation	full,embed,knn	knn	False	False	scib	cpu	10
 morans_i_random	batch_correction	full,embed,knn	knn	False	False	scib	cpu	10
+morans_i_random_genes	bio_conservation	full,embed,knn	knn	True	False	scib	cpu	10
 morans_i_platlets	bio_conservation	full,embed,knn	knn	True	False	scib	cpu	10
 morans_i_rbc	bio_conservation	full,embed,knn	knn	True	False	scib	cpu	10
 morans_i_plasma_cells	bio_conservation	full,embed,knn	knn	True	False	scib	cpu	10
@@ -37,6 +38,7 @@ pcr_y	batch_correction	full,embed	embed	True	False	scib_metrics	gpu	1
 pcr_random	batch_correction	full,embed	embed	True	False	scib	cpu	10
 pcr_batch	batch_correction	full,embed	embed	True	False	scib	cpu	10
 pcr_label	bio_conservation	full,embed	embed	True	False	scib	cpu	10
+pcr_random_genes	bio_conservation	full,embed	knn	True	False	scib	cpu	10
 pcr_platlets	bio_conservation	full,embed	knn	True	False	scib	cpu	10
 pcr_rbc	bio_conservation	full,embed	knn	True	False	scib	cpu	10
 pcr_plasma_cells	bio_conservation	full,embed	knn	True	False	scib	cpu	10

@@ -73,6 +73,10 @@ def morans_i_gene_score(
     )
 
 
+def morans_i_random_genes(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    random_genes = np.random.choice(adata_raw.var_names[adata_raw.var[var_key]], size=50, replace=False)
+    return morans_i_gene_score(adata, adata_raw, var_key, random_genes)
+
 
 def morans_i_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
     return morans_i_gene_score(adata, adata_raw, var_key, dict_marker_genes["platlets"])
@@ -127,6 +131,11 @@ def pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature):
         covariate='gene_score',
         recompute_pca=False
     )
+
+
+def pcr_random_genes(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):
+    random_genes = np.random.choice(adata_raw.var_names[adata_raw.var[var_key]], size=50, replace=False)
+    return pcr_gene_score(adata, output_type, adata_raw, var_key, gene_signature=random_genes)
 
 
 def pcr_platlets(adata, output_type, adata_raw, var_key='metrics_features', **kwargs):

@@ -7,8 +7,11 @@ from .nmi import nmi, nmi_kmeans_y, nmi_leiden_y
 from .pcr import cell_cycle, pcr_comparison, pcr_y, pcr_batch, pcr_label, pcr_random
 from .kbet import kbet_y
 from .morans_i import morans_i_batch, morans_i_label, morans_i_random
-from .gene_scores import morans_i_ifn_signature, morans_i_ilc_cells, morans_i_monocytes_cd14, morans_i_nk_cells, morans_i_plasma_cells, morans_i_platlets, morans_i_rbc, morans_i_t_cd4_ctl
-from .gene_scores import pcr_ifn_signature, pcr_ilc_cells, pcr_monocytes_cd14, pcr_t_cd4_ctl, pcr_nk_cells, pcr_plasma_cells, pcr_platlets, pcr_rbc
+from .gene_scores import morans_i_ifn_signature, morans_i_ilc_cells, morans_i_monocytes_cd14, \
+    morans_i_nk_cells, morans_i_plasma_cells, morans_i_platlets, morans_i_rbc, morans_i_t_cd4_ctl, \
+    morans_i_random_genes
+from .gene_scores import pcr_ifn_signature, pcr_ilc_cells, pcr_monocytes_cd14, pcr_t_cd4_ctl, \
+    pcr_nk_cells, pcr_plasma_cells, pcr_platlets, pcr_rbc, pcr_random_genes
 
 metric_map = {
     'ari': ari,
@@ -40,6 +43,7 @@ metric_map = {
     'morans_i_random': morans_i_random,
     'morans_i_batch': morans_i_batch,
     'morans_i_label': morans_i_label,
+    'morans_i_random_genes': morans_i_random_genes,
     'morans_i_platlets': morans_i_platlets,
     'morans_i_rbc': morans_i_rbc,
     'morans_i_plasma_cells': morans_i_plasma_cells,
@@ -51,6 +55,7 @@ metric_map = {
     'pcr_random': pcr_random,
     'pcr_batch': pcr_batch,
     'pcr_label': pcr_label,
+    'pcr_random_genes': pcr_random_genes,
     'pcr_platlets': pcr_platlets,
     'pcr_rbc': pcr_rbc,
     'pcr_plasma_cells': pcr_plasma_cells,
