@@ -7,10 +7,11 @@ dependencies:
   - anndata=0.10
   - scanpy=1.10
   - zarr
+  - scipy<1.15
   - hdf5=1.14.2
   - dask
   - sparse
   - pip
   - pip:
     - scikit-learn-intelex
-    - git+https://github.com/theislab/scib.git@optimise_pcr
+    - git+https://github.com/theislab/scib.git@main
