@@ -35,3 +35,9 @@ rerun-triggers:
   - software-env
   - code
 show-failed-logs: True
+groups:
+  - doublets_scrublet=doublets_scrublet
+  - doublets_doubletdetection=doublets_doubletdetection
+group-components:
+  - doublets_scrublet=5
+  - doublets_doubletdetection=5
