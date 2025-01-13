@@ -3,7 +3,7 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from integration_utils import add_metadata, remove_slots
+from integration_utils import add_metadata, remove_slots, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.processing import assert_neighbors
 from utils.accessors import subset_hvg
@@ -25,6 +25,8 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+clean_categorical_column(adata, wildcards.batch)
 
 # subset features
 adata, _ = subset_hvg(adata, var_column='integration_features')
@@ -59,5 +61,8 @@ write_zarr_linked(
     input_file,
     output_file,
     files_to_keep=files_to_keep,
-    slot_map={'X': 'layers/normcounts'},
+    slot_map={
+        'X': 'layers/normcounts',
+        # 'obsm/X_full': 'layers/normcounts',
+    },
 )

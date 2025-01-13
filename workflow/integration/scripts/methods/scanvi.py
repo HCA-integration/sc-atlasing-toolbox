@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
-    SCVI_MODEL_PARAMS, plot_model_history
+    SCVI_MODEL_PARAMS, plot_model_history, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 
@@ -54,6 +54,10 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+clean_categorical_column(adata, batch_key)
+if label_key is not None and label_key != 'None':
+    clean_categorical_column(adata, label_key)
 
 # subset features
 adata, _ = subset_hvg(adata, var_column='integration_features')

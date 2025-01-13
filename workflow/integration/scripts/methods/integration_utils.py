@@ -176,3 +176,8 @@ def get_hyperparams(
     model_params = {k: v for k, v in hyperparams.items() if k in model_params}
     train_params = {k: v for k, v in hyperparams.items() if k not in model_params}
     return model_params, train_params
+
+
+def clean_categorical_column(adata, column):
+    assert column in adata.obs, f'Colmn {column} is missing'
+    adata.obs[column] = adata.obs[column].astype(str).astype('category')

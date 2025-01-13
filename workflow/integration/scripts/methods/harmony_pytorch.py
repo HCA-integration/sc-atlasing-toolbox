@@ -5,7 +5,8 @@ import torch
 import scanpy as sc
 from harmony import harmonize
 
-from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
+from integration_utils import clean_categorical_column, add_metadata, \
+    remove_slots, get_hyperparams, PCA_PARAMS
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 from utils.misc import dask_compute
@@ -51,6 +52,9 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+for column in keys:
+    clean_categorical_column(adata, column)
 
 # subset features
 adata, _ = subset_hvg(

@@ -169,18 +169,6 @@ else:
 #     sc.pp.neighbors(adata, use_rep='X_pca')
 #     files_to_keep.extend(['obsp', 'uns'])
 
-# fix batch covariate
-for batch_key in batch_keys:
-    assert batch_key in adata.obs, f'Batch key {batch_key} is missing'
-    adata.obs[batch_key] = adata.obs[batch_key].astype(str).astype('category')
-
-# fix labels
-for label_key in label_keys:
-    if label_key is None or label_key == 'None':
-        continue
-    assert label_key in adata.obs, f'Label key {label_key} is missing'
-    adata.obs[label_key] = adata.obs[label_key].astype(str).astype('category')
-
 
 logging.info(f'Write {output_file}...')
 logging.info(adata.__str__())
