@@ -32,6 +32,7 @@ rule get_thresholds:
         alternative_thresholds=lambda wildcards: mcfg.get_from_parameters(wildcards, 'alternative_thresholds', default={}),
     conda:
         get_env(config, 'qc')
+    localrule: True
     script:
         '../scripts/get_thresholds.py'
 
