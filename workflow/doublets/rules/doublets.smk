@@ -8,8 +8,6 @@ checkpoint split_batches:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key'),
     conda:
         get_env(config, 'scanpy')
-    resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:
         '../scripts/split_batches.py'
 
@@ -29,6 +27,15 @@ def get_from_checkpoint(wildcards, pattern=None):
     )
 
 
+def get_mem_mb(attempt, profile):
+    mem_mb = mcfg.get_resource(profile=profile, resource_key='mem_mb', attempt=attempt)
+    try:
+        mem_mb = int(mem_mb)
+    except ValueError:
+        return mem_mb
+    return min(100_000, int(mem_mb // 5))
+
+
 rule scrublet:
     input:
         zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
@@ -39,12 +46,11 @@ rule scrublet:
         batch_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'batch_key', check_query_keys=False),
     conda:
         get_env(config, 'qc', gpu_env='rapids_singlecell')
-    priority: 1
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition', attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos', attempt=attempt),
         gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu', attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: get_mem_mb(attempt, profile='gpu'),
     script:
         '../scripts/scrublet.py'
 
@@ -64,8 +70,8 @@ rule doubletdetection:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
         gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
-    shadow: "minimal"
+        mem_mb=lambda w, attempt: get_mem_mb(attempt, profile='cpu'),
+    # shadow: "minimal"
     script:
         '../scripts/doubletdetection.py'
 
