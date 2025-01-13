@@ -1,8 +1,8 @@
 from pathlib import Path
 import numpy as np
 import pandas as pd
-import scanpy as sc
 import anndata as ad
+import traceback
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -39,14 +39,8 @@ if adata.n_obs < 10:
 # load data to memory
 adata = dask_compute(adata)
 
-# run scrublet
-logging.info('Run scrublet...')
-
-if USE_GPU:
-    sc.get.anndata_to_GPU(adata)
-
-sc.pp.scrublet(
-    adata,
+# set parameters
+kwargs = dict(
     batch_key=None,
     sim_doublet_ratio=2.0,
     expected_doublet_rate=0.05,
@@ -65,6 +59,25 @@ sc.pp.scrublet(
     copy=False,
     random_state=0,
 )
+
+logging.info('Run scrublet...')
+
+if USE_GPU:
+    sc.get.anndata_to_GPU(adata)
+
+try: 
+    sc.pp.scrublet(adata, **kwargs)
+except Exception as e:    
+    if not USE_GPU:
+        raise e
+
+    traceback.print_exc()
+
+    logging.info('Retry on CPU...')
+    sc.get.anndata_to_CPU(adata)
+    del sc
+    import scanpy as sc
+    sc.pp.scrublet(adata, **kwargs)
 
 # save results
 logging.info('Save results...')
