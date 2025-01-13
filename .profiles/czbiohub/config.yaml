@@ -38,3 +38,9 @@ show-failed-logs: True
 shadow-prefix: /tmp/michaela.mueller
 latency-wait: 90
 configfile: configs/computational_resources/czbiohub.yaml
+groups:
+  - doublets_scrublet=doublets_scrublet
+  - doublets_doubletdetection=doublets_doubletdetection
+group-components:
+  - doublets_scrublet=5
+  - doublets_doubletdetection=5
