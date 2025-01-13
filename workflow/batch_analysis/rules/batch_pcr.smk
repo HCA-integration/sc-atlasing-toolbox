@@ -54,6 +54,7 @@ rule batch_pcr:
 rule collect:
     input:
         tsv=lambda wildcards: get_from_checkpoint(wildcards, rules.batch_pcr.output.tsv),
+        setup=lambda wildcards: checkpoints.determine_covariates.get(**wildcards).output[0],
     output:
         tsv=mcfg.out_dir / paramspace.wildcard_pattern / 'batch_pcr.tsv',
     run:
