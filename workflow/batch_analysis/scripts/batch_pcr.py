@@ -4,6 +4,7 @@ import numpy as np
 import scib
 from anndata import AnnData
 import yaml
+from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 # from multiprocessing.pool import ThreadPool
 try:
@@ -71,16 +72,15 @@ covariates = [covariate]+perm_covariates
 
 
 def compute_pcr(adata, covariate, is_permuted, n_threads=1):
-    print(f'PCR for covariate: "{covariate}"', flush=True)
     pcr = scib.me.pcr(
         adata,
         covariate=covariate,
         recompute_pca=False,
         verbose=False,
         linreg_method='numpy',
+        # linreg_method='sequential',  # old implementation
         n_threads=n_threads,
     )
-    print(f'covariate: {covariate}, pcr: {pcr}', flush=True)
     return (covariate, pcr, is_permuted)
 
 
@@ -89,16 +89,17 @@ with ProcessPoolExecutor(max_workers=n_threads) as executor:
     chunk_size = max(1, 2 * int(n_permute / n_threads))
     print(f'chunk_size: {chunk_size}', flush=True)
     n_covariates = len(covariates)
-    pcr_scores = list(
-        executor.map(
-            compute_pcr,
-            [adata] * n_covariates,
-            covariates,
-            [x in perm_covariates for x in covariates],
-            # [chunk_size] * n_covariates,
-            chunksize=chunk_size,
-        )
+    
+    tasks = executor.map(
+        compute_pcr,
+        [adata] * n_covariates,
+        covariates,
+        [x in perm_covariates for x in covariates],
+        chunksize=chunk_size,
     )
+    
+    # Use tqdm to track the progress
+    pcr_scores = list(tqdm(tasks, total=n_covariates, desc=f"Computing PCR scores"))
 
 df = pd.DataFrame.from_records(
     pcr_scores,
