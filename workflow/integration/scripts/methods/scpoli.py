@@ -3,7 +3,8 @@ from scarches.models.scpoli import scPoli
 from pprint import pformat
 from pathlib import Path
 
-from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, plot_model_history
+from integration_utils import add_metadata, get_hyperparams, remove_slots, \
+    set_model_history_dtypes, plot_model_history, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 
@@ -17,6 +18,8 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 batch_key = wildcards.batch
 label_key = wildcards.label
+if label_key == 'None':
+    label_key = None
 
 torch.manual_seed(params.get('seed', 0))
 torch.set_num_threads(snakemake.threads)
@@ -83,18 +86,23 @@ adata = read_anndata(
     backed=True,
 )
 
-# subset features
-adata, _ = subset_hvg(adata, var_column='integration_features')
+clean_categorical_column(adata, batch_key)
 
-# prepare data for model
-adata.X = adata.X.astype('float32')
 cell_type_keys = model_params.get('cell_type_keys', [])
 if isinstance(cell_type_keys, str):
     cell_type_keys = [cell_type_keys]
 elif cell_type_keys is None:
     cell_type_keys = []
 for key in cell_type_keys:
-    adata.obs[key] = adata.obs[key].astype(str).fillna('NA').astype('category')
+    if key is None:
+        continue
+    clean_categorical_column(adata, key)
+
+# subset features
+adata, _ = subset_hvg(adata, var_column='integration_features')
+
+# prepare data for model
+adata.X = adata.X.astype('float32')
 
 print(f'Set up scPoli with parameters:\n{pformat(model_params)}', flush=True)
 model = scPoli(adata=adata, **model_params)
@@ -129,5 +137,5 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['X', 'obsm', 'var', 'varm', 'varp', 'uns']
+    files_to_keep=['obsm', 'uns']
 )

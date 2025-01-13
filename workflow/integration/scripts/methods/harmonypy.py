@@ -24,7 +24,8 @@ except ImportError as e:
     logging.info('Importing scanpy...')
     USE_GPU = False
 
-from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS
+from integration_utils import add_metadata, remove_slots, get_hyperparams, PCA_PARAMS, \
+    clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 from utils.misc import dask_compute
@@ -54,6 +55,7 @@ elif isinstance(keys, str):
 elif isinstance(keys, list):
     keys = set(keys).union({batch_key})
 hyperparams['key'] = list(keys)
+
 if USE_GPU:
     hyperparams['dtype'] = 'float32'
 
@@ -68,6 +70,9 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+for column in keys:
+    clean_categorical_column(adata, column)
 
 # subset features
 adata, _ = subset_hvg(

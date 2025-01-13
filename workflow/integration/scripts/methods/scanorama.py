@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.INFO)
 import scanpy as sc
 import scanorama
 
-from integration_utils import add_metadata, remove_slots
+from integration_utils import add_metadata, remove_slots, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 
@@ -56,6 +56,8 @@ adata = read_anndata(
     backed=True,
 )
 
+clean_categorical_column(adata, batch_key)
+
 # subset features
 adata, _ = subset_hvg(adata, var_column='integration_features')
 
@@ -78,6 +80,11 @@ adata = merge_adata(
     keys=batch_categories,
     index_unique=None
 )
+
+# save full feature output
+# adata.obsm["X_full"] = adata.X
+
+# save embedding output
 adata.obsm["X_emb"] = adata.obsm["X_scanorama"]
 del adata.obsm["X_scanorama"]
 
@@ -91,5 +98,6 @@ write_zarr_linked(
     adata,
     input_file,
     output_file,
+    # files_to_keep=['obsm', 'uns'],
     files_to_keep=['X', 'obsm', 'var', 'uns'],
 )

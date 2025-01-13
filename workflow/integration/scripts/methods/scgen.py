@@ -6,7 +6,8 @@ import torch
 import scarches as sca
 from scarches.dataset.trvae.data_handling import remove_sparsity
 
-from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, plot_model_history
+from integration_utils import add_metadata, get_hyperparams, remove_slots, \
+    set_model_history_dtypes, plot_model_history, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 
@@ -50,6 +51,10 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+clean_categorical_column(adata, batch_key)
+if label_key is not None and label_key != 'None':
+    clean_categorical_column(adata, label_key)
 
 # subset features
 adata, _ = subset_hvg(adata, var_column='integration_features')

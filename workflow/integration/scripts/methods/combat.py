@@ -5,7 +5,7 @@ import scanpy as sc
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from integration_utils import add_metadata, remove_slots
+from integration_utils import add_metadata, remove_slots, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked
 from utils.accessors import subset_hvg
 
@@ -32,6 +32,8 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+clean_categorical_column(adata, wildcards.batch)
 
 # subset features
 adata, _ = subset_hvg(adata, var_column='integration_features')
