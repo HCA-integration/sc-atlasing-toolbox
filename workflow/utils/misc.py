@@ -183,20 +183,26 @@ def ensure_dense(adata, layers: [str, list] = None, **kwargs):
     return apply_layers(adata, func=to_dense, layers=layers, **kwargs)
 
 
-def dask_compute(adata, layers: [str, list] = None, **kwargs):
+def dask_compute(adata, layers: [str, list] = None, verbose: bool = True, **kwargs):
     from dask import array as da
     
     def compute_layer(x, persist=False):
+        from tqdm.dask import TqdmCallback
+        
         if not isinstance(x, da.Array):
             return x
-        if persist:
-            x = x.persist()
-        return x.compute()
+        
+        with TqdmCallback():
+            if persist:
+                x = x.persist()
+            x = x.compute()
+        return x
     
     return apply_layers(
         adata,
         func=compute_layer,
         layers=layers,
+        verbose=verbose,
         **kwargs,
     )
 
