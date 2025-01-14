@@ -28,14 +28,16 @@ logging.info(adata.__str__())
 
 mask = pd.Series(np.full(adata.n_obs, True, dtype=bool), index=adata.obs_names)
 
-if 'remove_by_column' in params:
-    logging.info('remove by columns...')
-    ex_filters = params['remove_by_column']
-    logging.info(pformat(ex_filters))
-    for column, values in ex_filters.items():
-        logging.info(f'remove {values} from column="{column}"...')
-        values = [str(v) for v in values]
-        mask = mask & ~adata.obs[column].astype(str).isin(values)
+ex_filters = params.get('remove_by_column', {})
+logging.info(pformat(ex_filters))
+for column, values in ex_filters.items():
+    logging.info(f'remove cells matching {len(values)} value(s) from column="{column}"...')
+    values = [str(v) for v in values]
+    mask &= ~adata.obs[column].astype(str).isin(values)
+
+for query in params.get('remove_by_query', []):
+    logging.info(f'remove by query="{query}"...')
+    mask &= adata.obs.eval(query)
 
 logging.info('Add filtered column...')
 adata.obs['filtered'] = mask
