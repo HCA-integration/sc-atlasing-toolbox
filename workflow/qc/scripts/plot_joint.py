@@ -67,7 +67,7 @@ def create_figure(df, png_file, density_png, joint_title, **kwargs):
     plt.close('all')
 
 
-def call_plot(df, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png):
+def call_plot(df, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png, density_log_png):
     # logging.info(f'Joint QC plots for hue={hue}...') 
     joint_title = f'Joint QC for\n{dataset}\nmargin hue: {hue}'
        
@@ -111,7 +111,7 @@ def call_plot(df, x, y, log_x, log_y, hue, scatter_plot_kwargs, density_png):
     create_figure(
         df,
         png_file=plot_path / f'{log_x_prefix}{x}_vs_{log_y_prefix}{y}.png',
-        density_png=density_png,
+        density_png=density_log_png,
         joint_title=joint_title,
         x=x,
         y=y,
@@ -167,34 +167,75 @@ for x, y, log_x, log_y in coordinates:
     density_png = output_joint / f'{x}_vs_{y}_density.png'
     density_log_png = output_joint / f'log_{x}_vs_{y}_density.png'
     
-    logging.info('Plotting density...')
-    plot_qc_joint(
-        density_data,
-        x=x,
-        y=y,
-        # main_plot_function=Axes.hexbin,
-        main_plot_function=sns.kdeplot,
-        x_threshold=thresholds[x],
-        y_threshold=thresholds[y],
-        title='',
-        **kde_plot_kwargs,
-    )
+    try:
+        logging.info('Plotting density...')
+        plot_qc_joint(
+            density_data,
+            x=x,
+            y=y,
+            # main_plot_function=Axes.hexbin,
+            main_plot_function=sns.kdeplot,
+            x_threshold=thresholds[x],
+            y_threshold=thresholds[y],
+            title='',
+            **kde_plot_kwargs,
+        )
+    except ValueError as e:
+        logging.error(f'Error in plotting density: {e}')
+        traceback.print_exc()
+        
+        logging.info('Retry with adjusted parameters...')
+        kde_plot_kwargs.pop('bw_adjust', None)
+        kde_plot_kwargs.pop('gridsize', None)
+        
+        plot_qc_joint(
+            density_data,
+            x=x,
+            y=y,
+            # main_plot_function=Axes.hexbin,
+            main_plot_function=sns.kdeplot,
+            x_threshold=thresholds[x],
+            y_threshold=thresholds[y],
+            title='',
+            **kde_plot_kwargs,
+        )
     plt.tight_layout()
-    plt.savefig(density_png, bbox_inches='tight')
+    plt.savefig(density_png, bbox_inches='tight')   
     
-    logging.info('Plotting density for log scale...')
-    plot_qc_joint(
-        density_data,
-        x=x,
-        y=y,
-        main_plot_function=sns.kdeplot,
-        log_x=log_x,
-        log_y=log_y,
-        x_threshold=thresholds[x],
-        y_threshold=thresholds[y],
-        title='',
-        **kde_plot_kwargs,
-    )
+    try:
+        logging.info('Plotting density for log scale...')
+        plot_qc_joint(
+            density_data,
+            x=x,
+            y=y,
+            main_plot_function=sns.kdeplot,
+            log_x=log_x,
+            log_y=log_y,
+            x_threshold=thresholds[x],
+            y_threshold=thresholds[y],
+            title='',
+            **kde_plot_kwargs,
+        )
+    except ValueError as e:
+        logging.error(f'Error in plotting density for log scale: {e}')
+        traceback.print_exc()
+        
+        logging.info('Retry with adjusted parameters...')
+        kde_plot_kwargs.pop('bw_adjust', None)
+        kde_plot_kwargs.pop('gridsize', None)
+        
+        plot_qc_joint(
+            density_data,
+            x=x,
+            y=y,
+            main_plot_function=sns.kdeplot,
+            log_x=log_x,
+            log_y=log_y,
+            x_threshold=thresholds[x],
+            y_threshold=thresholds[y],
+            title='',
+            **kde_plot_kwargs,
+        )
     plt.tight_layout()
     plt.savefig(density_log_png, bbox_inches='tight')
 
@@ -212,7 +253,8 @@ for x, y, log_x, log_y in coordinates:
                 log_y=log_y,
                 hue=hue,
                 scatter_plot_kwargs=scatter_plot_kwargs,
-                density_png=density_png
+                density_png=density_png,
+                density_log_png=density_log_png,
             ) for hue in hues
         ]
         
