@@ -12,6 +12,22 @@ def get_metric_input(wildcards):
     return rules.prepare.output.zarr
 
 
+def get_mem_mb(wildcards, attempt):
+    profile = mcfg.get_profile(wildcards)
+    mem_mb = mcfg.get_resource(profile=profile, resource_key='mem_mb', attempt=attempt)
+    input_type = mcfg.get_from_parameters(wildcards, 'input_type')
+    comparison = mcfg.get_from_parameters(wildcards, 'comparison', default=False)
+
+    try:
+        mem_mb = int(mem_mb)
+    except ValueError:
+        return mem_mb
+    
+    if input_type == 'full' or comparison:
+        return mem_mb
+    return min(100_000, int(mem_mb // 3))
+
+
 rule run:
     message:
        """
@@ -41,7 +57,7 @@ rule run:
     resources:
         partition=lambda w: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w)),
         qos=lambda w: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w)),
-        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt),
+        mem_mb=lambda w, attempt: get_mem_mb(w, attempt),
         gpu=lambda w: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w)),
         time="1-08:00:00",
     script:
