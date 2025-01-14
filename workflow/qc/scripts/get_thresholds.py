@@ -1,7 +1,7 @@
-import logging
-logging.basicConfig(level=logging.INFO)
 import numpy as np
 import pandas as pd
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from utils.io import read_anndata, write_zarr_linked
 from qc_utils import get_thresholds, apply_thresholds, parse_autoqc
@@ -63,8 +63,7 @@ output_file = snakemake.output[0]
 output_tsv = snakemake.output.tsv
 output_qc_stats = snakemake.output.qc_stats
 
-logging.info(f'Read {input_file}...')
-adata = read_anndata(input_file, obs='obs', uns='uns')
+adata = read_anndata(input_file, obs='obs', uns='uns', verbose=False)
 
 threshold_keys = ['n_counts', 'n_genes', 'percent_mito']
 user_thresholds = snakemake.params.get('thresholds')
@@ -112,10 +111,8 @@ df = pd.concat(
         ),
     ]
 )
-print(df, flush=True)
 adata.uns['qc'] = df
 
-logging.info(f'Write thresholds to {output_tsv}...')
 df.to_csv(output_tsv, sep='\t', index=False)
 
 # add QC status column to .obs with 'passed', 'failed', and 'ambiguous'
@@ -163,13 +160,12 @@ qc_status_counts = pd.DataFrame(qc_status_counts).T
 qc_status_counts['file_id'] = snakemake.wildcards.file_id
 qc_status_counts = qc_status_counts[['file_id', 'passed', 'failed', 'ambiguous']]
 
-logging.info(f'Write QC stats to {output_qc_stats}...')
 qc_status_counts.to_csv(output_qc_stats, sep='\t', index=False)
 
-logging.info(f'Write {output_file}...')
 write_zarr_linked(
     adata,
     input_file,
     output_file,
-    files_to_keep=['obs', 'uns']
+    files_to_keep=['obs', 'uns'],
+    verbose=False,
 )

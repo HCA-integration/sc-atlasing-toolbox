@@ -57,7 +57,7 @@ def read_anndata(
     fail_on_missing: bool = True,
     exclude_slots: list = None,
     chunks: [int, tuple] = None,
-    stride: int = 1000,
+    stride: int = 200_000,
     verbose: bool = True,
     **kwargs
 ) -> ad.AnnData:
@@ -147,7 +147,7 @@ def read_partial(
     
     if chunks is None:
         chunks = (stride, -1)
-    print_flushed(f'dask: {dask}, backed: {backed}')
+    print_flushed(f'dask: {dask}, backed: {backed}', verbose=verbose)
     if dask:
         print_flushed('chunks:', chunks)
     
@@ -372,7 +372,7 @@ def write_zarr(adata, file):
     adata.write_zarr(file) # doesn't seem to work with dask array
 
 
-def link_file(in_file, out_file, relative_path=True, overwrite=False):
+def link_file(in_file, out_file, relative_path=True, overwrite=False, verbose=True):
     in_file = Path(in_file).resolve(True)
     out_file = Path(out_file)
     out_dir = out_file.parent.resolve()
@@ -383,7 +383,7 @@ def link_file(in_file, out_file, relative_path=True, overwrite=False):
     
     if overwrite and out_file.exists():
         if out_file.is_dir() and not out_file.is_symlink():
-            print_flushed(f'replace {out_file}...')
+            print_flushed(f'replace {out_file}...', verbose=verbose)
             shutil.rmtree(out_file)
         else:
             out_file.unlink()
@@ -400,6 +400,7 @@ def link_zarr(
     relative_path: bool = True,
     slot_map: MutableMapping = None,
     in_dir_map: MutableMapping = None,
+    verbose: bool = True,
 ):
     """
     Link to existing zarr file
@@ -472,18 +473,19 @@ def link_zarr(
         key=lambda item: out_dir.name in str(in_dir_map[item[1]]),
         reverse=False,
     )
-    print_flushed('slot_map:', pformat(slot_map))
+    print_flushed('slot_map:', pformat(slot_map), verbose=verbose)
 
     for out_slot, in_slot in slot_map:
         in_dir = in_dir_map[in_slot]
         in_file_name = str(in_dir).split('.zarr')[-1] + '/' + in_slot
         out_file_name = str(out_dir).split('.zarr')[-1] + '/' + out_slot
-        print_flushed(f'Link {out_file_name} -> {in_file_name}')
+        print_flushed(f'Link {out_file_name} -> {in_file_name}', verbose=verbose)
         link_file(
             in_file=in_dir / in_slot,
             out_file=out_dir / out_slot,
             relative_path=relative_path,
             overwrite=overwrite,
+            verbose=verbose,
         )
 
 
@@ -515,6 +517,7 @@ def write_zarr_linked(
     files_to_keep: list = None,
     slot_map: MutableMapping = None,
     in_dir_map: MutableMapping = None,
+    verbose: bool = True,
 ):
     """
     Write adata to linked zarr file
@@ -568,7 +571,7 @@ def write_zarr_linked(
     # remove slots that will be overwritten anyway
     for slot in set(files_to_link+extra_slots_to_link):
         if hasattr(adata, slot):
-            print_flushed(f'remove slot to be linked: {slot}')
+            print_flushed(f'remove slot to be linked: {slot}', verbose=verbose)
             delattr(adata, slot)
     
     # write zarr file
@@ -583,6 +586,7 @@ def write_zarr_linked(
         relative_path=relative_path,
         slot_map=slot_map,
         in_dir_map=in_dir_map,
+        verbose=verbose,
     )
     
     # update .zattrs files
