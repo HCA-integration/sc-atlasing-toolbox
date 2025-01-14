@@ -6,7 +6,7 @@ rule cluster:
     input:
         zarr='dataset.h5ad'
     output:
-        tsv='{resolution}.tsv',
+        zarr='{resolution}.zarr',
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     script:
@@ -16,7 +16,7 @@ rule cluster:
 rule merge:
     input:
         zarr='dataset.h5ad',
-        tsv=expand('{resolution}.tsv', resolution=[0.5, 1.0]),
+        cluster_anno=expand('{resolution}.zarr', resolution=[0.5, 1.0]),
     output:
         zarr=directory('all_resolutions.zarr')
     localrule: True
