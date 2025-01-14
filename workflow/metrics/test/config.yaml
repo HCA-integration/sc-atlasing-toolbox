@@ -17,7 +17,7 @@ resources:
 
 defaults:
   metrics:
-    methods:
+    metrics:
       - nmi
       - ari
       - asw_label
@@ -56,7 +56,7 @@ DATASETS:
       metrics:
         label: bulk_labels
         batch: louvain
-        methods:
+        metrics:
           - nmi
   
   test_integration:
@@ -78,7 +78,7 @@ DATASETS:
       batch:
         - batch
         - batch_2
-      methods:
+      metrics:
         - nmi
         - pcr_comparison
         - asw_batch
@@ -94,7 +94,7 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: batch
-      methods:
+      metrics:
         - ari
         - ari_leiden_y
         # - ari_kmeans_y
@@ -124,7 +124,7 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: batch
-      methods:
+      metrics:
         - nmi
         - ari
         - asw_label

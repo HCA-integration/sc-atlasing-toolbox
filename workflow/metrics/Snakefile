@@ -25,14 +25,15 @@ mcfg = ModuleConfig(
     config_params=[
         'label',
         'batch',
-        'methods',
+        'metrics',
+        'methods', # deprecated
         'unintegrated',
         'corrected',
         'overwrite_file_id',
         'cluster_algorithm',
     ],
     wildcard_names=['label', 'batch'],
-    rename_config_params={'methods': 'metric'},
+    rename_config_params={'methods': 'metric', 'metrics': 'metric'},
     explode_by=['metric', 'batch', 'label'],
     paramspace_kwargs=dict(filename_params=['label', 'batch'], filename_sep='--'),
     dtypes={

@@ -1,4 +1,6 @@
+import logging
 from collections.abc import Iterable
+from collections import defaultdict
 from pprint import pformat, pprint
 import numpy as np
 import pandas as pd
@@ -7,6 +9,9 @@ from snakemake.io import Wildcards
 
 from .config import _get_or_default_from_config
 from .misc import unique_dataframe
+
+logger = logging.getLogger('WildcardParameters')
+logger.setLevel(logging.WARNING)
 
 
 class WildcardParameters:
@@ -189,7 +194,22 @@ class WildcardParameters:
         # rename columns
         if rename_config_params is None:
             rename_config_params = {}
+        rename_config_params = {k: v for k, v in rename_config_params.items() if k in df.columns}
         df = df.rename(columns=rename_config_params)
+        
+        # deal with duplicate columns after renaming columns
+        duplicated_columns = df.columns[df.columns.duplicated(keep=False)].unique().tolist()
+        if len(duplicated_columns) > 0:
+            reverse_map = defaultdict(list)
+            for k, v in rename_config_params.items():
+                if v not in duplicated_columns:
+                    continue
+                reverse_map[v].append(k)
+            logger.warn(f'WARNING: Duplicated columns: {dict(reverse_map)}')
+        for col in duplicated_columns:
+            merged_col = df[duplicated_columns].bfill(axis=1).iloc[:, 0]
+            del df[col]
+            df[col] = merged_col
         
         # explode columns
         if explode_by is not None:
