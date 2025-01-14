@@ -31,6 +31,8 @@ use rule cluster from clustering as metrics_cluster with:
         zarr=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'cluster_resolutions' / '{algorithm}--{resolution}--{level}.zarr'),
+    conda:
+        get_env(config, 'scanpy') # force clustering on GPU
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
