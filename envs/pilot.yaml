@@ -6,6 +6,7 @@ dependencies:
   - python=3.11.9
   - anndata=0.10
   - scanpy=1.9.6
+  - scipy<1.15
   - hdf5=1.14.2
   - leidenalg
   - dask
