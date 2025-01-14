@@ -5,6 +5,8 @@ channels:
 dependencies:
   - python=3.10
   - anndata=0.10
+  - scanpy=1.10
+  - scipy<1.14  # due to doublet_detection using .A
   - hdf5=1.14.2
   - leidenalg
   - dask
@@ -16,4 +18,3 @@ dependencies:
   - pip:
     - doubletdetection
     - git+https://github.com/mumichae/sctk.git@mumichae-patch-1
-    - git+https://github.com/scverse/scanpy.git@main
