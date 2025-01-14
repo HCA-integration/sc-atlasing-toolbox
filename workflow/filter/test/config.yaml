@@ -24,6 +24,8 @@ DATASETS:
           - C19-CB-0008
         disease:
           - influenza
+      remove_by_query:
+         - 'random < 3'
   test:
     input:
       filter: test/input/pbmc68k.h5ad
