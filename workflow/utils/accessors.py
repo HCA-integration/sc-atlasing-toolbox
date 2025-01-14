@@ -65,6 +65,9 @@ def subset_hvg(
     :param to_memory: layers to convert to memory
     :return: subsetted anndata object, bool indicating whether subset was performed
     """
+    import sparse
+    from tqdm.dask import TqdmCallback
+    
     if var_column is None or var_column == 'None':
         var_column = 'mask'
         adata.var[var_column] = True
@@ -76,8 +79,14 @@ def subset_hvg(
     
     if min_cells > 0:
         print(f'Filter to genes that are in at least {min_cells} cells...', flush=True)
-        low_count_genes = _filter_genes(adata, min_cells=min_cells)
-        adata.var[var_column] = adata.var[var_column] & ~adata.var_names.isin(low_count_genes)
+        if isinstance(adata.X, da.Array):
+            low_count_mask = adata.X.map_blocks(sparse.COO).sum(axis=0) < min_cells
+            with TqdmCallback(desc=f"determine genes with <{min_cells} cells"):
+                low_count_mask = low_count_mask.compute().todense()
+        else:
+            low_count_genes = _filter_genes(adata, min_cells=min_cells)
+            low_count_mask = np.isin(adata.var_names, low_count_genes)
+        adata.var[var_column] = adata.var[var_column] & ~low_count_mask
     
     if adata.var[var_column].sum() == adata.var.shape[0]:
         warnings.warn('All genes are highly variable, not subsetting')
@@ -91,7 +100,6 @@ def subset_hvg(
         adata._inplace_subset_var(adata.var_names[adata.var[var_column]])
     
     if compute_dask:
-        print(f'Compute dask array for layers {to_memory}', flush=True)
         adata = dask_compute(adata, layers=to_memory)
     else:
         adata = adata_to_memory(
