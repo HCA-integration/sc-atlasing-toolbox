@@ -99,7 +99,8 @@ def plot_violin(
     fig_width=8,
     fig_height_min=5,
 ):
-    total_counts = df[category_key].value_counts(dropna=False).sort_values(ascending=True)
+    total_counts = df[category_key].astype(str) \
+            .value_counts(dropna=False).sort_values(ascending=True)
     clusters = total_counts.index.values
 
     grouped_data = [
