@@ -67,41 +67,49 @@ adata = dask_compute(adata, layers=['X', 'X_pca'])
 logging.info(adata.__str__())
 
 logging.info('Rankplot...')
-sc.pl.rank_genes_groups(adata, **args)
-plt.suptitle(title)
-plt.savefig(output_rankplot, dpi=100, bbox_inches='tight')
+try:
+    sc.pl.rank_genes_groups(adata, **args)
+    plt.suptitle(title)
+    plt.savefig(output_rankplot, dpi=100, bbox_inches='tight')
+except Exception as e:
+    logging.error(e)
+    logging.info('Error in rankplot, save empty plot...')
+    plt.savefig(output_rankplot)
 
 for i, partition_groups in enumerate(splits):
-    # partition_groups = list(partition_groups)
-    logging.info(f'Dotplot for partition {i}...')
-    sc.pl.rank_genes_groups_dotplot(
-        adata,
-        **args,
-        groups=partition_groups,
-        standard_scale='var',
-        swap_axes=False,
-        title=title,
-    )
-    plt.savefig(
-        f'{output_dotplot}/split={i}.png',
-        dpi=100,
-        bbox_inches='tight',
-    )
+    try:
+        logging.info(f'Dotplot for partition {i}...')
+        sc.pl.rank_genes_groups_dotplot(
+            adata,
+            **args,
+            groups=partition_groups,
+            standard_scale='var',
+            swap_axes=False,
+            title=title,
+        )
+        plt.savefig(
+            f'{output_dotplot}/split={i}.png',
+            dpi=100,
+            bbox_inches='tight',
+        )
 
-    logging.info(f'Matrixplot for partition {i}...')
-    sc.pl.rank_genes_groups_matrixplot(
-        adata,
-        **args,
-        groups=partition_groups,
-        values_to_plot='logfoldchanges',
-        cmap='bwr',
-        vmin=-4,
-        vmax=4,
-        colorbar_title='log fold change',
-    )
-    plt.suptitle(title)
-    plt.savefig(
-        f'{output_matrixplot}/split={i}.png',
-        dpi=100,
-        bbox_inches='tight'
-    )
+        logging.info(f'Matrixplot for partition {i}...')
+        sc.pl.rank_genes_groups_matrixplot(
+            adata,
+            **args,
+            groups=partition_groups,
+            values_to_plot='logfoldchanges',
+            cmap='bwr',
+            vmin=-4,
+            vmax=4,
+            colorbar_title='log fold change',
+        )
+        plt.suptitle(title)
+        plt.savefig(
+            f'{output_matrixplot}/split={i}.png',
+            dpi=100,
+            bbox_inches='tight'
+        )
+    except Exception as e:
+        logging.error(e)
+        logging.info(f'Error in partition {i}, skipping...')

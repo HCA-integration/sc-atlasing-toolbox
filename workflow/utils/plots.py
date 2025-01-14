@@ -21,7 +21,23 @@ def plot_stacked_bar(
     title_suffix='',
     fig_width=8,
     fig_height_min=5,
+    fig_height_factor=0.3,
+    n_legend_categories=50,
 ):
+    """
+    Plot a stacked bar chart of the counts of a covariate by a category.
+    
+    :param df: DataFrame containing the data
+    :param category_key: Column name of the category to stratify by, ends up in y-axis
+    :param covariate_key: Column name of the covariate to show counts for, ends up in x-axis
+    :param count_type: Type of count to show, either 'count' or 'proportion'
+    :param palette: Name of the color palette to use, or a list of colors
+    :param title_suffix: Suffix to add to the title
+    :param fig_width: Width of the figure
+    :param fig_height_min: Minimum height of the figure
+    :param fig_height_factor: Factor to multiply the number of categories with to determine the height of the figure
+    :param n_legend_categories: Maximum number of categories to show in the legend
+    """
     colors = palette
     if palette is not None:
         colors = plt.get_cmap(palette).colors
@@ -47,7 +63,7 @@ def plot_stacked_bar(
 
     # create plot
     num_categories = counts_df[category_key].nunique()
-    fig_height = max(fig_height_min, num_categories * 0.3)
+    fig_height = max(fig_height_min, num_categories * fig_height_factor)
     fig = plt.figure(figsize=(fig_width, fig_height))
     
     ax = counts_df.pivot(
@@ -78,7 +94,7 @@ def plot_stacked_bar(
         )
         longest_label = max(longest_label, len(label))
         
-    if df[covariate_key].nunique() < 30:
+    if df[covariate_key].nunique() < n_legend_categories:
         # adjust figure size to avoid overlapping labels with legend
         label_length_factor = longest_label * 0.13
         fig.set_size_inches(fig_width + label_length_factor, fig_height)
@@ -93,13 +109,25 @@ def plot_stacked_bar(
 
 
 def plot_violin(
-    df,
-    category_key,
-    covariate_key,
-    fig_width=8,
-    fig_height_min=5,
+    df: pd.DataFrame,
+    category_key: str,
+    covariate_key: str,
+    fig_width: float = 8,
+    fig_height_min: float = 5,
+    fig_height_factor: float = 0.3,
 ):
-    total_counts = df[category_key].value_counts(dropna=False).sort_values(ascending=True)
+    """
+    Plot a violin plot of the distribution of a covariate by a category.
+    
+    :param df: DataFrame containing the data
+    :param category_key: Column name of the category to stratify by, ends up in y-axis
+    :param covariate_key: Column name of the covariate to show counts for, ends up in x-axis
+    :param fig_width: Width of the figure
+    :param fig_height_min: Minimum height of the figure
+    :param fig_height_factor: Factor to multiply the number of categories with to determine the height of the figure
+    """
+    total_counts = df[category_key].astype(str) \
+            .value_counts(dropna=False).sort_values(ascending=True)
     clusters = total_counts.index.values
 
     grouped_data = [
@@ -108,9 +136,8 @@ def plot_violin(
     ]
     
     num_categories = len(grouped_data)
-    fig_height = max(fig_height_min, num_categories * 0.3)
+    fig_height = max(fig_height_min, num_categories * fig_height_factor)
     plt.figure(figsize=(fig_width, fig_height))
-    
 
     plt.violinplot(
         grouped_data,
