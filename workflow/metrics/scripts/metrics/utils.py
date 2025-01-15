@@ -2,22 +2,28 @@ import scanpy as sc
 import pandas as pd
 
 
-def write_metrics(filename, scores, output_types, **kwargs):
+def write_metrics(filename, metric_names, scores, output_types, **kwargs):
     """
     Write metrics for output type specific scores
     :param filename: file to write to
-    :param scores: list of scores, order must match that of output_types
-    :param output_types: list of output types, order must match that of scores
+    :param metric_names: list of metric names
+    :param scores: list of scores, order must match that of metric_names
+    :param output_types: list of output types, order must match that of metric_names
     :param kwargs: additional information to add to output
     """
     meta_names = list(kwargs.keys())
     meta_values = [kwargs[col] for col in meta_names]
 
     records = [
-        (*meta_values, output_type, score) 
-        for score, output_type in zip(scores, output_types)
+        (*meta_values, metric, output_type, score)
+        for metric, score, output_type
+        in zip(metric_names, scores, output_types)
     ]
-    df = pd.DataFrame.from_records(records, columns=meta_names + ['output_type', 'score'])
+    df = pd.DataFrame.from_records(
+        records,
+        columns=meta_names + ['metric_name', 'output_type', 'score']
+    )
+    df = df.explode('score')
     df.to_csv(filename, sep='\t', index=False)
 
 

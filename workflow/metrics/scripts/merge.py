@@ -18,7 +18,7 @@ metrics_df = pd.concat(
 print(metrics_df, flush=True)
 
 # set extra columns
-columns_to_ignore = ['score', 'metric_type']
+columns_to_ignore = ['score', 'metric_type', 'metric_name']
 ex_columns = set(
     [
         col for col in metrics_df.columns
@@ -82,6 +82,10 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
     if len(metrics_df.loc[row, 'file_name']) > max_len:
         metrics_df.loc[row, 'file_name'] = metrics_df.loc[row, 'file_name'][:max_len] + '...'
 
+
+# rename metric names
+metrics_df['metric'] = metrics_df['metric_name']
+del metrics_df['metric_name']
 
 ex_columns = sorted(ex_columns)
 print(metrics_df[ex_columns].drop_duplicates(), flush=True)

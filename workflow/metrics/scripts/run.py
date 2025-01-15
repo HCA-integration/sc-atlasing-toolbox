@@ -32,6 +32,8 @@ allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
+covariates = params.get('covariates', [label_key, batch_key])
+use_covariates = params.get('use_covariates', False)
 metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
@@ -43,6 +45,7 @@ if output_type not in allowed_output_types:
         f'allowed output types={allowed_output_types}'
     )
     write_metrics(
+        metric_names=[metric],
         scores=[np.nan],
         output_types=[output_type],
         metric=metric,
@@ -102,27 +105,51 @@ def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'
 
 # subset obs columns for metrics
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
-adata.obs = adata.obs[cluster_columns+[batch_key, label_key]].copy()
+columns = list(set([batch_key, label_key] + covariates + cluster_columns))
+adata.obs = adata.obs[columns].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
-score = metric_function(
-    adata,
-    output_type,
-    batch_key=batch_key,
-    label_key=label_key,
-    adata_raw=adata_raw,
-    cluster_key=cluster_key,
-    n_threads=threads,
-)
 
-if not isinstance(score, list):
-    score = [score]
+if use_covariates:
+    scores = []
+    metric_names = []
+    for cov in covariates:
+        logger.info(f'Covariate: {cov}')
+        score = metric_function(
+            adata,
+            output_type,
+            covariate=cov,
+            batch_key=batch_key,
+            label_key=label_key,
+            adata_raw=adata_raw,
+            cluster_key=cluster_key,
+            n_threads=threads,
+        )
+        metric_names.append(f'{metric}:{cov}')
+        scores.append(score)
+else:
+    scores = metric_function(
+        adata,
+        output_type,
+        batch_key=batch_key,
+        label_key=label_key,
+        adata_raw=adata_raw,
+        cluster_key=cluster_key,
+        n_threads=threads,
+    )
+
+    if not isinstance(scores, list):
+        scores = [scores]
+    
+    metric_names = [metric] * len(scores)
+
 
 write_metrics(
-    scores=score,
-    output_types=[output_type]*len(score),
+    metric_names=metric_names,
+    scores=scores,
+    output_types=[output_type]*len(scores),
     metric=metric,
     metric_type=metric_type,
     batch=batch_key,

@@ -31,6 +31,7 @@ mcfg = ModuleConfig(
         'corrected',
         'overwrite_file_id',
         'cluster_algorithm',
+        'covariates',
     ],
     wildcard_names=['label', 'batch'],
     rename_config_params={'methods': 'metric', 'metrics': 'metric'},
