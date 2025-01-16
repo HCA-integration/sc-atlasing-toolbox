@@ -1,11 +1,12 @@
 import anndata as ad
 import scanpy as sc
 import numpy as np
+import pandas as pd
 
 from .bootstrap import bootstrap_metric
 
 
-def morans_i(*args, **kwargs):
+def _morans_i(*args, **kwargs):
     """
     Moran's I wrapper
     Ensure the value is positive
@@ -15,6 +16,10 @@ def morans_i(*args, **kwargs):
     return max(score, 0)
     # except ZeroDivisionError:
     #     return float('nan')
+
+
+def morans_i_continuous(_ad, _cov) -> float:
+    return _morans_i(_ad, vals=_ad.obs[_cov].values)
 
 
 def morans_i_categorical(_ad, _cov, num_mappings=10) -> float:
@@ -36,8 +41,7 @@ def morans_i_categorical(_ad, _cov, num_mappings=10) -> float:
     morans = []  # Initialize a list to store Moran's I values
     for perm in unique_permutations:
         mapping_dict = dict(zip(unique_categories, perm))
-        mapped_values = _ad.obs[_cov].map(mapping_dict).values
-        score = morans_i(_ad, vals=mapped_values)
+        score = _morans_i(_ad, vals=_ad.obs[_cov].map(mapping_dict).values)
         morans.append(score)
     
     # Calculate and return the mean of all Moran's I values
@@ -50,33 +54,22 @@ def morans_i_random(adata, output_type, n_bootstraps=5, bootstrap_size=None, **k
     """
     return bootstrap_metric(
         adata,
-        metric_function=lambda _ad: morans_i(_ad, vals=np.random.normal(size=_ad.n_obs)),
+        metric_function=lambda _ad: _morans_i(_ad, vals=np.random.normal(size=_ad.n_obs)),
         n_bootstraps=n_bootstraps,
         size=bootstrap_size,
     )
 
 
-def morans_i_batch(adata, output_type, batch_key, n_bootstraps=5, bootstrap_size=None, **kwargs):
+def morans_i(adata, output_type, covariate, n_bootstraps=5, bootstrap_size=None, **kwargs):
     """
-    Moran's I for the batch (using permutations)
+    Moran's I for covariate (using permutations)
     """
+    is_numeric = pd.api.types.is_numeric_dtype(adata.obs[covariate])
+    morans_i_func = morans_i_continuous if is_numeric else morans_i_categorical
     return bootstrap_metric(
         adata,
-        metric_function=morans_i_categorical,
+        metric_function=morans_i_func,
         n_bootstraps=n_bootstraps,
         size=bootstrap_size,
-        _cov=batch_key,
-    )
-
-
-def morans_i_label(adata, output_type, label_key, n_bootstraps=5, bootstrap_size=None, **kwargs):
-    """
-    Moran's I for the label/cell type (using permutations)
-    """
-    return bootstrap_metric(
-        adata,
-        metric_function=morans_i_categorical,
-        n_bootstraps=n_bootstraps,
-        size=bootstrap_size,
-        _cov=label_key,
+        _cov=covariate,
     )

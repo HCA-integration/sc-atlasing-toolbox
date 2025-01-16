@@ -5,7 +5,7 @@ import scib
 
 from utils.accessors import subset_hvg
 from .bootstrap import bootstrap_metric
-from .morans_i import morans_i
+from .morans_i import _morans_i
 
 
 # TODO: get from user config file
@@ -63,10 +63,10 @@ def morans_i_gene_score(
         gene_scores = get_gene_score(adata, adata_raw, gene_signature, var_key)
     except ValueError:
         return float('nan')
-
+        
     return bootstrap_metric(
         adata,
-        metric_function=lambda _ad, vals: morans_i(_ad, vals=vals[_ad.obs_names]),
+        metric_function=lambda _ad, vals: _morans_i(_ad, vals=vals[_ad.obs_names]),
         n_bootstraps=n_bootstraps,
         size=bootstrap_size,
         vals=gene_scores,

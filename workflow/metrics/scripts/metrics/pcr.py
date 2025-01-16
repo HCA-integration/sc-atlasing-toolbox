@@ -119,7 +119,7 @@ def pcr_random(adata, output_type, **kwargs):
     return scib.metrics.pcr(adata, covariate='random', recompute_pca=False)
     
 
-def pcr_batch(adata, output_type, batch_key, **kwargs):
+def pcr(adata, output_type, covariate, **kwargs):
     import scib
 
     if output_type == 'knn':
@@ -127,15 +127,4 @@ def pcr_batch(adata, output_type, batch_key, **kwargs):
 
     assert_pca(adata, check_varm=False)
 
-    return scib.metrics.pcr(adata, covariate=batch_key, recompute_pca=False)
-    
-
-def pcr_label(adata, output_type, label_key, **kwargs):
-    import scib
-
-    if output_type == 'knn':
-        return np.nan
-
-    assert_pca(adata, check_varm=False)
-
-    return scib.metrics.pcr(adata, covariate=label_key, recompute_pca=False)
+    return scib.metrics.pcr(adata, covariate=covariate, recompute_pca=False)
