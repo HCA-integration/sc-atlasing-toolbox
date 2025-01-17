@@ -26,6 +26,8 @@ rule prepare_all:
     localrule: True
 
 
+# Clustering for cluster-based metrics
+
 use rule cluster from clustering as metrics_cluster with:
     input:
         zarr=rules.prepare.output.zarr,
@@ -57,4 +59,43 @@ use rule merge from clustering as metrics_cluster_collect with:
 rule cluster_all:
     input:
         mcfg.get_output_files(rules.metrics_cluster_collect.output)
+    localrule: True
+
+
+# Gene scoring for gene-based metrics
+
+rule score_genes:
+    input:
+        zarr=rules.prepare.output.zarr,
+    output:
+        zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores' / '{gene_set}.zarr'),
+    params:
+        gene_set=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset).get(wildcards.gene_set),
+    conda:
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+    resources:
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
+    script:
+        '../scripts/score_genes.py'
+
+
+def get_score_genes(mcfg, datasets=None):
+    if datasets is None:
+        datasets = mcfg.get_datasets()
+    targets = []
+    for dataset in datasets:
+        gene_set = mcfg.get_gene_sets(dataset)
+        files = mcfg.get_output_files(
+            rules.score_genes.output,
+            extra_wildcards={'gene_set': gene_set}
+        )
+        targets.extend(files)
+    return targets
+
+
+rule score_genes_all:
+    input: *get_score_genes(mcfg)
     localrule: True

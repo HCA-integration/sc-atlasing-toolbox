@@ -124,6 +124,39 @@ DATASETS:
     metrics:
       label: bulk_labels
       batch: batch
+      covariates:
+        - phase
+        - louvain
+        - n_genes
+      gene_sets:
+        ifn_signature: [
+          "IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
+          "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
+          "OAS2", "OAS1", "MX2", "MX1", "LY6E",
+          "ISG15", "IFIT3", "IFI6", "IFI44L", "IFI35",
+          "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"
+        ]
+        platlets: ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
+        rbc: ["HBA1", "HBA2", "HBB"]
+        plasma_cells: [
+          "CD79A", "DERL3", "IGHA1", "ITM2C", "JCHAIN",
+          "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"
+        ]
+        t_cd4_ctl: [
+          "CCL5", "FGFBP2", "GZMA", "GNLY", "GZMB", "GZMH",
+          "ITGB1", "KLRB1"
+        ]
+        nk_cells: [
+          "GNLY", "KLRB1", "KLRD1", "NCAM1", "NCR1", "NKG7",
+          "TYROBP"
+        ]
+        ilc: [
+          "KIT", "KLRB1", "LINC01229", "TNFRSF4", "TNFRSF18",
+          "TRDC", "TTLL10"
+        ]
+        monocytes_cd14: [
+          "CD14", "CSF3R", "S100A12", "S100A8", "S100A9"
+        ]
       metrics:
         - nmi
         - ari
@@ -136,8 +169,8 @@ DATASETS:
         - isolated_label_asw
         - isolated_label_f1
         - pcr_comparison
-        - morans_i_batch
-        - morans_i_label
+        - morans_i
+        - morans_i_genes
         - morans_i_random
         - morans_i_random_genes
         - morans_i_ifn_signature

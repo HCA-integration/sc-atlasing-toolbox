@@ -6,7 +6,8 @@ import pandas as pd
 import warnings
 
 from utils.environments import get_env
-from utils.ModuleConfig import ModuleConfig
+from MetricsConfig import MetricsConfig
+
 
 os.environ['LD_LIBRARY_PATH'] = os.environ['CONDA_EXE'].replace('bin/conda', 'lib')
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
@@ -17,8 +18,7 @@ envvars:
     'XLA_PYTHON_CLIENT_PREALLOCATE',
     'TF_CPP_MIN_LOG_LEVEL',
 
-
-mcfg = ModuleConfig(
+mcfg = MetricsConfig(
     module_name='metrics',
     config=config,
     parameters=workflow.source_path('params.tsv'),
@@ -32,6 +32,7 @@ mcfg = ModuleConfig(
         'overwrite_file_id',
         'cluster_algorithm',
         'covariates',
+        'gene_sets',
     ],
     wildcard_names=['label', 'batch'],
     rename_config_params={'methods': 'metric', 'metrics': 'metric'},
