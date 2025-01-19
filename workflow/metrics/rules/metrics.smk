@@ -9,6 +9,8 @@ class MetricNotDefinedError(RuntimeError):
 def get_metric_input(wildcards):
     if mcfg.get_from_parameters(wildcards, 'clustering', default=False):
         return rules.metrics_cluster_collect.output.zarr
+    if mcfg.get_from_parameters(wildcards, 'use_gene_set', default=False):
+        return rules.score_genes.output.zarr
     return rules.prepare.output.zarr
 
 
@@ -25,7 +27,7 @@ def get_mem_mb(wildcards, attempt):
     
     if input_type == 'full' or comparison:
         return mem_mb
-    return min(100_000, int(mem_mb // 3))
+    return min(1_000, int(mem_mb // 3))
 
 
 rule run:
@@ -40,17 +42,15 @@ rule run:
     input:
         zarr=get_metric_input,
     output:
-        metric=mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.tsv'
+        metric=mcfg.out_dir / paramspace.wildcard_pattern / 'metric={metric}--covariate={covariate}--gene_set={gene_set}.tsv'
     benchmark:
-        mcfg.out_dir / paramspace.wildcard_pattern / '{metric}.benchmark.tsv'
+        mcfg.out_dir / paramspace.wildcard_pattern / '.benchmark' / 'metric={metric}--covariate={covariate}--gene_set={gene_set}.tsv'
     params:
         metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type', default=MetricNotDefinedError(wildcards)),
         output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', default=MetricNotDefinedError(wildcards)),
         input_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'input_type', default=MetricNotDefinedError(wildcards)),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
         cluster_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cluster_algorithm', default='leiden'),
-        covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'covariates', default=[]),
-        use_covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_covariates', default=False),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)

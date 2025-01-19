@@ -70,7 +70,7 @@ rule score_genes:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores' / '{gene_set}.zarr'),
     params:
-        gene_set=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset).get(wildcards.gene_set),
+        gene_set=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset).get(wildcards.gene_set, []),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:

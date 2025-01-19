@@ -35,7 +35,12 @@ mcfg = MetricsConfig(
         'gene_sets',
     ],
     wildcard_names=['label', 'batch'],
-    rename_config_params={'methods': 'metric', 'metrics': 'metric'},
+    rename_config_params={
+        'methods': 'metric',
+        'metrics': 'metric',
+        'gene_sets': 'gene_set',
+        'covariates': 'covariate',
+    },
     explode_by=['metric', 'batch', 'label'],
     paramspace_kwargs=dict(filename_params=['label', 'batch'], filename_sep='--'),
     dtypes={

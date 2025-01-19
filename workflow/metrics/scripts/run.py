@@ -14,6 +14,20 @@ from metrics.utils import write_metrics
 from utils.io import read_anndata
 
 
+def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'):
+    """
+    Helper function for parsing clustering columns
+    adapted from
+    https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
+    """
+    if not source_string.startswith(cluster_key):
+        return source_string
+    if not source_string.endswith(replace_what):
+        return source_string + '_orig'
+    head, _sep, tail = source_string.rpartition(replace_what)
+    return head + replace_with + tail
+
+
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 wildcards = snakemake.wildcards
@@ -25,6 +39,8 @@ file_id = wildcards.file_id
 batch_key = wildcards.batch
 label_key = wildcards.label
 metric = wildcards.metric
+covariate = wildcards.covariate
+gene_set = wildcards.gene_set
 
 metric_type = params.get('metric_type')
 assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
@@ -32,8 +48,6 @@ allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
-covariates = params.get('covariates', [label_key, batch_key])
-use_covariates = params.get('use_covariates', False)
 metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
@@ -90,18 +104,12 @@ if comparison:
     print('adata_raw', flush=True)
     print(adata_raw, flush=True)
 
-# prepare clustering columns
-def replace_last(source_string, replace_what, replace_with, cluster_key='leiden'):
-    """
-    adapted from
-    https://stackoverflow.com/questions/3675318/how-to-replace-some-characters-from-the-end-of-a-string/3675423#3675423
-    """
-    if not source_string.startswith(cluster_key):
-        return source_string
-    if not source_string.endswith(replace_what):
-        return source_string + '_orig'
-    head, _sep, tail = source_string.rpartition(replace_what)
-    return head + replace_with + tail
+
+# set default covariates
+if covariate is None or covariate == 'None':
+    covariates = [label_key, batch_key]
+else:
+    covariates = [covariate]
 
 # subset obs columns for metrics
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
@@ -112,39 +120,28 @@ adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 logger.info(f'Run metric {metric} for {output_type}...')
 adata.obs[batch_key] = adata.obs[batch_key].astype(str).fillna('NA').astype('category')
 
-if use_covariates:
-    scores = []
-    metric_names = []
-    for cov in covariates:
-        logger.info(f'Covariate: {cov}')
-        score = metric_function(
-            adata,
-            output_type,
-            covariate=cov,
-            batch_key=batch_key,
-            label_key=label_key,
-            adata_raw=adata_raw,
-            cluster_key=cluster_key,
-            n_threads=threads,
-        )
-        metric_names.append(f'{metric}:{cov}')
-        scores.append(score)
-else:
-    scores = metric_function(
-        adata,
-        output_type,
-        batch_key=batch_key,
-        label_key=label_key,
-        adata_raw=adata_raw,
-        cluster_key=cluster_key,
-        n_threads=threads,
-    )
+# TODO: deal with bootstrapping
+scores = metric_function(
+    adata,
+    output_type,
+    batch_key=batch_key,
+    label_key=label_key,
+    adata_raw=adata_raw,
+    cluster_key=cluster_key,
+    covariate=covariates,
+    n_threads=threads,
+)
 
-    if not isinstance(scores, list):
-        scores = [scores]
-    
+# unpack scores
+if isinstance(scores, tuple):
+    scores, metric_names = scores
+elif isinstance(scores, (int, float)):
+    scores = [scores]
+    metric_names = [metric]
+elif isinstance(scores, list):
     metric_names = [metric] * len(scores)
-
+else:
+    raise ValueError(f'Unknown scores type {type(scores)}')
 
 write_metrics(
     metric_names=metric_names,
