@@ -161,3 +161,75 @@ def pcr(adata, output_type, covariate, **kwargs):
     ]
     
     return scores, metric_names
+
+
+def pcr_genes(adata, output_type, gene_set, **kwargs):
+    import scib
+    
+    metric = "pcr_genes"
+    metric_names = [
+        f'{metric}:{gene_set}',
+        f'{metric}_c:{gene_set}',
+        f'{metric}_b:{gene_set}',
+    ]
+    
+    if output_type == 'knn':
+        return [np.nan] * len(metric_names), metric_names
+    
+    # assertions
+    assert_pca(adata, check_varm=False)
+    assert gene_set in adata.obs.columns, f'Gene score for "{gene_set}" not found in adata.obs'
+    assert (
+        'random_gene_scores' in adata.obsm.keys(),
+        f'No random gene scores found in adata.obsm\n{adata.obsm.keys()}'
+    )
+    assert (
+        'binned_expression' in adata.obsm.keys(),
+        f'No binned gene expression found in adata.obsm\n{adata.obsm.keys()}'
+    )
+    
+    # don't compute metric if no genes were scored
+    if adata.obsm['random_gene_scores'].shape[1] == 0:
+        return [np.nan] * len(metric_names), metric_names
+    
+    # direct pcr score
+    score = scib.metrics.pcr(
+        adata,
+        covariate=gene_set,
+        recompute_pca=False,
+        linreg_method='numpy',
+    )
+    
+    # random gene score
+    _random_gene_scores = []
+    for gene in adata.obsm['random_gene_scores'].T:
+        adata.obs['random_gene'] = gene
+        s = scib.metrics.pcr(
+            adata,
+            covariate='random_gene',
+            recompute_pca=False,
+            linreg_method='numpy',
+        )
+        _random_gene_scores.append(s)
+    random_gene_score = np.mean(_random_gene_scores)
+    
+    # binned gene score
+    _binned_gene_scores = []
+    for gene in adata.obsm['binned_expression'].T:
+        adata.obs['binned_gene'] = gene
+        s = scib.metrics.pcr(
+            adata,
+            covariate='binned_gene',
+            recompute_pca=False,
+            linreg_method='numpy',
+        )
+        _binned_gene_scores.append(s)
+    binned_gene_score = np.mean(_binned_gene_scores)
+    
+    scores = [
+        score,
+        max(score - random_gene_score, 0),
+        binned_gene_score
+    ]
+    
+    return scores, metric_names

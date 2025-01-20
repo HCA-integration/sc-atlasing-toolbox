@@ -95,3 +95,39 @@ def morans_i(adata, output_type, covariate, n_bootstraps=5, bootstrap_size=None,
         scores.append(score)
     
     return scores, metrics_names
+
+
+def morans_i_genes(adata, output_type, gene_set, **kwargs):
+    metric = "M's I genes"
+    metric_names = [
+        f'{metric}:{gene_set}',
+        f'{metric}_c:{gene_set}',
+        f'{metric}_b:{gene_set}',
+    ]
+    
+    assert gene_set in adata.obs.columns, f'Gene score for "{gene_set}" not found in adata.obs'
+    assert (
+        'random_gene_scores' in adata.obsm.keys(),
+        f'No random gene scores found in adata.obsm\n{adata.obsm.keys()}'
+    )
+    assert (
+        'binned_expression' in adata.obsm.keys(),
+        f'No binned gene expression found in adata.obsm\n{adata.obsm.keys()}'
+    )
+    
+    # don't compute metric if no genes were scored
+    if adata.obsm['random_gene_scores'].shape[1] == 0:
+        return [np.nan] * len(metric_names), metric_names
+    
+    score = _morans_i(adata, covariate=gene_set)
+    random_gene_score = np.nanmean(_morans_i(adata, covariate=adata.obsm['random_gene_scores']))
+    binned_gene_score = np.nanmean(_morans_i(adata, covariate=adata.obsm['binned_expression']))
+    
+    scores = [
+        score,
+        score - random_gene_score,
+        binned_gene_score
+    ]
+    scores = [max(s, 0) for s in scores]  # ensure score is positive
+    
+    return scores, metric_names

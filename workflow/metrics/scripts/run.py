@@ -109,14 +109,19 @@ if comparison:
 # set default covariates
 covariates = []
 if use_covariate:
-if covariate is None or covariate == 'None':
-    covariates = [label_key, batch_key]
-else:
-    covariates = [covariate]
+    if covariate is None or covariate == 'None':
+        covariates = [label_key, batch_key]
+    else:
+        covariates = [covariate]
+
+gene_scores = []
+if gene_set is not None and gene_set != 'None':
+    gene_scores = [gene_set]
 
 # subset obs columns for metrics
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
-columns = list(set([batch_key, label_key] + covariates + cluster_columns))
+columns = [batch_key, label_key] + covariates + cluster_columns + gene_scores
+columns = list(set(columns))  # make unique
 adata.obs = adata.obs[columns].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
 
@@ -132,6 +137,7 @@ scores = metric_function(
     adata_raw=adata_raw,
     cluster_key=cluster_key,
     covariate=covariates,
+    gene_set=gene_set,
     n_threads=threads,
 )
 
