@@ -30,6 +30,7 @@ class MetricsConfig(ModuleConfig):
 
     def set_gene_sets(self, wildcards_df, config_key='gene_set'):
         gene_set_map = dict()
+        wildcards_df[config_key] = wildcards_df[config_key].astype(object)
 
         for dataset in self.datasets:
             gene_sets = get_marker_gene_set(
