@@ -80,7 +80,7 @@ rule all:
     input:
         rules.prepare_all.input,
         rules.run_all.input,
-        rules.merge_metrics_all.input,
+        rules.merge_all.input,
         rules.plots_all.input
     default_target: True
     localrule: True

@@ -1,6 +1,6 @@
 metric_wildcards = mcfg.get_wildcard_names() + ['metric', 'overwrite_file_id']
 
-rule merge_metrics:
+rule merge:
     message:
         """
         Merge all metrics for all datasets and methods
@@ -25,7 +25,7 @@ rule merge_metrics:
     script: '../scripts/merge.py'
 
 
-use rule merge_metrics as merge_metrics_per_dataset with:
+use rule merge as merge_per_dataset with:
     message:
         """
         Merge all metrics for {wildcards}
@@ -44,7 +44,7 @@ use rule merge_metrics as merge_metrics_per_dataset with:
         'metrics_merge'
 
 
-use rule merge_metrics as merge_metrics_per_batch with:
+use rule merge as merge_per_batch with:
     message:
         """
         Merge all metrics for {wildcards}
@@ -63,7 +63,7 @@ use rule merge_metrics as merge_metrics_per_batch with:
         'metrics_merge'
 
 
-use rule merge_metrics as merge_metrics_per_label with:
+use rule merge as merge_per_label with:
     message:
         """
         Merge all metrics for {wildcards}
@@ -82,7 +82,7 @@ use rule merge_metrics as merge_metrics_per_label with:
         'metrics_merge'
 
 
-use rule merge_metrics as merge_metrics_per_file with:
+use rule merge as merge_per_file with:
     message:
         """
         Merge all metrics for {wildcards}
@@ -101,11 +101,11 @@ use rule merge_metrics as merge_metrics_per_file with:
         'metrics_merge'
 
 
-rule merge_metrics_all:
+rule merge_all:
     input:
-        rules.merge_metrics.output,
-        mcfg.get_output_files(rules.merge_metrics_per_dataset.output, wildcard_names=['dataset']),
-        mcfg.get_output_files(rules.merge_metrics_per_batch.output, wildcard_names=['batch']),
-        mcfg.get_output_files(rules.merge_metrics_per_label.output, wildcard_names=['label']),
-        # mcfg.get_output_files(rules.merge_metrics_per_file.output, wildcard_names=['file_id']),
+        rules.merge.output,
+        mcfg.get_output_files(rules.merge_per_dataset.output, wildcard_names=['dataset']),
+        mcfg.get_output_files(rules.merge_per_batch.output, wildcard_names=['batch']),
+        mcfg.get_output_files(rules.merge_per_label.output, wildcard_names=['label']),
+        # mcfg.get_output_files(rules.merge_per_file.output, wildcard_names=['file_id']),
     localrule: True
