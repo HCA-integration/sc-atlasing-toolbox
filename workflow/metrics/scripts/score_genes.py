@@ -13,6 +13,7 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
 unintegrated_layer = params.get('unintegrated_layer', 'X')
+raw_counts_layer = params.get('raw_counts_layer', unintegrated_layer)
 gene_set = params['gene_set']
 var_key = 'metrics_features'
 
@@ -26,6 +27,14 @@ adata = read_anndata(
     dask=True,
     backed=True,
 )
+
+adata.layers['raw_counts'] = read_anndata(
+    input_file,
+    X=raw_counts_layer,
+    dask=True,
+    backed=True,
+).X
+ 
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
 

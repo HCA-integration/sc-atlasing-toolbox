@@ -29,6 +29,7 @@ mcfg = MetricsConfig(
         'methods', # deprecated
         'unintegrated',
         'corrected',
+        'raw_counts',
         'overwrite_file_id',
         'cluster_algorithm',
         'covariates',

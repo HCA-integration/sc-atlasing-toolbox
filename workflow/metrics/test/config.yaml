@@ -69,8 +69,10 @@ DATASETS:
         harmony: test/input/integration/dataset~harmony/file_id~3bd5f9cfa3/batch~batch/var_mask~highly_variable/method~harmonypy--hyperparams~a494363475--label~None--output_type~embed.zarr
         # scanorama_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~full.zarr
         scanorama_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~scanorama--hyperparams~a90b47ca49--label~None--output_type~embed.zarr
+        scvi: test/input/integration/dataset~scvi_tools/file_id~orig/batch~batch/var_mask~highly_variable/method~scvi--hyperparams~dbed8671e3--label~None--output_type~embed.zarr
     metrics:
       unintegrated: layers/normcounts
+      raw_counts: layers/counts
       corrected: X
       label:
         - bulk_labels
@@ -78,12 +80,18 @@ DATASETS:
       batch:
         - batch
         - batch_2
+      covariates:
+        - phase
+      gene_sets: 
+        ifn_signature, platlets, rbc, plasma_cells, t_cd4_ctl, nk_cells, ilc, monocytes_cd14
       metrics:
         - nmi
         - pcr_comparison
         - asw_batch
         - graph_connectivity
         - cell_cycle
+        - morans_i
+        - morans_i_genes
   
   scib_metrics:
     input:
@@ -118,53 +126,22 @@ DATASETS:
     input:
       metrics:
         test: test/input/pbmc68k.h5ad
-        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
-        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
-        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~None/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
+        unintegrated_full: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~full.zarr
+        unintegrated_embed: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~embed.zarr
+        unintegrated_knn: test/input/integration/dataset~test/file_id~pbmc68k/batch~batch/var_mask~highly_variable/method~unintegrated--hyperparams~None--label~None--output_type~knn.zarr
     metrics:
       label: bulk_labels
       batch: batch
+      raw_counts: layers/counts
       covariates:
         - phase
         - louvain
         - n_genes
       gene_sets:
-        ifn_signature: [
-          "IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
-          "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
-          "OAS2", "OAS1", "MX2", "MX1", "LY6E",
-          "ISG15", "IFIT3", "IFI6", "IFI44L", "IFI35",
-          "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"
-        ]
-        platlets: ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
-        rbc: ["HBA1", "HBA2", "HBB"]
-        plasma_cells: [
-          "CD79A", "DERL3", "IGHA1", "ITM2C", "JCHAIN",
-          "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"
-        ]
-        t_cd4_ctl: [
-          "CCL5", "FGFBP2", "GZMA", "GNLY", "GZMB", "GZMH",
-          "ITGB1", "KLRB1"
-        ]
-        nk_cells: [
-          "GNLY", "KLRB1", "KLRD1", "NCAM1", "NCR1", "NKG7",
-          "TYROBP"
-        ]
-        ilc: [
-          "KIT", "KLRB1", "LINC01229", "TNFRSF4", "TNFRSF18",
-          "TRDC", "TTLL10"
-        ]
-        monocytes_cd14: [
-          "CD14", "CSF3R", "S100A12", "S100A8", "S100A9"
-        ]
+        ifn_signature, plasma_cells, t_cd4_ctl, monocytes_cd14
       metrics:
         - nmi
-        - ari
-        - asw_label
-        - asw_batch 
         - cell_cycle
-        - clisi
-        - ilisi
         - graph_connectivity
         - isolated_label_asw
         - isolated_label_f1
@@ -172,10 +149,37 @@ DATASETS:
         - morans_i
         - morans_i_genes
         - morans_i_random
-        - morans_i_random_genes
-        - morans_i_ifn_signature
-        - pcr_batch
-        - pcr_label
+        - pcr
         - pcr_random
-        - pcr_random_genes
-        - pcr_ifn_signature
+        - pcr_genes
+
+
+MARKER_GENES:
+  ifn_signature: [
+    "IRF7", "XAF1", "UBE2L6", "TRIM22", "STAT1",
+    "SP110", "SAMD9L", "SAMD9", "PLSCR1", "PARP9",
+    "OAS2", "OAS1", "MX2", "MX1", "LY6E",
+    "ISG15", "IFIT3", "IFI6", "IFI44L", "IFI35",
+    "HERC5", "EPSTI1", "EIF2AK2", "CMPK2", "BST2"
+  ]
+  platlets: ["GP1BB", "ITGA2B", "PF4", "PPBP", "TUBB1"]
+  rbc: ["HBA1", "HBA2", "HBB"]
+  plasma_cells: [
+    "CD79A", "DERL3", "IGHA1", "ITM2C", "JCHAIN",
+    "MZB1", "POU2AF1", "TNFRSF17", "TXNDC11"
+  ]
+  t_cd4_ctl: [
+    "CCL5", "FGFBP2", "GZMA", "GNLY", "GZMB", "GZMH",
+    "ITGB1", "KLRB1"
+  ]
+  nk_cells: [
+    "GNLY", "KLRB1", "KLRD1", "NCAM1", "NCR1", "NKG7",
+    "TYROBP"
+  ]
+  ilc: [
+    "KIT", "KLRB1", "LINC01229", "TNFRSF4", "TNFRSF18",
+    "TRDC", "TTLL10"
+  ]
+  monocytes_cd14: [
+    "CD14", "CSF3R", "S100A12", "S100A8", "S100A9"
+  ]
