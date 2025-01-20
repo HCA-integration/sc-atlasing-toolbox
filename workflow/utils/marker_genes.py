@@ -27,11 +27,8 @@ def get_marker_gene_set(
     if isinstance(gene_sets, dict):
         genes = gene_sets
     elif isinstance(gene_sets, str):
-        # split by comma for multiple gene sets
-        gene_sets.split(',')
-        
-        # strip trailing whitespace
-        gene_sets = [g.strip() for g in gene_sets]
+        # parse gene sets from string
+        gene_sets = [g.strip() for g in gene_sets.split(',')]
         
         for key in gene_sets:
             assert isinstance(key, str), f'Expected string, got {key}'
@@ -40,11 +37,13 @@ def get_marker_gene_set(
     if flatten:
         # ignore supersets of gene set maps to single flattened gene set map
         # Note: this will overwrite gene sets with the same key across different supersets
-        for key, gene_set in genes.items():
+        for key, gene_set in genes.copy().items():
             if isinstance(gene_set, str):
                 gene_set = {key: [gene_set]}
             elif isinstance(gene_set, list):
                 continue
+            elif isinstance(gene_set, dict):
+                del genes[key]
             genes |= gene_set
     
     return genes
