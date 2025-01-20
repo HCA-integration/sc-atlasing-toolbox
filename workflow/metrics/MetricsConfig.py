@@ -16,8 +16,14 @@ class MetricsConfig(ModuleConfig):
         :param kwargs: parameters for ModuleConfig
         """
         super().__init__(**kwargs, write_output_files=False)
-        
+
         wildcards_df = self.parameters.wildcards_df
+        
+        # check if all metrics in config are configured in parameters.tsv
+        available_metrics = self.get_parameters()['metric'].unique()
+        for metric in wildcards_df['metric'].unique():
+            assert metric in available_metrics, f'Metric not available: "{metric}"'
+        
         wildcards_df = self.set_gene_sets(wildcards_df)
         wildcards_df = self.set_covariates(wildcards_df)
         
