@@ -30,12 +30,14 @@ neighbor_args = params.get('neighbor_args', {})
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 corrected_layer = params.get('corrected_layer', 'X')
 
+files_to_keep = ['obsm', 'obsp', 'raw', 'uns', 'var']
+
 # determine output types
 # default output type is 'full'
 output_type = read_anndata(input_file, uns='uns').uns.get('output_type', 'full')
 slot_map = {}
 
-logger.info(f'Read {input_file} ...')
+logger.info(f'Read {input_file} for output_type={output_type}...')
 kwargs = dict(
     X=unintegrated_layer,
     obs='obs',
@@ -46,9 +48,14 @@ kwargs = dict(
     dask=True,
     backed=True,
 )
+if input_file.endswith('.h5ad'):
+    kwargs |= {'layers': 'layers'}
+    files_to_keep.append('layers')
 if output_type == 'full':
     kwargs |= {'X': corrected_layer}
     slot_map |= {'X': corrected_layer}
+else:
+    slot_map |= {'X': unintegrated_layer}
 adata = read_anndata(input_file, **kwargs)
 
 # remove cells without labels
@@ -71,9 +78,9 @@ if var_key not in adata.var.columns:
 else:
     adata.var[new_var_column] = adata.var[var_key]
 
-logging.info('Filter all zero genes...')
-all_zero_genes = _filter_genes(adata, min_cells=1)
-adata.var[new_var_column] = adata.var[new_var_column] & ~adata.var_names.isin(all_zero_genes)
+# logging.info('Filter all zero genes...')
+# all_zero_genes = _filter_genes(adata, min_cells=1)
+adata.var[new_var_column] = adata.var[new_var_column] # & ~adata.var_names.isin(all_zero_genes)
 
 if output_type == 'full':
     hvg_matrix = subset_hvg(
@@ -103,7 +110,7 @@ write_zarr_linked(
     adata,
     in_dir=input_file,
     out_dir=output_file,
-    files_to_keep=['obsm', 'obsp', 'raw', 'uns', 'var'],
+    files_to_keep=files_to_keep,
     slot_map=slot_map,
 )
 
@@ -118,7 +125,6 @@ adata_raw = read_anndata(
     backed=True,
 )
 
-logging.info('Run PCA on unintegrated data...')
 adata_raw.var[new_var_column] = adata.var[new_var_column]
 adata_raw.var[new_var_column] = adata_raw.var[new_var_column].fillna(False)
 hvg_matrix = subset_hvg(
@@ -126,6 +132,8 @@ hvg_matrix = subset_hvg(
     var_column=new_var_column,
     compute_dask=True,
 )[0].X
+
+logging.info('Run PCA on unintegrated data...')
 compute_pca(adata_raw, matrix=hvg_matrix)
 del hvg_matrix
 

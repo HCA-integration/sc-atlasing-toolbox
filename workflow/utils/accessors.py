@@ -81,7 +81,7 @@ def subset_hvg(
         print(f'Filter to genes that are in at least {min_cells} cells...', flush=True)
         if isinstance(adata.X, da.Array):
             low_count_mask = adata.X.map_blocks(sparse.COO).sum(axis=0) < min_cells
-            with TqdmCallback(desc=f"determine genes with <{min_cells} cells"):
+            with TqdmCallback(desc=f"Determine genes with < {min_cells} cells"):
                 low_count_mask = low_count_mask.compute().todense()
         else:
             low_count_genes = _filter_genes(adata, min_cells=min_cells)
