@@ -34,7 +34,7 @@ use rule cluster from clustering as metrics_cluster with:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'cluster_resolutions' / '{algorithm}--{resolution}--{level}.zarr'),
     conda:
-        get_env(config, 'scanpy') # force clustering on GPU
+        get_env(config, 'scanpy') # force clustering on CPU
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
@@ -70,6 +70,8 @@ rule score_genes:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores' / '{gene_set}.zarr'),
     params:
+        unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
+        raw_counts_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', default=None),
         gene_set=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset).get(wildcards.gene_set, []),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
@@ -83,18 +85,11 @@ rule score_genes:
 
 
 def get_score_genes(mcfg, datasets=None):
-    if datasets is None:
-        datasets = mcfg.get_datasets()
-    targets = []
-    for dataset in datasets:
-        gene_set = mcfg.get_gene_sets(dataset)
-        files = mcfg.get_output_files(
-            rules.score_genes.output,
-            extra_wildcards={'gene_set': gene_set}
-        )
-        targets.extend(files)
-    return targets
-
+    return [
+        file for file in
+        mcfg.get_output_files(rules.score_genes.output, all_params=True)
+        if 'gene_scores/None.zarr' not in file
+    ]
 
 rule score_genes_all:
     input: *get_score_genes(mcfg)
