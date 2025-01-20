@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
 
-from utils.accessors import adata_to_memory
 from utils.assertions import assert_pca
 from utils.misc import dask_compute
 
@@ -26,19 +25,19 @@ def pcr_comparison(adata, output_type, batch_key, label_key, adata_raw, n_thread
         adata_post=adata,
         covariate=batch_key,
         # embed=embed,  # assume that existing PCA is already computed on correct embedding
-        n_threads=n_threads,
+        # n_threads=n_threads,
         linreg_method='numpy',
         recompute_pca=False,
     )
 
 
-def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
+def pcr_y(adata, output_type, batch_key, label_key, adata_raw, var_key='metrics_features', **kwargs):
     import scib_metrics
 
     if output_type == 'knn':
         return np.nan
     
-    adata_raw = adata_to_memory(adata_raw)
+    adata_raw = dask_compute(adata_raw[:, adata_raw.var[var_key]].copy())
     X_pre = adata_raw.X
     X_post = adata.obsm['X_emb'] if output_type == 'embed' else adata.X
     X_pre, X_post = [X if isinstance(X, np.ndarray) else X.todense() for X in [X_pre, X_post]]
@@ -51,11 +50,27 @@ def pcr_y(adata, output_type, batch_key, label_key, adata_raw, **kwargs):
     )
 
 
-def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1, **kwargs):
+def cell_cycle(
+    adata,
+    output_type,
+    batch_key,
+    label_key,
+    adata_raw,
+    var_key='metrics_features',
+    n_threads=1,
+    **kwargs
+):
     import scib
 
     if output_type == 'knn':
         return np.nan
+
+    # subset adata if dataset too large
+    n_subset = int(1e6)
+    if adata.n_obs > n_subset:
+        random_subset = np.random.choice(adata.obs_names, size=n_subset, replace=False)
+        adata = adata[random_subset].copy()
+        adata_raw = adata_raw[random_subset].copy()
 
     # get correct feature names
     if 'feature_name' in adata_raw.var.columns:
@@ -69,10 +84,10 @@ def cell_cycle(adata, output_type, batch_key, label_key, adata_raw, n_threads=1,
     assert embed in adata.obsm, f'Embedding {embed} missing from adata.obsm'
     adata.obsm['X_emb'] = adata.obsm[embed]
 
-    dask_compute(adata_raw)
+    # TODO: ensure that cell cycle genes are preserved
+    adata_raw = dask_compute(adata_raw[:, adata_raw.var[var_key]].copy())
 
     # compute cell cycle score per batch
-    batch_key = batch_key
     for batch in adata.obs[batch_key].unique():
         batch_mask = adata_raw.obs[batch_key] == batch
         try:
@@ -116,15 +131,33 @@ def pcr_random(adata, output_type, **kwargs):
     # Add column full of random values and use it as input for the PCR
     adata.obs['random'] = np.random.normal(size=adata.n_obs)
 
-    return scib.metrics.pcr(adata, covariate='random', recompute_pca=False)
+    return scib.metrics.pcr(
+        adata,
+        covariate='random',
+        recompute_pca=False,
+        linreg_method='numpy',
+    )
     
 
 def pcr(adata, output_type, covariate, **kwargs):
     import scib
+    
+    covariates = covariate if isinstance(covariate, list) else [covariate]
+    metric_names = [f'pcr:{cov}' for cov in covariates]
 
     if output_type == 'knn':
-        return np.nan
+        return [np.nan] * len(covariates), metric_names, 
 
     assert_pca(adata, check_varm=False)
 
-    return scib.metrics.pcr(adata, covariate=covariate, recompute_pca=False)
+    scores = [
+        scib.metrics.pcr(
+            adata,
+            covariate=covariate,
+            recompute_pca=False,
+            linreg_method='numpy',
+        )
+        for covariate in covariates
+    ]
+    
+    return scores, metric_names

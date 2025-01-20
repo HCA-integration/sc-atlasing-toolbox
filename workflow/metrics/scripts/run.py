@@ -48,6 +48,7 @@ allowed_output_types = params.get('output_types')
 input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
+use_covariate = params.get('use_covariate', False)
 metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
@@ -79,7 +80,7 @@ if input_type == 'knn':
 if input_type == 'embed':
     kwargs |= {'obsm': 'obsm'}
 if input_type == 'full':
-    kwargs |= {'X': 'X', 'var': 'var'}
+    kwargs |= {'X': 'X', 'obsm': 'obsm', 'var': 'var'}
 
 logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
@@ -106,6 +107,8 @@ if comparison:
 
 
 # set default covariates
+covariates = []
+if use_covariate:
 if covariate is None or covariate == 'None':
     covariates = [label_key, batch_key]
 else:

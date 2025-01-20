@@ -27,7 +27,7 @@ def get_mem_mb(wildcards, attempt):
     
     if input_type == 'full' or comparison:
         return mem_mb
-    return min(1_000, int(mem_mb // 3))
+    return max(1_000, int(mem_mb // 3))
 
 
 rule run:
@@ -51,6 +51,7 @@ rule run:
         input_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'input_type', default=MetricNotDefinedError(wildcards)),
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
         cluster_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cluster_algorithm', default='leiden'),
+        use_covariate=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_covariate', default=False),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)
