@@ -363,7 +363,7 @@ class WildcardParameters:
         parameter_key: str,
         wildcards_sub: [list, None] = None,
         exclude: [list, str] = None,
-        check_query_keys: bool = True,
+        check_query_keys: bool = False,
         check_null: bool = False,
         default: [str, None] = None,
         single_value: bool = True,
@@ -387,14 +387,16 @@ class WildcardParameters:
             wildcards_sub = [w for w in wildcards_sub if w not in exclude]
         
         assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
-        if check_query_keys:
+        if check_query_keys:  # redundant?
             for key in query_dict:
                 assert key in wildcards_sub, f'Query key "{key}" is not in wildcards_sub'
+
+        wildcards_sub = list(set(wildcards_sub + [parameter_key]))
+        query_dict = {k: v for k, v in query_dict.items() if k in wildcards_sub}
         
         try:
-            wildcards_sub = list(set(wildcards_sub + [parameter_key]))
             params_sub = self.subset_by_query(
-                query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                query_dict=query_dict,
                 columns=[parameter_key],
                 verbose=verbose,
             )
@@ -423,7 +425,7 @@ class WildcardParameters:
         if is_null:
             if check_null:
                 df = self.subset_by_query(
-                    query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                    query_dict=query_dict,
                     columns=[parameter_key],
                     verbose=True,
                 )
