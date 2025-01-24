@@ -8,43 +8,61 @@ Parameters that are optional can be ommitted in the config and the pipeline will
 
 ```yaml
 DATASETS:
+
   dataset_name:
+
     # input file configuration
     input:
       integration:
         # file_id to file path mapping
         pbmc: test/input/pbmc68k.h5ad
+
     # module configuration
     integration:
       raw_counts: layers/counts  # optional
       norm_counts: layers/normcounts  # optional
+
       label:
         - bulk_labels
         - louvain
+
       batch:
         - phase
         - batch_2
+
       output_types:
         - full
         - embed
         - knn
+
       var_mask:  # optional
         - highly_variable
         - highly_variable_2
+
       neighbors:  # optional
         n_neighbors: 30
-      seed: 0 # random seed used by each integration method, default: 0
-      threads: 3 # number of CPU threads to use for preparation and running integration methods
+
+      # random seed used by each integration method, default: 0
+      seed: 0
+
+      # number of CPU threads to use for preparation and running integration methods
+      threads: 3
+
       methods: # mandatory, needs at least 1 value
+
         unintegrated: # no hyperparameters defined, will use defaults
+
         bbknn:
           # define hyperparamters if desired
           neighbors_within_batch: 3
+
         combat:
           covariates:
             - bulk_labels
+
         scanorama:
           batch_size: 100
+
         scvi:
           max_epochs: 100
           early_stopping: true
@@ -53,8 +71,10 @@ DATASETS:
             - [batch_2, phase]
           continuous_covariate_keys:
             - percent_mito
+
         scgen:
           n_epochs: 10
+
         scpoli:
           cell_type_keys:
             - 
@@ -70,12 +90,14 @@ DATASETS:
             reduce_lr: true
             lr_patience: 13
             lr_factor: 0.1
+
         harmonypy:
           sigma: 0.1
           key: batch_2
           n_comps:
             - 10
             - 30
+
         harmony_pytorch:
           sigma: 0.1
           batch_key: batch_2
