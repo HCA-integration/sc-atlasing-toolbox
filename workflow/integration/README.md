@@ -130,9 +130,14 @@ Files with computed embeddings (for full feature outputs) and kNN graphs (for fu
 
 ## Contributing to the module
 
-Adding new integration methods to the module simply requires adding a new script under `scripts/integration/methods/` and adding meta information of the method in the `params.tsv`. The name of the script must match the method name in the `params.tsv`.
-You can make use of the `integration_utils.py` script if you want to use global variables or functions that apply across integrations.
+Adding new integration methods to the module simply requires adding a new script under `scripts/integration/methods/` and adding meta information of the method in the `params.tsv`.
+The name of the script must match the method name in the `params.tsv` and the method must be defined in the `params.tsv`, otherwise it won't be recognised by the pipeline.
+When developing the script, you can make use of the global variables and functions from the `integration_utils.py` script.
+This is particlarly useful if you want to manage different parameter assignments to e.g. train and model setup functions (see `scripts/methods/scvi.py` for an example).
 The best way to get started, is to look at one of the scripts (ideally one that has a similar model to what you want to implement).
+
+Additionally, you might want to add a new conda environment YAML file, if the new integration requires different dependencies than what is already provided in `envs`.
+The new environment must then be specified in `params.tsv` and must be installed if you're using the default running mode of the pipeline.
 
 Once you have implemented the new integration method, you can test if the the method gets recognised via a dry run. See below about testing.
 
