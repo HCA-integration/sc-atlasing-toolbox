@@ -29,6 +29,7 @@ defaults:
     - harmony
     - scarches
     - scvi_tools
+    - drvi
 
 
 DATASETS:
@@ -174,6 +175,28 @@ DATASETS:
               - phase
           continuous_covariate_keys:
             - percent_mito
+      umap_colors:
+        - bulk_labels
+        - phase
+        - percent_mito
+
+  drvi:
+    input:
+      integration:
+        orig: test/input/pbmc68k.h5ad
+        # prepr: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        drvi:
+          # n_latent: 128
+          # encoder_dims:
+          #   - [128, 128]
+          # decoder_dims:
+          #   - [128, 128]
+          # max_epochs: 100
+          # early_stopping: true
       umap_colors:
         - bulk_labels
         - phase
