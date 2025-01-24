@@ -31,11 +31,11 @@ defaults:
       - pcr_comparison
       # - pcr_y  # broken function
   datasets:
-    - test_metrics
-    - test_no_name
+    # - test_metrics
+    # - test_no_name
     - test_integration
-    - scib_metrics
-    - morans_i
+    # - scib_metrics
+    # - morans_i
 
 
 DATASETS:
@@ -82,6 +82,8 @@ DATASETS:
         - batch_2
       covariates:
         - phase
+        - louvain
+        - n_genes
       gene_sets: 
         ifn_signature, platlets, rbc, plasma_cells, t_cd4_ctl, nk_cells, ilc, monocytes_cd14
       metrics:
@@ -92,6 +94,8 @@ DATASETS:
         - cell_cycle
         - morans_i
         - morans_i_genes
+        - pcr
+        - pcr_genes
   
   scib_metrics:
     input:
@@ -140,17 +144,15 @@ DATASETS:
       gene_sets:
         ifn_signature, plasma_cells, t_cd4_ctl, monocytes_cd14
       metrics:
-        - nmi
-        - cell_cycle
+        # - nmi
+        # - cell_cycle
         - graph_connectivity
-        - isolated_label_asw
-        - isolated_label_f1
+        # - isolated_label_asw
+        # - isolated_label_f1
         - pcr_comparison
         - morans_i
         - morans_i_genes
-        - morans_i_random
         - pcr
-        - pcr_random
         - pcr_genes
 
 

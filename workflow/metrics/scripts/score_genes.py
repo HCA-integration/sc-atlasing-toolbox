@@ -7,7 +7,6 @@ from tqdm import tqdm
 from scipy import sparse
 
 from metrics.bootstrap import get_bootstrap_adata
-from utils.accessors import subset_hvg
 from utils.io import read_anndata, write_zarr_linked
 from utils.processing import sc
 from utils.misc import dask_compute
@@ -27,13 +26,12 @@ def bins_by_quantiles(matrix: [np.array, np.matrix], n_quantiles: int):
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
-batch_key = snakemake.wildcards.batch
-gene_set_name = snakemake.wildcards.gene_set
 
 params = snakemake.params
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 raw_counts_layer = params.get('raw_counts_layer', unintegrated_layer)
-gene_set = params['gene_set']
+gene_sets = params['gene_sets']
+n_random_permutations = params.get('n_permutations', 100)
 n_quantiles = params.get('n_quantiles', 2)
 var_key = 'metrics_features'
 
@@ -61,20 +59,19 @@ adata.layers['raw_counts'] = read_anndata(
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
 
-# filter genes of interest to genes in dataset
-gene_set = [g for g in gene_set if g in adata.var_names]
+# filter all gene sets to genes in adata
+for set_name, gene_list in gene_sets.items():
+    gene_sets[set_name] = [g for g in gene_list if g in adata.var_names]
 
-if len(gene_set) == 0:
+# get all genes from gene sets
+genes = list(set().union(*gene_sets.values()))
+
+if len(genes) == 0:
     logging.warning('No genes of interest found in dataset')
-    adata.obs[gene_set_name] = np.nan
-    adata.obsm['random_gene_scores'] = np.empty((adata.n_obs, 0))
-    adata.obsm['binned_expression'] = sparse.csr_matrix((adata.n_obs, 0))
-    
     write_zarr_linked(
         adata,
         in_dir=input_file,
         out_dir=output_file,
-        files_to_keep=files_to_keep,
     )
     exit(0)
 
@@ -83,38 +80,49 @@ if len(gene_set) == 0:
 n_subset = int(4e6)
 if adata.n_obs > n_subset:
     adata.obsp = read_anndata(input_file, obs='obs', obsp='obsp').obsp
-    files_to_keep.extend(['obsp', 'X', 'layers'])
+    files_to_keep.extend(['obsp'])
     adata = get_bootstrap_adata(adata, size=n_subset)
 
 # subset to HVGs (used for control genes) + genes of interest
-adata.var.loc[adata.var_names.isin(gene_set), var_key] = True
+adata.var.loc[adata.var_names.isin(genes), var_key] = True
 adata = adata[:, adata.var[var_key]].copy()
 adata = dask_compute(adata, layers='X')
 
-logging.info(f'Gene score for gene set with {len(gene_set)} genes...')
-sc.tl.score_genes(
-    adata,
-    gene_list=gene_set,
-    score_name=gene_set_name
-)
-
-logging.info('Add random gene scores...')
-scores = []
-n_samples = 5
-for _ in tqdm(range(n_samples)):
-    random_genes = np.random.choice(
-        adata.var_names,
-        size=len(gene_set),
-        replace=False
+for set_name, gene_list in gene_sets.items():
+    if len(gene_list) == 0:
+        continue
+    
+    logging.info(f'Gene score for gene set with {len(gene_list)} genes...')
+    sc.tl.score_genes(
+        adata,
+        gene_list=gene_list,
+        score_name=f'gene_score:{set_name}'
     )
-    sc.tl.score_genes(adata, gene_list=random_genes)
-    scores.append(adata.obs['score'].values)
-adata.obsm['random_gene_scores'] = np.array(scores).T
-del adata.obs['score']
+
+    logging.info('Add random gene scores...')
+    n_genes = len(gene_list)
+    random_key = f'random_gene_scores:{n_genes}'
+    if random_key in adata.obsm.keys():
+        logging.info(f'Random gene scores for {n_genes} genes already computed, skip')
+        continue
+    
+    scores = []
+    for _ in tqdm(range(n_random_permutations)):
+        sc.tl.score_genes(
+            adata,
+            gene_list=np.random.choice(
+                adata.var_names,
+                size=n_genes,
+                replace=False
+            )
+        )
+        scores.append(adata.obs['score'].values)
+    del adata.obs['score']
+    adata.obsm[random_key] = np.array(scores).T
 
 logging.info('Bin expression...')
-adata = dask_compute(adata[:, gene_set].copy(), layers='raw_counts')
-adata.obsm[f'binned_expression'] = bins_by_quantiles(
+adata = dask_compute(adata[:, genes].copy(), layers='raw_counts')
+adata.X = bins_by_quantiles(
     adata.layers['raw_counts'].toarray(),
     n_quantiles=n_quantiles,
 )
@@ -125,5 +133,5 @@ write_zarr_linked(
     adata,
     in_dir=input_file,
     out_dir=output_file,
-    files_to_keep=files_to_keep,
+    files_to_keep=files_to_keep+['X', 'var', 'varm', 'varp', 'layers'],
 )

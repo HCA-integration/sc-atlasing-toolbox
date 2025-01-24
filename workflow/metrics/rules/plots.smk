@@ -136,7 +136,7 @@ rule funkyheatmap:
         id_vars=['dataset', 'output_type', 'batch', 'label'], # TODO: 'hyperparams'
         variable_var='metric',
         value_var='score',
-        weight_batch=0.4,
+        weight_batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'weight_batch', default=0.4),
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'), #'https://ftp.fau.de/cran/'
     conda:
@@ -160,7 +160,7 @@ use rule funkyheatmap as funkyheatmap_per_dataset with:
         id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
-        weight_batch=0.4,
+        weight_batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'weight_batch', default=0.4),
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
     group:
@@ -178,7 +178,7 @@ use rule funkyheatmap as funkyheatmap_per_batch with:
         id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
-        weight_batch=0.4,
+        weight_batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'weight_batch', default=0.4),
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
     group:
@@ -196,7 +196,7 @@ use rule funkyheatmap as funkyheatmap_per_label with:
         id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
-        weight_batch=0.4,
+        weight_batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'weight_batch', default=0.4),
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
     group:
@@ -214,7 +214,7 @@ use rule funkyheatmap as funkyheatmap_per_file with:
         id_vars=['dataset', 'output_type', 'batch', 'label'],
         variable_var='metric',
         value_var='score',
-        weight_batch=0.4,
+        weight_batch=lambda wildcards: mcfg.get_from_parameters(wildcards, 'weight_batch', default=0.4),
         n_top=50,
         cran_url=config.get('cran_url', 'https://cloud.r-project.org'),
     group:

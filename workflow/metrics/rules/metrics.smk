@@ -42,9 +42,9 @@ rule run:
     input:
         zarr=get_metric_input,
     output:
-        metric=mcfg.out_dir / paramspace.wildcard_pattern / 'metric={metric}--covariate={covariate}--gene_set={gene_set}.tsv'
+        metric=mcfg.out_dir / paramspace.wildcard_pattern / 'metric={metric}.tsv'
     benchmark:
-        mcfg.out_dir / paramspace.wildcard_pattern / '.benchmark' / 'metric={metric}--covariate={covariate}--gene_set={gene_set}.tsv'
+        mcfg.out_dir / paramspace.wildcard_pattern / '.benchmark' / 'metric={metric}.tsv'
     params:
         metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type', default=MetricNotDefinedError(wildcards)),
         output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', default=MetricNotDefinedError(wildcards)),
@@ -52,6 +52,9 @@ rule run:
         comparison=lambda wildcards: mcfg.get_from_parameters(wildcards, 'comparison', default=False),
         cluster_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'cluster_algorithm', default='leiden'),
         use_covariate=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_covariate', default=False),
+        use_gene_set=lambda wildcards: mcfg.get_from_parameters(wildcards, 'use_gene_set', default=False),
+        covariates=lambda wildcards: mcfg.get_from_parameters(wildcards, 'covariate', default=[]),
+        gene_sets=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset),
         env=lambda wildcards: mcfg.get_from_parameters(wildcards, 'env', check_null=True, default=MetricNotDefinedError(wildcards)),
     conda:
         lambda wildcards, params: get_env(config, params.env)

@@ -166,70 +166,73 @@ def pcr(adata, output_type, covariate, **kwargs):
 def pcr_genes(adata, output_type, gene_set, **kwargs):
     import scib
     
+    adata = dask_compute(adata)
+    
     metric = "pcr_genes"
-    metric_names = [
-        f'{metric}:{gene_set}',
-        f'{metric}_c:{gene_set}',
-        f'{metric}_b:{gene_set}',
-    ]
+    metric_names = []
+    scores = []
     
     if output_type == 'knn':
-        return [np.nan] * len(metric_names), metric_names
+        return scores, metric_names
     
-    # assertions
     assert_pca(adata, check_varm=False)
-    assert gene_set in adata.obs.columns, f'Gene score for "{gene_set}" not found in adata.obs'
-    assert (
-        'random_gene_scores' in adata.obsm.keys(),
-        f'No random gene scores found in adata.obsm\n{adata.obsm.keys()}'
-    )
-    assert (
-        'binned_expression' in adata.obsm.keys(),
-        f'No binned gene expression found in adata.obsm\n{adata.obsm.keys()}'
-    )
     
-    # don't compute metric if no genes were scored
-    if adata.obsm['random_gene_scores'].shape[1] == 0:
-        return [np.nan] * len(metric_names), metric_names
+    for set_name, gene_list in gene_set.items():
+        # filter for existing genes
+        gene_list = [g for g in gene_list if g in adata.var_names]
+        
+        gene_score_name = f'gene_score:{set_name}'
+        random_gene_score_name = f'random_gene_scores:{len(gene_list)}'
+        
+        if gene_score_name not in adata.obs.keys():
+            continue
     
-    # direct pcr score
-    score = scib.metrics.pcr(
-        adata,
-        covariate=gene_set,
-        recompute_pca=False,
-        linreg_method='numpy',
-    )
-    
-    # random gene score
-    _random_gene_scores = []
-    for gene in adata.obsm['random_gene_scores'].T:
-        adata.obs['random_gene'] = gene
-        s = scib.metrics.pcr(
+        # direct pcr score
+        score = scib.metrics.pcr(
             adata,
-            covariate='random_gene',
+            covariate=gene_score_name,
             recompute_pca=False,
             linreg_method='numpy',
         )
-        _random_gene_scores.append(s)
-    random_gene_score = np.mean(_random_gene_scores)
     
-    # binned gene score
-    _binned_gene_scores = []
-    for gene in adata.obsm['binned_expression'].T:
-        adata.obs['binned_gene'] = gene
-        s = scib.metrics.pcr(
-            adata,
-            covariate='binned_gene',
-            recompute_pca=False,
-            linreg_method='numpy',
-        )
-        _binned_gene_scores.append(s)
-    binned_gene_score = np.mean(_binned_gene_scores)
+        # random gene score
+        _random_gene_scores = []
+        for gene in adata.obsm[random_gene_score_name].T:
+            adata.obs[random_gene_score_name] = gene
+            s = scib.metrics.pcr(
+                adata,
+                covariate=random_gene_score_name,
+                recompute_pca=False,
+                linreg_method='numpy',
+            )
+            _random_gene_scores.append(s)
+        random_gene_score = np.mean(_random_gene_scores)
+        
+        # binned gene score
+        _binned_gene_scores = []
+        for gene in gene_list:
+            adata.obs['binned_gene'] = adata[:, adata.var_names == gene].X.toarray()
+            s = scib.metrics.pcr(
+                adata,
+                covariate='binned_gene',
+                recompute_pca=False,
+                linreg_method='numpy',
+            )
+            _binned_gene_scores.append(s)
+        binned_gene_score = np.mean(_binned_gene_scores)
     
-    scores = [
-        score,
-        max(score - random_gene_score, 0),
-        binned_gene_score
-    ]
+        scores.extend([
+            score,
+            score - random_gene_score,
+            binned_gene_score
+        ])
+        
+        metric_names.extend([
+            f'{metric}:{set_name}',
+            f'{metric}_c:{set_name}',
+            f'{metric}_b:{set_name}',
+        ])
+    
+    scores = [max(s, 0) for s in scores]  # ensure score is positive
     
     return scores, metric_names

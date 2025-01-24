@@ -6,6 +6,7 @@ logger.setLevel(logging.INFO)
 try:
     from sklearnex import patch_sklearn
     patch_sklearn()
+    logging.getLogger("sklearnex").setLevel(logging.WARNING)
 except ImportError:
     logger.info('no hardware acceleration for sklearn')
 
@@ -39,8 +40,6 @@ file_id = wildcards.file_id
 batch_key = wildcards.batch
 label_key = wildcards.label
 metric = wildcards.metric
-covariate = wildcards.covariate
-gene_set = wildcards.gene_set
 
 metric_type = params.get('metric_type')
 assert metric_type in ['batch_correction', 'bio_conservation'], f'Unknown metric_type: {metric_type}'
@@ -49,6 +48,10 @@ input_type = params.get('input_type')
 comparison = params.get('comparison', False)
 cluster_key = params.get('cluster_key', 'leiden')
 use_covariate = params.get('use_covariate', False)
+use_gene_set = params.get('use_gene_set', False)
+covariates = params.get('covariates', [])
+gene_sets = params.get('gene_sets', {})
+
 metric_function = metric_map[metric]
 
 uns = read_anndata(input_file, uns='uns').uns
@@ -75,12 +78,12 @@ if output_type not in allowed_output_types:
     exit(0)
 
 kwargs = {'obs': 'obs', 'uns': 'uns'}
-if input_type == 'knn':
-    kwargs |= {'obsp': 'obsp', 'obsm': 'obsm'}
-if input_type == 'embed':
+if 'knn' in input_type:
+    kwargs |= {'obsp': 'obsp'}
+if 'embed' in input_type:
     kwargs |= {'obsm': 'obsm'}
-if input_type == 'full':
-    kwargs |= {'X': 'X', 'obsm': 'obsm', 'var': 'var'}
+if 'full' in input_type:
+    kwargs |= {'X': 'X', 'var': 'var', 'dask': True, 'backed': True}
 
 logger.info(f'Read {input_file} of input_type {input_type}...')
 adata = read_anndata(input_file, **kwargs)
@@ -107,20 +110,16 @@ if comparison:
 
 
 # set default covariates
-covariates = []
-if use_covariate:
-    if covariate is None or covariate == 'None':
-        covariates = [label_key, batch_key]
-    else:
-        covariates = [covariate]
+if use_covariate and len(covariates) == 0:
+    covariates = [label_key, batch_key]
 
-gene_scores = []
-if gene_set is not None and gene_set != 'None':
-    gene_scores = [gene_set]
+gene_score_columns = []
+if use_gene_set:
+    gene_score_columns = [x for x in adata.obs.columns if x.startswith('gene_score:')]
 
 # subset obs columns for metrics
 cluster_columns = [col for col in adata.obs.columns if col.startswith(cluster_key) and col.endswith('_1')]
-columns = [batch_key, label_key] + covariates + cluster_columns + gene_scores
+columns = [batch_key, label_key] + covariates + cluster_columns + gene_score_columns
 columns = list(set(columns))  # make unique
 adata.obs = adata.obs[columns].copy()
 adata.obs.rename(columns=lambda x: replace_last(x, '_1', ''), inplace=True)
@@ -137,7 +136,7 @@ scores = metric_function(
     adata_raw=adata_raw,
     cluster_key=cluster_key,
     covariate=covariates,
-    gene_set=gene_set,
+    gene_set=gene_sets,
     n_threads=threads,
 )
 

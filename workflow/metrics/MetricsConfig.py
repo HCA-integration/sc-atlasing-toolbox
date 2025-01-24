@@ -75,8 +75,9 @@ class MetricsConfig(ModuleConfig):
         # covariates only used for metrics that require it
         wildcards_df.loc[~wildcards_df[f'use_{config_key}'], config_key] = None
 
-        # explode covariates so that each metric setting has a single covariate
-        wildcards_df = wildcards_df.explode(config_key, ignore_index=True)
+        # # explode covariates so that each metric setting has a single covariate
+        # wildcards_df = wildcards_df.explode(config_key, ignore_index=True)
+        
         wildcards_df[config_key] = wildcards_df[config_key].fillna('None')
 
         return wildcards_df

@@ -56,7 +56,7 @@ metrics_tab <- dcast(
   value.var = value_var,
   fun.aggregate = mean
 )
-print(metrics_tab)
+print(head(metrics_tab))
 
 # remove columns that are all empty
 metrics_tab <- metrics_tab[, .SD, .SDcols = colSums(is.na(metrics_tab)) < nrow(metrics_tab)]
@@ -69,7 +69,7 @@ if (nrow(scaled_metrics_tab) > 1) {
   scaled_metrics_tab <- as.data.table(scaled_metrics_tab)
 }
 cat('Scaled metrics table: \n')
-print(scaled_metrics_tab)
+print(head(scaled_metrics_tab))
 
 # calculate average score by group and 
 score_group_batch <- rowMeans(scaled_metrics_tab[, batch_metrics, with=FALSE], na.rm = TRUE)
@@ -98,9 +98,25 @@ fwrite(metrics_tab, output_tsv, sep='\t')
 metrics_tab <- metrics_tab[1:min(n_top, nrow(metrics_tab))]
 
 # add funkyheatmap data
-metrics_tab[, id := rownames(metrics_tab)]
-row_info <- data.table(id = metrics_tab$id, group = metrics_tab$output_type)
-# metrics_tab[, output_type := NULL]
+row_info <- NULL
+row_groups <- NULL
+if ('split_data_value' %in% colnames(metrics_tab)) {
+  ## hardcoded!!!
+  # set split_data_value NaN values to values from file_name column
+  metrics_tab[split_data_value == '', split_data_value := file_name]
+  metrics_tab[, split_data_value := gsub("_", "+", split_data_value)]
+  metrics_tab[split_data_value == 'B+plasma', split_data_value := 'B+Plasma']
+  metrics_tab <- metrics_tab[order(get('split_data_value'))]
+  metrics_tab[, id := rownames(metrics_tab)]
+  row_info <- data.table(id = metrics_tab$id, group = metrics_tab[, get('split_data_value')]) #  metrics_tab$output_type)
+  # metrics_tab[, output_type := NULL]
+  row_groups <- data.table(group=unique(row_info$group), Group=unique(row_info$group))
+  metrics_tab[, split_data_value := NULL]
+}
+
+# remove uninformative columns TODO: include this information in figure header
+columns <- names(metrics_tab)[sapply(metrics_tab, uniqueN) != 1]
+metrics_tab <- metrics_tab[, ..columns]
 
 #add column info metadata for plotting using funkyheatmap
 dt1 <- data.table(id=integration_setup, group="Integration Setup", geom='text', palette='setup')
@@ -117,7 +133,8 @@ print(column_info)
 n_top <- min(n_top, nrow(metrics_tab))
 g <- funky_heatmap(
   metrics_tab,
-  # row_info = row_info,
+  row_info = row_info,
+  row_groups = row_groups,
   column_info = column_info,
   column_groups = data.table(
     group = c("Integration Setup", "Overall", "Bio Conservation", "Batch Correction"),

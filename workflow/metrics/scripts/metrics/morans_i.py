@@ -4,9 +4,11 @@ import numpy as np
 from scipy import sparse
 import pandas as pd
 import itertools
+from tqdm import tqdm
 
+from utils.misc import dask_compute
 from .bootstrap import bootstrap_metric
-# from .utils_pipeline.processing import sc as rsc
+# from utils.processing import sc as rsc
 
 
 def _morans_i(adata, covariate, **kwargs) -> float:
@@ -81,7 +83,7 @@ def morans_i(adata, output_type, covariate, n_bootstraps=5, bootstrap_size=None,
     metrics_names = [f"M's I:{covariate}" for covariate in covariates]
     
     scores = []
-    for covariate in covariates:
+    for covariate in tqdm(covariates, desc='Compute Moran\'s I for covariates'):
         is_numeric = pd.api.types.is_numeric_dtype(adata.obs[covariate])
         morans_i_func = _morans_i if is_numeric else morans_i_categorical
         score = morans_i_func(adata, covariate)
@@ -98,36 +100,44 @@ def morans_i(adata, output_type, covariate, n_bootstraps=5, bootstrap_size=None,
 
 
 def morans_i_genes(adata, output_type, gene_set, **kwargs):
+    adata = dask_compute(adata, layers='X')
+    
     metric = "M's I genes"
-    metric_names = [
-        f'{metric}:{gene_set}',
-        f'{metric}_c:{gene_set}',
-        f'{metric}_b:{gene_set}',
-    ]
+    metric_names = []
+    scores = []
     
-    assert gene_set in adata.obs.columns, f'Gene score for "{gene_set}" not found in adata.obs'
-    assert (
-        'random_gene_scores' in adata.obsm.keys(),
-        f'No random gene scores found in adata.obsm\n{adata.obsm.keys()}'
-    )
-    assert (
-        'binned_expression' in adata.obsm.keys(),
-        f'No binned gene expression found in adata.obsm\n{adata.obsm.keys()}'
-    )
+    for set_name, gene_list in tqdm(gene_set.items(), desc='Compute Moran\'s I for gene sets'):
+        gene_list = [g for g in gene_list if g in adata.var_names]
+        
+        gene_score_name = f'gene_score:{set_name}'
+        random_gene_score_name = f'random_gene_scores:{len(gene_list)}'
+        
+        if gene_score_name not in adata.obs.keys():
+            continue
     
-    # don't compute metric if no genes were scored
-    if adata.obsm['random_gene_scores'].shape[1] == 0:
-        return [np.nan] * len(metric_names), metric_names
-    
-    score = _morans_i(adata, covariate=gene_set)
-    random_gene_score = np.nanmean(_morans_i(adata, covariate=adata.obsm['random_gene_scores']))
-    binned_gene_score = np.nanmean(_morans_i(adata, covariate=adata.obsm['binned_expression']))
-    
-    scores = [
-        score,
-        score - random_gene_score,
-        binned_gene_score
-    ]
+        score = _morans_i(adata, covariate=gene_score_name)
+        
+        random_gene_score = np.nanmean(
+            _morans_i(adata, covariate=adata.obsm[random_gene_score_name])
+        )
+        
+        binned_expression = adata[:, adata.var_names.isin(gene_list)].X
+        binned_gene_score = np.nanmean(
+            _morans_i(adata, covariate=binned_expression)
+        )
+        
+        scores.extend([
+            score,
+            score - random_gene_score,
+            binned_gene_score
+        ])
+        
+        metric_names.extend([
+            f'{metric}:{set_name}',
+            f'{metric}_c:{set_name}',
+            f'{metric}_b:{set_name}',
+        ])
+        
     scores = [max(s, 0) for s in scores]  # ensure score is positive
     
     return scores, metric_names

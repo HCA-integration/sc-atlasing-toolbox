@@ -68,11 +68,13 @@ rule score_genes:
     input:
         zarr=rules.prepare.output.zarr,
     output:
-        zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores' / '{gene_set}.zarr'),
+        zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores.zarr'),
     params:
         unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
         raw_counts_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', default=None),
-        gene_set=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset).get(wildcards.gene_set, []),
+        gene_sets=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset),
+        n_permutations=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=100),
+        n_quantiles=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_quantiles', default=5),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')
     resources:
@@ -84,13 +86,6 @@ rule score_genes:
         '../scripts/score_genes.py'
 
 
-def get_score_genes(mcfg, datasets=None):
-    return [
-        file for file in
-        mcfg.get_output_files(rules.score_genes.output, all_params=True)
-        if 'gene_scores/None.zarr' not in file
-    ]
-
 rule score_genes_all:
-    input: *get_score_genes(mcfg)
+    input: mcfg.get_output_files(rules.score_genes.output)
     localrule: True
