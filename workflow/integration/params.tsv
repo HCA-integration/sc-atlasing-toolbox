@@ -9,3 +9,4 @@ scanvi	embed	true	true	scvi-tools	gpu
 scvi	embed	false	true	scvi-tools	gpu	
 scpoli	embed	true	false	scarches	gpu	conditions,unknown_ct_names,labeled_indices,hidden_layer_sizes
 scgen	embed,full	true	false	scarches	gpu	hidden_layer_sizes
+sysvi	embed	false	true	sysvi	gpu
