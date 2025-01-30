@@ -54,6 +54,13 @@ SCVI_MODEL_PARAMS = [
 
 SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']
 
+SYSVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + [
+    'system_key',
+    'prior',
+    'n_prior_components',
+    'pseudoinputs_data_indices',
+]
+
 DRVI_MODEL_PARAMS = [
     'categorical_covariate_keys',
     'continuous_covariate_keys',
