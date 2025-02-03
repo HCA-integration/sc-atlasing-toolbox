@@ -42,7 +42,8 @@ rule batch_pcr:
     conda:
         get_env(config, 'scib')
     threads:
-        lambda wildcards: max(1, min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', check_query_keys=False)))
+        # lambda wildcards: max(1, min(10, mcfg.get_from_parameters(wildcards, 'n_permutations', check_query_keys=False)))
+        lambda wildcards: 50
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
