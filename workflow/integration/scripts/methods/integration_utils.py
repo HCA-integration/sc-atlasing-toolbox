@@ -54,6 +54,43 @@ SCVI_MODEL_PARAMS = [
 
 SCANVI_MODEL_PARAMS = SCVI_MODEL_PARAMS + ['linear_classifier']
 
+DRVI_MODEL_PARAMS = [
+    'categorical_covariate_keys',
+    'continuous_covariate_keys',
+    'n_latent',
+    'encoder_dims',
+    'decoder_dims',
+    'prior',
+    'prior_init_obs',
+    'categorical_covariates',
+    # DRVIModule VAE parameters
+    'n_input',
+    'n_split_latent',
+    'split_aggregation',
+    'split_method',
+    'decoder_reuse_weights',
+    'n_continuous_cov',
+    'n_cats_per_cov',
+    'encode_covariates',
+    'deeply_inject_covariates',
+    'categorical_covariate_dims',
+    'covariate_modeling_strategy',
+    'use_batch_norm',
+    'affine_batch_norm',
+    'use_layer_norm',
+    'input_dropout_rate',
+    'encoder_dropout_rate',
+    'decoder_dropout_rate',
+    'gene_likelihood',
+    'prior',
+    # 'prior_init_dataloader',
+    'var_activation',
+    # 'encoder_layer_factory',
+    # 'decoder_layer_factory',
+    'extra_encoder_kwargs',
+    'extra_decoder_kwargs',
+]
+
 
 def ensure_sparse(adata):
     from scipy.sparse import csr_matrix, issparse

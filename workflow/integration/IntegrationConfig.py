@@ -4,7 +4,6 @@ import pandas as pd
 from snakemake.rules import Rule
 
 from utils.ModuleConfig import ModuleConfig
-from utils.WildcardParameters import WildcardParameters
 from utils.config import _get_or_default_from_config
 from utils.misc import expand_dict_and_serialize, unique_dataframe
 
