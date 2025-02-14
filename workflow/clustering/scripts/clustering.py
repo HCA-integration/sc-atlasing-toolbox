@@ -3,9 +3,20 @@ warnings.filterwarnings("ignore")
 import logging
 logging.basicConfig(level=logging.INFO)
 import numpy as np
+import scanpy as sc
+USE_GPU = False
+try:
+    import subprocess
+    assert subprocess.run('nvidia-smi', shell=True, stdout=subprocess.DEVNULL).returncode == 0
+    from rapids_singlecell.tl import leiden, louvain
+    from rapids_singlecell.pp import neighbors
+    USE_GPU = True
+except Exception as e:
+    logging.info(f'Importing rapids failed, using scanpy implementation\n{e}')
+    from scanpy.tools import leiden, louvain
+    from scanpy.preprocessing import neighbors
 
-from utils.io import read_anndata, write_zarr_linked, get_file_reader
-from utils.misc import dask_compute
+from utils.io import read_anndata, write_zarr_linked, get_file_reader, read_elem
 
 
 def check_and_set_neighbors_key(adata, neighbors_key):
@@ -37,19 +48,6 @@ def apply_clustering(
     :param n_cell_cpu: number of cells to use CPU implementation
     :param max_clusters: maximum number of clusters to determine if number of clusters are correct
     """
-    import scanpy as sc
-    USE_GPU = False
-    try:
-        import subprocess
-        assert subprocess.run('nvidia-smi', shell=True, stdout=subprocess.DEVNULL).returncode == 0
-        from rapids_singlecell.tl import leiden, louvain
-        from rapids_singlecell.pp import neighbors
-        USE_GPU = True
-    except Exception as e:
-        logging.info(f'Error importing rapids found...\n{e}')
-        from scanpy.tools import leiden, louvain
-        from scanpy.preprocessing import neighbors
-    
     algorithm_map = {
         'louvain': louvain,
         'leiden': leiden,
@@ -68,7 +66,6 @@ def apply_clustering(
         kwargs |= cpu_kwargs
     
     if recompute_neighbors:
-        logging.info(f'Compute neighbors for {neighbors_args}...')
         neighbors(adata, **neighbors_args)
     
     if USE_GPU:
@@ -79,7 +76,7 @@ def apply_clustering(
         # switch to CPU implementation for smaller numbers of cells
         algorithm_map = alt_algorithm_map
         
-    logging.info(f'{algorithm} clustering with {kwargs} for {adata.n_obs} cells...')
+    # logging.info(f'{algorithm} clustering with {kwargs} for {adata.n_obs} cells...')
     cluster_func = algorithm_map.get(algorithm, KeyError(f'Unknown clustering algorithm: {algorithm}'))
     cluster_func(adata, **kwargs)
     
@@ -117,27 +114,35 @@ cpu_kwargs = dict(flavor='igraph')
 if algorithm == 'leiden':
     cpu_kwargs |= dict(n_iterations=2)
 
+# check if clusters have already been computed
 read_func, _ = get_file_reader(input_file)
-with read_func(input_file, 'r') as f:
-    cluster_key_exists = cluster_key in f['obs'].keys()
+f = read_func(input_file, 'r')
+cluster_key_exists = cluster_key in f['obs'].keys()
+
 
 if cluster_key_exists and not overwrite:
     logging.info(f'Read anndata file {input_file} and skip clustering...')
     adata = read_anndata(input_file, obs='obs')
 else:
-    read_kwargs = dict(obs='obs', obsm='obsm')
+    read_kwargs = dict(obs='obs')
     
-    if level <= 1:
+    if level <= 1:        
         logging.info(f'Read anndata file {input_file}...')
-        if not input_file.endswith('.h5ad'):
-            read_kwargs.pop('obsm', None) # not needed, since neighobrs are already computed
-        adata = read_anndata(input_file, uns='uns', obsp='obsp', **read_kwargs)
+        if input_file.endswith('.h5ad'):
+            read_kwargs['obsm'] = 'obsm'  # preserve obsm for later hierarchical clustering
+        adata = read_anndata(input_file, uns='uns', **read_kwargs)
         
         # select neighbors
         neighbors_key = snakemake.params.get('neighbors_key', 'neighbors')
-        logging.info(f'Select neighbors for "{neighbors_key}"...')
-        check_and_set_neighbors_key(adata, neighbors_key)
-                
+        neighbors = adata.uns.get(neighbors_key, {})
+        conn_key = neighbors.get('connectivities_key', 'connectivities')
+        dist_key = neighbors.get('distances_key', 'distances')
+        adata.obsp = {
+            'connectivities': read_elem(f['obsp'][conn_key]),
+            'distances': read_elem(f['obsp'][dist_key]),
+        }
+        
+        logging.info(f'{algorithm} clustering with {kwargs} for {adata.n_obs} cells...')
         adata = apply_clustering(
             adata,
             cpu_kwargs=cpu_kwargs,
@@ -145,11 +150,9 @@ else:
             **kwargs,
         )
     else:
-        from concurrent.futures import ProcessPoolExecutor
-        from concurrent.futures import as_completed
-        
-        logging.info(f'Read anndata file {input_file}...')
-        adata = read_anndata(input_file, dask=True, backed=True, **read_kwargs)
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from joblib import Parallel, delayed
+        from tqdm import tqdm
         
         def cluster_subset(
             adata,
@@ -159,8 +162,8 @@ else:
             prev_cluster_value,
             neighbors_args, # TODO: custom parameters
         ):
-            logging.info(f'Subsetting to {prev_cluster_key}={prev_cluster_value}...')
-            sub_adata = dask_compute(adata[adata.obs[prev_cluster_key] == prev_cluster_value].copy())
+            # logging.info(f'Subsetting to {prev_cluster_key}={prev_cluster_value}...')
+            sub_adata = adata[adata.obs[prev_cluster_key] == prev_cluster_value].copy()
             
             if sub_adata.n_obs < 2 * neighbors_args.get('n_neighbors', 15):
                 prev_cluster_clean = sub_adata.obs[prev_cluster_key].astype(str).apply(lambda x: x.split('_')[-1])
@@ -176,27 +179,41 @@ else:
             )
             return sub_adata.obs[[prev_cluster_key, key_added]].agg('_'.join, axis=1)
         
+        neighbors_args = snakemake.params.get('neighbors_args', {})
+        use_rep = neighbors_args.get('use_rep', 'X_pca')
+        neighbors_args['use_rep'] = use_rep
+        
+        # check if use_rep is present in obsm
+        if use_rep not in f['obsm'].keys():
+            params = read_elem(f['uns']['neighbors']['params'])
+            if 'use_rep' not in params:
+                raise ValueError(f'use_rep not defined in neighbors_args for {params}, consider recomputing neighbors')
+            use_rep = params['use_rep']
+            neighbors_args['use_rep'] = use_rep
+            assert use_rep in f['obsm'].keys(), f'obsm key {use_rep} not found in {input_file}'
+        
+        adata = read_anndata(input_file, **read_kwargs)
+        adata.obsm[use_rep] = read_elem(f['obsm'][use_rep])
         
         prev_cluster_key = f'{algorithm}_{resolution}_{level-1}'
-        neighbors_args = dict(use_rep='X_pca') | snakemake.params.get('neighbors_args', {})
+        cluster_labels = adata.obs[prev_cluster_key].unique()
         
-        logging.info(f'Cluster {cluster_key} with {threads} threads...')
-        with ProcessPoolExecutor(threads) as executor:
-            futures = [
-                executor.submit(
-                    cluster_subset,
-                    adata,
-                    prev_cluster_key=prev_cluster_key,
-                    prev_cluster_value=prev_cluster,
-                    neighbors_args=neighbors_args,
-                    **kwargs
-                )
-                for prev_cluster in adata.obs[prev_cluster_key].unique()
-            ]
+        logging.info(f'Will recompute neighbors with {neighbors_args}')
+        logging.info(f'{algorithm} clustering with {kwargs} for clusters from {cluster_key}...')
+            
+        results = Parallel(n_jobs=threads)(
+            delayed(cluster_subset)(
+                adata,
+                prev_cluster_key=prev_cluster_key,
+                prev_cluster_value=prev_cluster,
+                neighbors_args=neighbors_args,
+                **kwargs
+            )
+            for prev_cluster in tqdm(cluster_labels, desc=f'Cluster with {threads} threads', miniters=1)
+        )
 
-            for future in as_completed(futures):
-                clusters = future.result()
-                adata.obs.loc[clusters.index, cluster_key] = clusters
+        for clusters in results:
+            adata.obs.loc[clusters.index, cluster_key] = clusters
 
 
 logging.info(f'Write {cluster_key} to {output_file}...')
