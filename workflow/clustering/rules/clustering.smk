@@ -47,8 +47,10 @@ use rule cluster from clustering as clustering_cluster with:
         clustering_args=lambda wildcards: mcfg.get_from_parameters(wildcards, 'kwargs', default={}),
     threads:
         lambda wildcards: 4 * int(wildcards.level) - 3
+    conda:
+        'scanpy'
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
         gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),

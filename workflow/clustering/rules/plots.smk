@@ -13,7 +13,8 @@ use rule plots from preprocessing as clustering_plot_umap with:
         plots=directory(mcfg.image_dir / 'dataset~{dataset}' / 'file_id~{file_id}' / 'umap')
     params:
         basis='X_umap',
-        color=lambda wildcards: mcfg.get_from_parameters(wildcards, 'umap_colors', default=[])
+        color=lambda wildcards: mcfg.get_from_parameters(wildcards, 'umap_colors', default=[]),
+        # outlier_factor=10,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
@@ -28,6 +29,7 @@ use rule plots from preprocessing as clustering_plot_umap_clusters with:
         basis='X_umap',
         color=get_cluster_keys,
         legend_loc='on data',
+        # outlier_factor=10,
     resources:
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
