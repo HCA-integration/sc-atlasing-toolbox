@@ -35,6 +35,15 @@ use rule plots from preprocessing as clustering_plot_umap_clusters with:
         qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
 
 
+def get_mem_mb(attempt, profile):
+    mem_mb = mcfg.get_resource(profile=profile, resource_key='mem_mb', attempt=attempt)
+    try:
+        mem_mb = int(mem_mb)
+    except ValueError:
+        return mem_mb
+    return min(100_000, int(mem_mb // 5))
+
+
 use rule plot_evaluation from clustering as clustering_plot_evaluation with:
     input:
         zarr=rules.clustering_merge.output.zarr,
@@ -48,8 +57,10 @@ use rule plot_evaluation from clustering as clustering_plot_evaluation with:
     threads:
         lambda wildcards: max(1, min(10, len(mcfg.get_from_parameters(wildcards, 'umap_colors', default=[]))))
     resources:
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
-
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
+        mem_mb=lambda w, attempt: get_mem_mb(attempt=attempt, profile='cpu'),
 
 rule plots_all:
     input:
