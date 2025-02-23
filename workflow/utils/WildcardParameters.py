@@ -1,4 +1,6 @@
+import logging
 from collections.abc import Iterable
+from collections import defaultdict
 from pprint import pformat, pprint
 import numpy as np
 import pandas as pd
@@ -7,6 +9,9 @@ from snakemake.io import Wildcards
 
 from .config import _get_or_default_from_config
 from .misc import unique_dataframe
+
+logger = logging.getLogger('WildcardParameters')
+logger.setLevel(logging.WARNING)
 
 
 class WildcardParameters:
@@ -174,7 +179,6 @@ class WildcardParameters:
                         defaults=defaults,
                         key=self.module_name,
                         value=param,
-                        update=True,
                         warn=warn,
                     )
                     for param in config_params
@@ -189,7 +193,22 @@ class WildcardParameters:
         # rename columns
         if rename_config_params is None:
             rename_config_params = {}
+        rename_config_params = {k: v for k, v in rename_config_params.items() if k in df.columns}
         df = df.rename(columns=rename_config_params)
+        
+        # deal with duplicate columns after renaming columns
+        duplicated_columns = df.columns[df.columns.duplicated(keep=False)].unique().tolist()
+        if len(duplicated_columns) > 0:
+            reverse_map = defaultdict(list)
+            for k, v in rename_config_params.items():
+                if v not in duplicated_columns:
+                    continue
+                reverse_map[v].append(k)
+            logger.warn(f'WARNING: Duplicated columns: {dict(reverse_map)}')
+        for col in duplicated_columns:
+            merged_col = df[duplicated_columns].bfill(axis=1).iloc[:, 0]
+            del df[col]
+            df[col] = merged_col
         
         # explode columns
         if explode_by is not None:
@@ -343,7 +362,7 @@ class WildcardParameters:
         parameter_key: str,
         wildcards_sub: [list, None] = None,
         exclude: [list, str] = None,
-        check_query_keys: bool = True,
+        check_query_keys: bool = False,
         check_null: bool = False,
         default: [str, None] = None,
         single_value: bool = True,
@@ -367,14 +386,16 @@ class WildcardParameters:
             wildcards_sub = [w for w in wildcards_sub if w not in exclude]
         
         assert parameter_key in self.wildcards_df.columns, f'"{parameter_key}" not in wildcards_df.columns'
-        if check_query_keys:
+        if check_query_keys:  # redundant?
             for key in query_dict:
                 assert key in wildcards_sub, f'Query key "{key}" is not in wildcards_sub'
+
+        wildcards_sub = list(set(wildcards_sub + [parameter_key]))
+        query_dict = {k: v for k, v in query_dict.items() if k in wildcards_sub}
         
         try:
-            wildcards_sub = list(set(wildcards_sub + [parameter_key]))
             params_sub = self.subset_by_query(
-                query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                query_dict=query_dict,
                 columns=[parameter_key],
                 verbose=verbose,
             )
@@ -403,7 +424,7 @@ class WildcardParameters:
         if is_null:
             if check_null:
                 df = self.subset_by_query(
-                    query_dict={k: v for k, v in query_dict.items() if k in wildcards_sub},
+                    query_dict=query_dict,
                     columns=[parameter_key],
                     verbose=True,
                 )

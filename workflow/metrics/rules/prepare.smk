@@ -4,7 +4,7 @@ rule prepare:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'prepare.zarr'),
     params:
-        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        # labels=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', single_value=False),
         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
         unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
         corrected_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'corrected', default='X'),
@@ -26,15 +26,19 @@ rule prepare_all:
     localrule: True
 
 
+# Clustering for cluster-based metrics
+
 use rule cluster from clustering as metrics_cluster with:
     input:
         zarr=rules.prepare.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'cluster_resolutions' / '{algorithm}--{resolution}--{level}.zarr'),
+    conda:
+        get_env(config, 'scanpy') # force clustering on CPU
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
         gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
 
 
@@ -55,4 +59,33 @@ use rule merge from clustering as metrics_cluster_collect with:
 rule cluster_all:
     input:
         mcfg.get_output_files(rules.metrics_cluster_collect.output)
+    localrule: True
+
+
+# Gene scoring for gene-based metrics
+
+rule score_genes:
+    input:
+        zarr=rules.prepare.output.zarr,
+    output:
+        zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'gene_scores.zarr'),
+    params:
+        unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
+        raw_counts_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', default=None),
+        gene_sets=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset),
+        n_permutations=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=20),
+        n_quantiles=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_quantiles', default=5),
+    conda:
+        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+    resources:
+        partition=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='qos',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='mem_mb',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='gpu',resource_key='gpu',attempt=attempt),
+    script:
+        '../scripts/score_genes.py'
+
+
+rule score_genes_all:
+    input: mcfg.get_output_files(rules.score_genes.output)
     localrule: True

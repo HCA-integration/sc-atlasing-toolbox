@@ -1,4 +1,4 @@
-from pprint import pprint
+from pprint import pprint, pformat
 from typing import Union
 from pathlib import Path
 import pandas as pd
@@ -71,7 +71,7 @@ class ModuleConfig:
             wildcard_names = []
 
         if isinstance(parameters, str):
-            parameters = pd.read_table(parameters)
+            parameters = pd.read_table(parameters, comment='#')
 
         self.parameters = WildcardParameters(
             module_name=module_name,
@@ -111,12 +111,11 @@ class ModuleConfig:
             value=self.module_name,
             return_missing={},
             warn=warn,
-            update=True,
         )
         
-        # for TSV input make sure integration methods have the proper types TODO: deprecate
-        if self.module_name == 'integration' and isinstance(entry, list):
-            entry = {k: self.config['defaults'][self.module_name][k] for k in entry}
+        # # for TSV input make sure integration methods have the proper types TODO: deprecate
+        # if self.module_name == 'integration' and isinstance(entry, list):
+        #     entry = {k: self.config['defaults'][self.module_name][k] for k in entry}
         
         # set entry in config
         self.config['DATASETS'][dataset][self.module_name] = entry
@@ -218,6 +217,7 @@ class ModuleConfig:
     def get_output_files(
         self,
         pattern: [str, Rule] = None,
+        extra_wildcards: dict = None,
         allow_missing: bool=False,
         as_dict: bool=False,
         as_records: bool=False,
@@ -232,15 +232,21 @@ class ModuleConfig:
         """
         if pattern is None:
             pattern = self.default_target
+        
+        if extra_wildcards is None:
+            extra_wildcards = {}
+        
         kwargs['verbose'] = verbose
-        wildcards = self.get_wildcards(**kwargs)
+        wildcards = self.get_wildcards(**kwargs) | extra_wildcards
+        
         if verbose:
             print(wildcards)
         try:
             targets = expand(pattern, zip, **wildcards, allow_missing=allow_missing)
         except WildcardError as e:
             raise ValueError(
-                f'WildcardError: {e}\nInvalid wildcard "{wildcards}" for pattern "{pattern}"'
+                f'WildcardError: {e}\nInvalid wildcard "{list(wildcards.keys())}" for pattern "{pattern}"'
+                f'\n{pformat(pd.DataFrame(wildcards))}'
             )
         
         def get_wildcard_string(wildcard_name, wildcard_value):
