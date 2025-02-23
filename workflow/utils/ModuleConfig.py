@@ -111,12 +111,11 @@ class ModuleConfig:
             value=self.module_name,
             return_missing={},
             warn=warn,
-            update=True,
         )
         
-        # for TSV input make sure integration methods have the proper types TODO: deprecate
-        if self.module_name == 'integration' and isinstance(entry, list):
-            entry = {k: self.config['defaults'][self.module_name][k] for k in entry}
+        # # for TSV input make sure integration methods have the proper types TODO: deprecate
+        # if self.module_name == 'integration' and isinstance(entry, list):
+        #     entry = {k: self.config['defaults'][self.module_name][k] for k in entry}
         
         # set entry in config
         self.config['DATASETS'][dataset][self.module_name] = entry

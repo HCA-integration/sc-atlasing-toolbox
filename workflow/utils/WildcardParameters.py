@@ -179,7 +179,6 @@ class WildcardParameters:
                         defaults=defaults,
                         key=self.module_name,
                         value=param,
-                        update=True,
                         warn=warn,
                     )
                     for param in config_params

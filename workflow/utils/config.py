@@ -33,13 +33,12 @@ def set_defaults(config, modules=None, warn=False):
                 value=module,
                 return_missing={},
                 warn=warn,
-                update=True,
             )
 
             # for TSV input make sure integration methods have the proper types
-            if module == 'integration' and isinstance(entry, list):
-                # get parameters from config
-                entry = {k: config['defaults'][module][k] for k in entry}
+            # if module == 'integration' and isinstance(entry, list):
+            #     # get parameters from config
+            #     entry = {k: config['defaults'][module][k] for k in entry}
 
             # set entry in config
             config['DATASETS'][dataset][module] = entry
@@ -89,7 +88,6 @@ def get_params_from_config(
                     defaults=defaults[module_name],
                     key=module_name,
                     value=param,
-                    update=True,
                     warn=warn,
                     )
                 for param in config_params
@@ -148,7 +146,6 @@ def _get_or_default_from_config(
     value,
     return_missing=None,
     warn=False,
-    update=False,
 ):
     """
     Get entry from config or return defaults if not present
@@ -159,7 +156,6 @@ def _get_or_default_from_config(
     :param value: points to entry within key
     :param return_missing: return value if no defaults for key, value
     :param warn: warn if no defaults are defined for key, value
-    :param update: wether to update existing entry with defaults, otherwise only return existing entry
     :return:
     """
     if key not in config.keys():
@@ -168,24 +164,18 @@ def _get_or_default_from_config(
         print(f'key: {key}, value: {value}')
         raise KeyError(f'Key "{key}" not found in config')
     
-    config_at_key = config.get(key)
-    if config_at_key is None:
-        config_at_key = {}
+    config_at_value = config.get(key, {})
+    if config_at_value is None:
+        config_at_value = {}
     
-    if value in config_at_key:
-        entry = config_at_key[value]
-        #if update and isinstance(entry, dict) and value in defaults and not any(isinstance(x, (dict, list)) for x in entry.values()):
-            # don't update lists or nested dictionaries
-        #    entry.update(defaults[value])
-        return entry
-
-    try:
-        assert value in defaults.keys()
-    except AssertionError:
-        if warn:
-            warnings.warn(f'No default defined for "{value}" for "{key}", returning None')
-        return return_missing
-    return defaults[value]
+    default_entry = defaults.get(value, return_missing)
+    entry = config_at_value.get(value, default_entry)
+    
+    # update if entry is a dict
+    if isinstance(entry, dict) and isinstance(default_entry, dict):
+        entry = default_entry | entry
+    
+    return entry
 
 
 def get_hyperparams(config, module_name='integration', methods_key='methods'):
@@ -331,7 +321,7 @@ def get_from_config(
     for q in query: # walk down query
         try:
             value = value[q]
-        except (AttributeError, KeyError):
+        except (AttributeError, KeyError, TypeError):
             if warn:
                 warnings.warn(f'key {q} not found in config for query {query}, returning default')
             return default
