@@ -49,12 +49,12 @@ adata = read_anndata(
     backed=True,
 )
 
-adata.layers['raw_counts'] = read_anndata(
-    input_file,
-    X=raw_counts_layer,
-    dask=True,
-    backed=True,
-).X
+# adata.layers['raw_counts'] = read_anndata(
+#     input_file,
+#     X=raw_counts_layer,
+#     dask=True,
+#     backed=True,
+# ).X
  
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
@@ -88,8 +88,10 @@ adata.var.loc[adata.var_names.isin(genes), var_key] = True
 adata = adata[:, adata.var[var_key]].copy()
 adata = dask_compute(adata, layers='X')
 
-for set_name, gene_list in gene_sets.items():
-    if len(gene_list) == 0:
+for set_name, gene_list in tqdm(gene_sets.items(), desc='Compute Gene scores', miniters=1):
+    n_genes = len(gene_list)
+    if n_genes == 0:
+        logging.info(f'Gene set with {n_genes} genes is too small, skip')
         continue
     
     logging.info(f'Gene score for gene set with {len(gene_list)} genes...')
@@ -100,14 +102,13 @@ for set_name, gene_list in gene_sets.items():
     )
 
     logging.info('Add random gene scores...')
-    n_genes = len(gene_list)
     random_key = f'random_gene_scores:{n_genes}'
     if random_key in adata.obsm.keys():
         logging.info(f'Random gene scores for {n_genes} genes already computed, skip')
         continue
     
     scores = []
-    for _ in tqdm(range(n_random_permutations)):
+    for _ in range(n_random_permutations):
         sc.tl.score_genes(
             adata,
             gene_list=np.random.choice(
@@ -118,14 +119,15 @@ for set_name, gene_list in gene_sets.items():
         )
         scores.append(adata.obs['score'].values)
     del adata.obs['score']
-    adata.obsm[random_key] = np.array(scores).T
+    adata.obsm[random_key] = sparse.csr_matrix(np.vstack(scores).T)
 
-logging.info('Bin expression...')
-adata = dask_compute(adata[:, genes].copy(), layers='raw_counts')
-adata.X = bins_by_quantiles(
-    adata.layers['raw_counts'].toarray(),
-    n_quantiles=n_quantiles,
-)
+# logging.info('Bin expression...')
+adata = adata[:, genes].copy()
+# adata = dask_compute(adata[:, genes].copy(), layers='raw_counts')
+# adata.X = bins_by_quantiles(
+#     adata.layers['raw_counts'].toarray(),
+#     n_quantiles=n_quantiles,
+# )
 
 logging.info(f'Write to {output_file}...')
 logging.info(adata.__str__())

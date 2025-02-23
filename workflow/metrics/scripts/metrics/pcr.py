@@ -195,42 +195,42 @@ def pcr_genes(adata, output_type, gene_set, **kwargs):
             linreg_method='numpy',
         )
     
-        # random gene score
-        _random_gene_scores = []
-        for gene in adata.obsm[random_gene_score_name].T:
-            adata.obs[random_gene_score_name] = gene
-            s = scib.metrics.pcr(
-                adata,
-                covariate=random_gene_score_name,
-                recompute_pca=False,
-                linreg_method='numpy',
-            )
-            _random_gene_scores.append(s)
-        random_gene_score = np.mean(_random_gene_scores)
+        # # random gene score
+        # _random_gene_scores = []
+        # for gene in adata.obsm[random_gene_score_name].T:
+        #     adata.obs[random_gene_score_name] = np.ravel(gene.toarray())
+        #     s = scib.metrics.pcr(
+        #         adata,
+        #         covariate=random_gene_score_name,
+        #         recompute_pca=False,
+        #         linreg_method='numpy',
+        #     )
+        #     _random_gene_scores.append(s)
+        # random_gene_score = np.mean(_random_gene_scores)
         
-        # binned gene score
-        _binned_gene_scores = []
-        for gene in gene_list:
-            adata.obs['binned_gene'] = adata[:, adata.var_names == gene].X.toarray()
-            s = scib.metrics.pcr(
-                adata,
-                covariate='binned_gene',
-                recompute_pca=False,
-                linreg_method='numpy',
-            )
-            _binned_gene_scores.append(s)
-        binned_gene_score = np.mean(_binned_gene_scores)
+        # # binned gene score
+        # _binned_gene_scores = []
+        # for gene in gene_list:
+        #     adata.obs['binned_gene'] = adata[:, adata.var_names == gene].X.toarray()
+        #     s = scib.metrics.pcr(
+        #         adata,
+        #         covariate='binned_gene',
+        #         recompute_pca=False,
+        #         linreg_method='numpy',
+        #     )
+        #     _binned_gene_scores.append(s)
+        # binned_gene_score = np.mean(_binned_gene_scores)
     
         scores.extend([
             score,
-            score - random_gene_score,
-            binned_gene_score
+            # score - random_gene_score,
+            # binned_gene_score
         ])
         
         metric_names.extend([
             f'{metric}:{set_name}',
-            f'{metric}_c:{set_name}',
-            f'{metric}_b:{set_name}',
+            # f'{metric}_c:{set_name}',
+            # f'{metric}_b:{set_name}',
         ])
     
     scores = [max(s, 0) for s in scores]  # ensure score is positive

@@ -115,11 +115,11 @@ def morans_i_genes(adata, output_type, gene_set, **kwargs):
         if gene_score_name not in adata.obs.keys():
             continue
     
-        score = _morans_i(adata, covariate=gene_score_name)
+        # score = _morans_i(adata, covariate=gene_score_name)
         
-        random_gene_score = np.nanmean(
-            _morans_i(adata, covariate=adata.obsm[random_gene_score_name])
-        )
+        # random_gene_score = np.nanmean(
+        #     _morans_i(adata, covariate=adata.obsm[random_gene_score_name])
+        # )
         
         binned_expression = adata[:, adata.var_names.isin(gene_list)].X
         binned_gene_score = np.nanmean(
@@ -127,15 +127,15 @@ def morans_i_genes(adata, output_type, gene_set, **kwargs):
         )
         
         scores.extend([
-            score,
-            score - random_gene_score,
+            # score,
+            # score - random_gene_score,
             binned_gene_score
         ])
         
         metric_names.extend([
-            f'{metric}:{set_name}',
-            f'{metric}_c:{set_name}',
-            f'{metric}_b:{set_name}',
+            # f'{metric}:{set_name}',
+            # f'{metric}_c:{set_name}',
+            f'{metric}_m:{set_name}',
         ])
         
     scores = [max(s, 0) for s in scores]  # ensure score is positive
