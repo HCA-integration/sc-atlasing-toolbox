@@ -4,7 +4,7 @@ rule prepare:
     output:
         zarr=directory(mcfg.out_dir / 'prepare' / paramspace.wildcard_pattern / 'prepare.zarr'),
     params:
-        label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label'),
+        # labels=lambda wildcards: mcfg.get_from_parameters(wildcards, 'label', single_value=False),
         neighbor_args=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, ['preprocessing', 'neighbors'], default={}),
         unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
         corrected_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'corrected', default='X'),
@@ -38,7 +38,7 @@ use rule cluster from clustering as metrics_cluster with:
     resources:
         partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
         qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
-        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
         gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
 
 
@@ -73,7 +73,7 @@ rule score_genes:
         unintegrated_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'unintegrated', default='X'),
         raw_counts_layer=lambda wildcards: mcfg.get_from_parameters(wildcards, 'raw_counts', default=None),
         gene_sets=lambda wildcards: mcfg.get_gene_sets(wildcards.dataset),
-        n_permutations=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=100),
+        n_permutations=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_permutations', default=20),
         n_quantiles=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_quantiles', default=5),
     conda:
         get_env(config, 'scanpy', gpu_env='rapids_singlecell')

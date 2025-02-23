@@ -77,10 +77,11 @@ for row, _dict in expanded_file_ids.to_dict('index').items():
         metrics_df.loc[row, key] = value
         ex_columns.add(key)
 
-    # truncate file_name if too long
-    max_len = 20
-    if len(metrics_df.loc[row, 'file_name']) > max_len:
-        metrics_df.loc[row, 'file_name'] = metrics_df.loc[row, 'file_name'][:max_len] + '...'
+    if 'file_name' in metrics_df.columns:
+        # truncate file_name if too long
+        max_len = 20
+        if len(str(metrics_df.loc[row, 'file_name'])) > max_len:
+            metrics_df.loc[row, 'file_name'] = metrics_df.loc[row, 'file_name'][:max_len] + '...'
 
 
 # rename metric names

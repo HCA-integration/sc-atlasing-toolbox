@@ -38,7 +38,7 @@ mcfg = MetricsConfig(
         'n_quantiles',
         'weight_batch',
     ],
-    wildcard_names=['label', 'batch'],
+    # wildcard_names=['label', 'batch'],
     rename_config_params={
         'methods': 'metric',
         'metrics': 'metric',
@@ -46,7 +46,7 @@ mcfg = MetricsConfig(
         'covariates': 'covariate',
     },
     explode_by=['metric', 'batch', 'label'],
-    paramspace_kwargs=dict(filename_params=['label', 'batch'], filename_sep='--'),
+    # paramspace_kwargs=dict(filename_params=['label', 'batch'], filename_sep='--'),
     dtypes={
         'overwrite_file_id': bool,
     }
@@ -84,6 +84,7 @@ rule all:
     input:
         rules.prepare_all.input,
         rules.run_all.input,
+        rules.collect_all.input,
         rules.merge_all.input,
         rules.plots_all.input
     default_target: True

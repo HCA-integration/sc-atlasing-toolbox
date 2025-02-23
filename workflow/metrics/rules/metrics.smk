@@ -42,9 +42,9 @@ rule run:
     input:
         zarr=get_metric_input,
     output:
-        metric=mcfg.out_dir / paramspace.wildcard_pattern / 'metric={metric}.tsv'
+        metric=mcfg.out_dir / paramspace.wildcard_pattern / 'label={label}--batch={batch}' / 'metric={metric}.tsv'
     benchmark:
-        mcfg.out_dir / paramspace.wildcard_pattern / '.benchmark' / 'metric={metric}.tsv'
+        mcfg.out_dir / paramspace.wildcard_pattern / '.benchmark' / 'label={label}--batch={batch}' / 'metric={metric}.tsv'
     params:
         metric_type=lambda wildcards: mcfg.get_from_parameters(wildcards, 'metric_type', default=MetricNotDefinedError(wildcards)),
         output_types=lambda wildcards: mcfg.get_from_parameters(wildcards, 'output_types', default=MetricNotDefinedError(wildcards)),

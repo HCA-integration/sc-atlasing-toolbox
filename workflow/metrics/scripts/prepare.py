@@ -15,7 +15,6 @@ from utils.processing import compute_neighbors, _filter_genes
 def compute_pca(adata, matrix):
     X_pca, _, variance_ratio, variance = sc.tl.pca(matrix, return_info=True)
     adata.obsm['X_pca'] = X_pca
-    adata.obsm['X_emb'] = X_pca
     adata.uns['pca'] = {
         'variance_ratio': variance_ratio,
         'variance': variance,
@@ -25,7 +24,7 @@ def compute_pca(adata, matrix):
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 params = snakemake.params
-label_key = params.get('label_key')
+# label_key = params.get('label_key')
 neighbor_args = params.get('neighbor_args', {})
 unintegrated_layer = params.get('unintegrated_layer', 'X')
 corrected_layer = params.get('corrected_layer', 'X')
@@ -89,6 +88,7 @@ if output_type == 'full':
         compute_dask=True,
     )[0].X
     compute_pca(adata, matrix=hvg_matrix)
+    adata.obsm['X_emb'] = adata.obsm['X_pca']
     del hvg_matrix
     force_neighbors = True
 elif output_type == 'embed':
@@ -100,7 +100,7 @@ compute_neighbors(
     adata,
     output_type,
     force=force_neighbors,
-    check_n_neighbors=True,
+    check_n_neighbors=False,
     **neighbor_args
 )
 
