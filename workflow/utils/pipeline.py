@@ -76,7 +76,7 @@ def update_input_files_per_dataset(
     file_map = InputFiles.parse(config['DATASETS'][dataset]['input'][module_name])
     input_files = {}
     for file_name, file_path in file_map.items():
-        if ',' in file_path:
+        if ',' in file_path and '.zarr' not in file_path and '.h5ad' not in file_path:
             # multiple files
             file_paths = file_path.split(',')
         else:
