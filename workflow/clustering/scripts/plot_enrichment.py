@@ -9,6 +9,7 @@ import seaborn as sns
 from tqdm import tqdm
 import traceback
 import concurrent.futures
+from joblib import Parallel, delayed
 
 from utils.io import read_anndata
 from utils.plots import plot_stacked_bar, plot_violin
@@ -31,6 +32,8 @@ threads = snakemake.threads
 
 
 obs_df = read_anndata(input_file, obs='obs').obs
+columns = [x for x in cluster_keys + covariates if x in obs_df.columns]
+obs_df = obs_df[columns]
 
 def call_plot(covariate, cluster_key, obs_df, output_dir):
     if covariate not in obs_df.columns:
@@ -55,25 +58,31 @@ def call_plot(covariate, cluster_key, obs_df, output_dir):
             )
         else:
             raise ValueError(f'Invalid covariate type: {obs_df[covariate].dtype}, must be category or numeric')
-    except TypeError as e:
+        
+        fig.savefig(output_dir / f'{cluster_key}--{covariate}.png', bbox_inches='tight')
+        
+    except Exception as e:
         logging.error(f'Error plotting {cluster_key}--{covariate}: {e}')
         traceback.print_exc()
         return
 
-    fig.savefig(output_dir / f'{cluster_key}--{covariate}.png', bbox_inches='tight')
+Parallel(n_jobs=threads, backend='threading')(
+    delayed(call_plot)(covariate, cluster_key, obs_df, output_dir)
+    for covariate in tqdm(covariates, desc=f'Plotting with {threads} threads')
+    for cluster_key in cluster_keys
+)
 
-
-with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-    tasks = [
-        (covariate, cluster_key, obs_df, output_dir)
-        for covariate in covariates if covariate in obs_df.columns
-        for cluster_key in cluster_keys
-    ]
-    futures = [executor.submit(call_plot, *task) for task in tasks]
+# with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
+#     tasks = [
+#         (covariate, cluster_key, obs_df, output_dir)
+#         for covariate in covariates if covariate in obs_df.columns
+#         for cluster_key in cluster_keys
+#     ]
+#     futures = [executor.submit(call_plot, *task) for task in tasks]
     
-    for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
-        try:
-            future.result()
-        except Exception as e:
-            logging.error(f"Exception occurred: {e}")
-            traceback.print_exc()
+#     for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+#         try:
+#             future.result()
+#         except Exception as e:
+#             logging.error(f"Exception occurred: {e}")
+#             traceback.print_exc()
