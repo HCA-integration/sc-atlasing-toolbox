@@ -16,7 +16,7 @@ DATASETS:
         - obs
         - obsm
       obs_index_col:
-        file_2: barcode
+        .*_2: barcode
   test:
     input:
       collect:

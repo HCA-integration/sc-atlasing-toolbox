@@ -9,6 +9,8 @@ def check_obs_same_index(adatas):
     key1, _ad1 = next(iterator)
     
     for key, _ad in iterator:
+        if key == key1:
+            continue
         diff = _ad.obs_names.difference(_ad1.obs_names)
         assert len(diff) == 0, \
             f'Index must be the same\n {len(diff)} differing indices \

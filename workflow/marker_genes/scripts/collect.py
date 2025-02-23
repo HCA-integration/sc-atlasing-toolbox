@@ -5,10 +5,14 @@ logging.basicConfig(level=logging.INFO)
 from utils.io import read_anndata, write_zarr_linked
 
 input_files = snakemake.input.dfs
+input_zarr = snakemake.input.zarr
 output_file = snakemake.output.zarr
 
 
-uns_list = [read_anndata(file, uns='uns').uns for file in input_files]
+uns_list = [
+    read_anndata(file, uns='uns').uns
+    for file in [input_zarr]+input_files
+]
 uns_all = uns_list[0]
 for uns in uns_list[1:]:
     uns_all |= uns

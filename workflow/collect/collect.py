@@ -5,6 +5,7 @@ import anndata as ad
 import pandas as pd
 from pprint import pformat
 from scipy.sparse import csr_matrix
+import re
 
 from utils.io import read_anndata, get_file_reader, write_zarr_linked, link_file
 from utils.misc import dask_compute
@@ -23,8 +24,17 @@ kwargs = {k: k for k in same_slots+merge_slots if k not in skip_slots}
 
 # parse obs index
 if isinstance(obs_index_col_map, str):
-    obs_index_col_map = {file_id: obs_index_col_map for file_id in files}
+    obs_index_col_map = {file_id: obs_index_col_map for file_id in files.keys()}
 assert isinstance(obs_index_col_map, dict), 'obs_index_col_map must be a dict'
+
+# parse regex keys
+obs_index_col_map = {
+    file_id: next(
+        (v for k, v in obs_index_col_map.items() if re.fullmatch(k, file_id)), 
+        None  # Default if no match is found
+    )
+    for file_id in files.keys()
+}
 
 if len(files) == 1:
     logging.info('Single file, write unmodified...')
@@ -68,6 +78,7 @@ adatas = {
     file_id: read_file(file, **kwargs, dask=True, backed=True)
     for file_id, file in files.items()
 }
+print(adatas.keys(), flush=True)
 
 if 'obs' in merge_slots:
     for file_id, _ad in adatas.items():

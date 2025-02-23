@@ -29,13 +29,14 @@ except ImportError as e:
 
 from .assertions import assert_neighbors
 from .io import to_memory, csr_matrix_int64_indptr
+from .misc import dask_compute
 
 
 def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=False, **kwargs):
     """ Compute kNN graph based on output type.
 
     :param adata: integrated anndata object
-    :param output_type: string of output typefilter
+    :param output_type: string of output type
     :param force: force re-computation of kNN graph
     :param kwargs: additional arguments for sc.pp.neighbors
     :return: anndata with kNN graph based on output type
@@ -59,23 +60,28 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
         if 'params' not in adata.uns['neighbors']:
             adata.uns['neighbors']['params'] = adata.uns['neighbors'].get('params', {})
         adata.uns['neighbors']['params'] |= dict(use_rep='X')
+    
     elif output_type == 'embed':
         assert 'X_emb' in adata.obsm, 'Embedding key "X_emb" not found'
         kwargs |= dict(use_rep='X_emb')
         sc.pp.neighbors(adata, **kwargs)
+    
     elif output_type == 'full':
         if 'X_emb' not in adata.obsm:
+            logging.info('Load corrected counts...')
+            adata_tmp = adata
+            if 'highly_variable' in adata_tmp.var.columns:
+                adata_tmp = adata_tmp[:, adata_tmp.var['highly_variable']]
+            adata_tmp = dask_compute(adata_tmp.copy(), layers='X')
+            
             logging.info('Compute PCA on corrected counts...')
-            adata_tmp = adata.copy()
-            sc.pp.pca(
-                adata_tmp,
-                use_highly_variable='highly_variable' in adata_tmp.var.columns
-            )
+            sc.pp.pca(adata_tmp)
             adata.obsm['X_emb'] = adata_tmp.obsm['X_pca']
             del adata_tmp
         kwargs |= dict(use_rep='X_emb')
         logging.info('Neighbors...')
         sc.pp.neighbors(adata, **kwargs)
+    
     else:
         raise ValueError(f'Invalid output type {output_type}')
     
@@ -87,7 +93,10 @@ def _filter_genes(adata, **kwargs):
     from dask import array as da
     
     if isinstance(adata.X, da.Array):
-        adata.X = adata.X.map_blocks(lambda x: x.toarray(), dtype=adata.X.dtype)
+        adata.X = adata.X.map_blocks(
+            lambda x: x.toarray(),
+            dtype=adata.X.dtype
+        )
     gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
     if isinstance(gene_subset, da.Array):
         gene_subset = gene_subset.compute()

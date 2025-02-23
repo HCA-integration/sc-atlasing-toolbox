@@ -10,6 +10,9 @@ rule plot_user:
     conda:
         get_env(config, 'scanpy')
     resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/plot_user.py'
@@ -27,6 +30,9 @@ rule plot:
     conda:
         get_env(config, 'scanpy')
     resources:
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/plot.py'
