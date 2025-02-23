@@ -11,9 +11,9 @@ rule rank_genes_groups:
     conda:
         get_env(config, 'scanpy') #, gpu_env='rapids_singlecell')
     resources:
-        # partition=mcfg.get_resource(profile='gpu',resource_key='partition'),
-        # qos=mcfg.get_resource(profile='gpu',resource_key='qos'),
-        # gpu=mcfg.get_resource(profile='gpu',resource_key='gpu'),
+        partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
+        qos=mcfg.get_resource(profile='cpu',resource_key='qos'),
+        gpu=mcfg.get_resource(profile='cpu',resource_key='gpu'),
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
     script:
         '../scripts/rank_genes_groups.py'
