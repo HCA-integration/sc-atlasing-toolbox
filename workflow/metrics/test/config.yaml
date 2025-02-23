@@ -30,12 +30,13 @@ defaults:
       - isolated_label_f1
       - pcr_comparison
       # - pcr_y  # broken function
+      - kbet_pg
   datasets:
-    # - test_metrics
-    # - test_no_name
+    - test_metrics
+    - test_no_name
     - test_integration
-    # - scib_metrics
-    # - morans_i
+    - scib_metrics
+    - morans_i
 
 
 DATASETS:

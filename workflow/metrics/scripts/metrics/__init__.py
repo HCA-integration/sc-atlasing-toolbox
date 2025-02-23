@@ -5,7 +5,7 @@ from .isolated_labels import isolated_label_asw, isolated_label_f1, isolated_lab
 from .lisi import clisi, clisi_y, ilisi, ilisi_y
 from .nmi import nmi, nmi_kmeans_y, nmi_leiden_y
 from .pcr import cell_cycle, pcr_comparison, pcr_y, pcr, pcr_random, pcr_genes
-from .kbet import kbet_y
+from .kbet import kbet_y, kbet_pg
 from .morans_i import morans_i, morans_i_random, morans_i_genes
 
 metric_map = {
@@ -35,6 +35,7 @@ metric_map = {
     'pcr_comparison': pcr_comparison,
     'pcr_y': pcr_y,
     'kbet_y': kbet_y,
+    'kbet_pg': kbet_pg,
     'morans_i_random': morans_i_random,
     'morans_i': morans_i,
     'morans_i_genes': morans_i_genes,

@@ -1,0 +1,25 @@
+name: pegasus
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - scanpy=1.10
+  - anndata=0.10
+  - scipy<1.15
+  - hdf5=1.14.2
+  - pegasuspy=1.8
+  - dask<2024.8
+  - dask-ml
+  - sparse
+  - zarr
+  - pandas<2.0
+  - numpy<2.0
+  # - r-base=4.3
+  # - rpy2
+  # - r-glue
+  # - r-data.table
+  # - r-tidyverse
+  # - bioconductor-rhdf5
+  # - bioconductor-limma
+  # - bioconductor-deseq2
