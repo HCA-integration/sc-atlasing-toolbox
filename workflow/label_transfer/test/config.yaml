@@ -16,5 +16,4 @@ DATASETS:
       majority_consensus:
         columns:
           - bulk_labels
-          - na_column
-          - na_str_column
+          - na_.*
