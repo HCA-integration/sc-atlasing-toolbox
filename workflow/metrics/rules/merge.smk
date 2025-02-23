@@ -101,6 +101,28 @@ use rule merge as merge_per_file with:
         'metrics_merge'
 
 
+rule collect:
+    message:
+        """
+        Collect all metrics for {wildcards}
+        """
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        metrics=rules.merge_per_file.output.tsv,
+    output:
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
+    conda:
+        get_env(config, 'scanpy')
+    script:
+        '../scripts/collect.py'
+
+
+rule collect_all:
+    input:
+        mcfg.get_output_files(rules.collect.output),
+    localrule: True
+
+
 rule merge_all:
     input:
         rules.merge.output,
