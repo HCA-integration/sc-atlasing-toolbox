@@ -100,22 +100,22 @@ metrics_tab <- metrics_tab[1:min(n_top, nrow(metrics_tab))]
 # add funkyheatmap data
 row_info <- NULL
 row_groups <- NULL
-if ('split_data_value' %in% colnames(metrics_tab)) {
-  ## hardcoded!!!
-  # set split_data_value NaN values to values from file_name column
-  metrics_tab[split_data_value == '', split_data_value := file_name]
-  metrics_tab[, split_data_value := gsub("_", "+", split_data_value)]
-  metrics_tab[split_data_value == 'B+plasma', split_data_value := 'B+Plasma']
-  metrics_tab <- metrics_tab[order(get('split_data_value'))]
-  metrics_tab[, id := rownames(metrics_tab)]
-  row_info <- data.table(id = metrics_tab$id, group = metrics_tab[, get('split_data_value')]) #  metrics_tab$output_type)
-  # metrics_tab[, output_type := NULL]
-  row_groups <- data.table(group=unique(row_info$group), Group=unique(row_info$group))
-  metrics_tab[, split_data_value := NULL]
-}
+# if ('split_data_value' %in% colnames(metrics_tab)) {
+#   ## hardcoded!!!
+#   # set split_data_value NaN values to values from file_name column
+#   metrics_tab[split_data_value == '', split_data_value := file_name]
+#   metrics_tab[, split_data_value := gsub("_", "+", split_data_value)]
+#   metrics_tab[split_data_value == 'B+plasma', split_data_value := 'B+Plasma']
+#   metrics_tab <- metrics_tab[order(get('split_data_value'))]
+#   metrics_tab[, id := rownames(metrics_tab)]
+#   row_info <- data.table(id = metrics_tab$id, group = metrics_tab[, get('split_data_value')]) #  metrics_tab$output_type)
+#   # metrics_tab[, output_type := NULL]
+#   row_groups <- data.table(group=unique(row_info$group), Group=unique(row_info$group))
+#   metrics_tab[, split_data_value := NULL]
+# }
 
 # remove uninformative columns TODO: include this information in figure header
-columns <- names(metrics_tab)[sapply(metrics_tab, uniqueN) != 1]
+columns <- names(metrics_tab)[sapply(metrics_tab, uniqueN) != 1 | names(metrics_tab) %in% metrics]
 metrics_tab <- metrics_tab[, ..columns]
 
 #add column info metadata for plotting using funkyheatmap

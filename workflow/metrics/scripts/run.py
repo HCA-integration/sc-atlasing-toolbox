@@ -143,7 +143,7 @@ scores = metric_function(
 # unpack scores
 if isinstance(scores, tuple):
     scores, metric_names = scores
-elif isinstance(scores, (int, float)):
+elif isinstance(scores, (int, float, np.number)):
     scores = [scores]
     metric_names = [metric]
 elif isinstance(scores, list):
