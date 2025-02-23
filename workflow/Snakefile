@@ -44,14 +44,6 @@ config_kwargs = {
         rename_config_params={'methods': 'method'},
         explode_by=['method', 'batch', 'label', 'var_mask'],
     ),
-    'metrics': dict(
-        parameters=workflow.source_path('metrics/params.tsv'),
-        config_params=['label', 'batch', 'methods', 'unintegrated'],
-        wildcard_names=['label', 'batch', 'metric'],
-        rename_config_params={'methods': 'metric'},
-        explode_by=['metric', 'batch'],
-        paramspace_kwargs=dict(filename_params=['label', 'batch', 'metric'], filename_sep='--'),
-    ),
     'subset': dict(
         config_params=['strategy', 'n_cells', 'sample', 'label', 'per_sample'],
         explode_by='strategy',
