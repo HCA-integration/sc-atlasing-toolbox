@@ -48,7 +48,7 @@ class IntegrationConfig(ModuleConfig):
             output_types = self.get_for_dataset(
                 dataset=dataset,
                 query=[self.module_name, 'output_types'],
-                default=output_type_col.unique()
+                default=output_type_col.unique().tolist()
             )
             remove_indices.extend(output_type_col[~output_type_col.isin(output_types)].index)
         wildcards_df = wildcards_df.drop(remove_indices)
@@ -86,7 +86,6 @@ class IntegrationConfig(ModuleConfig):
                 defaults=defaults,
                 key=self.module_name,
                 value='methods',
-                update=False,
             )
             if methods_config is None:
                 continue
