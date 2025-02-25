@@ -5,12 +5,13 @@ import scib
 from anndata import AnnData
 import yaml
 from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor, as_completed
-try:
-    from sklearnex import patch_sklearn
-    patch_sklearn()
-except ImportError:
-    print('no hardware acceleration for sklearn', flush=True)
+# from concurrent.futures import ProcessPoolExecutor, as_completed
+# from joblib import Parallel, delayed
+# try:
+#     from sklearnex import patch_sklearn
+#     patch_sklearn()
+# except ImportError:
+#     print('no hardware acceleration for sklearn', flush=True)
 
 from utils.io import read_anndata
 
@@ -23,7 +24,18 @@ sample_key = snakemake.params.get('sample_key')
 n_threads = np.max([snakemake.threads, 1])
 
 print('Read anndata file...', flush=True)
-adata = read_anndata(input_file, obsm='obsm', obs='obs', uns='uns')
+adata = read_anndata(
+    input_file,
+    X='obsm/X_pca',
+    obs='obs',
+    uns='uns',
+)
+if not isinstance(adata.X, np.ndarray):
+    # make sure the PCA embedding is an array
+    adata.X = adata.X.toarray()
+adata.obsm['X_pca'] = adata.X
+del adata.X
+
 adata = adata[adata.obs[covariate].notna()].copy()
 n_covariate = adata.obs[covariate].nunique()
 
@@ -32,10 +44,6 @@ if sample_key is None or sample_key == 'None':
     print('Using index as sample key...', flush=True)
     sample_key = 'index'
     adata.obs[sample_key] = adata.obs.index
-
-# make sure the PCA embedding is an array
-if not isinstance(adata.obsm['X_pca'], np.ndarray):
-    adata.obsm['X_pca'] = adata.obsm['X_pca'].toarray()
 
 # read setup file
 with open(setup_file, 'r') as f:
@@ -64,49 +72,44 @@ for i in range(n_permute):
     perm_covariates.append(covariate_perm)
 
 # concat new columns to adata to avoid fragmentation
-adata.obs = pd.concat([adata.obs, pd.DataFrame(series_dict)], axis=1).copy()
+adata.obs = pd.concat(
+    [
+        adata.obs[[sample_key, covariate]],
+        pd.DataFrame(series_dict)
+    ],
+    axis=1
+).copy()
 
-# Determine all covariates
-covariates = [covariate]+perm_covariates
 
-with ProcessPoolExecutor(max_workers=n_threads) as pool:
-    def compute_pcr(adata, covariate, is_permuted, n_threads=1):
-        pcr = scib.me.pcr(
-            adata,
-            covariate=covariate,
-            recompute_pca=False,
-            verbose=False,
-            linreg_method='numpy',
-            n_threads=n_threads,
-        )
-        return (covariate, is_permuted, pcr)
+pcr_scores = []
+for covariate in tqdm([covariate]+perm_covariates):
+    is_permuted = covariate in perm_covariates
+    score = scib.me.pcr(
+        adata,
+        covariate=covariate,
+        recompute_pca=False,
+        verbose=False,
+        linreg_method='numpy',
+    )
+    pcr_scores.append((covariate, is_permuted, score))
 
-    futures = [
-        pool.submit(
-            compute_pcr,
-            adata,
-            covariate=c,
-            is_permuted=c in perm_covariates
-        )
-        for c in covariates
-    ]
-    pcr_scores = []
-    completed_futures = 0
-    total_futures = len(futures)
-    
-    with tqdm(total=total_futures, desc="Computing PCR scores") as pbar:
-        for future in as_completed(futures):
-            pcr_scores.append(future.result())
-            pbar.update(1)
+# pcr_scores = tqdm(
+#     Parallel(
+#         n_jobs=n_threads,
+#         require='sharedmem',
+#         return_as='generator'
+#     )(
+#         delayed(compute_pcr)(adata, covariate, perm_covariates)
+#         for covariate in [covariate]+perm_covariates
+#     ),
+#     total=1+len(perm_covariates),
+# )
+# pcr_scores = list(pcr_scores)
 
 # Set permuted score when covariate is the same as the group variable
 if covariate == sample_key:
     # permutations wouln't change values in this case, impute same value as covariate score
-    perm_score = (
-        f'{covariate}-0',
-        True,
-        pcr_scores[0][2]
-    )
+    perm_score = (f'{covariate}-0', True, pcr_scores[0][2])
     pcr_scores.append(perm_score)
 
 df = pd.DataFrame.from_records(
@@ -123,5 +126,5 @@ df['z_score'] = (df['pcr'] - df['perm_mean']) / df['perm_std']
 df['signif'] = df['z_score'] > 1.5
 df['p-val'] = df.loc[df['permuted'], 'signif'].sum() / n_permute
 
-print(df, flush=True)
+print(df.to_string(), flush=True)
 df.to_csv(output_file, sep='\t', index=False)
