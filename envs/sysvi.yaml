@@ -12,7 +12,7 @@ dependencies:
   # - cuda-version>12.1
   # - cuda-nvcc>12.1
   # - scvi-tools
-  - zarr
+  - zarr=2
   - scipy<1.15
   - hdf5=1.14.2
   - dask

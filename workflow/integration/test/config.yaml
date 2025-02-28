@@ -23,13 +23,14 @@ defaults:
     var_mask: highly_variable
     save_subset: false
   datasets:
-    - test
-    - multi_wildcards
-    - preprocessed
-    - harmony
-    - scarches
-    - scvi_tools
+    # - test
+    # - multi_wildcards
+    # - preprocessed
+    # - harmony
+    # - scarches
+    # - scvi_tools
     - drvi
+    - sysvi
 
 
 DATASETS:
@@ -180,6 +181,25 @@ DATASETS:
         - phase
         - percent_mito
 
+  sysvi:
+    input:
+      integration:
+        orig: test/input/pbmc68k.h5ad
+    integration:
+      label: bulk_labels
+      batch: batch
+      methods:
+        sysvi:
+          system_key: phase
+          prior: vamp
+          n_prior_components: 5
+          max_epochs: 100
+          early_stopping: true
+      umap_colors:
+        - bulk_labels
+        - phase
+        - percent_mito
+
   drvi:
     input:
       integration:
@@ -190,13 +210,13 @@ DATASETS:
       batch: batch
       methods:
         drvi:
-          # n_latent: 128
-          # encoder_dims:
-          #   - [128, 128]
-          # decoder_dims:
-          #   - [128, 128]
-          # max_epochs: 100
-          # early_stopping: true
+          n_latent: 128
+          encoder_dims:
+            - [128, 128]
+          decoder_dims:
+            - [128, 128]
+          max_epochs: 100
+          early_stopping: true
       umap_colors:
         - bulk_labels
         - phase
