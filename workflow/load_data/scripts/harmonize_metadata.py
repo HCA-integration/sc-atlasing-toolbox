@@ -13,7 +13,7 @@ from dask import config as da_config
 
 from load_data_utils import SCHEMAS, get_union
 from utils.io import read_anndata, to_memory
-from utils.misc import ensure_sparse
+from utils.misc import ensure_sparse, dask_compute
 
 in_file = snakemake.input.h5ad
 schema_file = snakemake.input.schema
@@ -30,7 +30,7 @@ logging.info(f'meta:\n{pformat(meta)}')
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
-    adata = read_anndata(in_file, backed=backed, dask=dask)
+    adata = read_anndata(in_file, backed=backed, dask=dask, stride=500_000)
     adata = ensure_sparse(adata)
 except Exception as e:
     print(e)
@@ -168,4 +168,5 @@ adata.var.index.set_names('feature_id', inplace=True)
 
 logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
 with da_config.set(num_workers=snakemake.threads):
+    adata = dask_compute(adata)
     adata.write_zarr(out_file)
