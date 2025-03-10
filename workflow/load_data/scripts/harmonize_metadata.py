@@ -140,7 +140,7 @@ SCHEMAS["NAMES"] = dict(zip(schemas_df[from_schema], schemas_df[to_schema]))
 adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
 
 # making sure all columns are in the object
-all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
+all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["TIER1"], SCHEMAS["EXTRA_COLUMNS"])
 
 keep_covariates = meta.get('keep_covariates')
 if isinstance(keep_covariates, str):
