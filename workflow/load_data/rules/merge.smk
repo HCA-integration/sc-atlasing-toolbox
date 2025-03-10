@@ -18,7 +18,6 @@ use rule merge from load_data as load_data_merge_organ with:
         dask=False,
     resources:
         mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt, factor=3),
-        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique() * 3
 
@@ -38,7 +37,6 @@ use rule merge from load_data as load_data_merge_organ_filter with:
         dask=False,
     resources:
         mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
-        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
 
@@ -58,7 +56,7 @@ use rule merge from load_data as load_data_merge_subset with:
         dask=False,
     resources:
         mem_mb=lambda wildcards, attempt: get_resource(config,profile='cpu',resource_key='mem_mb', attempt=attempt),
-        disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
+        # disk_mb=get_resource(config,profile='cpu',resource_key='disk_mb'),
     threads:
         dataset_df['dataset'].nunique()
 
