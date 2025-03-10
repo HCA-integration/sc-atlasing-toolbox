@@ -62,7 +62,6 @@ for meta_i in ["organ", "study", "dataset"]:
     adata.uns[meta_i] = meta[meta_i]
 
 # add annotation if available
-author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     barcode_column = meta['barcode_column']
@@ -89,8 +88,7 @@ if annotation_file is not None:
 
 
 # assign sample and donor variables
-donor_column = meta['donor_column']
-adata.obs['donor'] = adata.obs[donor_column]
+adata.obs['donor'] = adata.obs[meta.pop('donor_column')]
 
 tech_id_columns = [s.strip() for s in meta.pop('tech_id').split('+')]
 adata.obs['tech_id'] = adata.obs[tech_id_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
@@ -111,19 +109,22 @@ if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity_ontology_term_id'] = adata.obs['ethnicity_ontology_term_id']
     adata.obs['donor_id'] = adata.obs['donor']
 
-# Assigning other keys in meta to obs
-for key, value in meta.items():
-    if isinstance(value, list):
-        continue
-    adata.obs[key] = value
-
 # add author annotations column
+author_annotation = meta.pop('author_annotation')
 adata.obs['author_annotation'] = adata.obs[author_annotation]
+logging.info(f'author_annotation: {author_annotation}')
+print(pformat(list(adata.obs['author_annotation'].unique())), flush=True)
 # use author annotations if no cell ontology available
 if 'cell_type' not in adata.obs.columns:
     adata.obs['cell_type'] = 'nan'
 if adata.obs['cell_type'].nunique() == 1:
     adata.obs['cell_type'] = adata.obs['author_annotation']
+
+# Assigning other keys in meta to obs
+for key, value in meta.items():
+    if isinstance(value, list):
+        continue
+    adata.obs[key] = value
 
 # save barcodes in separate column
 adata.obs['barcode'] = adata.obs_names
