@@ -151,7 +151,7 @@ def check_sparse_equal(a, b):
     return a.shape == b.shape and (a != b).nnz == 0
 
 
-def ensure_sparse(adata, layers: [str, list] = None, **kwargs):
+def ensure_sparse(adata, layers: [str, list] = None, sparse_type=None, **kwargs):
     
     def to_sparse(matrix, sparse_type=None):
         from scipy.sparse import csr_matrix
@@ -166,7 +166,7 @@ def ensure_sparse(adata, layers: [str, list] = None, **kwargs):
             return matrix.map_blocks(sparse_type, dtype=matrix.dtype)
         return sparse_type(matrix)
 
-    return apply_layers(adata, func=to_sparse, layers=layers, **kwargs)
+    return apply_layers(adata, func=to_sparse, layers=layers, sparse_type=sparse_type, **kwargs)
 
 
 def ensure_dense(adata, layers: [str, list] = None, **kwargs):

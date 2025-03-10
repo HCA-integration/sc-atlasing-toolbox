@@ -1,4 +1,5 @@
 from pathlib import Path
+from tqdm import tqdm
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -12,7 +13,7 @@ from dask import config as da_config
 
 from load_data_utils import SCHEMAS, get_union
 from utils.io import read_anndata, to_memory
-from utils.misc import ensure_sparse
+from utils.misc import ensure_sparse, dask_compute
 
 in_file = snakemake.input.h5ad
 schema_file = snakemake.input.schema
@@ -29,7 +30,7 @@ logging.info(f'meta:\n{pformat(meta)}')
 # h5ad
 logging.info(f'\033[0;36mread\033[0m {in_file}...')
 try:
-    adata = read_anndata(in_file, backed=backed, dask=dask)
+    adata = read_anndata(in_file, backed=backed, dask=dask, stride=500_000)
     adata = ensure_sparse(adata)
 except Exception as e:
     print(e)
@@ -61,7 +62,6 @@ for meta_i in ["organ", "study", "dataset"]:
     adata.uns[meta_i] = meta[meta_i]
 
 # add annotation if available
-author_annotation = meta['author_annotation']
 if annotation_file is not None:
     logging.info(f'Add annotations from {annotation_file}...')
     barcode_column = meta['barcode_column']
@@ -80,17 +80,19 @@ if annotation_file is not None:
     #    del adata.obs[author_annotation]
 
     # merge annotations
-    for col in annotation.columns:
-        logging.info(f'add column {col} to obs')
+    for col in tqdm(annotation.columns, mininterval=5):
         adata.obs[col] = annotation[col]
+        if adata.obs[col].isna().all():
+            logging.warning(f'column {col} is empty or doesn\'t map, skipping')
+            del adata.obs[col]
 
 
 # assign sample and donor variables
-donor_column = meta['donor_column']
-adata.obs['donor'] = adata.obs[donor_column]
+adata.obs['donor'] = adata.obs[meta.pop('donor_column')]
 
-sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
-adata.obs['sample'] = adata.obs[sample_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
+tech_id_columns = [s.strip() for s in meta.pop('tech_id').split('+')]
+adata.obs['tech_id'] = adata.obs[tech_id_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
+adata.obs['sample'] = adata.obs['tech_id'] # keep for backwards compatibility
 
 # CELLxGENE specific
 if 'batch_condition' in adata.uns.keys():
@@ -107,19 +109,22 @@ if adata.uns['schema_version'] == '2.0.0':
     adata.obs['self_reported_ethnicity_ontology_term_id'] = adata.obs['ethnicity_ontology_term_id']
     adata.obs['donor_id'] = adata.obs['donor']
 
-# Assigning other keys in meta to obs
-for key, value in meta.items():
-    if isinstance(value, list):
-        continue
-    adata.obs[key] = value
-
 # add author annotations column
+author_annotation = meta.pop('author_annotation')
 adata.obs['author_annotation'] = adata.obs[author_annotation]
+logging.info(f'author_annotation: {author_annotation}')
+print(pformat(list(adata.obs['author_annotation'].unique())), flush=True)
 # use author annotations if no cell ontology available
 if 'cell_type' not in adata.obs.columns:
     adata.obs['cell_type'] = 'nan'
 if adata.obs['cell_type'].nunique() == 1:
     adata.obs['cell_type'] = adata.obs['author_annotation']
+
+# Assigning other keys in meta to obs
+for key, value in meta.items():
+    if isinstance(value, list):
+        continue
+    adata.obs[key] = value
 
 # save barcodes in separate column
 adata.obs['barcode'] = adata.obs_names
@@ -135,12 +140,12 @@ SCHEMAS["NAMES"] = dict(zip(schemas_df[from_schema], schemas_df[to_schema]))
 adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
 
 # making sure all columns are in the object
-all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
+all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["TIER1"], SCHEMAS["EXTRA_COLUMNS"])
 
-tech_covariates = meta.get('tech_covariates')
-if isinstance(tech_covariates, str):
-    tech_covariates = meta['tech_covariates'].split(',')
-    all_columns = get_union(all_columns, tech_covariates)
+keep_covariates = meta.get('keep_covariates')
+if isinstance(keep_covariates, str):
+    keep_covariates = meta['keep_covariates'].split(',')
+    all_columns = get_union(all_columns, keep_covariates)
 
 for column in all_columns:
     if column not in adata.obs.columns:
@@ -163,4 +168,5 @@ adata.var.index.set_names('feature_id', inplace=True)
 
 logging.info(f'\033[0;36mwrite\033[0m {out_file}...')
 with da_config.set(num_workers=snakemake.threads):
+    adata = dask_compute(adata)
     adata.write_zarr(out_file)
