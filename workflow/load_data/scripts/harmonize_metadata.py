@@ -1,4 +1,5 @@
 from pathlib import Path
+from tqdm import tqdm
 from pprint import pformat
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -80,9 +81,11 @@ if annotation_file is not None:
     #    del adata.obs[author_annotation]
 
     # merge annotations
-    for col in annotation.columns:
-        logging.info(f'add column {col} to obs')
+    for col in tqdm(annotation.columns, mininterval=5):
         adata.obs[col] = annotation[col]
+        if adata.obs[col].isna().all():
+            logging.warning(f'column {col} is empty or doesn\'t map, skipping')
+            del adata.obs[col]
 
 
 # assign sample and donor variables
