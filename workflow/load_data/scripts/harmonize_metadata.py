@@ -92,8 +92,9 @@ if annotation_file is not None:
 donor_column = meta['donor_column']
 adata.obs['donor'] = adata.obs[donor_column]
 
-sample_columns = [s.strip() for s in meta['sample_column'].split('+')]
-adata.obs['sample'] = adata.obs[sample_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
+tech_id_columns = [s.strip() for s in meta.pop('tech_id').split('+')]
+adata.obs['tech_id'] = adata.obs[tech_id_columns].astype(str).apply(lambda x: '-'.join(x), axis=1)
+adata.obs['sample'] = adata.obs['tech_id'] # keep for backwards compatibility
 
 # CELLxGENE specific
 if 'batch_condition' in adata.uns.keys():
@@ -140,10 +141,10 @@ adata.obs.rename(SCHEMAS["NAMES"], inplace=True)
 # making sure all columns are in the object
 all_columns = get_union(SCHEMAS["CELLxGENE_OBS"], SCHEMAS["EXTRA_COLUMNS"])
 
-tech_covariates = meta.get('tech_covariates')
-if isinstance(tech_covariates, str):
-    tech_covariates = meta['tech_covariates'].split(',')
-    all_columns = get_union(all_columns, tech_covariates)
+keep_covariates = meta.get('keep_covariates')
+if isinstance(keep_covariates, str):
+    keep_covariates = meta['keep_covariates'].split(',')
+    all_columns = get_union(all_columns, keep_covariates)
 
 for column in all_columns:
     if column not in adata.obs.columns:

@@ -45,7 +45,8 @@ SCHEMAS = {
         'barcode',
         'organ',
         'donor',
-        'sample',
+        'tech_id',
+        'sample', # DEPRECATED
         'batch_condition',
         'author_annotation',
         'reference',
