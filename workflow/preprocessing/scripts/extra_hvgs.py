@@ -15,7 +15,7 @@ import anndata as ad
 
 from utils.io import read_anndata, write_zarr_linked, csr_matrix_int64_indptr
 from utils.misc import dask_compute
-from utils.processing import filter_genes, sc, USE_GPU
+from utils.processing import _filter_batch, sc, USE_GPU
 
 
 def match_genes(var_df, gene_list, column=None):
@@ -130,12 +130,12 @@ else:
             .astype('category')
         
         for group in tqdm(adata.obs['union_over'].unique()):
-            _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
-            _ad = filter_genes(
-                _ad,
-                min_cells=1,
-                batch_key=args.get('batch_key'),
-            ).copy()
+            _ad = adata[adata.obs['union_over'] == group].copy()
+            
+            # filter genes and cells that would break HVG function
+            batch_mask = _filter_batch(_ad, batch_key=args.get('batch_key'))
+            _ad = _ad[batch_mask, _ad.var['nonzero_genes']].copy()
+            _ad = dask_compute(_ad, layers='X')
             
             min_cells = 10
             if _ad.n_obs < min_cells:

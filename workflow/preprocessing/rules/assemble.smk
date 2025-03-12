@@ -18,9 +18,25 @@ use rule normalize from preprocessing as preprocessing_normalize with:
         mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
 
 
-use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
+rule filter_genes:
     input:
         zarr=rules.preprocessing_normalize.output.zarr,
+    output:
+        zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'filtered_genes.zarr'),
+    resources:
+        partition=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='partition',attempt=attempt),
+        qos=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='qos',attempt=attempt),
+        gpu=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='gpu',attempt=attempt),
+        mem_mb=lambda w, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb',attempt=attempt, factor=1),
+    conda:
+        get_env(config, 'scanpy')
+    script:
+        '../scripts/filter_genes.py'
+
+
+use rule highly_variable_genes from preprocessing as preprocessing_highly_variable_genes with:
+    input:
+        zarr=rules.filter_genes.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'highly_variable_genes.zarr'),
     params:
@@ -36,7 +52,7 @@ use rule highly_variable_genes from preprocessing as preprocessing_highly_variab
 
 use rule extra_hvgs from preprocessing as preprocessing_extra_hvgs with:
     input:
-        zarr=rules.preprocessing_normalize.output.zarr,
+        zarr=rules.filter_genes.output.zarr,
     output:
         zarr=directory(mcfg.out_dir / paramspace.wildcard_pattern / 'extra_hvgs--{overwrite_args}.zarr'),
     params:

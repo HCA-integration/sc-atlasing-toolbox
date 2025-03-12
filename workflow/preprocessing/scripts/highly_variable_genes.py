@@ -12,7 +12,8 @@ from dask import config as da_config
 da_config.set(num_workers=snakemake.threads)
 
 from utils.io import read_anndata, write_zarr_linked
-from utils.processing import filter_genes, sc, USE_GPU
+from utils.processing import _filter_batch, sc, USE_GPU
+from utils.misc import dask_compute
 
 input_file = snakemake.input[0]
 output_file = snakemake.output[0]
@@ -28,7 +29,14 @@ elif isinstance(args, dict):
 logging.info(str(args))
 
 logging.info(f'Read {input_file}...')
-kwargs = dict(X='X', obs='obs', var='var', uns='uns', backed=True, dask=True)
+kwargs = dict(
+    X='X',
+    obs='obs',
+    var='var',
+    uns='uns',
+    backed=True,
+    dask=True,
+)
 # if subset_to_hvg:
 #     kwargs |= dict(layers='layers')
 adata = read_anndata(input_file, **kwargs)
@@ -50,8 +58,10 @@ if args == False:
     logging.info('No highly variable gene parameters provided, including all genes...')
     var['highly_variable'] = True
 else:
-    # filter genes that are all 0
-    adata = filter_genes(adata, min_cells=1, batch_key=args.get('batch_key'))
+    # filter genes and cells that would break HVG function
+    batch_mask = _filter_batch(adata, batch_key=args.get('batch_key'))
+    adata = adata[batch_mask, adata.var['nonzero_genes']].copy()
+    adata = dask_compute(adata, layers='X')
     
     # make sure data is on GPU for rapids_singlecell
     if USE_GPU:
