@@ -5,10 +5,10 @@ from pathlib import Path
 import pandas as pd
 
 from utils.environments import get_env
-from utils.ModuleConfig import ModuleConfig
+from PreprocessingConfig import PreprocessingConfig
 
 
-mcfg = ModuleConfig(
+mcfg = PreprocessingConfig(
     module_name='preprocessing',
     config=config,
     config_params=[
