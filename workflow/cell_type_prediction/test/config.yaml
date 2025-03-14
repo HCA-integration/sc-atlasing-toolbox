@@ -16,12 +16,17 @@ DATASETS:
 
   test:
     input:
-      cell_type_prediction: data/pbmc68k.h5ad
+      cell_type_prediction:
+        raw: data/pbmc68k.h5ad
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     cell_type_prediction:
       reference_label: bulk_labels
-      celltypist_models:
-        - Healthy_COVID19_PBMC
-        - Immune_All_Low
+      celltypist:
+        params:
+          majority_voting: true
+        models:
+          - Healthy_COVID19_PBMC
+          - Immune_All_Low
 
   large:
     input:
@@ -30,5 +35,6 @@ DATASETS:
         merged: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr 
     cell_type_prediction:
       reference_label: cell_type
-      celltypist_models:
-        - COVID19_HumanChallenge_Blood
+      celltypist:
+        models:
+          - COVID19_HumanChallenge_Blood

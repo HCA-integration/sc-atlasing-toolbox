@@ -16,18 +16,22 @@ output_file = snakemake.output[0]
 
 model_name = snakemake.wildcards.celltypist_model
 label_key = snakemake.params.label_key
+params = snakemake.params.celltypist_params
+if params is None:
+    params = {}
 output_png = Path(snakemake.output.png)
 output_png.mkdir(parents=True, exist_ok=True)
 
 
 print(f'Read file: {input_file}...', flush=True)
-adata = read_anndata(input_file, X='X', obs='obs', var='var')
+kwargs = {'X': 'X', 'obs': 'obs', 'var': 'var'}
+if params.get('majority_voting') and not params.get('over_clustering'):
+    kwargs |=  {'obsm': 'obsm', 'obsp': 'obsp', 'uns': 'uns'}
+adata = read_anndata(input_file, **kwargs)
 
 # assign and subset adata based on feature names instead on ensembl IDs
 if 'feature_name' in adata.var.columns:
     adata.var_names = adata.var['feature_name']
-non_ENS_genes_list = [name for name in adata.var_names if not name.startswith('ENS')]
-adata = adata[:, non_ENS_genes_list].copy()
 
 print('Normalizing and log-transforming data...', flush=True)
 sc.pp.normalize_total(adata, target_sum=1e4)
@@ -37,8 +41,8 @@ sc.pp.log1p(adata)
 model = models.Model.load(model=input_model)
 print(model, flush=True)
 
-# Predict the identity of each input cell with the new model.
-predictions = celltypist.annotate(adata, model=model, majority_voting=True)
+print('Predicting cell types...', flush=True)
+predictions = celltypist.annotate(adata, model=model, **params)
 print(predictions, flush=True)
 
 # plot predictions vs author labels
@@ -51,14 +55,15 @@ celltypist.dotplot(
 )
 plt.savefig(output_png / 'predicted_labels.png', bbox_inches='tight')
 
-celltypist.dotplot(
-    predictions,
-    use_as_reference=label_key,
-    use_as_prediction='majority_voting',
-    title=f'CellTypist label transfer {label_key} vs. majority_voting',
-    # show=False,
-)
-plt.savefig(output_png / 'majority_voting.png', bbox_inches='tight')
+if params.get('majority_voting'):
+    celltypist.dotplot(
+        predictions,
+        use_as_reference=label_key,
+        use_as_prediction='majority_voting',
+        title=f'CellTypist label transfer {label_key} vs. majority_voting',
+        # show=False,
+    )
+    plt.savefig(output_png / 'majority_voting.png', bbox_inches='tight')
 
 # Get an `AnnData` with predicted labels and confidence scores embedded into the observation metadata columns.
 prefix = f'celltypist_{model_name}:'

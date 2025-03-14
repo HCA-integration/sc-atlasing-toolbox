@@ -20,12 +20,16 @@ use rule * from common as common_ *
 mcfg = ModuleConfig(
     module_name='cell_type_prediction',
     config=config,
-    config_params=['reference_label', 'celltypist_models'],
-    wildcard_names=[],
-    rename_config_params={'celltypist_models': 'celltypist_model'},
-    explode_by=['celltypist_model'],
+    config_params=['reference_label', 'celltypist'],
 )
 paramspace = mcfg.get_paramspace()
+
+wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
+
+# parse CellTypist parameters
+wildcards_df['celltypist_model'] = wildcards_df['celltypist'].apply(lambda x: x.get('models'))
+wildcards_df = wildcards_df.explode('celltypist_model')
+mcfg.update_parameters(wildcards_df)
 
 
 include: 'rules/celltypist.smk'
