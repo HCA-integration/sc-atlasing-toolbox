@@ -18,76 +18,34 @@ module common:
 use rule * from common as common_ *
 
 mcfg = ModuleConfig(
-    module_name='label_transfer',
+    module_name='cell_type_prediction',
     config=config,
-    config_params=['labels'], #['label', 'methods'],
+    config_params=['reference_label', 'celltypist_models'],
     wildcard_names=[],
-    # rename_config_params={'methods': 'method'},
+    rename_config_params={'celltypist_models': 'celltypist_model'},
+    explode_by=['celltypist_model'],
 )
 paramspace = mcfg.get_paramspace()
 
-module_name = 'label_transfer'
-config = set_defaults(config,module_name)
-out_dir = Path(config['output_dir']) / module_name
-os.environ["CELLTYPIST_FOLDER"] = str(out_dir / 'models' / 'celltypist')
 
-envvars:
-    "CELLTYPIST_FOLDER"
+include: 'rules/celltypist.smk'
 
 
-parameters = get_wildcards_from_config(
-    config=config['DATASETS'],
-    config_keys=config['defaults']['datasets'],
-    config_params=[module_name, 'label'],
-    wildcard_names=['dataset', module_name, 'label'],
-).merge(mcfg.get_wildcards(as_df=True))
-
-# subset to datasets that have module defined
-parameters = parameters[(~parameters[module_name].isnull()) & (parameters[module_name] != {})]
-if parameters.empty:
-    parameters['method'] = []
-    parameters['model'] = []
-else:
-    parameters['method'] = [k for d in parameters[module_name] for k,v in d.items()]
-    parameters['model'] = [list(v) for d in parameters[module_name] for k,v in d.items()]
-    parameters = parameters.explode('model').reset_index(drop=True)
-
-rule get_model:
-    output:
-        model=mcfg.out_dir / 'models' / '{method}' / '{model}.pkl'
-    conda:
-        lambda wildcards: get_env(config, wildcards.method)
-    params:
-        CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"]
-    script:
-        'scripts/get_model_{wildcards.method}.py'
-
-
-rule run:
+rule collect:
     input:
-        h5ad=lambda wildcards: mcfg.get_input_file(**wildcards),
-        model=rules.get_model.output.model,
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        celltypist=mcfg.get_output_files(rules.celltypist.output.zarr, all_params=True),
     output:
-        tsv=mcfg.out_dir / '{dataset}' / '{file_id}' / '{method}' / '{model}.tsv',
-        png=mcfg.image_dir / '{dataset}' / '{file_id}' / '{method}-{model}.png',
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
     conda:
-        lambda wildcards: get_env(config, wildcards.method)
-    params:
-        CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
-        label_key=lambda wildcards: get_params(wildcards,parameters,'label')
-    resources:
-        mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
+        get_env(config, 'scanpy')
     script:
-        'scripts/celltypist.py'
+        'scripts/collect.py'
 
 
 rule all:
     input:
-        expand(
-            rules.run.output,
-            zip,
-            **get_wildcards(parameters, ['dataset', 'file_id', 'method', 'model'])
-        )
+        mcfg.get_output_files(rules.collect.output),
     default_target: True
     localrule: True
 

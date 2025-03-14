@@ -11,66 +11,24 @@ resources:
     qos: gpu
     gpu: 1
 
-defaults:
-  label_transfer:
-    celltypist:
-      - Healthy_COVID19_PBMC
-      - Immune_All_Low
-  # datasets:
-  #   - test
 
 DATASETS:
-  Lee2020:
-    input:
-      label_transfer: test/input/load_data/filtered/Lee2020.zarr
-    label: cell_type
-    label_transfer:
-      celltypist:
-        - Healthy_COVID19_PBMC
-        - Adult_COVID19_PBMC
-        - COVID19_HumanChallenge_Blood
-  blood:
-    input:
-      label_transfer: test/input/load_data/merged/organ/blood.zarr
-    label: cell_type
-    label_transfer:
-      celltypist:
-        - Healthy_COVID19_PBMC
+
   test:
     input:
-      label_transfer: ../../data/pbmc68k.h5ad
-    label: bulk_labels
+      cell_type_prediction: data/pbmc68k.h5ad
+    cell_type_prediction:
+      reference_label: bulk_labels
+      celltypist_models:
+        - Healthy_COVID19_PBMC
+        - Immune_All_Low
 
-### new config
-
-# defaults:
-#   label_transfer:
-#     methods:
-#       celltypist:
-#         - Healthy_COVID19_PBMC
-#         - Immune_All_Low
-#   datasets:
-#     - test
-
-# DATASETS:
-#   Lee2020:
-#     input:
-#       label_transfer: test/out/load_data/filtered/Lee2020.h5ad
-#     label_transfer:
-#       label: cell_type
-#       methods:
-#         celltypist:
-#           - Healthy_COVID19_PBMC
-#   blood:
-#     input:
-#       label_transfer: test/out/load_data/merged/organ/blood.h5ad
-#     label_transfer:
-#       label: cell_type
-#       methods:
-#         celltypist:
-#           - Healthy_COVID19_PBMC
-#   test:
-#     input:
-#         label_transfer: ../../data/pbmc68k.h5ad
-#     label_transfer:
-#       label: bulk_labels
+  large:
+    input:
+      cell_type_prediction:
+        Lee2020: test/input/load_data/filtered/Lee2020.zarr
+        merged: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr 
+    cell_type_prediction:
+      reference_label: cell_type
+      celltypist_models:
+        - COVID19_HumanChallenge_Blood
