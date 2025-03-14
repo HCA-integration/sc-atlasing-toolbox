@@ -22,8 +22,8 @@ da_config.set(
 )
 logging.info(f"Dask using {da_config.get('num_workers')} workers")
 
-from utils.io import read_anndata, link_zarr
-from utils.misc import apply_layers, dask_compute
+from utils.io import read_anndata, link_zarr, write_zarr
+from utils.misc import apply_layers, dask_compute, ensure_sparse
 
 
 def read_adata(
@@ -46,6 +46,8 @@ def read_adata(
         verbose=False,
     )
     adata.obs['file_id'] = file_id
+    adata = ensure_sparse(adata)
+    
     return adata
 
 
@@ -188,4 +190,4 @@ logging.info(f'Write to {out_file}...')
 with tdask.TqdmCallback():
     if isinstance(adata.X, da.Array):
         print(adata.X.dask, flush=True)
-    adata.write_zarr(out_file)
+    write_zarr(adata, out_file)

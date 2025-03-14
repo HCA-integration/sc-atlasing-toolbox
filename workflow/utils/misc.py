@@ -192,7 +192,7 @@ def dask_compute(adata, layers: [str, list] = None, verbose: bool = True, **kwar
         if not isinstance(x, da.Array):
             return x
         
-        with TqdmCallback():
+        with TqdmCallback(miniters=10, mininterval=5):
             if persist:
                 x = x.persist()
             x = x.compute()
