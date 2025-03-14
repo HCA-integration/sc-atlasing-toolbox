@@ -30,7 +30,7 @@ if batch_key in adata.obs.columns:
     adata = adata[adata.obs[batch_key].astype(str) == batch, :].copy()
 logging.info(adata.__str__())
 
-if adata.n_obs < 10:
+if adata.n_obs < 100:
     columns = ['scrublet_score', 'scrublet_prediction']
     df = pd.DataFrame(index=adata.obs.index, columns=columns, dtype=float).fillna(0)
     df.to_csv(output_tsv, sep='\t')
@@ -50,7 +50,7 @@ kwargs = dict(
     normalize_variance=True,
     log_transform=False,
     mean_center=True,
-    n_prin_comps=np.min([adata.n_obs-1, adata.n_vars-1, 30]),
+    n_prin_comps=np.min([30, adata.n_obs-1, adata.n_vars-1]),
     use_approx_neighbors=True,
     get_doublet_neighbor_parents=False,
     n_neighbors=None,
@@ -72,6 +72,7 @@ except Exception as e:
         raise e
 
     traceback.print_exc()
+    print(adata, flush=True)
 
     logging.info('Retry on CPU...')
     sc.get.anndata_to_CPU(adata)
