@@ -36,7 +36,7 @@ plt.rcParams['figure.dpi'] = dpi
 
 logging.info('Heatmap...')
 if dist_mat.shape[0] > 1:
-    g = sns.clustermap(dist_mat)
+    g = sns.clustermap(dist_mat, figsize=(12, 12))
     g.fig.suptitle(dataset)
     plt.savefig(output_heatmap, dpi=dpi, bbox_inches='tight')
 else:

@@ -53,9 +53,10 @@ rule cellhint_umap_per_group:
         group=get_checkpoint_output,
         splits=checkpoints.split_cellhint_groups.rule.output,
     output:
-        png=image_dir / paramspace.wildcard_pattern / 'cellhint' / 'group~{group}' / 'umap.png',
+        png=directory(image_dir / paramspace.wildcard_pattern / 'cellhint' / 'group~{group}' / 'umaps'),
     params:
         author_label_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'author_label_key'),
+        dataset_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'dataset_key'),
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb'),
         partition=mcfg.get_resource(profile='cpu',resource_key='partition'),
@@ -105,7 +106,8 @@ rule cellhint_dotplot:
         author_label_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'author_label_key'),
         marker_genes=lambda wildcards: get_marker_gene_set(
             mcfg,
-            wildcards={k: wildcards[k] for k in ('dataset', 'file_id')}
+            wildcards={k: wildcards[k] for k in ('dataset', 'file_id')},
+            flatten=True,
         ),
         kwargs=dict(
             use_raw=False,
