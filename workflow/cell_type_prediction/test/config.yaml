@@ -16,22 +16,22 @@ defaults:
     celltypist:
       - Healthy_COVID19_PBMC
       - Immune_All_Low
-  datasets:
-    - test
+  # datasets:
+  #   - test
 
 DATASETS:
   Lee2020:
     input:
-      label_transfer: test/out/load_data/filtered/Lee2020.h5ad
-    adata_file: test/out/load_data/filtered/Lee2020.h5ad
+      label_transfer: test/input/load_data/filtered/Lee2020.zarr
     label: cell_type
     label_transfer:
       celltypist:
         - Healthy_COVID19_PBMC
+        - Adult_COVID19_PBMC
+        - COVID19_HumanChallenge_Blood
   blood:
     input:
-      label_transfer: test/out/load_data/merged/organ/blood.h5ad
-    adata_file: test/out/load_data/merged/organ/blood.h5ad
+      label_transfer: test/input/load_data/merged/organ/blood.zarr
     label: cell_type
     label_transfer:
       celltypist:
@@ -39,7 +39,6 @@ DATASETS:
   test:
     input:
       label_transfer: ../../data/pbmc68k.h5ad
-    adata_file: ../../data/pbmc68k.h5ad
     label: bulk_labels
 
 ### new config

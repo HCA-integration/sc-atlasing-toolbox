@@ -11,10 +11,6 @@ from utils.environments import get_env
 from utils.ModuleConfig import ModuleConfig
 
 
-def get_h5ad(wildcards):
-    return config['DATASETS'][wildcards.dataset]['adata_file']
-
-
 module common:
     snakefile: "../common/Snakefile"
     config: config
