@@ -37,3 +37,9 @@ DATASETS:
         order:
           - index
           - relabel_by_index
+  test_rename_columns:
+    input:
+      relabel: test/input/pbmc68k.h5ad
+    relabel:
+      rename_columns:
+        bulk_labels: new_name

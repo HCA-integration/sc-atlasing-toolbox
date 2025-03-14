@@ -12,16 +12,28 @@ input_new_cols = snakemake.input.get('new_columns')
 input_merge_cols = snakemake.input.get('merge_columns')
 output_file = snakemake.output.zarr
 file_id = snakemake.wildcards.file_id
+rename_columns = snakemake.params.get('rename_columns')
+
 
 logging.info('Read adata...')
 if input_file.endswith('.zarr'):
     adata = read_anndata(input_file, obs='obs')
 else:
-    adata = anndata.read(input_file)  # read complete file to convert to zarr
+    adata = anndata.read_h5ad(input_file)  # read complete file to convert to zarr
 if adata.obs_names.name in (None, ''):
     adata.obs_names.name = 'index'
 
 # merge new columns
+if rename_columns is not None:
+    logging.info(f'Rename columns...')
+    # adata.obs = adata.obs.rename(columns=rename_columns)
+    
+    for old_col, new_col in rename_columns.items():
+        if old_col not in adata.obs.columns:
+            adata.obs[old_col] = 'nan'
+        else:
+            adata.obs[new_col] = adata.obs[old_col]
+
 if input_new_cols is not None:
     mapping_order = snakemake.params.get('mapping_order')
     logging.info(f'Mapping order:\n{mapping_order}')
