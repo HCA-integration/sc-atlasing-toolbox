@@ -69,7 +69,7 @@ if 'feature_name' in adata.var.columns:
 # filter marker genes
 logging.info('Marker genes before filtering:')
 logging.info(pformat(marker_genes))
-marker_genes = filter_markers(marker_genes, adata.var_names)
+marker_genes = filter_markers(marker_genes, adata.var_names.values)
 assert len(marker_genes) > 0, 'No marker genes found in data'
 logging.info('Marker genes after filtering:')
 logging.info(marker_genes)
@@ -116,7 +116,7 @@ adata = subset_genes_for_plotting(adata, marker_genes)
 sc.pl.dotplot(
     adata,
     groupby=[author_label_key],
-    var_names=filter_markers(marker_genes, adata.var_names),
+    var_names=marker_genes,
     show=False,
     title=f'Group: {group}',
     **kwargs,
