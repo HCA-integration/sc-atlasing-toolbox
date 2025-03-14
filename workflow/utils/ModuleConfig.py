@@ -38,9 +38,10 @@ class ModuleConfig:
         rename_config_params: dict = None,
         explode_by: [str, list] = None,
         paramspace_kwargs: dict = None,
+        dont_inherit: list = None,
         dtypes: dict = None,
         write_output_files: bool = True,
-        warn: bool = True,
+        warn: bool = False,
     ):
         """
         :param module_name: name of module
@@ -79,6 +80,7 @@ class ModuleConfig:
             input_file_wildcards=self.input_files.get_wildcards(),
             dataset_config=self.datasets,
             default_config=self.config.get('defaults'),
+            dont_inherit=dont_inherit,
             wildcard_names=wildcard_names,
             mandatory_wildcards=mandatory_wildcards,
             config_params=config_params,

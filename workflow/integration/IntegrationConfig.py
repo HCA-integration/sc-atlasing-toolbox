@@ -27,6 +27,8 @@ class IntegrationConfig(ModuleConfig):
             parameters = parameters.explode('output_type')
             kwargs['parameters'] = parameters
         
+        kwargs['dont_inherit'] = ['methods']
+        
         super().__init__(**kwargs, write_output_files=False)
         
         # set hyperparameters
@@ -91,7 +93,10 @@ class IntegrationConfig(ModuleConfig):
                 continue
             for method, hyperparams_dict in methods_config.items():
                 if isinstance(hyperparams_dict, dict):
-                    do_not_expand = self.parameters.wildcards_df.query('method == @method and dataset == @dataset').iloc[0]['do_not_expand']
+                    df = self.parameters.wildcards_df.query('method == @method and dataset == @dataset')
+                    if df.empty:
+                        continue
+                    do_not_expand = df.iloc[0]['do_not_expand']
                     do_not_expand = do_not_expand.split(',') if isinstance(do_not_expand, str) else [do_not_expand]
                     records.extend(
                         (dataset, method, *rec)
