@@ -23,10 +23,15 @@ adata = read_anndata(input_file, obs='obs')
 if majority_reference is not None:
     logging.info(f'Compute majority reference for:\n{pformat(majority_reference)}')
     
+    reference_key = majority_reference['reference_key']
+    query_key = majority_reference['query_key']
+    
+    adata.obs[reference_key] = adata.obs[reference_key].astype(str).replace('nan', float('nan'))
+    
     adata.obs['majority_reference'] = get_majority_reference(
         adata.obs,
-        reference_key=majority_reference['reference_key'],
-        query_key=majority_reference['query_key'],
+        reference_key=reference_key,
+        query_key=query_key,
         **majority_reference.get('crosstab_kwargs', {})
     )
 
