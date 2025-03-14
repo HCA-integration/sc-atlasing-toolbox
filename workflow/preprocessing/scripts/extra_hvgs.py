@@ -15,7 +15,7 @@ import anndata as ad
 
 from utils.io import read_anndata, write_zarr_linked, csr_matrix_int64_indptr
 from utils.misc import dask_compute
-from utils.processing import filter_genes, sc, USE_GPU
+from utils.processing import _filter_batch, sc, USE_GPU
 
 
 def match_genes(var_df, gene_list, column=None):
@@ -47,7 +47,7 @@ def match_genes(var_df, gene_list, column=None):
         gene_list.remove(path)
 
     try:
-        genes = var_df.index if column is None else var_df[column]
+        genes = var_df.index.to_series() if column is None else var_df[column]
         pattern = '|'.join(gene_list)
         return genes[genes.astype(str).str.contains(pattern, regex=True)].index
     except Exception as e:
@@ -62,10 +62,12 @@ input_file = snakemake.input[0]
 output_file = snakemake.output[0]
 args = snakemake.params.get('args', {})
 extra_hvg_args = snakemake.params.get('extra_hvgs', {})
-overwrite_args = extra_hvg_args.get('overwrite_args', {})
+overwrite_args = snakemake.params.get('overwrite_args')
 union_over = extra_hvg_args.get('union_over')
 extra_genes = extra_hvg_args.get('extra_genes', [])
 remove_genes = extra_hvg_args.get('remove_genes', [])
+
+hvg_column_name = 'extra_hvgs'
 
 if args is None:
     args = {}
@@ -73,6 +75,8 @@ elif isinstance(args, dict):
     args.pop('subset', None) # don't support subsetting
 if overwrite_args:
     args |= overwrite_args
+    for key in sorted(overwrite_args.keys()):
+        hvg_column_name += f'--{key}={overwrite_args[key]}'
 
 logging.info(f'args: {args}')
 
@@ -91,17 +95,17 @@ logging.info(adata.__str__())
 # add metadata
 if 'preprocessing' not in adata.uns:
     adata.uns['preprocessing'] = {}
-adata.uns['preprocessing']['extra_hvgs'] = args
+adata.uns['preprocessing'][hvg_column_name] = args
 
 if adata.n_obs == 0:
     logging.info('No data, write empty file...')
-    adata.var['extra_hvgs'] = True
+    adata.var[hvg_column_name] = True
     adata.write_zarr(output_file)
     exit(0)
 
 if args == False:
     logging.info('No highly variable gene parameters provided, including all genes...')
-    adata.var['extra_hvgs'] = True
+    adata.var[hvg_column_name] = True
 else:
     var = adata.var.copy()
     
@@ -114,7 +118,7 @@ else:
         logging.info(f'Remove {len(remove_genes)} genes (subset data)...')
         adata = adata[:, ~adata.var_names.isin(remove_genes)].copy()
 
-    adata.var['extra_hvgs'] = False
+    adata.var[hvg_column_name] = False
     
     if union_over is not None:
         logging.info(f'Compute highly variable genes per {union_over} with args={args}...')
@@ -126,12 +130,12 @@ else:
             .astype('category')
         
         for group in tqdm(adata.obs['union_over'].unique()):
-            _ad = dask_compute(adata[adata.obs['union_over'] == group].copy())
-            _ad = filter_genes(
-                _ad,
-                min_cells=1,
-                batch_key=args.get('batch_key'),
-            ).copy()
+            _ad = adata[adata.obs['union_over'] == group].copy()
+            
+            # filter genes and cells that would break HVG function
+            batch_mask = _filter_batch(_ad, batch_key=args.get('batch_key'))
+            _ad = _ad[batch_mask, _ad.var['nonzero_genes']].copy()
+            _ad = dask_compute(_ad, layers='X')
             
             min_cells = 10
             if _ad.n_obs < min_cells:
@@ -144,7 +148,7 @@ else:
             sc.pp.highly_variable_genes(_ad, **args)
             
             # get union of gene sets
-            adata.var['extra_hvgs'] = adata.var['extra_hvgs'] | _ad.var['highly_variable']
+            adata.var[hvg_column_name] = adata.var[hvg_column_name] | _ad.var['highly_variable']
             del _ad
         del adata.obs['union_over']
     else:
@@ -154,11 +158,11 @@ else:
         if USE_GPU:
             sc.get.anndata_to_GPU(adata)
         sc.pp.highly_variable_genes(adata, **args)
-        adata.var['extra_hvgs'] = adata.var['highly_variable']
+        adata.var[hvg_column_name] = adata.var['highly_variable']
 
     # set extra_hvgs in full dataset
-    var['extra_hvgs'] = False
-    var.loc[adata.var_names, 'extra_hvgs'] = adata.var['extra_hvgs']
+    var[hvg_column_name] = False
+    var.loc[adata.var_names, hvg_column_name] = adata.var[hvg_column_name]
 
     # add user-provided genes
     if extra_genes:
@@ -171,7 +175,7 @@ else:
             logging.info('No extra user genes added...')
         else:
             logging.info(f'Add {len(extra_genes)} user-provided genes...')
-            var.loc[extra_genes, 'extra_hvgs'] = True
+            var.loc[extra_genes, hvg_column_name] = True
     
     # recreate AnnData object for full feature space
     adata = ad.AnnData(var=var, uns=adata.uns)

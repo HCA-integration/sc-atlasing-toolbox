@@ -43,7 +43,7 @@ rule pca:
     output:
         zarr=directory('{dataset}_pca.zarr')
     conda:
-        get_env(config, 'scanpy', gpu_env='rapids_singlecell')
+        get_env(config, 'scanpy') #, gpu_env='rapids_singlecell')
     script:
         '../scripts/pca.py'
 

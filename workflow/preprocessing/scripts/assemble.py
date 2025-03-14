@@ -52,7 +52,9 @@ def assemble_adata(file, file_type, adata, backed=True):
         adata.var[hvg_columns] = adata_pp.var[hvg_columns]
         adata.var = adata.var.fillna(hvg_column_map)
     elif file_type == 'extra_hvgs':
-         adata.var['extra_hvgs'] = read_anndata(file, var='var')['extra_hvgs']
+        var = read_anndata(file, var='var').var
+        hvg_col = [col for col in var.columns if col.startswith('extra_hvgs')][0]
+        adata.var[hvg_col] = var[hvg_col]
     elif file_type == 'pca':
         logging.info('add PCA')
         adata_pp = read_anndata(file, obsm='obsm', uns='uns', varm='varm')
@@ -77,7 +79,6 @@ def assemble_adata(file, file_type, adata, backed=True):
 
 
 def assemble_zarr(file, file_type, slot_map, in_dir_map):
-    file = Path(file)
     update_slot_map = {}
 
     if file_type == 'normalize':
@@ -98,9 +99,11 @@ def assemble_zarr(file, file_type, slot_map, in_dir_map):
         }
     elif file_type == 'extra_hvgs':
         logging.info('add highly variable genes')
+        var = read_anndata(file, var='var').var
+        hvg_col = [col for col in var.columns if col.startswith('extra_hvgs')][0]
         update_slot_map = {
-            'var/extra_hvgs': 'var/extra_hvgs',
-            'uns/preprocessing/extra_hvgs': 'uns/preprocessing/extra_hvgs',
+            f'var/{hvg_col}': f'var/{hvg_col}',
+            f'uns/preprocessing/{hvg_col}': f'uns/preprocessing/{hvg_col}',
         }
     elif file_type == 'pca':
         logging.info('add PCA')
@@ -135,7 +138,14 @@ slot_map = {}
 in_dir_map = {}
 backed=True
 
+file_map = []
 for file_type, file in snakemake.input.items():
+    if isinstance(file, str):
+        file_map.append((file_type, file))
+    else:
+        file_map.extend((file_type, f) for f in file)
+
+for file_type, file in file_map:
     if adata is None: # read first file
         logging.info(f'Read first file {file}...')
         adata = read_anndata(file, obs='obs', var='var')

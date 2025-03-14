@@ -89,25 +89,49 @@ def compute_neighbors(adata, output_type=None, force=False, check_n_neighbors=Fa
 
 
 def _filter_genes(adata, **kwargs):
+    import sparse
+    from tqdm.dask import TqdmCallback
     import scanpy as sc
     from dask import array as da
     
     if isinstance(adata.X, da.Array):
-        adata.X = adata.X.map_blocks(
-            lambda x: x.toarray(),
-            dtype=adata.X.dtype
-        )
+        # adata.X = adata.X.map_blocks(
+        #     lambda x: x.toarray(),
+        #     dtype=adata.X.dtype
+        # )
+        min_cells = kwargs.get('min_cells', 0)
+        mask = adata.X.map_blocks(sparse.COO).sum(axis=0) >= min_cells
+        with TqdmCallback(
+            desc=f"Determine genes with >= {min_cells} cells",
+            miniters=10,
+            mininterval=5,
+        ):
+            mask = mask.compute().todense()
+        return mask
     gene_subset, _ = sc.pp.filter_genes(adata.X, **kwargs)
-    if isinstance(gene_subset, da.Array):
-        gene_subset = gene_subset.compute()
+    # if isinstance(gene_subset, da.Array):
+    #     gene_subset = gene_subset.compute()
     return gene_subset
 
 
-def filter_genes(adata, batch_key=None, **kwargs):
+def _filter_batch(adata, batch_key=None):
+    """
+    Filter cells from batches with too few cells
+    """
+    mask = np.ones(adata.n_obs, dtype=bool)
+    if batch_key is not None:
+        cells_per_batch = adata.obs[batch_key].value_counts()
+        if cells_per_batch.min() < 2:
+            mask = adata.obs[batch_key].isin(cells_per_batch[cells_per_batch > 1].index)
+    return mask
+
+
+def filter_genes(adata, batch_key=None, compute=True, **kwargs):
     """
     Filter anndata based on .X matrix
     """
     from dask import array as da
+    import dask.config
     
     # filter cells from batches with too few cells
     if batch_key is not None:
@@ -125,8 +149,9 @@ def filter_genes(adata, batch_key=None, **kwargs):
         adata = adata.copy()    
     
     # convert dask array to csr matrix
-    if isinstance(adata.X, da.Array):
-        adata.X = adata.X.map_blocks(csr_matrix_int64_indptr).compute()
+    if compute and isinstance(adata.X, da.Array):
+        with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+            adata = dask_compute(adata, layers='X')
 
     return adata
 

@@ -30,6 +30,11 @@ DATASETS:
       raw_counts: X
       scale: false
       extra_hvgs:
+        overwrite_args:
+          n_top_genes:
+            - 200
+            - 300
+          batch_key: batch_condition
         union_over:
           - disease
         remove_genes:

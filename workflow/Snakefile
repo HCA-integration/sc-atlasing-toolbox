@@ -7,6 +7,7 @@ from utils.pipeline import update_module_configs, config_for_module, update_inpu
 from utils.ModuleConfig import ModuleConfig
 from integration.IntegrationConfig import IntegrationConfig
 from sample_representation.SampleRepresentationConfig import SampleRepresentationConfig
+from preprocessing.PreprocessingConfig import PreprocessingConfig
 
 
 min_version("6.0")
@@ -23,6 +24,9 @@ configfile: "configs/exploration/config.yaml"
 config_kwargs = {
     'batch_analysis': dict(
         config_params=['covariates', 'permute_covariates', 'n_permutations', 'sample'],
+    ),
+    'preprocessing': dict(
+        config_params=['assemble', 'extra_hvgs'],
     ),
     'sample_representation': dict(
         parameters=workflow.source_path('sample_representation/params.tsv'),
@@ -69,6 +73,7 @@ config_kwargs = {
 config_classes = {
     'integration': IntegrationConfig,
     'sample_representation': SampleRepresentationConfig,
+    'preprocessing': PreprocessingConfig,
 }
 
 config['DATASETS'] = config.get('DATASETS', {})
