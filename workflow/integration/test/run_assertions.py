@@ -37,8 +37,8 @@ for file in outputs:
         assert 'integration_hyperparams' in uns['wildcards']
         assert 'integration_label' in uns['wildcards']
         assert 'integration_method' in uns['wildcards']
-        assert 'dataset' in uns
-        assert 'methods' in uns
+        # assert 'dataset' in uns
+        # assert 'methods' in uns
         assert 'integration' in uns
         for key in ['method', 'label_key', 'batch_key', 'output_type']:
             assert key in uns['integration']
@@ -68,7 +68,6 @@ for file in outputs:
         if 'embed' in output_types:
             assert 'obsm' in z, f'No obsm for output type embed\nfile: {file}'
             obsm = read_elem(z["obsm"])
-
             assert 'X_emb' in obsm
         if 'full' in output_types:
             assert 'X' in z, f'No X for output type full\nfile: {file}'

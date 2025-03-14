@@ -64,10 +64,10 @@ use rule run_method from integration as integration_run_method with:
     threads:
         lambda wildcards: max(1, mcfg.get_from_parameters(wildcards, 'threads', exclude=['output_type'], default=1)),
     resources:
-        partition=lambda w, attempt: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2),
-        qos=lambda w, attempt: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2),
-        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2, factor=1),
-        gpu=lambda w, attempt: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2),
+        partition=lambda w, attempt: mcfg.get_resource(resource_key='partition', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=3),
+        qos=lambda w, attempt: mcfg.get_resource(resource_key='qos', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=3),
+        mem_mb=lambda w, attempt: mcfg.get_resource(resource_key='mem_mb', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=2, factor=3),
+        gpu=lambda w, attempt: mcfg.get_resource(resource_key='gpu', profile=mcfg.get_profile(w), attempt=attempt, attempt_to_cpu=3),
         time="2-00:00:00",
 
 

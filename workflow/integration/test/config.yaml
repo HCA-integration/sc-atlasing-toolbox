@@ -107,6 +107,7 @@ DATASETS:
           sigma: 0.1
           batch_key: batch_2
           n_comps: 30
+          scale: true
       umap_colors:
         - phase
 

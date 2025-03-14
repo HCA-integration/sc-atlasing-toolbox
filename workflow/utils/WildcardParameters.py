@@ -23,6 +23,7 @@ class WildcardParameters:
         input_file_wildcards: dict,
         dataset_config: dict,
         default_config: dict,
+        dont_inherit: list,
         wildcard_names: list,
         mandatory_wildcards: list = None,
         config_params: list = None,
@@ -53,6 +54,7 @@ class WildcardParameters:
             wildcard_names=wildcard_names,
             explode_by=explode_by,
             rename_config_params=rename_config_params,
+            dont_inherit=dont_inherit,
             dtypes=dtypes,
         )
         if mandatory_wildcards is None:
@@ -139,6 +141,7 @@ class WildcardParameters:
         config_entries: list = None,
         rename_config_params: dict = None,
         dtypes: dict = None,
+        dont_inherit: list = None,
         warn: bool = False,
     ):
         """
@@ -179,6 +182,7 @@ class WildcardParameters:
                         defaults=defaults,
                         key=self.module_name,
                         value=param,
+                        dont_inherit=dont_inherit,
                         warn=warn,
                     )
                     for param in config_params

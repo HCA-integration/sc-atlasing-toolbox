@@ -145,6 +145,7 @@ def _get_or_default_from_config(
     key,
     value,
     return_missing=None,
+    dont_inherit=None,
     warn=False,
 ):
     """
@@ -155,9 +156,13 @@ def _get_or_default_from_config(
     :param key: top-level key of config dictionary
     :param value: points to entry within key
     :param return_missing: return value if no defaults for key, value
+    :param dont_inherit: list of keys in value config that should not be inherited from defaults
     :param warn: warn if no defaults are defined for key, value
     :return:
     """
+    if dont_inherit is None:
+        dont_inherit = []
+    
     if key not in config.keys():
         print('config:')
         pprint(config)
@@ -169,6 +174,8 @@ def _get_or_default_from_config(
         config_at_value = {}
     
     default_entry = defaults.get(value, return_missing)
+    if value in dont_inherit and value in config_at_value.keys():
+        default_entry = return_missing
     entry = config_at_value.get(value, default_entry)
     
     # update if entry is a dict

@@ -21,6 +21,7 @@ batch_key = wildcards.batch
 hyperparams = params.get('hyperparams', {})
 hyperparams = {} if hyperparams is None else hyperparams
 
+scale = hyperparams.pop('scale', False)
 pca_kwargs, hyperparams = get_hyperparams(
     hyperparams=hyperparams,
     model_params=PCA_PARAMS,
@@ -62,6 +63,10 @@ adata, _ = subset_hvg(
     var_column='integration_features',
     compute_dask=True
 )
+
+if scale:
+    logging.info('Scale counts...')
+    sc.pp.scale(adata)
 
 # recompute PCA according to user-defined hyperparameters
 logging.info(f'Compute PCA with parameters {pformat(pca_kwargs)}...')
