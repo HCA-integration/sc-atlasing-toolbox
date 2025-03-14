@@ -28,7 +28,8 @@ rule celltypist:
     params:
         CELLTYPIST_FOLDER=os.environ["CELLTYPIST_FOLDER"],
         label_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'reference_label'),
-        celltypist_params=lambda wildcards: mcfg.get_from_parameters(wildcards, 'celltypist').get('params', {})
+        celltypist_params=lambda wildcards: mcfg.get_from_parameters(wildcards, 'celltypist').get('params', {}),
+        is_normalized=lambda wildcards: mcfg.get_from_parameters(wildcards, 'norm_counts', default=None) is not None,
     resources:
         mem_mb=mcfg.get_resource(profile='cpu',resource_key='mem_mb')
     script:

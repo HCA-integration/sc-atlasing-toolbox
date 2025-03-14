@@ -21,6 +21,7 @@ DATASETS:
         preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
     cell_type_prediction:
       reference_label: bulk_labels
+      raw_counts: layers/counts
       celltypist:
         params:
           majority_voting: true
@@ -35,6 +36,21 @@ DATASETS:
         merged: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr 
     cell_type_prediction:
       reference_label: cell_type
+      counts: X
       celltypist:
         models:
+          - COVID19_HumanChallenge_Blood
+  
+  preprocessed:
+    input:
+      cell_type_prediction:
+        test: data/pbmc68k.h5ad
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    cell_type_prediction:
+      norm_counts: layers/normcounts
+      celltypist:
+        params:
+          majority_voting: true
+        models:
+          - Healthy_COVID19_PBMC
           - COVID19_HumanChallenge_Blood
