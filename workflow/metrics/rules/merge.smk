@@ -19,7 +19,6 @@ rule merge:
         get_env(config, 'scanpy')
     resources:
         mem_mb=1000,
-        disk_mb=500
     group:
         'metrics_merge'
     script: '../scripts/merge.py'

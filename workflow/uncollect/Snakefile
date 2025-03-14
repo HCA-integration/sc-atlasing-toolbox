@@ -17,7 +17,6 @@ mcfg = ModuleConfig(
     explode_by=['new_file_id'],
 )
 params = mcfg.get_paramspace()
-print(params.wildcard_pattern)
 
 wildcard_constraints:
     dataset=r'[^/]+',
