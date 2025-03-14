@@ -37,8 +37,15 @@ class ClusteringConfig(ModuleConfig):
                 ]
             return [{}] * len(levels)
 
-        # parse hierarchical clustering parameters
+
         wildcards_df = self.parameters.wildcards_df
+
+        # check if all algorithms in config are configured
+        available_algorihtms = ['leiden', 'louvain']
+        for algorithm in wildcards_df['algorithm'].unique():
+            assert algorithm in available_algorihtms, f'Algorithm not available: "{algorithm}"'
+        
+        # parse hierarchical clustering parameters
         wildcards_df['level'] = wildcards_df['hierarchy'].apply(parse_levels)
         wildcards_df['kwargs'] = wildcards_df['hierarchy'].apply(parse_kwargs)
 

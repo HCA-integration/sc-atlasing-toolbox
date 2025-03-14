@@ -36,7 +36,6 @@ rule subset:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')  # TODO: remove from wildcards and use as params
     resources:
         mem_mb=lambda wildcards, attempt: mcfg.get_resource(profile='cpu',resource_key='mem_mb', attempt=attempt),
-        disk_mb=mcfg.get_resource(profile='cpu',resource_key='disk_mb'),
     params:
         n_cells=lambda wildcards: mcfg.get_from_parameters(wildcards, 'n_cells'),
         sample_key=lambda wildcards: mcfg.get_from_parameters(wildcards, 'sample'),

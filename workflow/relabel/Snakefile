@@ -8,7 +8,7 @@ from utils.ModuleConfig import ModuleConfig
 mcfg = ModuleConfig(
     module_name='relabel',
     config=config,
-    # config_params=['new_columns', 'merge_columns'],
+    config_params=['rename_columns', 'new_columns', 'merge_columns'],
 )
 paramspace = mcfg.get_paramspace()
 
@@ -36,8 +36,9 @@ rule relabel:
     output:
         zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr'),
     params:
-        mapping_order=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'new_columns', 'order']),
-        merge_sep=lambda wildcards: mcfg.get_for_dataset(wildcards.dataset, query=[mcfg.module_name, 'merge_columns', 'sep'], default='-'),
+        rename_columns=lambda wildcards: mcfg.get_from_parameters(wildcards, 'rename_columns', default={}),
+        mapping_order=lambda wildcards: mcfg.get_from_parameters(wildcards, 'new_columns', default={}).get('order'),
+        merge_sep=lambda wildcards: mcfg.get_from_parameters(wildcards, 'merge_columns', default={}).get('sep', '-'),
     conda:
         get_env(config, 'scanpy', env_dir='envs')
     resources:
