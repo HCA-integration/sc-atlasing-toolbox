@@ -105,7 +105,8 @@ rule cellhint_dotplot:
         author_label_key=lambda w: mcfg.get_from_parameters({k: w[k] for k in ('dataset', 'file_id')}, 'author_label_key'),
         marker_genes=lambda wildcards: get_marker_gene_set(
             mcfg,
-            wildcards={k: wildcards[k] for k in ('dataset', 'file_id')}
+            wildcards={k: wildcards[k] for k in ('dataset', 'file_id')},
+            flatten=True,
         ),
         kwargs=dict(
             use_raw=False,
