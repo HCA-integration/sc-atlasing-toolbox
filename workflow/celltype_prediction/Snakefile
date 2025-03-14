@@ -1,0 +1,64 @@
+"""
+Label transfer
+"""
+import os
+from pathlib import Path
+
+from utils.config import get_resource, get_wildcards_from_config, set_defaults
+from utils.wildcards import get_params, get_wildcards
+from utils.misc import unpack_dict_in_df
+from utils.environments import get_env
+from utils.ModuleConfig import ModuleConfig
+
+
+module common:
+    snakefile: "../common/Snakefile"
+    config: config
+
+use rule * from common as common_ *
+
+mcfg = ModuleConfig(
+    module_name='celltype_prediction',
+    config=config,
+    config_params=['reference_label', 'celltypist', 'raw_counts', 'norm_counts'],
+)
+paramspace = mcfg.get_paramspace()
+
+wildcards_df = mcfg.get_wildcards(as_df=True, all_params=True)
+
+# parse CellTypist parameters
+wildcards_df['celltypist_model'] = wildcards_df['celltypist'].apply(lambda x: x.get('models'))
+wildcards_df = wildcards_df.explode('celltypist_model')
+mcfg.update_parameters(wildcards_df)
+
+
+include: 'rules/celltypist.smk'
+
+
+rule collect:
+    input:
+        zarr=lambda wildcards: mcfg.get_input_file(**wildcards),
+        celltypist=lambda wildcards: mcfg.get_output_files(rules.celltypist.output.zarr, subset_dict=wildcards, all_params=True),
+    output:
+        zarr=directory(mcfg.out_dir / f'{paramspace.wildcard_pattern}.zarr')
+    conda:
+        get_env(config, 'scanpy')
+    script:
+        'scripts/collect.py'
+
+
+rule all:
+    input:
+        mcfg.get_output_files(rules.collect.output),
+    default_target: True
+    localrule: True
+
+
+rule dependency_graph:
+    input:
+        expand(
+            rules.common_dependency_graph.input,
+            images=mcfg.image_dir,
+            target='all'
+        )
+    localrule: True

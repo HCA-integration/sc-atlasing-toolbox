@@ -1,7 +1,7 @@
 import os
 from celltypist import models
 
-model = snakemake.wildcards.model
+model = snakemake.wildcards.celltypist_model
 output_model = snakemake.output.model
 
 model_name = f'{model}.pkl'

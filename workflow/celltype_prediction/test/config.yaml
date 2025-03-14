@@ -1,0 +1,56 @@
+output_dir: test/out
+images: test/images
+
+resources:
+  cpu:
+    partition: cpu_p
+    qos: icb
+    gpu: 0
+  gpu:
+    partition: gpu_p
+    qos: gpu
+    gpu: 1
+
+
+DATASETS:
+
+  test:
+    input:
+      celltype_prediction:
+        raw: data/pbmc68k.h5ad
+        preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
+    celltype_prediction:
+      reference_label: bulk_labels
+      raw_counts: layers/counts
+      celltypist:
+        params:
+          majority_voting: true
+        models:
+          - Healthy_COVID19_PBMC
+          - Immune_All_Low
+
+  large:
+    input:
+      celltype_prediction:
+        Lee2020: test/input/load_data/filtered/Lee2020.zarr
+        merged: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr 
+    celltype_prediction:
+      reference_label: cell_type
+      counts: X
+      celltypist:
+        models:
+          - COVID19_HumanChallenge_Blood
+  
+  preprocessed:
+    input:
+      celltype_prediction:
+        test: data/pbmc68k.h5ad
+        large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
+    celltype_prediction:
+      norm_counts: layers/normcounts
+      celltypist:
+        params:
+          majority_voting: true
+        models:
+          - Healthy_COVID19_PBMC
+          - COVID19_HumanChallenge_Blood
