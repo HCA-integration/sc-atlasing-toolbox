@@ -16,10 +16,10 @@ DATASETS:
 
   test:
     input:
-      cell_type_prediction:
+      celltype_prediction:
         raw: data/pbmc68k.h5ad
         preprocessed: test/input/preprocessing/dataset~all/file_id~pbmc/preprocessed.zarr
-    cell_type_prediction:
+    celltype_prediction:
       reference_label: bulk_labels
       raw_counts: layers/counts
       celltypist:
@@ -31,10 +31,10 @@ DATASETS:
 
   large:
     input:
-      cell_type_prediction:
+      celltype_prediction:
         Lee2020: test/input/load_data/filtered/Lee2020.zarr
         merged: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr 
-    cell_type_prediction:
+    celltype_prediction:
       reference_label: cell_type
       counts: X
       celltypist:
@@ -43,10 +43,10 @@ DATASETS:
   
   preprocessed:
     input:
-      cell_type_prediction:
+      celltype_prediction:
         test: data/pbmc68k.h5ad
         large: test/input/preprocessing/dataset~large/file_id~blood/preprocessed.zarr
-    cell_type_prediction:
+    celltype_prediction:
       norm_counts: layers/normcounts
       celltypist:
         params:
