@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from integration_utils import add_metadata, get_hyperparams, remove_slots, set_model_history_dtypes, \
-    SCVI_MODEL_PARAMS, plot_model_history, clean_categorical_column
+    SYSVI_MODEL_PARAMS, plot_model_history, clean_categorical_column
 from utils.io import read_anndata, write_zarr_linked, to_memory
 from utils.accessors import subset_hvg
 
@@ -28,15 +28,45 @@ scvi.settings.num_threads = snakemake.threads
 
 model_params, train_params = get_hyperparams(
     hyperparams=params.get('hyperparams', {}),
-    model_params=SCVI_MODEL_PARAMS,
+    model_params=SYSVI_MODEL_PARAMS,
 )
+
+logging.info(
+    'User-provided parameters:\n'
+    f'model parameters:\n{pformat(model_params)}\n'
+    f'training parameters:\n{pformat(train_params)}'
+)
+
+
+# set correct early_stopping parameters
+if train_params.pop('early_stopping', False):
+    train_params |= dict(
+        log_every_n_steps=train_params.get('log_every_n_steps', 1),
+        check_val_every_n_epoch=train_params.get('check_val_every_n_epoch', 1),
+        val_check_interval=train_params.get('val_check_interval', 1.0),
+    )
+
 categorical_covariate_keys = model_params.pop('categorical_covariate_keys', [])
 if isinstance(categorical_covariate_keys, str):
     categorical_covariate_keys = [categorical_covariate_keys]
 continuous_covariate_keys = model_params.pop('continuous_covariate_keys', [])
 if isinstance(continuous_covariate_keys, str):
     continuous_covariate_keys = [continuous_covariate_keys]
+
+try:
+    system_key = model_params.pop('system_key')
+except KeyError:
+    raise KeyError(
+        'system_key is not configured, but is mandatory.'
+        'Please make sure to set it in your config file.'
+    )
+
+# ensure that batch_key is included in categorical_covariate_keys
+if batch_key not in categorical_covariate_keys:
+    categorical_covariate_keys.append(batch_key)
+
 logging.info(
+    'Parsed parameters:\n'
     f'model parameters:\n{pformat(model_params)}\n'
     f'training parameters:\n{pformat(train_params)}'
 )
@@ -56,19 +86,19 @@ adata = read_anndata(
 )
 
 clean_categorical_column(adata, batch_key)
+clean_categorical_column(adata, system_key)
 
 # subset features
-adata, subsetted = subset_hvg(adata, var_column='integration_features')
+adata, _ = subset_hvg(adata, var_column='integration_features')
 
-if isinstance(categorical_covariate_keys, list):
-    for cov in categorical_covariate_keys:
-        adata.obs[cov] = adata.obs[cov].astype('str')
+for cov in categorical_covariate_keys:
+    adata.obs[cov] = adata.obs[cov].astype('str')
 
 SysVI.setup_anndata(
     adata,
-    batch_key=batch_key,
+    batch_key=system_key,
     categorical_covariate_keys=categorical_covariate_keys, # Does not work with scArches
-    #continuous_covariate_keys=continuous_covariate_keys,
+    continuous_covariate_keys=continuous_covariate_keys,
 )
 
 logging.info(f'Set up SysVI with parameters:\n{pformat(model_params)}')
@@ -91,7 +121,7 @@ add_metadata(
     model_history=set_model_history_dtypes(model.history)
 )
 
-for loss in ['reconstruction_loss', 'elbo', 'kl_local']:
+for loss in ['loss', 'reconstruction_loss', 'kl_local', 'z_distance_cycle']:
     train_key = f'{loss}_train'
     validation_key = f'{loss}_validation'
     if train_key not in model.history or validation_key not in model.history:
