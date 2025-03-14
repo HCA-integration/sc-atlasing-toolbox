@@ -8,6 +8,7 @@ import anndata as ad
 import zarr
 import h5py
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
 from anndata.experimental import read_elem, sparse_dataset
 from pprint import pformat
@@ -363,12 +364,21 @@ def write_zarr(adata, file):
         import sparse
         
         if isinstance(matrix, da.Array) and isinstance(matrix._meta, sparse.COO):
-            matrix = matrix.map_blocks(lambda x: x.tocsr(), dtype='float32')
+            matrix = matrix.map_blocks(lambda x: x.tocsr(), dtype=matrix.dtype)
         return matrix
     
     adata.X = sparse_coo_to_csr(adata.X)
     for layer in adata.layers:
         adata.layers[layer] = sparse_coo_to_csr(adata.layers[layer])
+        
+    # fix dtype for NaN obs columns
+    for col in adata.obs.columns:
+        if adata.obs[col].isna().any() or adata.obs[col].dtype.name == 'object':
+            try:
+                adata.obs[col] = pd.to_numeric(adata.obs[col])
+            except (ValueError, TypeError):
+                adata.obs[col] = adata.obs[col].astype('category')
+    
     adata.write_zarr(file) # doesn't seem to work with dask array
 
 
@@ -575,7 +585,7 @@ def write_zarr_linked(
             delattr(adata, slot)
     
     # write zarr file
-    adata.write_zarr(out_dir)
+    write_zarr(adata, out_dir)
     
     # link files
     link_zarr(
